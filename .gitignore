@@ -1,0 +1,11 @@
+node_modules/
+dist/
+public/generated/
+playwright-report/
+test-results/
+coverage/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.DS_Store

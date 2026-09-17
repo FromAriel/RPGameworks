@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#141b26" />
+    <meta name="description" content="RPGameworks: a browser-native JRPG framework. First playable rendering foundation." />
+    <title>RPGameworks — Foundation Room</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">RPGAMEWORKS / DEVELOPMENT BUILD</p>
+        <h1>A small room. A real beginning.</h1>
+        <p class="intro">The first playable foundation for a larger pixel world.</p>
+      </header>
+      <section class="workspace" aria-label="Foundation room">
+        <div class="play-column">
+          <div class="stage-heading"><span>FOUNDATION ROOM</span><span id="render-label">BOOTING</span></div>
+          <div id="stage" tabindex="0" role="group" aria-label="Game viewport. Arrow keys or W A S D to move. Space to trigger a cosmetic burst." data-testid="viewport"></div>
+          <p id="status" role="status">Loading renderer…</p>
+          <p id="error" role="alert" hidden></p>
+          <div class="controls">
+            <div class="dpad" aria-label="Movement controls">
+              <button type="button" data-direction="up" aria-label="Move up">↑</button>
+              <button type="button" data-direction="left" aria-label="Move left">←</button>
+              <button type="button" data-direction="down" aria-label="Move down">↓</button>
+              <button type="button" data-direction="right" aria-label="Move right">→</button>
+            </div>
+            <div class="actions">
+              <button id="burst" type="button" disabled>Pixel burst <kbd>SPACE</kbd></button>
+              <button id="restart" type="button" class="secondary" disabled>Restart room</button>
+            </div>
+          </div>
+          <p class="hint">Click the room, then use <kbd>W A S D</kbd> or <kbd>↑ ↓ ← →</kbd>. Touch controls work too.</p>
+        </div>
+        <aside aria-label="Runtime diagnostics">
+          <h2>Under the hood</h2>
+          <p class="aside-intro">One active scene. One shared atlas. One bounded particle emitter.</p>
+          <dl id="diagnostics"></dl>
+          <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
+          <p class="hint">Starts off when reduced motion is requested. Effects never change movement or game state.</p>
+          <div class="scope-note"><strong>Foundation slice</strong><p>This is a rendering and input test, not the complete RPG engine. Maps, NPCs, doors, and saves come next.</p></div>
+        </aside>
+      </section>
+      <footer><span>EXPANSIVE WORLDS. SMALL ACTIVE SIMULATIONS.</span><span id="build-label">0.1.0</span></footer>
+      <noscript>This browser game requires JavaScript to run.</noscript>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

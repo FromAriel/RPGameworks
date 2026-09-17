@@ -1,0 +1,53 @@
+name: Foundation checks
+on:
+  push:
+    branches: [main, work/m1-foundation]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: foundation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install the committed lockfile
+        run: npm ci
+      - name: Record environment
+        run: |
+          node --version
+          npm --version
+          npm ls --depth=0
+      - name: Typecheck, domain tests, and production build
+        run: npm run check
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Production browser tests, including the project subpath
+        run: npm run test:browser
+      - name: Build portable static artifact
+        run: npm run build
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload static browser build
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-build
+          path: dist/
+          retention-days: 14

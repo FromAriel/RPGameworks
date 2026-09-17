@@ -18,7 +18,11 @@ const snapshot = (page: Page): Promise<RuntimeSnapshot> => page.evaluate(() => {
 
 async function openRoom(page: Page, suffix = ''): Promise<void> {
   await page.goto(`./${suffix}`);
-  await expect.poll(async () => (await snapshot(page)).phase).toBe('ready');
+  // The rendering module loads asynchronously after the HTML load event.
+  // Poll a value during startup; throwing from the poll would fail immediately.
+  await expect.poll(() => page.evaluate(
+    () => window.__RPGAMEWORKS__?.snapshot().phase ?? 'booting',
+  )).toBe('ready');
   await expect(page.locator('#error')).toBeHidden();
   await page.getByTestId('viewport').focus();
 }

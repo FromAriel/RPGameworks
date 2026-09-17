@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Browser-native JRPG framework: first rendering foundation",
-  "engines": { "node": ">=22.16.0 <23" },
+  "engines": {
+    "node": ">=22.16.0 <23"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
@@ -13,5 +15,15 @@
     "preview": "vite preview --host 127.0.0.1",
     "test:browser": "playwright test",
     "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.3",
+    "typescript": "7.0.2",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
   }
 }

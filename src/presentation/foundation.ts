@@ -26,6 +26,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
   let phase: RuntimeSnapshot['phase'] = 'booting';
   let current: FoundationScene | null = null;
   let disposed = false;
+  let resizeFrame: number | null = null;
+  let appliedScale = 0;
   const appLifetime = new AbortController();
 
   class FoundationScene extends Phaser.Scene {
@@ -92,7 +94,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       elements.burst.disabled = false;
       elements.restart.disabled = false;
       phase = 'ready';
-      resize();
+      scheduleResize();
     }
 
     update(_time: number, delta: number): void {
@@ -130,12 +132,21 @@ export function createFoundation(elements: FoundationElements, onError: (message
   }
 
   function resize(): void {
-    if (disposed || !game.canvas) return;
+    if (disposed || !game.isBooted || !game.canvas) return;
     const scale = integerScale(elements.stage.clientWidth - 2, Math.max(HEIGHT, window.innerHeight * 0.58), WIDTH, HEIGHT);
-    game.canvas.style.width = `${WIDTH * scale}px`;
-    game.canvas.style.height = `${HEIGHT * scale}px`;
-    // Phaser pointer scaling is refreshed after CSS dimensions change.
-    game.scale.refresh();
+    if (scale === appliedScale) return;
+    appliedScale = scale;
+    // Let Phaser own CSS dimensions and its coordinate transforms together.
+    game.scale.setZoom(scale);
+  }
+
+  function scheduleResize(): void {
+    if (disposed || resizeFrame !== null) return;
+    // Never mutate the observed element during ResizeObserver delivery.
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = null;
+      resize();
+    });
   }
 
   const renderer = new URLSearchParams(window.location.search).get('renderer');
@@ -157,9 +168,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
     scene: [FoundationScene],
   });
 
-  const observer = new ResizeObserver(resize);
+  const observer = new ResizeObserver(scheduleResize);
   observer.observe(elements.stage);
-  window.addEventListener('resize', resize, { signal: appLifetime.signal });
+  window.addEventListener('resize', scheduleResize, { signal: appLifetime.signal });
 
   return {
     snapshot(): RuntimeSnapshot {
@@ -187,6 +198,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
       disposed = true;
       phase = 'stopped';
       observer.disconnect();
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+      resizeFrame = null;
       appLifetime.abort();
       elements.burst.disabled = true;
       elements.restart.disabled = true;

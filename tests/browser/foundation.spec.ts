@@ -6,6 +6,13 @@ const test = base.extend<{ errorGuard: void }>({
   errorGuard: [async ({ page }, use) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => {
+      if (message.text().startsWith('TEST_WINDOW_ERROR:')) errors.push(message.text());
+    });
+    await page.addInitScript(() => {
+      // ResizeObserver errors use window.error, not always Playwright pageerror.
+      window.addEventListener('error', (event) => console.error(`TEST_WINDOW_ERROR:${event.message}`));
+    });
     await use();
     expect(errors, 'Uncaught browser errors').toEqual([]);
   }, { auto: true }],

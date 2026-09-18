@@ -1,4 +1,5 @@
 import './style.css';
+import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
 import { GamepadController } from './platform/gamepad';
 import { mountControllerSettings } from './presentation/ui/controller-settings';
@@ -27,9 +28,16 @@ let disposed = false;
 let failed = false;
 let lastStatus = '';
 let startupFocusPending = true;
+const pageErrors = new PageErrorLog();
+const pageErrorNotice = required<HTMLElement>('#page-error-notice');
 const controller = new GamepadController();
 const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
-const controllerUI = mountControllerSettings(controllerPanel, controller, stage);
+const controllerUI = mountControllerSettings(controllerPanel, controller, stage, () => ({
+  build: __BUILD_ID__, version: __APP_VERSION__,
+  runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
+  fatalGameError: failed ? error.textContent : null,
+  pageErrors: pageErrors.snapshot(),
+}));
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;
 
@@ -41,11 +49,12 @@ function reportError(message: string): void {
 }
 
 function drawDiagnostics(): void {
-  if (!handle || disposed) return;
-  const snapshot = handle.snapshot();
+  if (disposed) return;
   controllerUI.refresh();
+  if (!handle) return;
+  const snapshot = handle.snapshot();
   if (snapshot.phase === 'ready' && !failed) {
-    if (startupFocusPending) {
+    if (startupFocusPending && !document.hidden) {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
@@ -90,8 +99,18 @@ function dispose(): void {
   delete window.__RPGAMEWORKS__;
 }
 
-window.addEventListener('error', (event) => reportError(event.message || 'Unexpected rendering error.'), { signal: appLifetime.signal });
-window.addEventListener('unhandledrejection', (event) => reportError(String(event.reason)), { signal: appLifetime.signal });
+function reportPageIssue(kind: string, reason: unknown, source = ''): void {
+  pageErrors.record(kind, reason, source);
+  const latest = pageErrors.snapshot();
+  pageErrorNotice.hidden = false;
+  pageErrorNotice.textContent = `Page error observed (${latest.count}); source is not attributed to the game. ` +
+    `Game readiness is reported separately. Latest: ${latest.last?.message ?? 'unknown'}. ` +
+    'Controller configuration includes a diagnostic report. Original errors remain in the browser console.';
+}
+// Do not call preventDefault: preserve the browser's original error and stack.
+// Explicit startup, asset and scene boundaries still report fatal game failures.
+window.addEventListener('error', (event) => reportPageIssue('error', event.error ?? event.message, event.filename), { signal: appLifetime.signal });
+window.addEventListener('unhandledrejection', (event) => reportPageIssue('unhandledrejection', event.reason), { signal: appLifetime.signal });
 media.addEventListener('change', (event) => {
   if (event.matches) {
     effects.checked = false;
@@ -132,7 +151,6 @@ async function start(): Promise<void> {
     }, reportError, content);
     const running = handle;
     window.__RPGAMEWORKS__ = Object.freeze({ snapshot: () => running.snapshot() });
-    timer = setInterval(drawDiagnostics, 250);
     drawDiagnostics();
   } catch (cause) {
     if (disposed) return;
@@ -140,4 +158,5 @@ async function start(): Promise<void> {
   }
 }
 
+timer = setInterval(drawDiagnostics, 250);
 void start();

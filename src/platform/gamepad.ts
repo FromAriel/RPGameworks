@@ -1,4 +1,4 @@
-import { CONTROLLER_KEY, NO_PAD_INPUT, PadLatch, defaultControllerConfig, parseControllerConfig } from './gamepad-model';
+import { CONTROLLER_KEY, NO_PAD_INPUT, PadLatch, axisValue, buttonPressed, defaultControllerConfig, parseControllerConfig } from './gamepad-model';
 import type { ControllerConfig, PadInput, PadState } from './gamepad-model';
 
 export interface GamepadSource {
@@ -17,6 +17,9 @@ export class GamepadController implements GamepadSource {
   private storageMessage = '';
   private pads: readonly PadState[] = [];
   private chosen: PadState | null = null;
+  private lastScan = -Infinity;
+  private lastPoll: number | null = null;
+  private gameplayRequested = false;
 
   constructor() {
     try {
@@ -47,7 +50,11 @@ export class GamepadController implements GamepadSource {
       'Press a controller button once to let the browser detect it, then release the controls.';
     const name = this.chosen.id.slice(0, 160);
     if (this.chosen.mapping !== 'standard' && !this.config.allowUnmapped) return `${name}: non-standard mapping. Configure bindings and enable custom mapping.`;
-    return `${name} · ${this.chosen.mapping || 'custom'} · ${this.latch.waitingForNeutral ? 'Return to the game and release controls to resume.' : 'Ready'}`;
+    const prefix = `${name} · ${this.chosen.mapping || 'custom'} · `;
+    if (document.hidden) return prefix + 'Paused: browser tab is hidden.';
+    if (!document.hasFocus()) return prefix + 'Paused: focus the game tab, not DevTools or another window.';
+    if (!this.gameplayRequested) return prefix + 'Detected; gameplay paused. Close settings and activate the game viewport.';
+    return prefix + (this.latch.waitingForNeutral ? 'Waiting for neutral: center the selected stick and release mapped buttons.' : 'Ready');
   }
 
   select(index: number | null): void {
@@ -68,24 +75,61 @@ export class GamepadController implements GamepadSource {
     return true;
   }
 
-  poll(active: boolean): Readonly<PadInput> {
-    if (this.disposed) return NO_PAD_INPUT;
+  /** Detection is independent of gameplay permission and works before a scene is ready. */
+  private scan(): void {
+    if (this.disposed) return;
+    this.lastScan = performance.now();
     try {
       if (typeof navigator.getGamepads !== 'function') throw new Error('unavailable');
       this.pads = Array.from(navigator.getGamepads()).slice(0, 16)
         .filter((pad): pad is Gamepad => !!pad?.connected);
       this.problem = '';
-    } catch {
+    } catch (cause) {
       this.pads = []; this.chosen = null; this.reset();
-      this.problem = 'Controller API unavailable or blocked. Use localhost or HTTPS; keyboard and touch still work.';
-      return NO_PAD_INPUT;
+      const detail = cause instanceof Error ? `${cause.name}: ${cause.message}`.slice(0, 200) : 'No readable API result';
+      this.problem = `Controller API unavailable or blocked. Use localhost or HTTPS; keyboard and touch still work. ${detail}`;
+      return;
     }
     this.chosen = this.selection ? this.pads.find((pad) => pad.index === this.selection!.index && pad.id === this.selection!.id) ?? null :
       this.pads.find((pad) => pad.mapping === 'standard') ?? this.pads[0] ?? null;
+  }
+
+  /** Reuse the 4 Hz UI timer when gameplay has not scanned recently; never arm input here. */
+  refreshDetection(): void {
+    if (performance.now() - this.lastScan >= 200) this.scan();
+  }
+
+  rescan(): void { this.reset(); this.scan(); }
+
+  poll(active: boolean): Readonly<PadInput> {
+    if (this.disposed) return NO_PAD_INPUT;
+    this.scan();
+    this.lastPoll = performance.now();
+    this.gameplayRequested = active;
     return this.latch.sample(this.chosen, this.config, active && !document.hidden && document.hasFocus());
   }
 
-  reset(): void { this.latch.reset(); }
+  /** Bounded copies for a user-requested report, never a mutable Gamepad reference. */
+  diagnostics(): object {
+    return {
+      secureContext: window.isSecureContext,
+      apiAvailable: typeof navigator.getGamepads === 'function',
+      documentFocused: document.hasFocus(), documentHidden: document.hidden,
+      selectedIndex: this.selectedIndex, detectedCount: this.pads.length,
+      chosenIndex: this.chosen?.index ?? null, gameplayRequested: this.gameplayRequested,
+      waitingForNeutral: this.latch.waitingForNeutral,
+      lastGameplayPollAgeMs: this.lastPoll === null ? null : Math.round(performance.now() - this.lastPoll),
+      status: this.status, persistence: this.storageMessage, settings: this.settings,
+      devices: this.pads.map((pad) => ({
+        id: pad.id.slice(0, 200), index: pad.index, mapping: pad.mapping, connected: pad.connected,
+        axisCount: pad.axes.length, buttonCount: pad.buttons.length,
+        axes: pad.axes.slice(0, 16).map((_, i) => axisValue(pad, i)),
+        pressedButtons: pad.buttons.slice(0, 64).flatMap((_, i) => buttonPressed(pad, i) ? [i] : []),
+      })),
+    };
+  }
+
+  reset(): void { this.latch.reset(); this.gameplayRequested = false; }
   dispose(): void {
     this.disposed = true; this.lifetime.abort(); this.reset(); this.pads = []; this.chosen = null;
   }

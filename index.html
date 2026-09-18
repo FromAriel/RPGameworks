@@ -21,6 +21,11 @@
           <div id="stage" tabindex="0" role="group" aria-label="Game viewport. Arrow keys or W A S D to move. Space to trigger a cosmetic burst." data-testid="viewport"></div>
           <p id="status" role="status">Loading renderer…</p>
           <p id="error" role="alert" hidden></p>
+          <p id="page-error-notice" class="hint" role="status" hidden></p>
+          <div class="controller-actions">
+            <button id="controller-activate" type="button" class="secondary">Activate controller</button>
+            <span id="controller-brief" role="status">Checking controller detection…</span>
+          </div>
           <div class="controls">
             <div class="dpad" aria-label="Movement controls">
               <button type="button" data-direction="up" aria-label="Move up">↑</button>
@@ -53,6 +58,15 @@
             <p class="hint">Names beside button/axis numbers describe the standard layout. For a non-standard layout, use the live numbers below. Unassign a button before moving it to another action. Bindings apply to the selected controller, not its firmware profiles.</p>
             <pre id="controller-live" aria-label="Live controller inputs"></pre>
             <p id="controller-message" role="status"></p>
+            <div class="controller-actions">
+              <button id="controller-rescan" type="button" class="secondary">Rescan controllers</button>
+              <button id="controller-report-button" type="button" class="secondary">Show diagnostic report</button>
+            </div>
+            <div id="controller-report-area" hidden>
+              <label for="controller-report">Controller diagnostic report (select and copy to share)</label>
+              <textarea id="controller-report" readonly rows="12" spellcheck="false"></textarea>
+              <p class="hint">Captured only when requested. Includes browser/device data, settings and the last page error; nothing is uploaded automatically. Review before sharing.</p>
+            </div>
             <div class="controller-actions">
               <button id="controller-reset" type="button" class="secondary">Reset controller defaults</button>
               <button id="controller-return" type="button">Return to game</button>

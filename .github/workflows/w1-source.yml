@@ -1,0 +1,20 @@
+name: W1 source
+on:
+  push:
+    branches: [work/w1-base-skin]
+    paths: [.github/workflows/w1-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar HEAD > source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w1-source
+          path: source.tar
+          retention-days: 2

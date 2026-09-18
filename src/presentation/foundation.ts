@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
 import { integerScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
+import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 
@@ -19,6 +20,8 @@ export interface FoundationElements {
   burst: HTMLButtonElement;
   restart: HTMLButtonElement;
   effects: HTMLInputElement;
+  gamepad: GamepadSource;
+  canPlay: () => boolean;
 }
 
 export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
@@ -98,7 +101,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         blendMode: Phaser.BlendModes.NORMAL,
       });
       this.emitter.setDepth(2);
-      this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst);
+      this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst, elements.gamepad, elements.canPlay);
       elements.effects.addEventListener('change', () => {
         if (!elements.effects.checked) this.emitter?.killAll();
       }, { signal: this.sceneLifetime.signal });

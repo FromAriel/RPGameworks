@@ -1,12 +1,14 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 17, 2026, M1.3 delivery. GitHub CI timestamps for this work are September 18 UTC.
+**Updated:** September 17, 2026, requested launch-focus/controller follow-up after M1.3. GitHub CI timestamps for this work are September 18 UTC.
 
 ## Current phase
 
 **M1.1–M1.3 implemented and tested.** The foundation now has two data-authored maps, one reusable scene, canonical schemas, shared structural/semantic validation, compiled collision data, and on-demand loading. The full M1 room-to-room RPG milestone is **not complete**.
 
 The 20 × 12 Workshop and 24 × 14 Pillar Gallery can be selected in the development preview. The selector deliberately reloads the page. Named exits and target spawns are validated metadata only; stepping onto an exit does not yet trigger a gameplay transition. There is no NPC conversation, inventory, save game, combat, or full PixelFX recipe system.
+
+**Input follow-up:** The viewport now receives keyboard focus once at first readiness, without stealing deliberate settings focus. Standard browser controllers have left-stick/D-pad movement, an A-button cosmetic burst, and a configuration panel for device selection, deadzone, axes/inversion, and button remapping. Local preferences, visible fallbacks, neutral rearming, and settings/focus input gating are implemented. Physical Elite Series 2 verification remains outstanding. See [INPUT.md](INPUT.md).
 
 ## What works
 
@@ -17,18 +19,22 @@ The 20 × 12 Workshop and 24 × 14 Pillar Gallery can be selected in the develop
 - Runtime loading of only the manifest and selected map, with schema/identity/spawn checking, bounded response sizes, timeout, cancellation, and visible failure reporting.
 - Deeply frozen copied map definitions and a private byte-grid collision representation. Movement collision uses constant-time lookup, not scans of every placed object.
 - One reusable Phaser map scene, bounded camera follow, original atlas, 320 × 192 logical canvas, and integer pixel scaling.
-- Existing scoped keyboard/pointer input, movement, reduced-motion settings, 64-particle ceiling, restart cleanup, and diagnostics preserved.
-- Strict TypeScript/checked-JavaScript checks, **83 unit tests**, and **18 production-browser scenarios**.
+- Existing scoped keyboard/pointer input, movement, reduced-motion settings, 64-particle ceiling, restart cleanup, and diagnostics preserved. Controller input joins the same scene input owner and existing update loop. The controller service and settings UI have one app lifetime.
+- Strict TypeScript/checked-JavaScript checks, **123 unit tests**, and **30 production-browser scenarios**. The 40 new unit cases and 12 new browser scenarios cover controller interpretation, focus, configuration, persistence, disconnection, and lifecycle behavior. Browser controller readings are synthetic fixtures, not physical-device tests.
 
 ## Toolchain and commands
 
 The accepted Node ranges remain `>=22.16.0 <23 || >=24.15.0 <25`. The Node 24 compatibility fix is preserved, including strict engine checking, synchronized package/lockfile metadata, and the Windows CI leg. No Node/npm downgrade is needed for Ariel's reported setup.
 
-Run `npm ci --include=dev` after pulling these dependency additions. `npm run dev` prepares assets/maps and starts the local development server. `npm run validate` performs content validation without replacing the emitted pack; `npm run content` rebuilds map payloads. While the development server is already running, manually rebuild content and refresh after editing map JSON; no content watcher is implemented yet.
+After pulling, use `npm ci --include=dev` to install the committed dependency graph. This input follow-up adds no dependencies. `npm run dev` prepares assets/maps and starts the local development server. `npm run validate` performs content validation without replacing the emitted pack; `npm run content` rebuilds map payloads. While the development server is already running, manually rebuild content and refresh after editing map JSON; no content watcher is implemented yet.
 
 `npm run check` performs source checks, unit tests, content validation, and production building. Browser checks use `npm run test:browser` after installing the configured Playwright Chromium browser. Commands generate ignored schema outputs automatically.
 
 ## Verification and provenance
+
+The input source revision **`ac86f175bf471b609c8abf484e6318234e4bc278`** passed [GitHub Actions run 35297625726](https://github.com/FromAriel/RPGameworks/actions/runs/35297625726) on Linux/Node 22.16.0, Linux/Node 24.15.0, and Windows/Node 24.15.0. Node 24 jobs used npm 11.6.2. All three legs passed strict installation, source checks, 123 unit tests, production builds, and 30 Chromium browser scenarios. Local source/unit/build checks also passed. Local browser navigation remained administratively blocked; actual browser evidence is from CI. Desktop and narrow settings screenshots were inspected. The final delivery's own normal CI is the authority for its exact commit identity; the temporary workspace-export workflow is excluded from the delivered tree.
+
+This input follow-up does not change dependencies, Node compatibility, map/game schemas, or authored rooms. It introduces only browser-local controller preference format v1, not gameplay saves. The original map verification below remains historical evidence for that earlier slice.
 
 The map source revision **`6c7a8d08c3eab217381bd3d24434c5eba3c9e3d7`** passed [GitHub Actions run 35294045478](https://github.com/FromAriel/RPGameworks/actions/runs/35294045478) on all three matrix legs: Linux/Node 22.16.0, Linux/Node 24.15.0, and Windows/Node 24.15.0. Node 24 jobs used npm 11.6.2. Installation, typechecking, unit tests, production-browser checks, and portable builds all passed. The clean main delivery receives a separate normal CI run; that run is the authority for its exact final commit identity.
 
@@ -44,7 +50,7 @@ Original foundation evidence remains in [FOUNDATION.md](FOUNDATION.md), and Node
 
 **M1.4/M1.5 — Interaction and room-to-room integration.** Add one NPC message, one interactable, modal input ownership, and actual door transitions using existing map/spawn references. Validate/load a destination before establishing it as active. Handle repeated requests, failure/cancellation, re-entry, and outgoing ownership cleanup. Do not create a separate scene subclass for each room.
 
-Keep movement, lazy content, schema generation, original assets, Node 24 support, and existing tests intact. Do not introduce saves, combat, a visual editor, custom WebGL, or general scripting in this packet. The full M1 acceptance criteria still require interaction and real transitions; preview reloads and scene restarts do not substitute for them.
+Keep movement, lazy content, schema generation, original assets, Node 24 support, controller configuration/focus gates, and existing tests intact. Route new dialogue/interaction actions through explicit ownership; do not let a held controller press both close a message and trigger an exploration action. Do not introduce saves, combat, a visual editor, custom WebGL, or general scripting in this packet. The full M1 acceptance criteria still require interaction and real transitions; preview reloads and scene restarts do not substitute for them.
 
 ## Compatibility and limits
 

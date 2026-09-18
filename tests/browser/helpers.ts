@@ -35,3 +35,29 @@ export async function openRoom(page: Page, suffix = ''): Promise<void> {
 }
 
 export { expect };
+
+/** Reach controls through the real closed-by-default player menu. */
+export async function openTools(page: Page, tab: 'options' | 'debug' = 'options'): Promise<void> {
+  if (await page.locator('#tools-panel').isHidden()) await page.locator('#tools-toggle').click();
+  const button = page.locator(`#${tab}-tab`);
+  if (await button.getAttribute('aria-selected') !== 'true') await button.click();
+  await expect(page.locator(`#${tab}-panel`)).toBeVisible();
+}
+export async function closeTools(page: Page): Promise<void> {
+  if (await page.locator('#tools-panel').isVisible()) await page.locator('#tools-close').click();
+  await expect(page.locator('#tools-panel')).toBeHidden();
+  await expect(page.locator('#stage')).toBeFocused();
+}
+export async function openControllerSettings(page: Page): Promise<void> {
+  await openTools(page);
+  if (!(await page.locator('#controller-settings').evaluate((root: HTMLDetailsElement) => root.open))) {
+    await page.locator('#controller-settings summary').click();
+  }
+}
+export async function setEffects(page: Page, value: boolean): Promise<void> {
+  await openTools(page); await page.locator('#effects').setChecked(value); await closeTools(page);
+}
+export async function enableTouch(page: Page): Promise<void> {
+  await openTools(page); await page.locator('#touch-enabled').check(); await closeTools(page);
+  await expect(page.locator('#touch-controls')).toBeVisible();
+}

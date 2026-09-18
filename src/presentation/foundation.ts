@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
-import { integerScale } from '../domain/viewport';
+import { viewportScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
 import type { MapExit } from '../domain/interaction';
@@ -25,6 +25,7 @@ export interface FoundationElements {
   effects: HTMLInputElement;
   gamepad: GamepadSource;
   canPlay: () => boolean;
+  canRestart: () => boolean;
   dialog: HTMLDialogElement;
   interact: HTMLButtonElement;
 }
@@ -85,7 +86,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         }, { signal: this.sceneLifetime.signal });
         elements.restart.addEventListener('click', () => {
           // Restart is deliberately unavailable while a message or transfer owns input.
-          if (this.mode !== 'exploration' || !elements.canPlay()) return;
+          if (this.mode !== 'exploration' || !elements.canRestart()) return;
           this.inputOwner?.clear();
           this.scene.restart();
         }, { signal: this.sceneLifetime.signal });
@@ -209,11 +210,18 @@ export function createFoundation(elements: FoundationElements, onError: (message
 
   function resize(): void {
     if (disposed || !game.isBooted || !game.canvas) return;
-    const scale = integerScale(elements.stage.clientWidth - 2, Math.max(HEIGHT, window.innerHeight * 0.58), WIDTH, HEIGHT);
-    if (scale === appliedScale) return;
-    appliedScale = scale;
-    // Let Phaser own CSS dimensions and its coordinate transforms together.
-    game.scale.setZoom(scale);
+    const width = elements.stage.clientWidth, height = elements.stage.clientHeight;
+    if (width <= 0 || height <= 0) return;
+    const scale = viewportScale(width, height, WIDTH, HEIGHT);
+    if (scale !== appliedScale) {
+      appliedScale = scale;
+      // Phaser owns canvas dimensions; centering never changes the logical world.
+      game.scale.setZoom(scale);
+    }
+    // Whole CSS-pixel offsets avoid half-pixel centering on odd-sized viewports.
+    game.canvas.style.left = `${Math.floor((width - WIDTH * scale) / 2)}px`;
+    game.canvas.style.top = `${Math.floor((height - HEIGHT * scale) / 2)}px`;
+    game.scale.updateBounds();
   }
 
   function scheduleResize(): void {
@@ -248,6 +256,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
   window.addEventListener('resize', scheduleResize, { signal: appLifetime.signal });
 
   return {
+    clearInput(): void { current?.inputOwner?.clear(); },
     snapshot(): RuntimeSnapshot {
       const { map, spawn, collision } = content;
       const room = current?.room;

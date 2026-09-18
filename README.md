@@ -4,7 +4,9 @@
 
 RPGameworks is being built a playable piece at a time: ordinary TypeScript/JavaScript, small active maps, a persistent world, and a composable cosmetic effects layer. The repository is the initial authoring environment; no paid coding agent, desktop RPG editor, runtime AI service, or game server is required by the design.
 
-## Current build: two-room interaction slice
+## Current build: player-first two-room slice
+
+**The game now fills the browser viewport**, centered on a black background with crisp whole-pixel enlargement. The small **Menu** button opens Settings; **F2** opens Debug directly. Both are closed at launch. On wide screens the drawer can sit beside live gameplay; click the play area to keep playing with the readout visible. Controller options, instructions, map preview, build information and runtime counters remain available without occupying the normal game screen. See [the player interface](docs/PLAYER-SHELL.md).
 
 The 20 × 12 Workshop and 24 × 14 Pillar Gallery are now connected by working doors. Walk up to Mara, the workshop caretaker, face her, and open her two-page greeting. Visit the gallery and examine its brass plaque, then return through the western doorway. Messages, placement IDs, exits, and arrival points are authored in validated JSON rather than map-specific scene classes.
 
@@ -23,17 +25,17 @@ npm run dev
 
 Open the local address Vite prints. Asset and map generation run automatically before development starts. Do not open `index.html` directly with a `file://` URL.
 
-The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**. **E / Enter** interacts with the adjacent object you face and advances messages; **Escape** closes a message or cancels travel. **Space** triggers a cosmetic pixel burst during exploration and advances an already-open message. The on-screen direction buttons also accept pointer input. **Restart room** exercises scene disposal/recreation. The **Cosmetic particles** checkbox turns the burst off without changing movement; reduced-motion preference disables it initially.
+The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**. **E / Enter** interacts with the adjacent object you face and advances messages; **Escape** closes a message or cancels travel. **Space** triggers a cosmetic pixel burst during exploration and advances an already-open message. During exploration, **Escape** opens/closes the menu and **F2** toggles Debug; dialogue and travel keep their existing Escape behavior. **Menu → Settings → On-screen controls** enables the pointer buttons, which are hidden by default on desktop and automatic on touch-first devices. **Menu → Debug → Restart room** exercises scene disposal/recreation. **Menu → Settings → Cosmetic particles** turns the burst off without changing movement; reduced-motion preference disables it initially. The drawer is not restored on reload. Below the logical canvas size only, proportional downscaling avoids cropping; enlargement stays integer-scaled.
 
 ### Controller recovery
 
-Use **Activate controller** to close settings, rescan and focus the game. Release the buttons and center the stick briefly. The visible status now distinguishes detected-but-paused input, neutral waiting, API problems, and no exposed controller. **Controller configuration → Show diagnostic report** gives selectable troubleshooting data without uploading it. Unattributed page errors are warnings, not automatically fatal game failures; genuine startup/scene failures remain separately reported. See [controller recovery](docs/CONTROLLER-RECOVERY.md).
+Use **Menu → Settings → Activate controller** to close settings, rescan and focus the game. Release the buttons and center the stick briefly. The status inside Settings distinguishes detected-but-paused input, neutral waiting, API problems, and no exposed controller. **Controller configuration → Show diagnostic report** gives selectable troubleshooting data without uploading it. Unattributed page errors are warnings, not automatically fatal game failures; genuine startup/scene failures remain separately reported. See [controller recovery](docs/CONTROLLER-RECOVERY.md).
 
 ### Controller configuration
 
 Native input now follows the supplied working MouseJoy reader: one app-owned frame sampler, retained connected-device selection, and no requirement to focus the viewport div for controller movement. Settings, form editing and inactive tabs still pause gameplay. **Open MouseJoy-style controller test** in the panel runs a minimal independent reader on the same server. See [the comparison, tests and remaining hardware uncertainty](docs/MOUSEJOY-PARITY.md).
 
-Open **Controller configuration** below the movement controls. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move** and **A for the cosmetic pixel burst**, **X to interact/advance**, and **B to close/cancel**. These are defaults: prior remapped buttons and axes are preserved during migration to controller preferences v2; new actions take unused buttons when necessary. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; no extra dependency or account is required.
+Open **Menu → Settings → Controller configuration**. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move** and **A for the cosmetic pixel burst**, **X to interact/advance**, and **B to close/cancel**. These are defaults: prior remapped buttons and axes are preserved during migration to controller preferences v2; new actions take unused buttons when necessary. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; no extra dependency or account is required.
 
 The browser may require a controller button press before exposing a connected device. Press and release once, center the stick, and use **Return to game** after configuration. Input pauses while settings are open; an already-started tile step finishes. Reconnection or return from an input-blocking pause requires neutral controls before gameplay resumes, preventing held-button surprises. Keyboard input remains available when the controller API is absent or blocked.
 
@@ -69,7 +71,7 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **178 unit tests and 56 browser scenarios**, including modal ownership, failure/cancellation, controller preference migration, and a 40-transfer room tour. See [INTERACTIONS.md](docs/INTERACTIONS.md) for execution evidence. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the preceding comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
+`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **190 unit tests and 65 browser scenarios**, including modal ownership, failure/cancellation, controller preference migration, and a 40-transfer room tour. See [PLAYER-SHELL.md](docs/PLAYER-SHELL.md) for current UI verification and [INTERACTIONS.md](docs/INTERACTIONS.md) for the preceding gameplay slice. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the preceding comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
 
 GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows with Node 24.15.0. Node 24 jobs use npm 11.6.2. Each matrix leg retains a `browser-build-<label>` artifact and `browser-evidence-<label>` report. Those artifacts are build/test outputs, not a deployed website. The standard workflow has read-only repository permissions.
 
@@ -77,7 +79,7 @@ GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows wit
 
 Edit the canonical records in `content/games/demo/maps/`, and register maps in `content/games/demo/game.json`. Run `npm run validate` for schema and cross-reference checks. `npm run content` rebuilds map payloads; refresh the development page afterward. Development startup and production builds run this automatically. Live file watching for content compilation is not implemented yet.
 
-Map IDs are independent of filenames. `?map=demo:map.gallery&spawn=from-workshop` selects a registered map/spawn for preview, relative to the app's existing URL. The selector performs a full page load; gameplay doors do not. Initial startup fetches the compact manifest and selected map. Door use fetches only its registered destination payload; neighbouring room data is not downloaded eagerly.
+Map IDs are independent of filenames. `?map=demo:map.gallery&spawn=from-workshop` selects a registered map/spawn for preview, relative to the app's existing URL. The selector is in **Menu → Debug** and performs a full page load; gameplay doors do not. Initial startup fetches the compact manifest and selected map. Door use fetches only its registered destination payload; neighbouring room data is not downloaded eagerly.
 
 Generated JSON payloads, standalone validators, and schema-derived TypeScript declarations are ignored build outputs. Do not edit them. [Map authoring and verification](docs/MAPS.md) describes units, boundaries, and the earlier map slice. [Interaction authoring](docs/INTERACTIONS.md) covers the added messages and working doors.
 
@@ -93,6 +95,7 @@ Generated JSON payloads, standalone validators, and schema-derived TypeScript de
 | `src/platform/gamepad-model.ts`, `src/platform/gamepad.ts` | Validated bindings, neutral/edge handling, and one app-owned browser controller adapter |
 | `src/presentation/ui/controller-settings.ts` | Semantic controller configuration and bounded-rate telemetry |
 | `src/presentation/foundation.ts`, `map-view.ts` | Reusable scene, explicit room visual ownership, safe transitions, camera, and cosmetic particles |
+| `src/presentation/ui/player-shell.ts` | Closed-by-default settings/debug drawer, keyboard access and optional touch overlay |
 | `src/presentation/ui/interaction-dialog.ts` | Native modal presenter; authored strings remain literal text |
 | `src/main.ts`, `src/style.css`, `index.html` | Accessible controls, diagnostics, errors, and responsive page layout |
 | `assets/source/` | Original placeholder pixel patterns and provenance |
@@ -105,6 +108,7 @@ Maps and simple messages are data, not new scene subclasses. The next packet clo
 
 | Document | Purpose |
 | --- | --- |
+| [Player interface](docs/PLAYER-SHELL.md) | Full-viewport play, black letterboxing, optional tools, input boundaries and verification |
 | [Interaction and room travel](docs/INTERACTIONS.md) | Current messages, controls, door lifecycle, compatibility, and tests |
 | [Controller recovery](docs/CONTROLLER-RECOVERY.md) | Page-error isolation, activation, diagnostics, and verification |
 | [Input and controller configuration](docs/INPUT.md) | Launch focus, controller mappings, safety gates, preferences, and test limits |

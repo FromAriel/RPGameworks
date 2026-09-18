@@ -1,3 +1,4 @@
+import { openTools } from './helpers';
 import { readFileSync } from 'node:fs';
 import { test, expect, snapshot, openRoom } from './helpers';
 const original = (): any => JSON.parse(readFileSync('content/games/demo/maps/workshop.json','utf8'));
@@ -29,6 +30,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
 
  test('preview selector reloads into a selected map and restart retains it',async({page})=>{
   await openRoom(page);
+  await openTools(page, 'debug');
   // Navigation replaces the execution context. Wait for the new document before polling it.
   await Promise.all([
     page.waitForURL(url => url.searchParams.get('map') === 'demo:map.gallery', { waitUntil: 'load' }),
@@ -38,7 +40,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
   const initial=await snapshot(page);
   for(let i=1;i<=6;i++){
-    await page.locator('#restart').click();
+    await openTools(page, 'debug'); await page.locator('#restart').click();
     await expect.poll(async()=>(await snapshot(page)).starts).toBe(initial.starts+i);
     const state=await snapshot(page);expect(state.displayObjects).toBe(initial.displayObjects);expect(state.textureCount).toBe(initial.textureCount);expect(state.stops).toBe(i);
   }

@@ -17,8 +17,8 @@ export interface RuntimeSnapshot {
   loadedMaps: number;
   collisionCells: number;
   blockedCells: number;
-  placedObjects: number;
   exits: number;
+  placedObjects: number;
   camera: { x: number; y: number };
   starts: number;
   stops: number;
@@ -39,6 +39,7 @@ export interface RuntimeSnapshot {
 }
 
 export interface FoundationHandle {
+  clearInput(): void;
   snapshot(): RuntimeSnapshot;
   destroy(): void;
 }

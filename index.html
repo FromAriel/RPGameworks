@@ -2,92 +2,101 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#141b26" />
-    <meta name="description" content="RPGameworks: a browser-native JRPG framework. Two-room interaction demo." />
-    <title>RPGameworks — Two-Room Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="An expanding pixel world built with RPGameworks." />
+    <title>RPGameworks</title>
   </head>
   <body>
-    <main>
-      <header>
-        <p class="eyebrow">RPGAMEWORKS / DEVELOPMENT BUILD</p>
-        <h1>One world. Room to grow.</h1>
-        <p class="intro">Meet the caretaker. Read the gallery plaque. Walk between rooms.</p>
-      </header>
-      <section class="workspace" aria-label="Foundation room">
-        <div class="play-column">
-          <label class="map-picker" for="map-preview">Map preview (reloads the room)<select id="map-preview" disabled></select></label>
-          <div class="stage-heading"><span id="map-title">LOADING MAP</span><span id="render-label">BOOTING</span></div>
-          <div id="stage" tabindex="0" role="group" aria-label="Game viewport. Arrow keys or W A S D to move. E or Enter to interact. Space to trigger a cosmetic burst." data-testid="viewport"></div>
-          <p id="status" role="status">Loading renderer…</p>
-          <p id="error" role="alert" hidden></p>
-          <p id="page-error-notice" class="hint" role="status" hidden></p>
-          <div class="controller-actions">
-            <button id="controller-activate" type="button" class="secondary">Activate controller</button>
-            <span id="controller-brief" role="status">Checking controller detection…</span>
-          </div>
-          <div class="controls">
-            <div class="dpad" aria-label="Movement controls">
-              <button type="button" data-direction="up" aria-label="Move up">↑</button>
-              <button type="button" data-direction="left" aria-label="Move left">←</button>
-              <button type="button" data-direction="down" aria-label="Move down">↓</button>
-              <button type="button" data-direction="right" aria-label="Move right">→</button>
-            </div>
-            <div class="actions">
-              <button id="interact" data-action="interact" type="button" disabled>Interact <kbd>E / ENTER</kbd></button>
-              <button id="burst" type="button" disabled>Pixel burst <kbd>SPACE</kbd></button>
-              <button id="restart" type="button" class="secondary" disabled>Restart room</button>
-            </div>
-          </div>
-          <p class="hint">Ready for keyboard movement on launch. Use <kbd>W A S D</kbd> or <kbd>↑ ↓ ← →</kbd>. Use E / Enter to interact; Escape to close. Touch controls work too.</p>
-          <details id="controller-settings" class="controller-panel">
-            <summary>Controller configuration</summary>
-            <p id="controller-status" role="status"></p>
-            <p class="hint"><a id="controller-probe" href="./controller-probe.html" target="_blank" rel="noopener">Open MouseJoy-style controller test</a> — same server, direct browser input, no Phaser or saved settings.</p>
-            <p class="hint">Xbox / Elite Series 2 defaults: left stick or D-pad to move; A for a pixel burst; X to interact/advance; B to close/cancel. Existing remapped buttons are preserved. Press a controller button once, then release it, if detection is waiting. Gameplay pauses while this panel is open.</p>
-            <label class="setting"><input id="controller-enabled" type="checkbox" /> Enable controller</label>
-            <label class="controller-device-label">Device<select id="controller-device"></select></label>
-            <label class="controller-deadzone-label" for="controller-deadzone">Stick deadzone <output id="controller-deadzone-value" for="controller-deadzone">25%</output></label>
-            <input id="controller-deadzone" type="range" min="5" max="90" step="1" value="25" />
-            <div class="controller-grid">
-              <label>Horizontal axis<select id="controller-axis-x"></select></label>
-              <label>Vertical axis<select id="controller-axis-y"></select></label>
-              <label class="setting"><input id="controller-invert-x" type="checkbox" /> Invert horizontal</label>
-              <label class="setting"><input id="controller-invert-y" type="checkbox" /> Invert vertical</label>
-            </div>
-            <div id="controller-bindings" class="controller-grid"></div>
-            <label class="setting"><input id="controller-unmapped" type="checkbox" /> Allow custom mapping for a non-standard controller</label>
-            <p class="hint">Names beside button/axis numbers describe the standard layout. For a non-standard layout, use the live numbers below. Unassign a button before moving it to another action. Bindings apply to the selected controller, not its firmware profiles.</p>
-            <pre id="controller-live" aria-label="Live controller inputs"></pre>
-            <p id="controller-message" role="status"></p>
-            <div class="controller-actions">
-              <button id="controller-rescan" type="button" class="secondary">Rescan controllers</button>
-              <button id="controller-report-button" type="button" class="secondary">Show diagnostic report</button>
-            </div>
-            <div id="controller-report-area" hidden>
-              <label for="controller-report">Controller diagnostic report (select and copy to share)</label>
-              <textarea id="controller-report" readonly rows="12" spellcheck="false"></textarea>
-              <p class="hint">Captured only when requested. Includes browser/device data, settings and the last page error; nothing is uploaded automatically. Review before sharing.</p>
-            </div>
-            <div class="controller-actions">
-              <button id="controller-reset" type="button" class="secondary">Reset controller defaults</button>
-              <button id="controller-return" type="button">Return to game</button>
-            </div>
-            <p class="hint">Browser-local preferences only. Elite paddles may mirror other buttons or be hidden by the browser. Hardware profiles remain in Xbox Accessories; independent paddles and rumble are not promised.</p>
-          </details>
+    <main id="game-shell" aria-label="RPGameworks">
+      <h1 class="sr-only">RPGameworks</h1>
+      <div id="stage" tabindex="0" role="group" aria-label="Game viewport. Arrow keys or W A S D to move. E or Enter to interact. Space to trigger a cosmetic burst." data-testid="viewport"></div>
+      <div id="loading-notice" class="game-notice" role="status">Entering the world…</div>
+      <p id="error" class="game-notice" role="alert" hidden></p>
+      <button id="tools-toggle" type="button" aria-label="Open game menu" aria-expanded="false" aria-controls="tools-panel"><span aria-hidden="true">☰</span><span>Menu</span></button>
+      <div id="touch-controls" class="controls" aria-label="On-screen game controls" hidden>
+        <div class="dpad" aria-label="Movement controls">
+          <button type="button" data-direction="up" aria-label="Move up">↑</button>
+          <button type="button" data-direction="left" aria-label="Move left">←</button>
+          <button type="button" data-direction="down" aria-label="Move down">↓</button>
+          <button type="button" data-direction="right" aria-label="Move right">→</button>
         </div>
-        <aside aria-label="Runtime diagnostics">
-          <h2>Under the hood</h2>
-          <p class="aside-intro">One active scene. One shared atlas. One bounded particle emitter.</p>
-          <dl id="diagnostics"></dl>
-          <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
-          <p class="hint">Starts off when reduced motion is requested. Effects never change movement or game state.</p>
-          <div class="scope-note"><strong>Two-room interaction slice</strong><p>Speak to Mara south of your starting position. The eastern doorway leads to the gallery; examine its brass plaque. Messages and doors are data-authored. Inventory, saves, and quests are still later work.</p></div>
-        </aside>
-      </section>
-      <footer><span>EXPANSIVE WORLDS. SMALL ACTIVE SIMULATIONS.</span><span id="build-label">0.1.0</span></footer>
-      <noscript>This browser game requires JavaScript to run.</noscript>
+        <div class="actions">
+          <button id="interact" data-action="interact" type="button" disabled>Interact</button>
+          <button id="burst" type="button" disabled>Spark</button>
+        </div>
+      </div>
+      <noscript><p class="game-notice">JavaScript is required to enter this world.</p></noscript>
     </main>
+    <aside id="tools-panel" tabindex="-1" aria-label="Game menu and developer tools" hidden>
+      <header class="panel-heading"><h2>RPGameworks</h2><button id="tools-close" type="button" aria-label="Close game menu">×</button></header>
+      <div class="panel-tabs" role="tablist" aria-label="Menu sections">
+        <button id="options-tab" type="button" role="tab" aria-selected="true" aria-controls="options-panel">Settings</button>
+        <button id="debug-tab" type="button" role="tab" aria-selected="false" aria-controls="debug-panel" tabindex="-1">Debug</button>
+      </div>
+      <section id="options-panel" role="tabpanel" aria-labelledby="options-tab">
+        <h3>Display & controls</h3>
+        <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
+        <p class="hint">Respects reduced motion. Effects never change game rules.</p>
+        <label class="setting"><input id="touch-enabled" type="checkbox" /> On-screen controls</label>
+        <p class="hint">Automatic on touch-first devices. Change for this session.</p>
+        <details class="help-panel"><summary>How to play</summary>
+          <p class="hint">Move with WASD or the arrow keys. Face someone or something nearby, then press E or Enter to interact. Escape closes messages; Space creates a small spark.</p>
+          <p class="hint">Controller defaults: left stick / D-pad to move, X to interact, B to close, A for sparks. Your custom bindings take priority.</p>
+          <p class="hint">Escape opens this menu during exploration. F2 toggles Debug. Click the play area to play with the panel still visible.</p>
+        </details>
+        <div class="controller-actions">
+          <button id="controller-activate" type="button" class="secondary">Activate controller</button>
+          <span id="controller-brief" role="status">Checking controller detection…</span>
+        </div>
+      <details id="controller-settings" class="controller-panel">
+        <summary>Controller configuration</summary>
+        <p id="controller-status" role="status"></p>
+        <p class="hint"><a id="controller-probe" href="./controller-probe.html" target="_blank" rel="noopener">Open MouseJoy-style controller test</a> — same server, direct browser input, no Phaser or saved settings.</p>
+        <p class="hint">Xbox / Elite Series 2 defaults: left stick or D-pad to move; A for a pixel burst; X to interact/advance; B to close/cancel. Existing remapped buttons are preserved. Press a controller button once, then release it, if detection is waiting. Gameplay pauses while this panel is open.</p>
+        <label class="setting"><input id="controller-enabled" type="checkbox" /> Enable controller</label>
+        <label class="controller-device-label">Device<select id="controller-device"></select></label>
+        <label class="controller-deadzone-label" for="controller-deadzone">Stick deadzone <output id="controller-deadzone-value" for="controller-deadzone">25%</output></label>
+        <input id="controller-deadzone" type="range" min="5" max="90" step="1" value="25" />
+        <div class="controller-grid">
+          <label>Horizontal axis<select id="controller-axis-x"></select></label>
+          <label>Vertical axis<select id="controller-axis-y"></select></label>
+          <label class="setting"><input id="controller-invert-x" type="checkbox" /> Invert horizontal</label>
+          <label class="setting"><input id="controller-invert-y" type="checkbox" /> Invert vertical</label>
+        </div>
+        <div id="controller-bindings" class="controller-grid"></div>
+        <label class="setting"><input id="controller-unmapped" type="checkbox" /> Allow custom mapping for a non-standard controller</label>
+        <p class="hint">Names beside button/axis numbers describe the standard layout. For a non-standard layout, use the live numbers below. Unassign a button before moving it to another action. Bindings apply to the selected controller, not its firmware profiles.</p>
+        <pre id="controller-live" aria-label="Live controller inputs"></pre>
+        <p id="controller-message" role="status"></p>
+        <div class="controller-actions">
+          <button id="controller-rescan" type="button" class="secondary">Rescan controllers</button>
+          <button id="controller-report-button" type="button" class="secondary">Show diagnostic report</button>
+        </div>
+        <div id="controller-report-area" hidden>
+          <label for="controller-report">Controller diagnostic report (select and copy to share)</label>
+          <textarea id="controller-report" readonly rows="12" spellcheck="false"></textarea>
+          <p class="hint">Captured only when requested. Includes browser/device data, settings and the last page error; nothing is uploaded automatically. Review before sharing.</p>
+        </div>
+        <div class="controller-actions">
+          <button id="controller-reset" type="button" class="secondary">Reset controller defaults</button>
+          <button id="controller-return" type="button">Return to game</button>
+        </div>
+        <p class="hint">Browser-local preferences only. Elite paddles may mirror other buttons or be hidden by the browser. Hardware profiles remain in Xbox Accessories; independent paddles and rumble are not promised.</p>
+      </details>
+      </section>
+      <section id="debug-panel" role="tabpanel" aria-labelledby="debug-tab" hidden>
+        <div class="stage-heading"><span id="map-title">LOADING MAP</span><span id="render-label">BOOTING</span></div>
+        <p id="status" role="status">Loading renderer…</p>
+        <p id="page-error-notice" class="hint" role="status" hidden></p>
+        <label class="map-picker" for="map-preview">Preview map (reloads the page)<select id="map-preview" disabled></select></label>
+        <dl id="diagnostics" aria-label="Runtime diagnostics"></dl>
+        <button id="restart" type="button" class="secondary" disabled>Restart room</button>
+        <p class="hint">Live readout. Click the play area to resume controls while keeping this panel visible. Settings and text fields never drive the character.</p>
+        <footer><span>BUILD</span><span id="build-label">0.1.0</span></footer>
+      </section>
+      <button id="tools-resume" class="resume-button" type="button">Return to game</button>
+    </aside>
     <dialog id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
       <p id="dialog-page" class="eyebrow"></p>
       <h2 id="dialog-title"></h2>
@@ -96,7 +105,6 @@
         <button id="dialog-advance" data-action="interact" type="button">Next page</button>
         <button id="dialog-cancel" data-action="cancel" class="secondary" type="button">Close</button>
       </div>
-      <p class="hint">E / Enter: advance · Escape: close. Controller defaults: X / B. Release held controls between modes.</p>
     </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>

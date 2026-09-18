@@ -1,3 +1,4 @@
+import { openTools, setEffects, enableTouch } from './helpers';
 import { test, expect, snapshot, openRoom } from './helpers';
 
  test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', async ({ page }, info) => {
@@ -10,7 +11,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await expect(page.locator('canvas')).toHaveAttribute('width', '320');
   await expect(page.locator('canvas')).toHaveAttribute('height', '192');
   const size = await page.locator('canvas').boundingBox();
-  expect(size!.width / 320).toBe(2);
+  expect(size!.width / 320).toBe(3);
   expect(await page.locator('canvas').evaluate((canvas) => getComputedStyle(canvas).imageRendering)).toBe('pixelated');
   await page.screenshot({ path: info.outputPath('foundation-desktop.png'), fullPage: true });
 });
@@ -36,7 +37,8 @@ import { test, expect, snapshot, openRoom } from './helpers';
 
  test('cosmetic bursts are capped, expire, and can be disabled without changing the actor', async ({ page }) => {
   await openRoom(page);
-  await page.locator('#effects').check();
+  await setEffects(page, true);
+  await enableTouch(page);
   const initial = (await snapshot(page)).actorTile;
   const peak = await page.evaluate(async () => {
     let highest = 0;
@@ -52,7 +54,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect((await snapshot(page)).pooledParticles).toBeLessThanOrEqual(64);
   await expect.poll(async () => (await snapshot(page)).aliveParticles).toBe(0);
   expect((await snapshot(page)).actorTile).toEqual(initial);
-  await page.locator('#effects').uncheck();
+  await setEffects(page, false);
   await page.locator('#burst').click();
   await page.waitForTimeout(100);
   expect((await snapshot(page)).aliveParticles).toBe(0);
@@ -66,7 +68,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await openRoom(page);
   const baseline = await snapshot(page);
   for (let i = 1; i <= 12; i += 1) {
-    await page.locator('#restart').click();
+    await openTools(page, 'debug'); await page.locator('#restart').click();
     await expect.poll(async () => (await snapshot(page)).starts).toBe(baseline.starts + i);
     const state = await snapshot(page);
     expect(state.stops).toBe(i);
@@ -85,6 +87,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await page.setViewportSize({ width: 390, height: 844 });
   await openRoom(page);
   expect((await page.locator('canvas').boundingBox())!.width).toBe(320);
+  await enableTouch(page);
   const left = page.getByRole('button', { name: 'Move left', exact: true });
   const box = (await left.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -94,18 +97,19 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
   await page.screenshot({ path: info.outputPath('foundation-narrow.png'), fullPage: true });
   await page.setViewportSize({ width: 280, height: 600 });
-  await expect.poll(async () => (await page.locator('canvas').boundingBox())!.width).toBe(320);
-  expect(await page.locator('#stage').evaluate((stage) => stage.scrollWidth > stage.clientWidth)).toBe(true);
+  await expect.poll(async () => (await page.locator('canvas').boundingBox())!.width).toBe(280);
+  expect(await page.locator('#stage').evaluate((stage) => stage.scrollWidth > stage.clientWidth)).toBe(false);
 });
 
  test('reduced-motion preference disables initial particles; explicit opt-in still works', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openRoom(page);
+  await enableTouch(page);
   await expect(page.locator('#effects')).not.toBeChecked();
   await page.locator('#burst').click();
   await page.waitForTimeout(100);
   expect((await snapshot(page)).aliveParticles).toBe(0);
-  await page.locator('#effects').check();
+  await setEffects(page, true);
   await page.locator('#burst').click();
   await expect.poll(async () => (await snapshot(page)).aliveParticles).toBeGreaterThan(0);
 });

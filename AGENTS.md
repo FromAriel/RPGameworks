@@ -4,7 +4,7 @@
 
 Read `docs/STATUS.md`, the relevant sections of `docs/PLAN.md`, and the current work packet in `docs/ROADMAP.md` before editing. Inspect the actual repository branch and files; do not infer implementation from aspirational documentation or an old conversation.
 
-As of the initial planning change, this repository contains documentation only. Planned npm commands, tests, source folders, hosting, and editor routes do not yet exist.
+The initial planning change contained documentation only. Executable foundations have since been added; STATUS and actual files, not this historical baseline, determine what exists now.
 
 Ariel sets the project direction. The intended workflow supports ordinary chat-assisted GitHub edits; it must not require a particular paid coding agent or desktop editor.
 

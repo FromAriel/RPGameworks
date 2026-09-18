@@ -29,7 +29,11 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
 
  test('preview selector reloads into a selected map and restart retains it',async({page})=>{
   await openRoom(page);
-  await page.locator('#map-preview').selectOption('demo:map.gallery');
+  // Navigation replaces the execution context. Wait for the new document before polling it.
+  await Promise.all([
+    page.waitForURL(url => url.searchParams.get('map') === 'demo:map.gallery', { waitUntil: 'load' }),
+    page.locator('#map-preview').selectOption('demo:map.gallery'),
+  ]);
   await expect.poll(()=>page.evaluate(()=>window.__RPGAMEWORKS__?.snapshot().mapId)).toBe('demo:map.gallery');
   await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
   const initial=await snapshot(page);

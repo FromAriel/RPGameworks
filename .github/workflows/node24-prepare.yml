@@ -1,0 +1,109 @@
+name: Node 24 compatibility verification
+on:
+  push:
+    branches: [work/node24-compat]
+permissions:
+  contents: read
+concurrency:
+  group: node24-compat-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lockfile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Synchronize only the lockfile root engine policy and publish its blob
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
+          const originalText = readFileSync('package-lock.json', 'utf8');
+          const original = JSON.parse(originalText);
+          assert.equal(original.packages[''].engines.node, '>=22.16.0 <23');
+          const expected = structuredClone(original);
+          expected.packages[''].engines = manifest.engines;
+          const updatedText = originalText.replace('"node": ">=22.16.0 <23"', '"node": ' + JSON.stringify(manifest.engines.node));
+          assert.deepEqual(JSON.parse(updatedText), expected);
+          writeFileSync('package-lock.json', updatedText);
+          const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/git/blobs`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
+            body: JSON.stringify({ content: updatedText, encoding: 'utf-8' })
+          });
+          if (!response.ok) throw new Error(`Blob write failed: ${response.status} ${await response.text()}`);
+          const blob = await response.json();
+          console.log(`LOCKFILE_BLOB_SHA=${blob.sha}`);
+          console.log('Verified: only the root Node engine policy changed; every dependency entry is identical.');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: node24-verified-lockfile
+          path: package-lock.json
+          retention-days: 7
+  verify:
+    needs: lockfile
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: linux-node22
+            os: ubuntu-24.04
+            node: '22.16.0'
+          - label: linux-node24
+            os: ubuntu-24.04
+            node: '24.15.0'
+          - label: windows-node24
+            os: windows-2022
+            node: '24.15.0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: node24-verified-lockfile
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Match the reported npm version on Node 24
+        if: matrix.node == '24.15.0'
+        run: npm install --global npm@11.6.2
+      - name: Install the committed dependency graph without bypassing engine checks
+        run: npm ci --include=dev
+      - name: Record environment
+        run: |
+          node --version
+          npm --version
+          npm ls --depth=0
+      - name: Typecheck, unit tests, and production build
+        run: npm run check
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Production browser tests
+        run: npm run test:browser
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node24-evidence-${{ matrix.label }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

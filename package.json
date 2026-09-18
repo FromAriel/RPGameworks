@@ -24,6 +24,8 @@
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.3",
+    "ajv": "8.20.0",
+    "json-schema-to-typescript": "15.0.4",
     "typescript": "7.0.2",
     "vite": "8.3.0",
     "vitest": "5.0.1"

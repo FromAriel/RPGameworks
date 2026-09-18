@@ -1,8 +1,8 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.4 · **Date:** September 18, 2026 · **Status:** M1.1–M1.5 implemented; M1.6 closeout remains. See INTERACTIONS and STATUS for verification.
+**Version:** 0.5 · **Date:** September 18, 2026 · **Status:** M1.1–M1.5 and player shell implemented; W1 is next, then outstanding M1.6 closeout. New skin/stateful-gameplay work is approved planning only. See STATUS for verification.
 
-Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md).
+Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
 ## Delivery rules
 
@@ -12,14 +12,21 @@ The ordering below is a recommended sequence, not a demand to implement all futu
 
 Update task status only when the corresponding behavior and evidence exist. Do not invent durations, completed benchmarks, CI results, or deploy URLs.
 
+## Approved near-term sequence
+
+**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 is the explicitly approved insertion; it does not complete M1.6 or authorize a general theme editor. Each stage is delivered in bounded packets with its own acceptance. No pending checkbox below was completed by this documentation update.
+
 ## Milestone overview
 
 | ID | Result | Main dependency | Exit evidence |
 | --- | --- | --- | --- |
 | M0 | Written project contract | Repository access | Reviewed, committed documentation and handoff |
 | M1 | Browser room-to-room slice | M0 | Two maps, movement, interaction, tiny effect, build/test foundation |
-| M2 | Persistent world slice | M1 | Inventory, one-shot state, safe saves, repeatable transitions |
-| M3 | Data-authored quest slice | M2 | Branching dialogue, a small quest, validation/reporting |
+| W1 | Base skin on actual windows | Existing M1.5/player shell | Ariel's edited artwork, live titles/dividers, responsive dialogue/Settings |
+| N1 | Direct menu navigation | Existing input/shell; delivered with first M2 menu | Controller/keyboard selection, confirm/cancel, scrolling, binding safety |
+| M2 | Persistent world slice | M1 closeout; N1 with inventory UI | Inventory, one-shot state, safe saves, repeatable transitions |
+| G1 | Conditional access integration | M2 acceptance | Persistent key lock and switch gate using shared state/travel |
+| M3 | Data-authored quest slice | M2 + G1; N1 for choices | Conditional dialogue, micro-quest, second-content proof, validation |
 | M4 | PixelFX v1 and laboratory | M1–M3 | Recipe-driven catalog, lifecycle tests, quality controls |
 | M5 | Playable turn-based battle | M2–M4 | Domain battle rules, presentation independence, reliable rewards |
 | M6 | Expanding region and residency proof | M3; M5 for battle integration | Many-map fixture, bounded assets, elapsed-time behavior |
@@ -43,7 +50,7 @@ This milestone includes README, PLAN, PIXELFX, ROADMAP, STATUS, RESEARCH, and AG
 
 **Player-visible outcome:** Open the game, see a small pixel room, move around, talk to an NPC, walk through a door into a second room, return, and trigger one tiny visual burst.
 
-**Checkpoint:** The two validated maps now have a caretaker message, readable plaque, modal keyboard/pointer/controller input, and real door travel without reloading the document. Destination preparation, cancellation, Retry/Stay recovery, and explicit outgoing room cleanup are implemented. The suite has 178 unit tests and 56 browser scenarios; see [INTERACTIONS.md](INTERACTIONS.md) and [STATUS.md](STATUS.md) for actual execution evidence. M1.6 remains open for a recorded frame/resource baseline and full acceptance consolidation; no public deployment is claimed.
+**Checkpoint:** The two validated maps now have a caretaker message, readable plaque, modal keyboard/pointer/controller input, and real door travel without reloading the document. Destination preparation, cancellation, Retry/Stay recovery, and explicit outgoing room cleanup are implemented. The player-shell baseline has 190 unit tests and 65 browser scenarios; the earlier 178/56 interaction suite is historical. See [INTERACTIONS.md](INTERACTIONS.md), [PLAYER-SHELL.md](PLAYER-SHELL.md) and [STATUS.md](STATUS.md) for recorded execution evidence, not new test results from this planning update. M1.6 remains open for a recorded frame/resource baseline and full acceptance consolidation; no public deployment is claimed.
 
 ### Work packets
 
@@ -62,16 +69,38 @@ The burst is cosmetic: removing it cannot break the interaction. Inspect the pix
 
 **Defer:** Full inventory, quests, battle, material masks, generic event scripting, a map editor, and custom shaders.
 
+## W1 — Base skin integration (next)
+
+**Outcome:** Mara's existing message window and Settings use Ariel's edited base skin, a live title opening, and a real section divider. Keep the default game view clean and tools optional. Detailed art identity, packing, joining and acceptance rules: [NEXT-SLICES](NEXT-SLICES.md).
+
+- [ ] **W1.1 — Source and seam audit.** Retrieve the exact edited PNG and companion kit; record original bytes/hash, alpha, dimensions, extraction rectangles and provenance. Audit ports/shoulders against the actual edit. Preserve it rather than regenerating the older sample or silently repainting mismatches. Asset import is not done in this planning commit.
+- [ ] **W1.2 — Minimum production compositor.** Implement the fixed corners, repeats/plain remainder plus complete mirrored ending, title brackets, fills and dividers needed by those real surfaces. Retain the full format's named roles for future use, with no per-stamp DOM explosion or per-frame border rebuild.
+- [ ] **W1.3 — Integration and acceptance.** Preserve semantic text/input/modal behavior, readable responsive content and current shell defaults. Check real dialogue/Settings, long titles, narrow/wide and odd/remainder dimensions, selected/focused states, revised-alpha composition, disposal and skin-load fallback. Record any unresolved seam explicitly.
+
+**Defer:** theme editor, extra visual tiers, recolored variants, fake inventory/party screens, new source packing and Python as a browser runtime requirement.
+
+After this bounded packet, complete M1.6 with the skinned current slice: identify browser/environment/commit, map, viewport, duration, effects setting and Debug-open/closed workload. Do not replace a performance report with assertions about tiny PNG size, and do not reopen general UI redesign before the baseline.
+
+## N1 — Direct menu and choice navigation
+
+**Scheduling:** reuse the current input/sampler; deliver the core with or before M2.2's first real inventory menu. Integrate choices during M3.1. This is not new controller detection and does not require a virtual cursor.
+
+- [ ] **N1.1 — Navigation owner.** Direct directional selection/focus, confirm/cancel, scroll-to-selection, bounded held repeat and predictable focus restoration for actual lists/tabs/controls. Include controller access to the player menu and existing Settings, preserve bindings, and explicitly validate/migrate any additional Menu action.
+- [ ] **N1.2 — First inventory/menu acceptance.** Test keyboard/controller/pointer handoff, scrolling, disabled items, nested settings, remapping, disconnect/reconnect and held-input leakage. Prompts reflect configured actions; no hidden menu can keep exploration blocked.
+- [ ] **N1.3 — Dialogue choices.** Reuse the model for M3.1 visible/disabled/hidden choices, preserving stable selection and a cancel/fallback path. No second incompatible navigation system.
+
+Keep Debug separate from player Inventory/Journal/Party/save functions. Add those entries only when their models work. New Game / Continue / Load follows M2.4/M2.5 storage; protect existing progress rather than adding a nonfunctional title screen.
+
 ## M2 — Persistent state and trustworthy saves
 
 **Player-visible outcome:** Open a chest once, receive an item, change rooms, return, save/export, reload, and find the same world state with no duplicate reward.
 
 ### Work packets
 
-- [ ] **M2.1 — State layers.** Implement immutable definitions, persistent deltas, transient map state, and separate presentation objects. Give placed objects stable instance IDs.
-- [ ] **M2.2 — Inventory transaction.** Add bounded stackable items, item grants/removals, a basic inventory menu, and atomic checks. Test invalid quantities and repeated grants.
-- [ ] **M2.3 — Declared facts and one-shot actions.** Add declared typed variables, one-shot completion markers, and a minimal condition/action registry. All rewards use one atomic domain path.
-- [ ] **M2.4 — Safe storage.** Implement an IndexedDB adapter, versioned envelope, safe checkpoints, previous-valid-revision preservation, and clear save status. Add export/import with size/schema validation.
+- [ ] **M2.1 — State layers.** Implement immutable definitions, persistent deltas, transient map state, and separate presentation objects. Give placed objects stable instance IDs. Declare fact types/defaults/ownership/persistence; chest/switch/lock state belongs to instances, not art/templates. Prepare ordered conditional object states with fallback and state-driven appearance/interaction, without claiming storage durability yet.
+- [ ] **M2.2 — Inventory transaction.** Add bounded stackable items, item grants/removals, a basic inventory menu, and atomic checks. Deliver it with N1 core navigation. Test invalid/full inventory and repeated grants; failure cannot partly claim a chest or lose its reward.
+- [ ] **M2.3 — Declared facts and one-shot actions.** Add bounded pure all/any/not, typed fact/placement/item checks, one-shot markers and a minimal registered action vocabulary. All rewards use one atomic domain path. Specify Interact/Enter/explicit State changed ownership, re-entry/repeat scope, stationary-player condition changes, hydration and bounded reaction behavior; implement only exercised policies. Update affected active objects on relevant commits, not through global frame scans. Quest checks arrive with M3.
+- [ ] **M2.4 — Safe storage.** Implement an IndexedDB adapter, versioned envelope, safe checkpoints, previous-valid-revision preservation, and clear save status. Add export/import with size/schema validation for facts, inventory and placement deltas. Supply functional player save/load/Continue access only with this capability, distinct from Debug, with explicit progress-replacement confirmation.
 - [ ] **M2.5 — Failure and concurrency fixtures.** Test unavailable storage, quota failure, invalid import, corrupt/future-version saves, stale tab revisions, and interrupted writes. Preserve usable prior data.
 - [ ] **M2.6 — Transition and residency audit.** Add explicit asset leases/cache ownership and outgoing-scene disposal checks. Run both repeated two-room transitions and a small distinct-map tour.
 
@@ -83,26 +112,42 @@ Saving during unsupported modal activity is explicitly deferred or disabled. No 
 
 **Defer:** Cloud sync, arbitrary save repair, unlimited undo history, and a full scripting language.
 
+## G1 — Conditional access integration
+
+**Dependency:** complete M2 state/save/lifecycle acceptance. **Outcome:** one key lock and one switch gate respond to the same authoritative facts/inventory/placement state and remain correct across travel and reload. Detailed semantics: [NEXT-SLICES](NEXT-SLICES.md).
+
+- [ ] **G1.1 — Conditional object/access contract.** Separate activation, eligibility, denial, unlock, visual state, passability and destination; retain unconditional exits and old content. Give conditional states an explicit order/fallback and update dynamic collision at safe boundaries with a tested occupied-cell policy. Keys are retained by default, unlock markers are per lock, and the return route is deliberately authored.
+- [ ] **G1.2 — Existing travel integration.** Denial reports once and makes no destination fetch. Success uses existing prepare/validate/activate, generation/cancel guards, Retry/Stay and cleanup. Recheck relevant state before commitment; distinguish permanent unlocking from crossing. Future passage-only costs cannot be charged for failed/cancelled travel.
+- [ ] **G1.3 — Playable proof and failures.** Test missing/present key, already unlocked, two independent locks, switch appearance/collision, occupied gate cell, reverse travel, reload, rapid input and cancelled/failed destination recovery. Preserve the 40-transfer and unconditional-exit regressions.
+
+**Defer:** toll implementation, stat checks, time schedules, arbitrary scripted transitions, hidden-entrance variants not used by content, and a new loader.
+
 ## M3 — Content-driven quest and authoring proof
 
-**Player-visible outcome:** Complete a short quest across a town square, inn, cellar, and path. Conversation choices and a key/stat condition change access. Returning NPCs recognize relevant progress.
+**Player-visible outcome:** Complete the missing-lens micro-quest using the existing Workshop, Gallery, Mara and plaque plus one storeroom. Clue facts, a reachable switch/gate and one-shot lens chest feed a conditional conversation; handing in the lens completes the quest and grants a brass key once. It unlocks the storeroom, which must not contain the prerequisite switch/lens. Save/reload and returning NPCs recognize progress.
+
+This smaller proving ground precedes the old town-square/inn/cellar/path expansion. First access conditions use keys, switches and quest facts; stat gates require a separately approved exploration-stat model instead of depending on later battle systems. See [NEXT-SLICES](NEXT-SLICES.md) for the route and out-of-order discovery tests.
 
 ### Work packets
 
-- [ ] **M3.1 — Dialogue graphs.** Add local node IDs, choices, declared conditions, safely substituted strings, focus ownership, and a small dialogue presenter.
-- [ ] **M3.2 — Quest state machine.** Implement named states, explicit transitions, journal text, completion markers, and reusable scenario tests.
-- [ ] **M3.3 — Useful actions.** Add the minimum sequence/branch/yield behavior required by the demo, with cancellation and execution budgets. Keep state transactions separate from presentation waits.
+- [ ] **M3.1 — Dialogue graphs.** Preserve existing finite messages; add stable node IDs, ordered entry rules with fallback, choices with separate visibility/eligibility and disabled reasons, safely substituted text and explicit ends. Revalidate on confirm and handle changing/no selectable choices. Reuse N1 with proper modal ownership. Use M2 facts before M3.2 adds quest-state checks; portraits/typewriter/history are deferred.
+- [ ] **M3.2 — Quest state machine.** Implement named states, legal transitions, derived journal text, completion markers and quest-state conditions. Entry rules select before/during/ready/completed conversations from that shared state. Preserve discovered progress when the quest is accepted late; add save compatibility fixtures.
+- [ ] **M3.3 — Useful actions.** Add the minimum sequence/branch/yield behavior required by the demo, with cancellation and execution budgets. Accepted choices use shared transactions: hand-in, reward and completion together, once. Remember meaningful authored decisions/topics, not every sentence. Keep state transactions separate from presentation waits; cancel does not undo already committed story changes.
 - [ ] **M3.4 — Content compiler and manifest.** Validate references and emit a compact game/region index. Check that distant content is not eagerly bundled or downloaded at startup.
 - [ ] **M3.5 — Reports and authoring fixtures.** Add orphan/reference reports, missing-exit tests, blocked-spawn checks, missing-string diagnostics, and deliberately broken fixtures that prove validation catches errors.
-- [ ] **M3.6 — Second-content test.** Add a second NPC, a second small quest, and an extra room primarily through content definitions. Document any engine extension that was genuinely required.
+- [ ] **M3.6 — Second-content test.** Add a second NPC, another conditional entrance, a second small quest and an extra room primarily through content definitions. Document any genuinely required engine primitive; do not introduce per-NPC/per-door hardcoded branches and call that data-driven.
 
 ### Acceptance
 
-The main quest is completable from a fresh game through documented alternatives. Reward collection cannot be repeated through dialogue re-entry. A save from M2 either migrates correctly or is explicitly rejected with preserved export access according to the declared compatibility policy.
+The main quest is completable from a fresh game through documented routes, including declining then returning and finding the lens before accepting. Hidden/disabled choices, priority/fallback, full inventory, cancellation, stale prerequisites and repeated acknowledgement are tested. Reward collection cannot be repeated through dialogue re-entry. The clue, switch, chest, lock, inventory and quest agree after travel/reload, with no circular access dependency. A save from M2 either migrates correctly or is explicitly rejected with preserved export access according to the declared compatibility policy.
 
 Invalid references fail before deployment. A structurally unreachable node is flagged, while reports acknowledge that graph connectivity does not establish logical solvability.
 
 **Defer:** Complex factions, procedural dialogue, broad crafting/economy systems, and a graphical quest editor.
+
+## Optional post-M3 audio polish
+
+- [ ] **A1 — Small nonessential cue set.** Exercise the planned bounded audio service with confirm/cancel/denied-action/door cues, per-category volume/mute, user-gesture start and cleanup. Missing sound is nonfatal; no essential information is sound-only. Do not preload the world's music or delay M4 for this optional packet.
 
 ## M4 — PixelFX v1
 
@@ -212,6 +257,8 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**M1.6 — Closeout and baseline:** retain the completed interaction/door slice, review the remaining M1 acceptance cases, and record a reproducible frame/resource workload with browser, environment, scene, duration and effects setting. Source checks, validation, CI, build diagnostics and production browser tests already exist; do not rebuild them as empty scaffolding. Static deployment is conditional on verified hosting access and user direction, not assumed from a build artifact.
+**W1 — Base skin integration.** Use Ariel's edited sheet identified in NEXT-SLICES, not the original generated sample. Import the exact source and companion contract, audit geometry/alpha/ports without silently repainting, and apply a minimal compositor to existing dialogue and Settings with title brackets and one real divider. Preserve full-area play, hidden tools and semantic input. Finish its regression/visual evidence and handoff; do not build a theme catalog or fake menu screens.
 
-After M1 closeout, M2 begins with explicit persistent state layers, a one-shot chest/inventory transaction, and trustworthy save/export behavior. Preserve controller preference migration, modal command ownership, lazy map loading, safe cancellation, and the 40-transfer regression. Do not introduce broad scripting, a custom renderer, or an editor before the next playable outcome requires them.
+**Then M1.6 — Closeout and baseline:** retain the working slice and record a reproducible frame/resource workload with browser/environment/commit, map, viewport, duration, effects and Debug visibility. Existing diagnostics, source/content checks and production-browser CI are not recreated as scaffolding. Static deployment is conditional on verified hosting access and user direction.
+
+After closeout, M2 establishes state/inventory/saves, with N1 beside the first menu; G1 applies those primitives to conditional access; M3 proves conversations and the connected quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. New capabilities remain unchecked until implemented and verified.

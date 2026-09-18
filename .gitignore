@@ -9,3 +9,6 @@ coverage/
 !.env.example
 *.tsbuildinfo
 .DS_Store
+
+# Schema outputs are generated before checks, tests and builds.
+src/content/generated/

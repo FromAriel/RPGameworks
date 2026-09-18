@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:map.workshop",
+  "name": "The Workshop",
+  "orientation": "orthogonal",
+  "tileSize": 16,
+  "width": 20,
+  "height": 12,
+  "legend": {"#": "wall", "a": "floor-a", "b": "floor-b"},
+  "layers": [{"id": "ground", "rows": [
+    "####################",
+    "#bababababababababa#",
+    "#ababababababababab#",
+    "#bababababababababa#",
+    "#ababababababababab#",
+    "#bababababababababa#",
+    "#ababababababababab#",
+    "#bababababababababa#",
+    "#ababababababababab#",
+    "#bababababababababa#",
+    "#ababababababababab#",
+    "####################"
+  ]}],
+  "collision": [
+    "####################",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "####################"
+  ],
+  "defaultSpawn": "start",
+  "spawns": [
+    {"id": "start", "x": 10, "y": 6, "facing": "down"},
+    {"id": "from-gallery", "x": 17, "y": 6, "facing": "left"}
+  ],
+  "objects": [{"id": "demo:object.workshop.sigil", "frame": "sigil", "x": 10, "y": 5, "solid": false}],
+  "exits": [{"id": "to-gallery", "x": 18, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-workshop"}]
+}

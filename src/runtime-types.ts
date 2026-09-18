@@ -1,6 +1,17 @@
 export interface RuntimeSnapshot {
   phase: 'booting' | 'ready' | 'error' | 'stopped';
   scene: string;
+  mapId: string;
+  mapName: string;
+  mapWidth: number;
+  mapHeight: number;
+  spawnId: string;
+  loadedMaps: number;
+  collisionCells: number;
+  blockedCells: number;
+  placedObjects: number;
+  exits: number;
+  camera: { x: number; y: number };
   starts: number;
   stops: number;
   actorTile: { x: number; y: number };

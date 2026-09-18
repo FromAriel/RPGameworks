@@ -4,19 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#141b26" />
-    <meta name="description" content="RPGameworks: a browser-native JRPG framework. First playable rendering foundation." />
-    <title>RPGameworks — Foundation Room</title>
+    <meta name="description" content="RPGameworks: a browser-native JRPG framework. Data-authored map preview." />
+    <title>RPGameworks — Map Preview</title>
   </head>
   <body>
     <main>
       <header>
         <p class="eyebrow">RPGAMEWORKS / DEVELOPMENT BUILD</p>
-        <h1>A small room. A real beginning.</h1>
-        <p class="intro">The first playable foundation for a larger pixel world.</p>
+        <h1>One world. Room to grow.</h1>
+        <p class="intro">Two data-authored maps. One reusable renderer.</p>
       </header>
       <section class="workspace" aria-label="Foundation room">
         <div class="play-column">
-          <div class="stage-heading"><span>FOUNDATION ROOM</span><span id="render-label">BOOTING</span></div>
+          <label class="map-picker" for="map-preview">Map preview (reloads the room)<select id="map-preview" disabled></select></label>
+          <div class="stage-heading"><span id="map-title">LOADING MAP</span><span id="render-label">BOOTING</span></div>
           <div id="stage" tabindex="0" role="group" aria-label="Game viewport. Arrow keys or W A S D to move. Space to trigger a cosmetic burst." data-testid="viewport"></div>
           <p id="status" role="status">Loading renderer…</p>
           <p id="error" role="alert" hidden></p>
@@ -40,7 +41,7 @@
           <dl id="diagnostics"></dl>
           <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
           <p class="hint">Starts off when reduced motion is requested. Effects never change movement or game state.</p>
-          <div class="scope-note"><strong>Foundation slice</strong><p>This is a rendering and input test, not the complete RPG engine. Maps, NPCs, doors, and saves come next.</p></div>
+          <div class="scope-note"><strong>Map-data slice</strong><p>This is a rendering and input test, not the complete RPG engine. Maps now load from validated JSON. Exits are checked metadata only; conversations, playable doors, and saves come next.</p></div>
         </aside>
       </section>
       <footer><span>EXPANSIVE WORLDS. SMALL ACTIVE SIMULATIONS.</span><span id="build-label">0.1.0</span></footer>

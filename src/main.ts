@@ -61,8 +61,8 @@ function drawDiagnostics(): void {
     const message = snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
-      snapshot.interactionTarget ? 'Within reach. Press E / Enter or the configured interaction button.' :
-      'Explore, face an NPC or plaque, and interact. Step into a lit doorway to change rooms.';
+      snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
+      'Ready. Explore, face an NPC or plaque, and interact. Step into a lit doorway to change rooms.';
     if (message !== lastStatus) { status.textContent = message; lastStatus = message; }
   }
   required<HTMLElement>('#map-title').textContent = snapshot.mapName;

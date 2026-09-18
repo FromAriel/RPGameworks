@@ -1,0 +1,152 @@
+{
+  "format": "rpgameworks.windowskin.audit",
+  "version": 1,
+  "sourceSha256": "2c81d15a1217059fd7c5177b92fffb3a78ca07c0edb305770083e396f645552a",
+  "manifestSha256": "c2968d1ed7b7c93c60eaf55b045e0d93217debd141de151940609396ccc29056",
+  "bytes": 3862,
+  "width": 192,
+  "height": 192,
+  "packingPassed": true,
+  "reservedTransparent": true,
+  "gutterPixels": 20480,
+  "gutterNontransparent": 0,
+  "partialAlphaPixels": 141,
+  "portCount": 96,
+  "portMatches": 88,
+  "portMismatches": [
+    {
+      "slot": "A5",
+      "id": "corner.tr",
+      "port": "S",
+      "matches": false
+    },
+    {
+      "slot": "B4",
+      "id": "edge.right.upper",
+      "port": "N",
+      "matches": false
+    },
+    {
+      "slot": "B4",
+      "id": "edge.right.upper",
+      "port": "S",
+      "matches": false
+    },
+    {
+      "slot": "B5",
+      "id": "mid.right",
+      "port": "N",
+      "matches": false
+    },
+    {
+      "slot": "B5",
+      "id": "mid.right",
+      "port": "S",
+      "matches": false
+    },
+    {
+      "slot": "B6",
+      "id": "edge.right.lower",
+      "port": "N",
+      "matches": false
+    },
+    {
+      "slot": "B6",
+      "id": "edge.right.lower",
+      "port": "S",
+      "matches": false
+    },
+    {
+      "slot": "C5",
+      "id": "corner.br",
+      "port": "N",
+      "matches": false
+    }
+  ],
+  "repeatCount": 10,
+  "shoulderMismatches": [
+    {
+      "slot": "A2",
+      "id": "edge.top.left",
+      "differingPixels": 4
+    },
+    {
+      "slot": "A4",
+      "id": "edge.top.right",
+      "differingPixels": 4
+    },
+    {
+      "slot": "B1",
+      "id": "edge.left.upper",
+      "differingPixels": 4
+    },
+    {
+      "slot": "B3",
+      "id": "edge.left.lower",
+      "differingPixels": 3
+    },
+    {
+      "slot": "B4",
+      "id": "edge.right.upper",
+      "differingPixels": 32
+    },
+    {
+      "slot": "B6",
+      "id": "edge.right.lower",
+      "differingPixels": 32
+    },
+    {
+      "slot": "C2",
+      "id": "edge.bottom.left",
+      "differingPixels": 4
+    },
+    {
+      "slot": "C4",
+      "id": "edge.bottom.right",
+      "differingPixels": 4
+    }
+  ],
+  "rightAdapterChecks": [
+    {
+      "id": "corner.tr",
+      "port": "S",
+      "matches": true
+    },
+    {
+      "id": "edge.right.upper",
+      "port": "N",
+      "matches": true
+    },
+    {
+      "id": "edge.right.upper",
+      "port": "S",
+      "matches": true
+    },
+    {
+      "id": "mid.right",
+      "port": "N",
+      "matches": true
+    },
+    {
+      "id": "mid.right",
+      "port": "S",
+      "matches": true
+    },
+    {
+      "id": "edge.right.lower",
+      "port": "N",
+      "matches": true
+    },
+    {
+      "id": "edge.right.lower",
+      "port": "S",
+      "matches": true
+    },
+    {
+      "id": "corner.br",
+      "port": "N",
+      "matches": true
+    }
+  ],
+  "policy": "Source unchanged. Runtime right-side plain spans repeat B4/B6 N-port pixels, not F7. D6 attachments are audited but not used in W1. Other shoulder differences retained; no universal seam claim."
+}

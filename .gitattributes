@@ -1,0 +1,4 @@
+# Canonical skin identities must not vary with checkout line-ending policy.
+assets/source/ui/base/Window.png binary
+assets/source/ui/base/Window.manifest.json text eol=lf
+assets/source/ui/base/Window.audit.json text eol=lf

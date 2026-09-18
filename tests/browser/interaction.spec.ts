@@ -6,9 +6,18 @@ const WORKSHOP = 'demo:map.workshop', GALLERY = 'demo:map.gallery';
 const dialog = '#interaction-dialog';
 
 async function step(page: Page, key: string): Promise<void> {
+  // Modal actions are consumed on the next game update, not by keyboard.press itself.
+  // Observe the real handoff; never focus the stage or bypass gameplay from this helper.
+  await expect(page.locator(dialog)).not.toBeVisible();
+  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
+  await expect(page.locator('#stage')).toBeFocused();
+  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
   await page.keyboard.down(key);
-  await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true);
-  await page.keyboard.up(key);
+  try {
+    await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true);
+  } finally {
+    await page.keyboard.up(key);
+  }
   await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(false);
 }
 async function caretaker(page: Page): Promise<void> {
@@ -195,7 +204,12 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   await page.emulateMedia({reducedMotion:'reduce'}); await openRoom(page); await caretaker(page);
   await page.keyboard.press('KeyE'); await expect(page.locator('#dialog-text')).toHaveText('<img src=x onerror=alert(1)> 世界 🌟');
   await expect(page.locator('#dialog-text img')).toHaveCount(0);
-  await page.keyboard.press('Escape'); await step(page,'ArrowUp'); await cross(page,'ArrowRight',GALLERY);
+  await page.keyboard.press('Escape');
+  await expect(page.locator(dialog)).not.toBeVisible();
+  await expect(page.locator('#stage')).toBeFocused();
+  await step(page,'ArrowUp');
+  expect((await snapshot(page)).actorTile).toEqual({x:10,y:6});
+  await cross(page,'ArrowRight',GALLERY);
   expect((await snapshot(page)).effectsEnabled).toBe(false);
 });
 

@@ -1,4 +1,7 @@
 import './style.css';
+import { focusGameWhenIdle } from './platform/input';
+import { GamepadController } from './platform/gamepad';
+import { mountControllerSettings } from './presentation/ui/controller-settings';
 import { loadSelectedMap } from './platform/map-loader';
 import type { FoundationHandle } from './runtime-types';
 
@@ -23,6 +26,10 @@ let timer: ReturnType<typeof setInterval> | null = null;
 let disposed = false;
 let failed = false;
 let lastStatus = '';
+let startupFocusPending = true;
+const controller = new GamepadController();
+const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
+const controllerUI = mountControllerSettings(controllerPanel, controller, stage);
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;
 
@@ -36,7 +43,12 @@ function reportError(message: string): void {
 function drawDiagnostics(): void {
   if (!handle || disposed) return;
   const snapshot = handle.snapshot();
+  controllerUI.refresh();
   if (snapshot.phase === 'ready' && !failed) {
+    if (startupFocusPending) {
+      startupFocusPending = false;
+      focusGameWhenIdle(stage);
+    }
     const message = snapshot.effectsEnabled ? 'Ready. Explore the room or trigger a pixel burst.' : 'Ready. Cosmetic particles are off; movement is unchanged.';
     if (message !== lastStatus) { status.textContent = message; lastStatus = message; }
   }
@@ -72,6 +84,8 @@ function dispose(): void {
   if (timer) clearInterval(timer);
   appLifetime.abort();
   handle?.destroy();
+  controllerUI.dispose();
+  controller.dispose();
   handle = null;
   delete window.__RPGAMEWORKS__;
 }
@@ -113,6 +127,8 @@ async function start(): Promise<void> {
       burst: required<HTMLButtonElement>('#burst'),
       restart: required<HTMLButtonElement>('#restart'),
       effects,
+      gamepad: controller,
+      canPlay: () => !controllerPanel.open,
     }, reportError, content);
     const running = handle;
     window.__RPGAMEWORKS__ = Object.freeze({ snapshot: () => running.snapshot() });

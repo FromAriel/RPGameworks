@@ -33,7 +33,32 @@
               <button id="restart" type="button" class="secondary" disabled>Restart room</button>
             </div>
           </div>
-          <p class="hint">Click the room, then use <kbd>W A S D</kbd> or <kbd>↑ ↓ ← →</kbd>. Touch controls work too.</p>
+          <p class="hint">Ready for keyboard movement on launch. Use <kbd>W A S D</kbd> or <kbd>↑ ↓ ← →</kbd>. Touch controls work too.</p>
+          <details id="controller-settings" class="controller-panel">
+            <summary>Controller configuration</summary>
+            <p id="controller-status" role="status"></p>
+            <p class="hint">Xbox / Elite Series 2 defaults: left stick or D-pad to move; A for a pixel burst. Press a controller button once, then release it, if detection is waiting. Gameplay pauses while this panel is open.</p>
+            <label class="setting"><input id="controller-enabled" type="checkbox" /> Enable controller</label>
+            <label class="controller-device-label">Device<select id="controller-device"></select></label>
+            <label class="controller-deadzone-label" for="controller-deadzone">Stick deadzone <output id="controller-deadzone-value" for="controller-deadzone">25%</output></label>
+            <input id="controller-deadzone" type="range" min="5" max="90" step="1" value="25" />
+            <div class="controller-grid">
+              <label>Horizontal axis<select id="controller-axis-x"></select></label>
+              <label>Vertical axis<select id="controller-axis-y"></select></label>
+              <label class="setting"><input id="controller-invert-x" type="checkbox" /> Invert horizontal</label>
+              <label class="setting"><input id="controller-invert-y" type="checkbox" /> Invert vertical</label>
+            </div>
+            <div id="controller-bindings" class="controller-grid"></div>
+            <label class="setting"><input id="controller-unmapped" type="checkbox" /> Allow custom mapping for a non-standard controller</label>
+            <p class="hint">Names beside button/axis numbers describe the standard layout. For a non-standard layout, use the live numbers below. Unassign a button before moving it to another action. Bindings apply to the selected controller, not its firmware profiles.</p>
+            <pre id="controller-live" aria-label="Live controller inputs"></pre>
+            <p id="controller-message" role="status"></p>
+            <div class="controller-actions">
+              <button id="controller-reset" type="button" class="secondary">Reset controller defaults</button>
+              <button id="controller-return" type="button">Return to game</button>
+            </div>
+            <p class="hint">Browser-local preferences only. Elite paddles may mirror other buttons or be hidden by the browser. Hardware profiles remain in Xbox Accessories; independent paddles and rumble are not promised.</p>
+          </details>
         </div>
         <aside aria-label="Runtime diagnostics">
           <h2>Under the hood</h2>

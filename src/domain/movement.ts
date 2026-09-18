@@ -21,7 +21,7 @@ export function safeDelta(deltaMs: number): number {
   return Number.isFinite(deltaMs) ? Math.min(MAX_FRAME_MS, Math.max(0, deltaMs)) : 0;
 }
 
-export function advanceActor(actor: Actor, direction: Direction | null, deltaMs: number, canEnter: CanEnter): void {
+export function advanceActor(actor: Actor, direction: Direction | null, deltaMs: number, canEnter: CanEnter, onArrival?: (tile: Tile) => boolean): void {
   let remainingMs = safeDelta(deltaMs);
   while (remainingMs > 1e-7) {
     if (!actor.motion) {
@@ -38,6 +38,8 @@ export function advanceActor(actor: Actor, direction: Direction | null, deltaMs:
     if (actor.motion.elapsedMs >= STEP_MS - 1e-7) {
       actor.tile = actor.motion.to;
       actor.motion = null;
+      // A door can consume the arrival before any leftover time starts another step.
+      if (onArrival && !onArrival(actor.tile)) return;
     }
   }
 }

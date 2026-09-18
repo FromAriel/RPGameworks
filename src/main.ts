@@ -58,9 +58,16 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = snapshot.effectsEnabled ? 'Ready. Explore the room or trigger a pixel burst.' : 'Ready. Cosmetic particles are off; movement is unchanged.';
+    const message = snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
+      snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
+      snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
+      snapshot.interactionTarget ? 'Within reach. Press E / Enter or the configured interaction button.' :
+      'Explore, face an NPC or plaque, and interact. Step into a lit doorway to change rooms.';
     if (message !== lastStatus) { status.textContent = message; lastStatus = message; }
   }
+  required<HTMLElement>('#map-title').textContent = snapshot.mapName;
+  mapPreview.value = snapshot.mapId;
+  mapPreview.disabled = snapshot.inputMode !== 'exploration';
   rendererLabel.textContent = snapshot.renderer.toUpperCase();
   const rows: [string, string][] = [
     ['Renderer', `${snapshot.renderer} / ${snapshot.phaser}`],
@@ -70,6 +77,9 @@ function drawDiagnostics(): void {
     ['Logical view', '320 × 192'],
     ['Player tile', `${snapshot.actorTile.x}, ${snapshot.actorTile.y}`],
     ['Active scenes', String(snapshot.activeScenes)],
+    ['Input owner', snapshot.inputMode],
+    ['Room transfers', String(snapshot.transitions)],
+    ['Travel failures / cancels', `${snapshot.failedTransitions} / ${snapshot.cancelledTransitions}`],
     ['Display objects', String(snapshot.displayObjects)],
     ['Particles', `${snapshot.aliveParticles} / 64`],
     ['Scene starts / stops', `${snapshot.starts} / ${snapshot.stops}`],
@@ -146,6 +156,8 @@ async function start(): Promise<void> {
       burst: required<HTMLButtonElement>('#burst'),
       restart: required<HTMLButtonElement>('#restart'),
       effects,
+      dialog: required<HTMLDialogElement>('#interaction-dialog'),
+      interact: required<HTMLButtonElement>('#interact'),
       gamepad: controller,
       canPlay: () => !controllerPanel.open,
     }, reportError, content);

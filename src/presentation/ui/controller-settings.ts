@@ -4,7 +4,7 @@ import type { GamepadController } from '../../platform/gamepad';
 
 const standardNames = ['A / bottom', 'B / right', 'X / left', 'Y / top', 'LB', 'RB', 'LT', 'RT',
   'View', 'Menu', 'Left stick click', 'Right stick click', 'D-pad up', 'D-pad down', 'D-pad left', 'D-pad right', 'Guide'];
-const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst' };
+const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst', interact: 'Interact / advance', cancel: 'Cancel / close' };
 
 /** Build the small settings UI once; telemetry uses the app's existing 4 Hz refresh. */
 export function mountControllerSettings(root: HTMLDetailsElement, controller: GamepadController, stage: HTMLElement, appReport: () => object): { refresh(): void; dispose(): void } {

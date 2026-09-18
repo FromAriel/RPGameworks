@@ -36,8 +36,8 @@ describe('app-owned native sampler', () => {
   it('updates fresh native snapshots and consumes each action only once', () => {
     raw = [device()]; tick(); service.poll(true);
     raw = [{ ...device(), axes:[0.85,0], buttons:[1] }]; tick();
-    expect(service.poll(true)).toEqual({ direction:'right', burst:true });
-    expect(service.poll(true)).toEqual({ direction:'right', burst:false });
+    expect(service.poll(true)).toEqual({ direction:'right', burst:true, interact:false, cancel:false });
+    expect(service.poll(true)).toEqual({ direction:'right', burst:false, interact:false, cancel:false });
   });
   it('does not multiply native reads when a scene requests input more than once', () => {
     raw = [device()]; tick(); const calls = read.mock.calls.length;

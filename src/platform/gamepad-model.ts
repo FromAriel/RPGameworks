@@ -20,7 +20,7 @@ export interface PadState {
   readonly connected: boolean;
   readonly mapping: string;
   readonly axes: readonly number[];
-  readonly buttons: readonly { readonly pressed: boolean; readonly value: number }[];
+  readonly buttons: readonly (number | { readonly pressed: boolean; readonly value: number })[];
 }
 export interface PadInput { direction: Direction | null; burst: boolean }
 export const NO_PAD_INPUT: Readonly<PadInput> = Object.freeze({ direction: null, burst: false });
@@ -58,6 +58,8 @@ export function axisValue(pad: PadState, index: number): number {
 }
 export function buttonPressed(pad: PadState, index: number): boolean {
   const button = pad.buttons[index];
+  // The supplied working demo accepts numeric legacy/polyfill buttons as well.
+  if (typeof button === 'number') return Number.isFinite(button) && button > 0.5;
   return !!button && (button.pressed === true || (Number.isFinite(button.value) && button.value >= 0.5));
 }
 

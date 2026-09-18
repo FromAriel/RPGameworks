@@ -1,3 +1,5 @@
+import { chooseGamepad, collectGamepads } from './gamepad-reader';
+import type { PadEnumeration, PadIdentity } from './gamepad-reader';
 import { CONTROLLER_KEY, NO_PAD_INPUT, PadLatch, axisValue, buttonPressed, defaultControllerConfig, parseControllerConfig } from './gamepad-model';
 import type { ControllerConfig, PadInput, PadState } from './gamepad-model';
 
@@ -6,16 +8,24 @@ export interface GamepadSource {
   reset(): void;
 }
 
-/** One app-owned service; sampled by the existing scene update, not another RAF loop. */
+/** One app-owned native sampler, independent of Phaser/map readiness.
+ * RAF reads devices only; the existing scene still owns all gameplay consumption.
+ */
 export class GamepadController implements GamepadSource {
   private readonly lifetime = new AbortController();
   private readonly latch = new PadLatch();
   private config = defaultControllerConfig();
-  private selection: { index: number; id: string } | null = null;
+  private selection: PadIdentity | null = null;
+  private automatic: PadIdentity | null = null;
+  private frame: number | null = null;
+  private frameSamples = 0;
+  private connectionEvents = 0;
+  private disconnectionEvents = 0;
+  private readonly enumeration: PadEnumeration = { rawSlotCount: 0, nonNullCount: 0, connectedCount: 0 };
   private disposed = false;
   private problem = '';
   private storageMessage = '';
-  private pads: readonly PadState[] = [];
+  private readonly pads: PadState[] = [];
   private chosen: PadState | null = null;
   private lastScan = -Infinity;
   private lastPoll: number | null = null;
@@ -33,8 +43,18 @@ export class GamepadController implements GamepadSource {
     const options = { signal: this.lifetime.signal };
     window.addEventListener('blur', () => this.reset(), options);
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); }, options);
-    window.addEventListener('gamepaddisconnected', () => this.reset(), options);
-    window.addEventListener('gamepadconnected', () => this.reset(), options);
+    window.addEventListener('gamepaddisconnected', () => {
+      this.disconnectionEvents += 1;
+      this.reset(); this.scan();
+    }, options);
+    window.addEventListener('gamepadconnected', (event) => {
+      this.connectionEvents += 1;
+      // Follow the newly connected pad in automatic mode, as MouseJoy does.
+      if (!this.selection) this.automatic = { index: event.gamepad.index, id: event.gamepad.id };
+      this.reset(); this.scan();
+    }, options);
+    this.scan();
+    this.frame = requestAnimationFrame(this.sampleFrame);
   }
 
   get settings(): ControllerConfig { return { ...this.config, buttons: { ...this.config.buttons } }; }
@@ -53,7 +73,7 @@ export class GamepadController implements GamepadSource {
     const prefix = `${name} · ${this.chosen.mapping || 'custom'} · `;
     if (document.hidden) return prefix + 'Paused: browser tab is hidden.';
     if (!document.hasFocus()) return prefix + 'Paused: focus the game tab, not DevTools or another window.';
-    if (!this.gameplayRequested) return prefix + 'Detected; gameplay paused. Close settings and activate the game viewport.';
+    if (!this.gameplayRequested) return prefix + 'Detected; gameplay paused. Close settings or finish editing a form control to resume.';
     return prefix + (this.latch.waitingForNeutral ? 'Waiting for neutral: center the selected stick and release mapped buttons.' : 'Ready');
   }
 
@@ -81,20 +101,28 @@ export class GamepadController implements GamepadSource {
     this.lastScan = performance.now();
     try {
       if (typeof navigator.getGamepads !== 'function') throw new Error('unavailable');
-      this.pads = Array.from(navigator.getGamepads()).slice(0, 16)
-        .filter((pad): pad is Gamepad => !!pad?.connected);
+      collectGamepads(navigator.getGamepads(), this.pads, this.enumeration);
       this.problem = '';
     } catch (cause) {
-      this.pads = []; this.chosen = null; this.reset();
+      this.pads.length = 0; this.chosen = null; this.automatic = null; this.reset();
+      this.enumeration.rawSlotCount = 0; this.enumeration.nonNullCount = 0; this.enumeration.connectedCount = 0;
       const detail = cause instanceof Error ? `${cause.name}: ${cause.message}`.slice(0, 200) : 'No readable API result';
       this.problem = `Controller API unavailable or blocked. Use localhost or HTTPS; keyboard and touch still work. ${detail}`;
       return;
     }
-    this.chosen = this.selection ? this.pads.find((pad) => pad.index === this.selection!.index && pad.id === this.selection!.id) ?? null :
-      this.pads.find((pad) => pad.mapping === 'standard') ?? this.pads[0] ?? null;
+    this.chosen = chooseGamepad(this.pads, this.selection, this.automatic);
+    this.automatic = this.chosen ? { index: this.chosen.index, id: this.chosen.id } : null;
   }
 
-  /** Reuse the 4 Hz UI timer when gameplay has not scanned recently; never arm input here. */
+  private readonly sampleFrame = (): void => {
+    this.frame = null;
+    if (this.disposed) return;
+    this.scan();
+    this.frameSamples += 1;
+    this.frame = requestAnimationFrame(this.sampleFrame);
+  };
+
+  /** Telemetry may refresh stalled detection, but never arms or consumes input. */
   refreshDetection(): void {
     if (performance.now() - this.lastScan >= 200) this.scan();
   }
@@ -103,7 +131,7 @@ export class GamepadController implements GamepadSource {
 
   poll(active: boolean): Readonly<PadInput> {
     if (this.disposed) return NO_PAD_INPUT;
-    this.scan();
+    this.refreshDetection();
     this.lastPoll = performance.now();
     this.gameplayRequested = active;
     return this.latch.sample(this.chosen, this.config, active && !document.hidden && document.hasFocus());
@@ -112,6 +140,11 @@ export class GamepadController implements GamepadSource {
   /** Bounded copies for a user-requested report, never a mutable Gamepad reference. */
   diagnostics(): object {
     return {
+      inputReader: 'mousejoy-frame-v1',
+      sampling: { ...this.enumeration, frameSamples: this.frameSamples,
+        framePending: this.frame !== null, connectionEvents: this.connectionEvents,
+        disconnectionEvents: this.disconnectionEvents,
+        lastScanAgeMs: Number.isFinite(this.lastScan) ? Math.round(performance.now() - this.lastScan) : null },
       secureContext: window.isSecureContext,
       apiAvailable: typeof navigator.getGamepads === 'function',
       documentFocused: document.hasFocus(), documentHidden: document.hidden,
@@ -120,7 +153,8 @@ export class GamepadController implements GamepadSource {
       waitingForNeutral: this.latch.waitingForNeutral,
       lastGameplayPollAgeMs: this.lastPoll === null ? null : Math.round(performance.now() - this.lastPoll),
       status: this.status, persistence: this.storageMessage, settings: this.settings,
-      devices: this.pads.map((pad) => ({
+      omittedDeviceDetails: Math.max(0, this.pads.length - 16),
+      devices: this.pads.slice(0, 16).map((pad) => ({
         id: pad.id.slice(0, 200), index: pad.index, mapping: pad.mapping, connected: pad.connected,
         axisCount: pad.axes.length, buttonCount: pad.buttons.length,
         axes: pad.axes.slice(0, 16).map((_, i) => axisValue(pad, i)),
@@ -131,6 +165,9 @@ export class GamepadController implements GamepadSource {
 
   reset(): void { this.latch.reset(); this.gameplayRequested = false; }
   dispose(): void {
-    this.disposed = true; this.lifetime.abort(); this.reset(); this.pads = []; this.chosen = null;
+    this.disposed = true;
+    if (this.frame !== null) cancelAnimationFrame(this.frame);
+    this.frame = null;
+    this.lifetime.abort(); this.reset(); this.pads.length = 0; this.chosen = null; this.automatic = null;
   }
 }

@@ -14,6 +14,18 @@ export function focusGameWhenIdle(stage: HTMLElement): void {
   }
 }
 
+/** A controller belongs to the active game page, not a focusable canvas div.
+ * Preserve form editing and modal ownership; keyboard listeners remain scoped.
+ */
+export function gamepadFocusAllowed(): boolean {
+  if (document.querySelector('dialog[open], [aria-modal="true"]')) return false;
+  const focused = document.activeElement;
+  if (!(focused instanceof HTMLElement)) return true;
+  return !focused.isContentEditable && !focused.closest(
+    'input, select, textarea, [role="textbox"], [role="combobox"], [role="slider"]',
+  );
+}
+
 /** One scene input owner. Controller and keyboard share movement, not a second simulation. */
 export class InputController {
   private readonly lifetime = new AbortController();
@@ -21,7 +33,7 @@ export class InputController {
   private burstQueued = false;
 
   constructor(
-    private readonly stage: HTMLElement,
+    stage: HTMLElement,
     controls: HTMLElement,
     burstButton: HTMLButtonElement,
     private readonly gamepad: GamepadSource | null = null,
@@ -41,7 +53,7 @@ export class InputController {
       }
     }, options);
     window.addEventListener('keyup', (event) => this.held.delete(event.code), options);
-    stage.addEventListener('focusout', () => this.clear(), options);
+    stage.addEventListener('focusout', () => this.clearLocal(), options);
     window.addEventListener('blur', () => this.clear(), options);
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.clear(); }, options);
     burstButton.addEventListener('click', () => { if (this.canPlay()) this.burstQueued = true; }, options);
@@ -67,13 +79,13 @@ export class InputController {
         }
       }, options);
       button.addEventListener('keyup', (event) => this.held.delete(`button:${event.code}`), options);
-      button.addEventListener('blur', () => this.clear(), options);
+      button.addEventListener('blur', () => this.clearLocal(), options);
     }
   }
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const pad = this.gamepad?.poll(active && this.stage.contains(document.activeElement));
+    const pad = this.gamepad?.poll(active && gamepadFocusAllowed());
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.burstQueued = true;
     let result: Direction | null = null;
@@ -88,6 +100,8 @@ export class InputController {
     return result;
   }
 
-  clear(): void { this.held.clear(); this.burstQueued = false; this.gamepad?.reset(); }
+  // Element focus changes release keyboard/pointer state, not a page-owned pad.
+  private clearLocal(): void { this.held.clear(); this.burstQueued = false; }
+  clear(): void { this.clearLocal(); this.gamepad?.reset(); }
   dispose(): void { this.clear(); this.lifetime.abort(); }
 }

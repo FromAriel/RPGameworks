@@ -1,0 +1,4 @@
+// Reader functions extracted unchanged from Ariel's supplied MouseJoy demo.
+function findGamepad(){const pads=navigator.getGamepads?navigator.getGamepads():[];if(state.gamepadIndex!=null&&pads[state.gamepadIndex]?.connected)return pads[state.gamepadIndex];for(const p of pads)if(p?.connected){state.gamepadIndex=p.index;state.gamepadName=p.id||`Controller ${p.index+1}`;return p}state.gamepadIndex=null;state.gamepadName="";return null}
+function buttonValue(g,i){const b=g?.buttons?.[i];return b==null?0:typeof b==="number"?b:Number(b.value??(b.pressed?1:0))}
+function buttonPressed(g,i){const b=g?.buttons?.[i];return b==null?false:typeof b==="number"?b>.5:Boolean(b.pressed||b.value>.5)}

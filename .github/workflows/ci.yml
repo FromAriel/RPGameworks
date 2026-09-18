@@ -1,7 +1,7 @@
 name: Foundation checks
 on:
   push:
-    branches: [main, work/m1-foundation, work/node24-compat, work/m1-maps, work/input-controller, work/controller-recovery, work/mousejoy-parity, work/m1-interactions, work/player-shell, work/w1-base-skin]
+    branches: [main, work/m1-foundation, work/node24-compat, work/m1-maps, work/input-controller, work/controller-recovery, work/mousejoy-parity, work/m1-interactions, work/player-shell, work/w1-base-skin, work/m1-baseline]
   pull_request:
 permissions:
   contents: read
@@ -50,6 +50,20 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Production browser tests, including the project subpath
         run: npm run test:browser
+      - name: Record reproducible baseline (timings are evidence, not FPS gates)
+        env:
+          BENCHMARK_HOST_LABEL: ${{ matrix.label }}
+        run: npm run benchmark
+      - name: Upload measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-evidence-${{ matrix.label }}
+          path: |
+            benchmark-results/
+            benchmark-report/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Build portable static artifact
         run: npm run build
       - name: Upload browser evidence

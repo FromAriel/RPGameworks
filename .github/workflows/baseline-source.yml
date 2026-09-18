@@ -1,0 +1,20 @@
+name: Baseline source
+on:
+  push:
+    branches: [work/m1-baseline]
+    paths: [.github/workflows/baseline-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar HEAD > source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: baseline-source
+          path: source.tar
+          retention-days: 2

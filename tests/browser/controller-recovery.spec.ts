@@ -1,3 +1,4 @@
+import { openTools, openControllerSettings } from './helpers';
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { snapshot } from './helpers';
@@ -54,7 +55,7 @@ test('unrelated rejection after startup stays observable without stopping keyboa
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
   await page.keyboard.up('ArrowRight');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-report-button').click();
   const report = JSON.parse(await page.locator('#controller-report').inputValue());
   expect(report.pageErrors.count).toBe(1);
@@ -65,9 +66,9 @@ test('unrelated rejection after startup stays observable without stopping keyboa
 test('activation restores viewport focus and reports the actual input gate', async ({ page }, testInfo) => {
   await simulatedController(page); await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('Ready');
-  await page.locator('#effects').focus();
+  await openTools(page); await page.locator('#effects').focus();
   await expect(page.locator('#controller-brief')).toContainText('gameplay paused');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await expect(page.locator('#controller-status')).toContainText('gameplay paused');
   await page.locator('#controller-report-button').click();
   const report = JSON.parse(await page.locator('#controller-report').inputValue());
@@ -92,7 +93,7 @@ test('controller detection and reporting work even if the map cannot load', asyn
   await page.route('**/generated/content/game.json', (route) => route.abort());
   await page.goto('./');
   await expect(page.locator('#error')).toBeVisible();
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-rescan').click();
   await expect(page.locator('#controller-live')).toContainText('Axes:');
   await page.locator('#controller-report-button').click();
@@ -108,7 +109,7 @@ test('blocked API stays isolated and preserves its reason in the report', async 
   }));
   await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('SecurityError');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-report-button').click();
   const report = JSON.parse(await page.locator('#controller-report').inputValue());
   expect(report.controller.detectedCount).toBe(0);
@@ -119,7 +120,7 @@ test('blocked API stays isolated and preserves its reason in the report', async 
 test('neutral wait is distinguished from an undetected controller', async ({ page }) => {
   await simulatedController(page); await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('Ready');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.evaluate(() => { (navigator.getGamepads()[0]!.axes as number[])[0] = 0.85; });
   await page.locator('#controller-activate').click();
   await expect(page.locator('#controller-brief')).toContainText('Waiting for neutral');

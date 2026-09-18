@@ -1,3 +1,4 @@
+import { openTools, openControllerSettings } from './helpers';
 import { test, expect, snapshot } from './helpers';
 import type { Page } from '@playwright/test';
 import type { PadState } from '../../src/platform/gamepad-model';
@@ -27,7 +28,7 @@ test('game accepts a high native slot and numeric buttons like the supplied read
   await axis(page,20,0);
   await page.evaluate(() => { (window.__PARITY_PADS__[20]!.buttons as number[])[0] = 1; });
   await expect.poll(async() => (await snapshot(page)).burstRequests).toBe(1);
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-report-button').click();
   const report = JSON.parse(await page.locator('#controller-report').inputValue());
   expect(report.controller.inputReader).toBe('mousejoy-frame-v1');
@@ -43,7 +44,7 @@ test('page-level gamepad input works without focusing the viewport but respects 
   await expect(page.locator('#controller-brief')).toContainText('Ready');
   await axis(page,0,.9); await expect.poll(async() => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
   await axis(page,0,0); await page.waitForTimeout(180);
-  await page.locator('#effects').focus();
+  await openTools(page); await page.locator('#effects').focus();
   await expect(page.locator('#controller-brief')).toContainText('gameplay paused');
   const before = (await snapshot(page)).actorTile;
   await axis(page,0,-.9); await page.waitForTimeout(250);
@@ -57,7 +58,7 @@ test('raw detection continues before map loading finishes', async ({ page }) => 
   await page.route('**/generated/content/game.json', async route => { await gate; await route.continue(); });
   await page.goto('./', { waitUntil:'domcontentloaded' });
   try {
-    await page.locator('#controller-settings summary').click();
+    await openControllerSettings(page);
     await expect(page.locator('#controller-live')).toContainText('Axes:');
     await page.locator('#controller-report-button').click();
     const report = JSON.parse(await page.locator('#controller-report').inputValue());
@@ -91,7 +92,7 @@ test('an empty native response remains empty in the game and the independent pro
   await page.addInitScript(() => Object.defineProperty(navigator,'getGamepads',{ value:() => [null,null,null,null] }));
   await page.goto('./');
   await expect.poll(() => page.evaluate(() => window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-report-button').click();
   const report = JSON.parse(await page.locator('#controller-report').inputValue());
   expect(report.controller.sampling).toMatchObject({ rawSlotCount:4, nonNullCount:0, connectedCount:0 });

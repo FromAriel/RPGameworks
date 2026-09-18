@@ -1,3 +1,4 @@
+import { openTools, openControllerSettings } from './helpers';
 import { test, expect, snapshot } from './helpers';
 import type { Page } from '@playwright/test';
 import type { PadState } from '../../src/platform/gamepad-model';
@@ -33,13 +34,13 @@ test('launch accepts keyboard without any click and does not repeatedly steal fo
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(initial.actorTile.x);
   await page.keyboard.up('ArrowRight');
-  await page.locator('#effects').focus(); await page.waitForTimeout(500);
+  await openTools(page); await page.locator('#effects').focus(); await page.waitForTimeout(500);
   await expect(page.locator('#effects')).toBeFocused();
 });
 
 test('slow startup preserves intentional settings focus', async ({ page }) => {
   await page.route('**/generated/foundation.png', async (route) => {
-    await page.locator('#controller-settings summary').click();
+    await openControllerSettings(page);
     await page.locator('#controller-deadzone').focus();
     await route.continue();
   });
@@ -74,7 +75,7 @@ test('A emits one burst per press, disconnect releases movement and held reconne
 
 test('settings freeze input, save deadzone/remapping, and resume only after controls are released', async ({ page }, testInfo) => {
   await fakePads(page); await ready(page); await neutral(page);
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-deadzone').evaluate((element: HTMLInputElement) => { element.value = '45'; element.dispatchEvent(new Event('change', { bubbles: true })); });
   // X is now assigned to interaction by default; explicitly free it before rebinding.
   await page.locator('#controller-button-interact').selectOption('-1');
@@ -84,7 +85,7 @@ test('settings freeze input, save deadzone/remapping, and resume only after cont
   await page.locator('#controller-return').click(); await rest(page); expect((await snapshot(page)).actorTile.x).toBe(10);
   await neutral(page); await setPad(page, [0.3, 0]); await rest(page); expect((await snapshot(page)).actorTile.x).toBe(10);
   await setPad(page, [0, 0], [2]); await expect.poll(async () => (await snapshot(page)).burstRequests).toBe(1);
-  await ready(page); await page.locator('#controller-settings summary').click();
+  await ready(page); await openControllerSettings(page);
   await expect(page.locator('#controller-deadzone')).toHaveValue('45');
   await expect(page.locator('#controller-button-burst')).toHaveValue('2');
   await neutral(page); await page.waitForTimeout(300);
@@ -96,7 +97,7 @@ test('settings freeze input, save deadzone/remapping, and resume only after cont
 
 test('right stick and inversion can be configured', async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-axis-x').selectOption('2'); await page.locator('#controller-axis-y').selectOption('3');
   await page.locator('#controller-invert-y').check(); await page.locator('#controller-return').click(); await neutral(page);
   const initial = (await snapshot(page)).actorTile.y;
@@ -106,12 +107,12 @@ test('right stick and inversion can be configured', async ({ page }) => {
 
 test('controller selection and non-standard mapping require explicit configuration', async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page); await neutral(page, 1, '');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await expect(page.locator('#controller-device option')).toHaveCount(3);
   await page.locator('#controller-device').selectOption('1'); await page.locator('#controller-return').click();
   await neutral(page, 1, ''); await setPad(page, [0.8, 0], [], 1, ''); await rest(page);
   expect((await snapshot(page)).actorTile.x).toBe(10);
-  await page.locator('#controller-settings summary').click(); await page.locator('#controller-unmapped').check();
+  await openControllerSettings(page); await page.locator('#controller-unmapped').check();
   await page.locator('#controller-return').click(); await neutral(page, 1, ''); await setPad(page, [0.8, 0], [], 1, '');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
 });
@@ -120,13 +121,13 @@ test('disabled and blocked controller APIs do not break keyboard gameplay', asyn
   await page.addInitScript(() => Object.defineProperty(navigator, 'getGamepads', { value: () => { throw new DOMException('blocked', 'SecurityError'); } }));
   await ready(page); await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10); await page.keyboard.up('ArrowRight');
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await expect(page.locator('#controller-status')).toContainText('unavailable or blocked');
 });
 
 test('corrupt preferences and unavailable storage have visible fallbacks', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('rpgameworks.controller.v1', '{oops'));
-  await ready(page); await page.locator('#controller-settings summary').click();
+  await ready(page); await openControllerSettings(page);
   await expect(page.locator('#controller-message')).toContainText('defaults');
   await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('full', 'QuotaExceededError'); }; });
   // X is now assigned to interaction by default; explicitly free it before rebinding.
@@ -139,7 +140,7 @@ test('corrupt preferences and unavailable storage have visible fallbacks', async
 test('room restarts keep controller settings and cannot multiply action edges', async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   for (let i = 1; i <= 4; i += 1) {
-    await page.locator('#restart').click(); await expect.poll(async () => (await snapshot(page)).starts).toBe(i + 1);
+    await openTools(page, 'debug'); await page.locator('#restart').click(); await expect.poll(async () => (await snapshot(page)).starts).toBe(i + 1);
     await page.locator('#stage').focus(); await neutral(page);
     await setPad(page, [0, 0], [0]); await expect.poll(async () => (await snapshot(page)).burstRequests).toBe(1);
     await page.waitForTimeout(200); expect((await snapshot(page)).burstRequests).toBe(1);
@@ -150,7 +151,7 @@ test('room restarts keep controller settings and cannot multiply action edges', 
 
 test('disabling the controller leaves keyboard input active', async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
-  await page.locator('#controller-settings summary').click();
+  await openControllerSettings(page);
   await page.locator('#controller-enabled').uncheck(); await page.locator('#controller-return').click();
   await setPad(page, [1, 0], [0]); await rest(page);
   expect((await snapshot(page)).actorTile.x).toBe(10); expect((await snapshot(page)).burstRequests).toBe(0);

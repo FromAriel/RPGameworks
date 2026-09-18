@@ -1,4 +1,5 @@
 import './style.css';
+import { mountPlayerShell } from './presentation/ui/player-shell';
 import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
 import { GamepadController } from './platform/gamepad';
@@ -32,20 +33,24 @@ const pageErrors = new PageErrorLog();
 const pageErrorNotice = required<HTMLElement>('#page-error-notice');
 const controller = new GamepadController();
 const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
+const loadingNotice = required<HTMLElement>('#loading-notice');
+const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.reset(); }, () => drawDiagnostics(),
+  () => !handle || handle.snapshot().inputMode === 'exploration');
 const controllerUI = mountControllerSettings(controllerPanel, controller, stage, () => ({
   build: __BUILD_ID__, version: __APP_VERSION__,
   runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
   fatalGameError: failed ? error.textContent : null,
   pageErrors: pageErrors.snapshot(),
-}));
+}), () => shell.close());
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;
 
 function reportError(message: string): void {
   failed = true;
+  loadingNotice.hidden = true;
   error.hidden = false;
   error.textContent = message;
-  status.textContent = 'The foundation could not continue. See the error above.';
+  status.textContent = 'The game could not continue. See the on-screen error.';
 }
 
 function drawDiagnostics(): void {
@@ -54,6 +59,7 @@ function drawDiagnostics(): void {
   if (!handle) return;
   const snapshot = handle.snapshot();
   if (snapshot.phase === 'ready' && !failed) {
+    loadingNotice.hidden = true;
     if (startupFocusPending && !document.hidden) {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
@@ -69,6 +75,7 @@ function drawDiagnostics(): void {
   mapPreview.value = snapshot.mapId;
   mapPreview.disabled = snapshot.inputMode !== 'exploration';
   rendererLabel.textContent = snapshot.renderer.toUpperCase();
+  if (!shell.debugVisible) return; // Hidden telemetry does not rebuild DOM at 4 Hz.
   const rows: [string, string][] = [
     ['Renderer', `${snapshot.renderer} / ${snapshot.phaser}`],
     ['Map', snapshot.mapName],
@@ -104,6 +111,7 @@ function dispose(): void {
   appLifetime.abort();
   handle?.destroy();
   controllerUI.dispose();
+  shell.dispose();
   controller.dispose();
   handle = null;
   delete window.__RPGAMEWORKS__;
@@ -159,7 +167,8 @@ async function start(): Promise<void> {
       dialog: required<HTMLDialogElement>('#interaction-dialog'),
       interact: required<HTMLButtonElement>('#interact'),
       gamepad: controller,
-      canPlay: () => !controllerPanel.open,
+      canPlay: () => !controllerPanel.open && !shell.ownsInput,
+      canRestart: () => !controllerPanel.open,
     }, reportError, content);
     const running = handle;
     window.__RPGAMEWORKS__ = Object.freeze({ snapshot: () => running.snapshot() });

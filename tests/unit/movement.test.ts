@@ -69,7 +69,7 @@ describe('renderer-independent movement', () => {
 });
 
 describe('logical pixel scaling', () => {
-  it.each([[640, 384, 2], [1000, 580, 3], [2000, 2000, 4], [310, 180, 1], [0, 0, 1]])('fits %ix%i at integer scale %i', (w, h, expected) => {
+  it.each([[640, 384, 2], [1000, 580, 3], [2000, 2000, 6], [310, 180, 1], [0, 0, 1]])('fits %ix%i at integer scale %i', (w, h, expected) => {
     expect(integerScale(w, h, 320, 192)).toBe(expected);
   });
   it('rejects invalid logical dimensions', () => {

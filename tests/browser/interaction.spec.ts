@@ -1,3 +1,4 @@
+import { openTools, openControllerSettings, enableTouch } from './helpers';
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { test, expect, openRoom, snapshot } from './helpers';
@@ -100,6 +101,7 @@ async function fakePad(page: Page): Promise<void> {
  test('the gallery plaque uses authored text and works with pointer actions on a narrow screen', async ({page}, info) => {
   await page.setViewportSize({width:390,height:844});
   await openRoom(page,'?map=demo:map.gallery');
+  await enableTouch(page);
   await step(page,'ArrowUp'); // start (4,6) -> (4,5), plaque at (4,4).
   await page.locator('#interact').click();
   await expect(page.locator('#dialog-title')).toHaveText('Brass plaque');
@@ -191,7 +193,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   expect((await snapshot(page)).transitions).toBe(40);
   await page.keyboard.press('Space'); await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
   await page.waitForTimeout(200); expect((await snapshot(page)).burstRequests).toBe(1);
-  await page.locator('#restart').click(); await expect.poll(async()=>(await snapshot(page)).starts).toBe(2);
+  await openTools(page, 'debug'); await page.locator('#restart').click(); await expect.poll(async()=>(await snapshot(page)).starts).toBe(2);
   expect((await snapshot(page)).mapId).toBe(WORKSHOP); expect((await snapshot(page)).stops).toBe(1);
 });
 
@@ -218,7 +220,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
     version:1,enabled:true,allowUnmapped:false,deadzone:0.4,axisX:2,axisY:3,invertX:true,invertY:false,
     buttons:{up:12,down:13,left:14,right:15,burst:2},
   })));
-  await openRoom(page); await page.locator('#controller-settings summary').click();
+  await openRoom(page); await openControllerSettings(page);
   await expect(page.locator('#controller-button-burst')).toHaveValue('2');
   await expect(page.locator('#controller-button-interact')).not.toHaveValue('2');
   await expect(page.locator('#controller-deadzone')).toHaveValue('40');

@@ -105,7 +105,7 @@ export function mountControllerSettings(root: HTMLDetailsElement, controller: Ga
     controller.refreshDetection();
     const signature = JSON.stringify([controller.selectedIndex, ...controller.devices.map((pad) => [pad.index, pad.id, pad.mapping])]);
     if (signature !== deviceSignature) {
-      deviceSignature = signature; devices.replaceChildren(); option(devices, 'auto', 'Automatic (standard controller first)');
+      deviceSignature = signature; devices.replaceChildren(); option(devices, 'auto', 'Automatic (retain connected controller)');
       for (const pad of controller.devices) option(devices, pad.index, `${pad.index}: ${pad.id.slice(0, 120)}`);
       const selected = controller.selectedIndex;
       if (selected !== null && !controller.devices.some((pad) => pad.index === selected)) option(devices, selected, `${selected}: disconnected`);

@@ -14,6 +14,18 @@ export function focusGameWhenIdle(stage: HTMLElement): void {
   }
 }
 
+/** A controller belongs to the active game page, not a focusable canvas div.
+ * Preserve form editing and modal ownership; keyboard listeners remain scoped.
+ */
+export function gamepadFocusAllowed(): boolean {
+  if (document.querySelector('dialog[open], [aria-modal="true"]')) return false;
+  const focused = document.activeElement;
+  if (!(focused instanceof HTMLElement)) return true;
+  return !focused.isContentEditable && !focused.closest(
+    'input, select, textarea, [role="textbox"], [role="combobox"], [role="slider"]',
+  );
+}
+
 /** One scene input owner. Controller and keyboard share movement, not a second simulation. */
 export class InputController {
   private readonly lifetime = new AbortController();
@@ -21,7 +33,7 @@ export class InputController {
   private burstQueued = false;
 
   constructor(
-    private readonly stage: HTMLElement,
+    stage: HTMLElement,
     controls: HTMLElement,
     burstButton: HTMLButtonElement,
     private readonly gamepad: GamepadSource | null = null,
@@ -73,7 +85,7 @@ export class InputController {
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const pad = this.gamepad?.poll(active && this.stage.contains(document.activeElement));
+    const pad = this.gamepad?.poll(active && gamepadFocusAllowed());
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.burstQueued = true;
     let result: Direction | null = null;

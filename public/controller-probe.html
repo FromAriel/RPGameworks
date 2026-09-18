@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RPGameworks — MouseJoy controller probe</title>
+<style>
+:root { color-scheme:dark; font-family:system-ui,sans-serif; background:#141b26; color:#e7edf4; }
+body { max-width:760px; margin:2rem auto; padding:0 1rem; line-height:1.5; }
+a { color:#a8d8ff; } h1 { font-size:1.6rem; } .sticks { display:flex; gap:2rem; flex-wrap:wrap; }
+label { display:block; margin:.5rem 0; } meter { width:180px; margin:0 .5rem; }
+pre { padding:1rem; background:#0c111b; border:1px solid #3b4657; white-space:pre-wrap; overflow-wrap:anywhere; }
+#connection { font-weight:700; padding:1rem; border:1px solid #3b4657; }
+p { max-width:70ch; } small { color:#b6c3d5; }
+</style>
+</head>
+<body>
+<h1>MouseJoy-style controller test</h1>
+<p>This standalone page uses the connected-device selection from Ariel's working MouseJoy demo.
+No Phaser, game settings, canvas-focus requirement, keyboard fallback, or stored preferences are involved.</p>
+<p>With this tab active, press a controller button and move either stick. This reads hardware input only;
+keyboard movement cannot produce a false success.</p>
+<p id="connection" role="status">Waiting for the first browser sample…</p>
+<div class="sticks">
+<section><h2>Left stick</h2><label>X <meter id="lx" min="-1" max="1" value="0"></meter><output id="lx-value">0.00</output></label><label>Y <meter id="ly" min="-1" max="1" value="0"></meter><output id="ly-value">0.00</output></label></section>
+<section><h2>Right stick</h2><label>X <meter id="rx" min="-1" max="1" value="0"></meter><output id="rx-value">0.00</output></label><label>Y <meter id="ry" min="-1" max="1" value="0"></meter><output id="ry-value">0.00</output></label></section>
+</div>
+<p id="buttons">Pressed buttons: none</p>
+<pre id="report" tabindex="0" aria-label="Native controller sample"></pre>
+<p><a href="./">Return to RPGameworks</a></p>
+<small>Probe version: mousejoy-direct-v1. Nothing is uploaded. Device names and raw inputs below are available for you to copy.</small>
+<script>
+(() => {
+  'use strict';
+  const state = { gamepadIndex: null, gamepadName: '' };
+  let raw = [], frameId = null, lastDraw = -Infinity, frameCount = 0, stopped = false;
+  let snapshot = {};
+  // Adapted only to retain the raw sample for display. Selection matches the supplied demo.
+  function findGamepad() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    raw = pads;
+    if (state.gamepadIndex != null && pads[state.gamepadIndex]?.connected) return pads[state.gamepadIndex];
+    for (const p of pads) if (p?.connected) {
+      state.gamepadIndex = p.index; state.gamepadName = p.id || `Controller ${p.index + 1}`; return p;
+    }
+    state.gamepadIndex = null; state.gamepadName = ''; return null;
+  }
+  function buttonValue(g, i) { const b = g?.buttons?.[i]; return b == null ? 0 : typeof b === 'number' ? b : Number(b.value ?? (b.pressed ? 1 : 0)); }
+  function buttonPressed(g, i) { const b = g?.buttons?.[i]; return b == null ? false : typeof b === 'number' ? b > .5 : Boolean(b.pressed || b.value > .5); }
+  function frame(now) {
+    frameId = null;
+    if (stopped) return;
+    frameCount += 1;
+    let g = null, problem = null;
+    try { g = findGamepad(); }
+    catch (error) { raw = []; state.gamepadIndex = null; problem = String(error).slice(0, 300); }
+    if (now - lastDraw >= 100) {
+      lastDraw = now;
+      const pads = Array.from(raw);
+      const axes = [0, 1, 2, 3].map(i => Number.isFinite(g?.axes?.[i]) ? g.axes[i] : 0);
+      const pressed = g ? Array.from(g.buttons).slice(0, 64).flatMap((_, i) => buttonPressed(g, i) ? [i] : []) : [];
+      snapshot = {
+        probe: 'mousejoy-direct-v1', origin: location.origin,
+        secureContext: window.isSecureContext, apiAvailable: typeof navigator.getGamepads === 'function',
+        documentFocused: document.hasFocus(), hidden: document.hidden, frameCount,
+        rawSlotCount: pads.length, connectedCount: pads.filter(p => p?.connected).length,
+        rawSlots: pads.slice(0, 32).map((p, slot) => p ? { slot, index: p.index, connected: p.connected, mapping: p.mapping, id: p.id.slice(0, 160) } : { slot, empty: true }),
+        chosen: g ? { index:g.index, id:g.id.slice(0,160), mapping:g.mapping, axes, pressedButtons:pressed,
+          buttonValues:Array.from(g.buttons).slice(0, 64).map((_,i) => buttonValue(g,i)) } : null,
+        problem,
+      };
+      document.querySelector('#connection').textContent = problem || (g ? `Connected: ${g.id}` : 'The browser returned no connected controller to this page.');
+      ['lx', 'ly', 'rx', 'ry'].forEach((id, i) => {
+        document.getElementById(id).value = axes[i];
+        document.getElementById(`${id}-value`).textContent = axes[i].toFixed(2);
+      });
+      document.querySelector('#buttons').textContent = `Pressed buttons: ${pressed.join(', ') || 'none'}`;
+      document.querySelector('#report').textContent = JSON.stringify(snapshot, null, 2);
+    }
+    frameId = requestAnimationFrame(frame);
+  }
+  const lifetime = new AbortController();
+  addEventListener('gamepadconnected', event => { state.gamepadIndex = event.gamepad.index; state.gamepadName = event.gamepad.id; }, { signal:lifetime.signal });
+  addEventListener('gamepaddisconnected', event => { if (state.gamepadIndex === event.gamepad.index) state.gamepadIndex = null; }, { signal:lifetime.signal });
+  addEventListener('pagehide', event => {
+    if (event.persisted) return;
+    stopped = true; if (frameId !== null) cancelAnimationFrame(frameId); lifetime.abort();
+  }, { signal:lifetime.signal });
+  window.__CONTROLLER_PROBE__ = Object.freeze({ snapshot: () => JSON.parse(JSON.stringify(snapshot)) });
+  frameId = requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

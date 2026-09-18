@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:map.gallery",
+  "name": "The Pillar Gallery",
+  "orientation": "orthogonal",
+  "tileSize": 16,
+  "width": 24,
+  "height": 14,
+  "legend": {"#": "wall", "a": "floor-a", "b": "floor-b"},
+  "layers": [{"id": "ground", "rows": [
+    "########################",
+    "#bababababababababababa#",
+    "#abababababa#ababababab#",
+    "#bababababab#bababababa#",
+    "#abababababa#ababababab#",
+    "#bababababab#bababababa#",
+    "#ababababababababababab#",
+    "#bababababababababababa#",
+    "#abababababa#ababababab#",
+    "#bababababab#bababababa#",
+    "#abababababa#ababababab#",
+    "#bababababab#bababababa#",
+    "#ababababababababababab#",
+    "########################"
+  ]}],
+  "collision": [
+    "########################",
+    "#......................#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#......................#",
+    "#......................#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#......................#",
+    "########################"
+  ],
+  "defaultSpawn": "start",
+  "spawns": [
+    {"id": "start", "x": 4, "y": 6, "facing": "down"},
+    {"id": "from-workshop", "x": 2, "y": 6, "facing": "right"}
+  ],
+  "objects": [
+    {"id": "demo:object.gallery.pillar", "frame": "wall", "x": 6, "y": 6, "solid": true},
+    {"id": "demo:object.gallery.sigil", "frame": "sigil", "x": 18, "y": 6, "solid": false}
+  ],
+  "exits": [{"id": "to-workshop", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-gallery"}]
+}

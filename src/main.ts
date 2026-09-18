@@ -1,4 +1,5 @@
 import './style.css';
+import { loadSelectedMap } from './platform/map-loader';
 import type { FoundationHandle } from './runtime-types';
 
 function required<T extends HTMLElement>(selector: string): T {
@@ -12,6 +13,7 @@ const status = required<HTMLElement>('#status');
 const error = required<HTMLElement>('#error');
 const effects = required<HTMLInputElement>('#effects');
 const diagnostics = required<HTMLElement>('#diagnostics');
+const mapPreview = required<HTMLSelectElement>('#map-preview');
 const rendererLabel = required<HTMLElement>('#render-label');
 const media = window.matchMedia('(prefers-reduced-motion: reduce)');
 const appLifetime = new AbortController();
@@ -41,6 +43,9 @@ function drawDiagnostics(): void {
   rendererLabel.textContent = snapshot.renderer.toUpperCase();
   const rows: [string, string][] = [
     ['Renderer', `${snapshot.renderer} / ${snapshot.phaser}`],
+    ['Map', snapshot.mapName],
+    ['Map cells', `${snapshot.mapWidth} × ${snapshot.mapHeight}`],
+    ['Resident maps', String(snapshot.loadedMaps)],
     ['Logical view', '320 × 192'],
     ['Player tile', `${snapshot.actorTile.x}, ${snapshot.actorTile.y}`],
     ['Active scenes', String(snapshot.activeScenes)],
@@ -85,6 +90,21 @@ import.meta.hot?.dispose(dispose);
 
 async function start(): Promise<void> {
   try {
+    const content = await loadSelectedMap(new URL(import.meta.env.BASE_URL, document.baseURI), new URLSearchParams(location.search), appLifetime.signal);
+    if (disposed) return;
+    for (const entry of content.game.maps) {
+      const option = document.createElement('option');
+      option.value = entry.id; option.textContent = entry.id;
+      mapPreview.append(option);
+    }
+    mapPreview.value = content.map.id;
+    mapPreview.disabled = false;
+    mapPreview.addEventListener('change', () => {
+      const url = new URL(location.href);
+      url.searchParams.set('map', mapPreview.value); url.searchParams.delete('spawn');
+      location.assign(url);
+    }, { signal: appLifetime.signal });
+    required<HTMLElement>('#map-title').textContent = content.map.name;
     const { createFoundation } = await import('./presentation/foundation');
     if (disposed) return;
     handle = createFoundation({
@@ -93,12 +113,13 @@ async function start(): Promise<void> {
       burst: required<HTMLButtonElement>('#burst'),
       restart: required<HTMLButtonElement>('#restart'),
       effects,
-    }, reportError);
+    }, reportError, content);
     const running = handle;
     window.__RPGAMEWORKS__ = Object.freeze({ snapshot: () => running.snapshot() });
     timer = setInterval(drawDiagnostics, 250);
     drawDiagnostics();
   } catch (cause) {
+    if (disposed) return;
     reportError(cause instanceof Error ? cause.message : String(cause));
   }
 }

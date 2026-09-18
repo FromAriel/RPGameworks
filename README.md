@@ -4,11 +4,11 @@
 
 RPGameworks is being built a playable piece at a time: ordinary TypeScript/JavaScript, small active maps, a persistent world, and a composable cosmetic effects layer. The repository is the initial authoring environment; no paid coding agent, desktop RPG editor, runtime AI service, or game server is required by the design.
 
-## Current build: foundation room
+## Current build: data-authored map preview
 
-The first implementation packet is runnable. It contains a 320 × 192 logical-pixel room, an original placeholder character, four-direction tile-step movement and wall collision, keyboard/pointer controls, a bounded cosmetic burst, restart cleanup, and runtime diagnostics.
+The foundation now loads maps from validated JSON. The 20 × 12 Workshop and larger 24 × 14 Pillar Gallery share one reusable Phaser scene, tile-step movement, collision, original atlas, and bounded particles. A map selector reloads into either room; the camera follows the actor on maps larger than the logical viewport.
 
-This is **M1.1 plus the M1.2 rendering spike**, not the complete M1 two-room RPG slice. Data-authored maps, NPC conversations, doors, persistence, inventory, and the full PixelFX recipe system are not implemented yet. No public deployment is configured or advertised.
+This completes the **M1.3 map-data slice**, not the complete M1 two-room RPG milestone. Named exits and their destination spawns are validated metadata only: **walking through a door does not change rooms yet**. NPC conversations, gameplay transitions, persistence, inventory, and the full PixelFX recipe system remain future work. No public deployment is configured.
 
 ## Run locally
 
@@ -19,7 +19,7 @@ npm ci --include=dev
 npm run dev
 ```
 
-Open the local address Vite prints. Asset generation runs automatically before development starts. Do not open `index.html` directly with a `file://` URL.
+Open the local address Vite prints. Asset and map generation run automatically before development starts. Do not open `index.html` directly with a `file://` URL.
 
 Click the room to focus keyboard input. Move with **WASD or arrow keys**; **Space** triggers a cosmetic pixel burst. The on-screen direction buttons also accept pointer input. **Restart room** exercises scene disposal/recreation. The **Cosmetic particles** checkbox turns the burst off without changing movement; reduced-motion preference disables it initially.
 
@@ -53,28 +53,39 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-`check` runs strict TypeScript checking, unit tests, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite contains **22 unit tests and 8 browser scenarios**. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
+`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The map slice expands the suite to **83 unit tests and 18 browser scenarios**; see [MAPS.md](docs/MAPS.md) for verification and limits. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
 
 GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows with Node 24.15.0. Node 24 jobs use npm 11.6.2. Each matrix leg retains a `browser-build-<label>` artifact and `browser-evidence-<label>` report. Those artifacts are build/test outputs, not a deployed website. The standard workflow has read-only repository permissions.
+
+## Edit and preview maps
+
+Edit the canonical records in `content/games/demo/maps/`, and register maps in `content/games/demo/game.json`. Run `npm run validate` for schema and cross-reference checks. `npm run content` rebuilds map payloads; refresh the development page afterward. Development startup and production builds run this automatically. Live file watching for content compilation is not implemented yet.
+
+Map IDs are independent of filenames. `?map=demo:map.gallery&spawn=from-workshop` selects a registered map/spawn for preview, relative to the app's existing URL. The selector performs a full page load, not a game-world transition. Each load fetches only the compact manifest and selected map; neighbouring room data is not downloaded eagerly.
+
+Generated JSON payloads, standalone validators, and schema-derived TypeScript declarations are ignored build outputs. Do not edit them. [Map authoring and verification](docs/MAPS.md) describes units, boundaries, diagnostics, and the next slice.
 
 ## Source boundaries
 
 | Location | Responsibility |
 | --- | --- |
-| `src/domain/` | Pure movement state and viewport arithmetic; no Phaser or DOM dependencies |
+| `src/domain/` | Pure movement, compiled collision grids, and viewport arithmetic |
+| `schemas/`, `src/content/` | Canonical schemas, generated validators/types, and shared semantic checks |
+| `src/platform/map-loader.ts` | Bounded, cancellable manifest/selected-map loading |
 | `src/platform/input.ts` | One abortable keyboard/pointer input owner per scene lifetime |
-| `src/presentation/foundation.ts` | Temporary Phaser rendering spike, original atlas loading, bounded emitter, scene cleanup |
+| `src/presentation/foundation.ts` | One data-backed map scene, original atlas loading, camera, bounded emitter, and cleanup |
 | `src/main.ts`, `src/style.css`, `index.html` | Accessible controls, diagnostics, errors, and responsive page layout |
 | `assets/source/` | Original placeholder pixel patterns and provenance |
-| `tools/generate-assets.mjs` | Validated deterministic atlas generation using Node built-ins |
-| `tests/` | Domain/asset/package-policy tests and production-browser checks |
+| `tools/` | Asset generation, schema generation, and validated map compilation |
+| `tests/` | Domain, asset, package-policy, map, loader, and production-browser checks |
 
-This intentionally starts with one small scene rather than a forest of empty engine modules. The next packet moves the temporary room geometry into validated map data.
+Maps are data now, not new scene subclasses. The next packet connects NPC interaction and gameplay door transitions while preserving the existing tests.
 
 ## Documentation
 
 | Document | Purpose |
 | --- | --- |
+| [Map-data slice](docs/MAPS.md) | Map authoring, compiler, tests, known limits, and handoff |
 | [Current status](docs/STATUS.md) | Actual progress and the next concrete task |
 | [Foundation and verification](docs/FOUNDATION.md) | Implemented behavior, checks, observed constraints, and handoff details |
 | [Toolchain and Windows repair](docs/TOOLCHAIN.md) | Node compatibility policy, setup troubleshooting, and regression evidence |
@@ -86,6 +97,6 @@ This intentionally starts with one small scene rather than a forest of empty eng
 
 ## Known limits and licensing
 
-Browser checks use Chromium on hosted Linux and Windows runners, including software WebGL and Canvas. Narrow viewport checks are not proof of Android/iOS device support. The Phaser-containing chunk is about 1.38 MB minified with a roughly 360 KB Vite-reported gzip estimate; its size warning is deliberately not hidden. Real-device performance, heap/GPU profiling, and other browser engines remain unverified.
+Browser checks use Chromium on hosted Linux and Windows runners, including software WebGL and Canvas. Narrow viewport checks are not proof of Android/iOS device support. The Phaser-containing chunk is about 1.38 MB minified with a roughly 361 KB Vite-reported gzip estimate; its size warning is deliberately not hidden. Real-device performance, heap/GPU profiling, and other browser engines remain unverified.
 
 **RPGameworks** is the working name; complete naming availability and search performance are not guaranteed. A project license has not been selected. Original placeholder artwork is documented in `assets/source/README.md`; third-party dependencies retain their own licenses. Do not interpret this repository as granting a license to future code or assets.

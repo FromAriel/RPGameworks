@@ -1,56 +1,59 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 17, 2026.
+**Updated:** September 17, 2026, M1.3 delivery. GitHub CI timestamps for this work are September 18 UTC.
 
 ## Current phase
 
-**M1 foundation implemented and tested.** M1.1 (reproducible foundation) and the bounded M1.2 rendering spike are complete. The full M1 room-to-room milestone is **not** complete.
+**M1.1–M1.3 implemented and tested.** The foundation now has two data-authored maps, one reusable scene, canonical schemas, shared structural/semantic validation, compiled collision data, and on-demand loading. The full M1 room-to-room RPG milestone is **not complete**.
 
-The current playable build is one small room with a placeholder actor, movement, wall collision, keyboard/pointer controls, a bounded particle burst, scene restart, and diagnostics. It is not yet a data-authored RPG or the full PixelFX system.
+The 20 × 12 Workshop and 24 × 14 Pillar Gallery can be selected in the development preview. The selector deliberately reloads the page. Named exits and target spawns are validated metadata only; stepping onto an exit does not yet trigger a gameplay transition. There is no NPC conversation, inventory, save game, combat, or full PixelFX recipe system.
 
-**Setup repair:** Node 24.15.0 / npm 11.6.2 is now admitted and tested, including on a Windows runner. The initial Node-22-only declaration blocked Ariel's dependency installation. The root package and lockfile now accept Node 22.16+ within Node 22 or Node 24.15+ within Node 24. Strict engine validation remains enabled; no dependency versions changed. See [TOOLCHAIN.md](TOOLCHAIN.md).
+## What works
 
-## What exists
+- Canonical JSON game/map schemas, stable namespaced map and placement IDs, and map-local spawn/layer/exit IDs.
+- Two authored maps with tile layers, collision rows, static objects, named entrances, and cross-map exit references. The gallery demonstrates internal walls and a solid placed pillar.
+- Build-time generation of standalone browser validators and TypeScript declarations from the same schemas. Ajv 8.20.0 and json-schema-to-typescript 15.0.4 are exact development-only additions; previously locked package versions/integrities were preserved.
+- A content compiler that validates before replacing generated output, emits one hashed JSON file per map plus a compact manifest, and refuses broken references or invalid data.
+- Runtime loading of only the manifest and selected map, with schema/identity/spawn checking, bounded response sizes, timeout, cancellation, and visible failure reporting.
+- Deeply frozen copied map definitions and a private byte-grid collision representation. Movement collision uses constant-time lookup, not scans of every placed object.
+- One reusable Phaser map scene, bounded camera follow, original atlas, 320 × 192 logical canvas, and integer pixel scaling.
+- Existing scoped keyboard/pointer input, movement, reduced-motion settings, 64-particle ceiling, restart cleanup, and diagnostics preserved.
+- Strict TypeScript/checked-JavaScript checks, **83 unit tests**, and **18 production-browser scenarios**.
 
-- Exact dependency pins and a registry-generated lockfile: Phaser 4.2.1, TypeScript 7.0.2, Vite 8.3.0, Vitest 5.0.1, Playwright 1.63.0, and Node types 22.20.3. Node 22.16.0 / npm 10.9.2 was the initial verification environment; Node 24.15.0 / npm 11.6.2 is also tested.
-- Pure tile movement with interpolation, collision callbacks, and bounded resume-time catch-up. Rendering rounds the final sprite coordinates instead of discarding simulation precision.
-- A 320 × 192 logical canvas with integer CSS scaling. Small viewports use 1×; viewports narrower than the canvas scroll rather than blur through fractional scaling.
-- Nine original placeholder atlas frames, generated deterministically from readable source using Node built-ins.
-- One input owner and one scene-owned emitter; particles are capped at 64. Turning effects off cannot change actor movement.
-- Reduced-motion defaults, visible loading/error states, build/version diagnostics, and abortable lifecycle ownership.
-- Strict checking, 22 unit tests (including three package/lockfile consistency tests), 8 production-browser scenarios, and read-only CI that uploads matrix-specific build/report artifacts.
-- A CI matrix covering Linux with Node 22 and Node 24, plus Windows with Node 24. The Node 24 jobs pin npm 11.6.2 to match the reported setup.
+## Toolchain and commands
 
-The room geometry in `src/presentation/foundation.ts` is deliberately temporary. It must not become the pattern of creating a new hardcoded Scene subclass for every map.
+The accepted Node ranges remain `>=22.16.0 <23 || >=24.15.0 <25`. The Node 24 compatibility fix is preserved, including strict engine checking, synchronized package/lockfile metadata, and the Windows CI leg. No Node/npm downgrade is needed for Ariel's reported setup.
 
-## Verification
+Run `npm ci --include=dev` after pulling these dependency additions. `npm run dev` prepares assets/maps and starts the local development server. `npm run validate` performs content validation without replacing the emitted pack; `npm run content` rebuilds map payloads. While the development server is already running, manually rebuild content and refresh after editing map JSON; no content watcher is implemented yet.
 
-The original passing foundation source revision was `72f48cdd7dcd4ef91c09559dcde365d48d91babd` on the isolated implementation branch. [GitHub Actions run 35288165031](https://github.com/FromAriel/RPGameworks/actions/runs/35288165031) passed installation from the lockfile, strict TypeScript checks, 19 unit tests, production builds, and all 8 Chromium browser scenarios. The delivered foundation commit `ce638d96f321b6f4a862d45397a3d4fb4118daa7` also passed its own [run 35288685754](https://github.com/FromAriel/RPGameworks/actions/runs/35288685754).
+`npm run check` performs source checks, unit tests, content validation, and production building. Browser checks use `npm run test:browser` after installing the configured Playwright Chromium browser. Commands generate ignored schema outputs automatically.
 
-The Node 24 repair was checked in [compatibility run 35290573553](https://github.com/FromAriel/RPGameworks/actions/runs/35290573553): strict installation, typechecking, unit tests, production builds, and all browser scenarios passed on Linux/Node 22, Linux/Node 24, and Windows/Node 24. The exact source and synchronized lockfile identities are recorded in [TOOLCHAIN.md](TOOLCHAIN.md). The final repair commit's own normal CI must be checked separately; the temporary preparation workflow is not included in its tree.
+## Verification and provenance
 
-The browser checks cover the `/RPGameworks/` production base path, keyboard movement/walls/release/blur, particle saturation/expiry/disable, 12 scene restarts with stable resource counts, narrow layouts/pointer controls, reduced motion, Canvas fallback, and failed atlas loading. Original foundation desktop and narrow screenshots were inspected. See [FOUNDATION.md](FOUNDATION.md) for details and limitations.
+The map source revision **`6c7a8d08c3eab217381bd3d24434c5eba3c9e3d7`** passed [GitHub Actions run 35294045478](https://github.com/FromAriel/RPGameworks/actions/runs/35294045478) on all three matrix legs: Linux/Node 22.16.0, Linux/Node 24.15.0, and Windows/Node 24.15.0. Node 24 jobs used npm 11.6.2. Installation, typechecking, unit tests, production-browser checks, and portable builds all passed. The clean main delivery receives a separate normal CI run; that run is the authority for its exact final commit identity.
 
-Local outbound DNS was unavailable. Package installation and the complete application test suite therefore ran on GitHub-hosted CI, not in the chat container. The original foundation work also ran the asset generator and independent pure-domain checks in the container and inspected CI artifacts.
+The first map CI attempt passed all 83 unit tests and 17 of 18 browser scenarios. One test read a page execution context during the selector's intentional navigation. It now waits for document load before polling the new runtime, without weakening assertions. See [MAPS.md](MAPS.md).
 
-**No public deployment is configured.** A static build artifact exists; it is not a hosted preview URL. Hosted Windows CI is not a test of Ariel's own machine. No real Android/iOS hardware, Firefox, Safari, heap plateau, or GPU timing claim is established.
+Browser scenarios preserve the eight original regressions and add selected-map network assertions, gallery collision/named spawn behavior, preview selection/restarts, a third content-only fixture, malformed/blocked/wrong-ID/missing-frame failures, unknown selections, and missing-manifest handling. The network assertion checks actual requests to ensure the gallery is not fetched when the workshop loads. Successful gallery and narrow-workshop screenshots were inspected.
 
-## Next concrete task
+Local Node 22 source checks, 83 unit tests, content validation, and builds also passed using the genuine CI-exported dependency installation. Local browser navigation was blocked by the environment (`ERR_BLOCKED_BY_ADMINISTRATOR`), so no local browser pass is claimed. Actual browser evidence comes from hosted Chromium on Windows and Linux. Those are not tests of Ariel's own device or proof of Android/iOS support.
 
-Implement **M1.3 — Domain and map minimum** from [ROADMAP.md](ROADMAP.md): define stable map/object/spawn/exit IDs, one canonical finite orthogonal JSON map schema, two small map fixtures, and a pure collision representation with boundary/schema/reference validation.
+Original foundation evidence remains in [FOUNDATION.md](FOUNDATION.md), and Node 24 repair evidence in [TOOLCHAIN.md](TOOLCHAIN.md). The temporary dependency preparation workflow is absent from the delivered tree; normal CI retains read-only repository permissions.
 
-Replace the temporary room-geometry loop with a reusable data-backed presentation path. Reuse the already-tested movement, atlas, input ownership, and cleanup rather than rewriting them. Keep M1.4/M1.5 work bounded: a later packet adds the NPC interaction, door transition, and modal input behavior needed to complete the two-room slice.
+## Next concrete packet
 
-Do not add save games, combat, a full visual editor, custom WebGL, or the complete PixelFX recipe engine in this next packet.
+**M1.4/M1.5 — Interaction and room-to-room integration.** Add one NPC message, one interactable, modal input ownership, and actual door transitions using existing map/spawn references. Validate/load a destination before establishing it as active. Handle repeated requests, failure/cancellation, re-entry, and outgoing ownership cleanup. Do not create a separate scene subclass for each room.
 
-## Open decisions and limits
+Keep movement, lazy content, schema generation, original assets, Node 24 support, and existing tests intact. Do not introduce saves, combat, a visual editor, custom WebGL, or general scripting in this packet. The full M1 acceptance criteria still require interaction and real transitions; preview reloads and scene restarts do not substitute for them.
 
-Project licensing, final story/art direction, supported-device certification, public deployment, long-session measurements, and final performance budgets remain open. The initial Phaser-containing chunk is about 1.38 MB minified / 360 KB estimated gzip; preserve the visible build warning and measure before choosing a custom engine bundle.
+## Compatibility and limits
 
-The input/collision and diagnostics portions of M1.4/M1.6 have started, but those packets remain unchecked because map integration, interaction focus ownership, and the complete M1 acceptance paths do not yet exist.
+This introduces map/game schema version 1. There is no prior save format to migrate. Future ID or schema changes require explicit compatibility decisions. Generated JSON and validator/type files are build products, not alternate authoring sources.
 
-RPGameworks remains the chosen working name. Complete name availability and strong SEO results are not established; keep the unresolved naming observation in [RESEARCH.md](RESEARCH.md).
+No public deployment, Tiled importer, per-region asset lease/cache, performance certification, long-session memory plateau, Safari/Firefox coverage, or Android/iOS hardware verification is supplied. Map size bounds and resource counts are not frame-rate guarantees. Build size warnings remain visible: the Phaser-containing chunk is about 1.38 MB minified / 361 KB estimated gzip.
 
-## Handoff checklist
+Project licensing, final story/art direction, full device support, and measured budgets remain open. RPGameworks is the chosen working name; complete name availability and SEO performance are not established. Preserve [RESEARCH.md](RESEARCH.md)'s unresolved naming note.
 
-Inspect the actual latest branch/ref, this file, and AGENTS.md. Do not assume an isolated verification revision is current. Run checks after changes; distinguish source, build, browser tests, and deployment. Preserve unrelated work and existing save/schema decisions. End with a status update identifying the next unfinished packet.
+## Handoff rule
+
+Inspect the actual current branch/ref, AGENTS.md, this status, and the next roadmap packet before editing. Preserve unrelated work, use non-forced ref updates, and report actual source/build/browser/deployment outcomes separately. Update this file after the next verified packet.

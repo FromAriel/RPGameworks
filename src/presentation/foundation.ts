@@ -2,13 +2,14 @@ import Phaser from 'phaser';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
 import { integerScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
+import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 
 const WIDTH = 320;
 const HEIGHT = 192;
 const TILE = 16;
 const ATLAS = 'foundation';
-const SCENE = 'demo:foundation';
+const SCENE = 'rpgameworks:map';
 const PARTICLE_CAP = 64;
 const BURST_SIZE = 24;
 
@@ -20,24 +21,26 @@ export interface FoundationElements {
   effects: HTMLInputElement;
 }
 
-export function createFoundation(elements: FoundationElements, onError: (message: string) => void): FoundationHandle {
+export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
+  const { map, spawn, collision } = content;
+  const spawnActor = () => ({ ...createActor(spawn.x, spawn.y), facing: spawn.facing });
   let starts = 0;
   let stops = 0;
   let phase: RuntimeSnapshot['phase'] = 'booting';
-  let current: FoundationScene | null = null;
+  let current: MapScene | null = null;
   let disposed = false;
   let resizeFrame: number | null = null;
   let appliedScale = 0;
   const appLifetime = new AbortController();
 
-  class FoundationScene extends Phaser.Scene {
-    actor = createActor(10, 6);
+  class MapScene extends Phaser.Scene {
+    actor = spawnActor();
     inputOwner: InputController | null = null;
     emitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
     hero: Phaser.GameObjects.Sprite | null = null;
     bursts = 0;
     private sceneLifetime: AbortController | null = null;
-    private readonly walkable = (x: number, y: number): boolean => x >= 1 && x <= 18 && y >= 1 && y <= 10;
+    private readonly walkable = collision.canEnter;
 
     constructor() { super(SCENE); }
 
@@ -52,21 +55,35 @@ export function createFoundation(elements: FoundationElements, onError: (message
 
     create(): void {
       if (phase === 'error') return;
-      this.actor = createActor(10, 6);
+      // A single scene presents any validated map; no map-specific geometry lives here.
+      const requiredFrames = new Set([...Object.values(map.legend), ...map.objects.map((object) => object.frame),
+        'hero-up', 'hero-down', 'hero-left', 'hero-right', 'spark']);
+      for (const frame of requiredFrames) {
+        if (!this.textures.get(ATLAS).has(frame)) {
+          phase = 'error'; onError(`${map.id}: atlas frame does not exist: ${frame}`); return;
+        }
+      }
+      this.actor = spawnActor();
       this.bursts = 0;
       starts += 1;
       current = this;
       this.sceneLifetime = new AbortController();
       this.cameras.main.setRoundPixels(true);
-      // One atlas, one scene, a finite room. Canonical JSON maps arrive in M1.3.
-      for (let y = 0; y < 12; y += 1) {
-        for (let x = 0; x < 20; x += 1) {
-          const frame = this.walkable(x, y) ? ((x + y) % 2 ? 'floor-a' : 'floor-b') : 'wall';
-          this.add.image(x * TILE, y * TILE, ATLAS, frame).setOrigin(0);
-        }
+      map.layers.forEach((layer, layerIndex) => {
+        layer.rows.forEach((row, y) => {
+          for (let x = 0; x < row.length; x += 1) {
+            const symbol = row[x]!;
+            if (symbol !== '.') this.add.image(x * TILE, y * TILE, ATLAS, map.legend[symbol]!).setOrigin(0).setDepth(layerIndex / 10);
+          }
+        });
+      });
+      for (const object of map.objects) {
+        this.add.image(object.x * TILE, object.y * TILE, ATLAS, object.frame).setOrigin(0).setDepth(0.5);
       }
-      this.add.image(10 * TILE, 5 * TILE, ATLAS, 'sigil').setOrigin(0).setAlpha(0.7);
-      this.hero = this.add.sprite(168, 104, ATLAS, 'hero-down');
+      const initial = actorPosition(this.actor, TILE);
+      this.hero = this.add.sprite(initial.x, initial.y, ATLAS, `hero-${spawn.facing}`).setDepth(1);
+      this.cameras.main.setBounds(0, 0, map.width * TILE, map.height * TILE);
+      this.cameras.main.startFollow(this.hero, true, 1, 1);
       this.emitter = this.add.particles(0, 0, ATLAS, {
         frame: 'spark',
         emitting: false,
@@ -162,10 +179,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
     transparent: false,
     banner: false,
     audio: { noAudio: true },
-    // DOM input has one explicit owner; unused Phaser input plugins stay off.
     input: { keyboard: false, mouse: false, touch: false, gamepad: false },
     scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.NO_CENTER },
-    scene: [FoundationScene],
+    scene: [MapScene],
   });
 
   const observer = new ResizeObserver(scheduleResize);
@@ -174,10 +190,14 @@ export function createFoundation(elements: FoundationElements, onError: (message
 
   return {
     snapshot(): RuntimeSnapshot {
-      const actor = current?.actor ?? createActor(10, 6);
+      const actor = current?.actor ?? spawnActor();
       const position = actorPosition(actor, TILE);
       return {
         phase, scene: SCENE, starts, stops,
+        mapId: map.id, mapName: map.name, mapWidth: map.width, mapHeight: map.height,
+        spawnId: spawn.id, loadedMaps: disposed ? 0 : 1, collisionCells: collision.cellCount,
+        blockedCells: collision.blockedCells, placedObjects: map.objects.length, exits: map.exits.length,
+        camera: { x: current?.cameras.main.scrollX ?? 0, y: current?.cameras.main.scrollY ?? 0 },
         actorTile: { ...actor.tile },
         actorPixel: { x: Math.round(position.x), y: Math.round(position.y) },
         moving: actor.motion !== null, facing: actor.facing,

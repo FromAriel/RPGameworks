@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.2 · **Date:** September 17, 2026 · **Status:** M1.1 and the bounded M1.2 rendering spike implemented and tested; full M1 remains in progress.
+**Version:** 0.3 · **Date:** September 17, 2026 · **Status:** M1.1–M1.3 implemented; full M1 remains in progress. See MAPS and STATUS for verification.
 
 Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md).
 
@@ -43,13 +43,13 @@ This milestone includes README, PLAN, PIXELFX, ROADMAP, STATUS, RESEARCH, and AG
 
 **Player-visible outcome:** Open the game, see a small pixel room, move around, talk to an NPC, walk through a door into a second room, return, and trigger one tiny visual burst.
 
-**Checkpoint:** One-room foundation passes 19 unit tests and 8 browser scenarios. See [FOUNDATION.md](FOUNDATION.md). M1.4/M1.6 have preliminary movement/input/diagnostics work, but remain unchecked until integrated with actual map and interaction behavior. No public deployment is claimed.
+**Checkpoint:** Two validated JSON maps now share one reusable scene, with pure collision, named spawns/exits, and on-demand map loading. The suite contains 83 unit tests and 18 browser scenarios; see [MAPS.md](MAPS.md) and [STATUS.md](STATUS.md) for execution evidence. The map selector reloads the page; it is not a gameplay transition. M1.4/M1.5/M1.6 remain unchecked until interaction and full lifecycle acceptance exist. No public deployment is claimed.
 
 ### Work packets
 
 - [x] **M1.1 — Reproducible foundation.** Inspect current repository/head. Create a minimal TypeScript/Vite application, choose compatible exact dependency versions, generate a real lockfile, and add typecheck/test/build commands. Record the actual environment and package decisions.
 - [x] **M1.2 — Rendering compatibility spike.** On the pinned Phaser version, prove sprite loading, atlas frames, nearest-neighbor presentation, camera alignment, one bounded emitter, and cleanup. Keep the spike small enough to replace if the selected API is wrong.
-- [ ] **M1.3 — Domain and map minimum.** Define IDs, a finite orthogonal map schema, two tiny maps, named spawns/exits, and a pure collision representation. Add schema and coordinate-boundary tests.
+- [x] **M1.3 — Domain and map minimum.** Define IDs, a finite orthogonal map schema, two tiny maps, named spawns/exits, and a pure collision representation. Add schema and coordinate-boundary tests.
 - [ ] **M1.4 — Movement and input.** Implement four-direction tile-step movement with interpolation, facing, collision, and a single input owner. Include keyboard and a minimal touch-control path; prevent menu/input leakage.
 - [ ] **M1.5 — Interaction and lifecycle.** Add one NPC message, one interactable, repeatable door transitions, transition cancellation/error reporting, and scene-owned cleanup. Avoid hardcoding a map-specific scene class.
 - [ ] **M1.6 — Build and diagnostics.** Add visible build/map diagnostics and browser smoke tests. Create validation/build CI when permissions allow. Configure and verify a static preview only if the required hosting access is available.
@@ -212,6 +212,6 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**M1.3 — Domain and map minimum:** define stable IDs, one canonical finite orthogonal JSON map schema, two small maps with named spawns/exits, and pure collision data. Add schema and coordinate/reference checks, then replace the rendering spike's temporary room geometry with a reusable data-backed presenter.
+**M1.4/M1.5 — Interaction and room-to-room integration:** add one NPC message, one interactable, modal input ownership, and actual door transitions using the existing map/spawn references. Check a destination before activation; handle repeated requests, cancellation, failed loads, and disposal without copying the map scene.
 
-Preserve the tested movement, input, atlas, pixel scaling, and scene cleanup. Do not copy the foundation Scene for every map or begin by scaffolding every future RPG subsystem. NPC interactions and actual door transitions follow as bounded M1.4/M1.5 integration work.
+Preserve validated content, lazy map loading, Node 24 compatibility, existing movement, input, atlas, pixel scaling, and particle cleanup. Do not introduce save games, battle, a visual editor, or general scripting in this packet. The map selector remains explicitly a development preview, not a substitute for the door-transition acceptance tests.

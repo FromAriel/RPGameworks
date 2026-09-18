@@ -1,40 +1,6 @@
-import { test as base, expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
-import type { RuntimeSnapshot } from '../../src/runtime-types';
+import { test, expect, snapshot, openRoom } from './helpers';
 
-const test = base.extend<{ errorGuard: void }>({
-  errorGuard: [async ({ page }, use) => {
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    page.on('console', (message) => {
-      if (message.text().startsWith('TEST_WINDOW_ERROR:')) errors.push(message.text());
-    });
-    await page.addInitScript(() => {
-      // ResizeObserver errors use window.error, not always Playwright pageerror.
-      window.addEventListener('error', (event) => console.error(`TEST_WINDOW_ERROR:${event.message}`));
-    });
-    await use();
-    expect(errors, 'Uncaught browser errors').toEqual([]);
-  }, { auto: true }],
-});
-
-const snapshot = (page: Page): Promise<RuntimeSnapshot> => page.evaluate(() => {
-  if (!window.__RPGAMEWORKS__) throw new Error('Runtime diagnostics not installed.');
-  return window.__RPGAMEWORKS__.snapshot();
-});
-
-async function openRoom(page: Page, suffix = ''): Promise<void> {
-  await page.goto(`./${suffix}`);
-  // The rendering module loads asynchronously after the HTML load event.
-  // Poll a value during startup; throwing from the poll would fail immediately.
-  await expect.poll(() => page.evaluate(
-    () => window.__RPGAMEWORKS__?.snapshot().phase ?? 'booting',
-  )).toBe('ready');
-  await expect(page.locator('#error')).toBeHidden();
-  await page.getByTestId('viewport').focus();
-}
-
-test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', async ({ page }, info) => {
+ test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', async ({ page }, info) => {
   await openRoom(page);
   const state = await snapshot(page);
   expect(state.phaser).toBe('4.2.1');
@@ -49,7 +15,7 @@ test('production build boots under /RPGameworks/ with an atlas and crisp logical
   await page.screenshot({ path: info.outputPath('foundation-desktop.png'), fullPage: true });
 });
 
-test('keyboard movement, wall collision, release, and blur are bounded', async ({ page }) => {
+ test('keyboard movement, wall collision, release, and blur are bounded', async ({ page }) => {
   await openRoom(page);
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
@@ -68,7 +34,7 @@ test('keyboard movement, wall collision, release, and blur are bounded', async (
   await page.keyboard.up('ArrowDown');
 });
 
-test('cosmetic bursts are capped, expire, and can be disabled without changing the actor', async ({ page }) => {
+ test('cosmetic bursts are capped, expire, and can be disabled without changing the actor', async ({ page }) => {
   await openRoom(page);
   await page.locator('#effects').check();
   const initial = (await snapshot(page)).actorTile;
@@ -96,7 +62,7 @@ test('cosmetic bursts are capped, expire, and can be disabled without changing t
   await page.keyboard.up('ArrowRight');
 });
 
-test('twelve restarts keep scene, texture, object, and burst ownership bounded', async ({ page }) => {
+ test('twelve restarts keep scene, texture, object, and burst ownership bounded', async ({ page }) => {
   await openRoom(page);
   const baseline = await snapshot(page);
   for (let i = 1; i <= 12; i += 1) {
@@ -115,7 +81,7 @@ test('twelve restarts keep scene, texture, object, and burst ownership bounded',
   expect((await snapshot(page)).burstRequests).toBe(1);
 });
 
-test('small viewport uses 1x pixels and pointer controls, not fractional stretching', async ({ page }, info) => {
+ test('small viewport uses 1x pixels and pointer controls, not fractional stretching', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openRoom(page);
   expect((await page.locator('canvas').boundingBox())!.width).toBe(320);
@@ -132,7 +98,7 @@ test('small viewport uses 1x pixels and pointer controls, not fractional stretch
   expect(await page.locator('#stage').evaluate((stage) => stage.scrollWidth > stage.clientWidth)).toBe(true);
 });
 
-test('reduced-motion preference disables initial particles; explicit opt-in still works', async ({ page }) => {
+ test('reduced-motion preference disables initial particles; explicit opt-in still works', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openRoom(page);
   await expect(page.locator('#effects')).not.toBeChecked();
@@ -144,7 +110,7 @@ test('reduced-motion preference disables initial particles; explicit opt-in stil
   await expect.poll(async () => (await snapshot(page)).aliveParticles).toBeGreaterThan(0);
 });
 
-test('Canvas renderer fallback boots and moves', async ({ page }) => {
+ test('Canvas renderer fallback boots and moves', async ({ page }) => {
   await openRoom(page, '?renderer=canvas');
   expect((await snapshot(page)).renderer).toBe('Canvas');
   await page.keyboard.down('ArrowUp');
@@ -152,7 +118,7 @@ test('Canvas renderer fallback boots and moves', async ({ page }) => {
   await page.keyboard.up('ArrowUp');
 });
 
-test('missing atlas shows a visible error rather than a false ready state', async ({ page }) => {
+ test('missing atlas shows a visible error rather than a false ready state', async ({ page }) => {
   await page.route('**/generated/foundation.png', (route) => route.abort());
   await page.goto('./');
   await expect(page.locator('#error')).toContainText('atlas failed to load');

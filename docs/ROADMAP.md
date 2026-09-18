@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.6 · **Date:** September 18, 2026 · **Status:** M1.1–M1.5, player shell and W1 base skin implemented; M1.6 closeout is next. Stateful gameplay remains pending. See STATUS for verification.
+**Version:** 0.7 · **Date:** September 18, 2026 · **Status:** M1 foundation, player shell and W1 base skin complete; M2 session state/chest is next. Stateful gameplay remains pending. See STATUS for verification.
 
 Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -14,7 +14,7 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 
 ## Approved near-term sequence
 
-**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 is the explicitly approved insertion; it does not complete M1.6 or authorize a general theme editor. Each stage is delivered in bounded packets with its own acceptance. W1 has now been implemented and verified; all later work remains pending. See [WINDOW-SKIN](WINDOW-SKIN.md) for exact source/audit, scope and candidate evidence.
+**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 is the explicitly approved insertion; it does not complete M1.6 or authorize a general theme editor. Each stage is delivered in bounded packets with its own acceptance. W1 and M1.6 have now been implemented and verified; M2/N1 and later gameplay remain pending. See [WINDOW-SKIN](WINDOW-SKIN.md) for exact source/audit, scope and candidate evidence.
 
 ## Milestone overview
 
@@ -50,7 +50,7 @@ This milestone includes README, PLAN, PIXELFX, ROADMAP, STATUS, RESEARCH, and AG
 
 **Player-visible outcome:** Open the game, see a small pixel room, move around, talk to an NPC, walk through a door into a second room, return, and trigger one tiny visual burst.
 
-**Checkpoint:** The two validated maps now have a caretaker message, readable plaque, modal keyboard/pointer/controller input, and real door travel without reloading the document. Destination preparation, cancellation, Retry/Stay recovery, and explicit outgoing room cleanup are implemented. The W1 slice has 207 unit tests and 78 browser scenarios; the preceding shell (190/65) and interaction (178/56) suites are historical. See [WINDOW-SKIN.md](WINDOW-SKIN.md), [INTERACTIONS.md](INTERACTIONS.md) and [STATUS.md](STATUS.md) for recorded execution evidence. M1.6 remains open for a recorded frame/resource baseline and full acceptance consolidation; no public deployment is claimed.
+**Checkpoint:** The two validated maps now have a caretaker message, readable plaque, modal keyboard/pointer/controller input, and real door travel without reloading the document. Destination preparation, cancellation, Retry/Stay recovery, and explicit outgoing room cleanup are implemented. The M1.6 slice has 216 unit tests, 81 functional browser scenarios and eight separate baseline workloads; the W1 (207/78), shell (190/65) and interaction (178/56) suites are historical. See [WINDOW-SKIN.md](WINDOW-SKIN.md), [INTERACTIONS.md](INTERACTIONS.md) and [STATUS.md](STATUS.md) for recorded execution evidence. M1.6 now records a reproducible frame/resource baseline and consolidated acceptance in [BASELINE.md](BASELINE.md); no public deployment or unmeasured hardware budget is claimed.
 
 ### Work packets
 
@@ -59,7 +59,7 @@ This milestone includes README, PLAN, PIXELFX, ROADMAP, STATUS, RESEARCH, and AG
 - [x] **M1.3 — Domain and map minimum.** Define IDs, a finite orthogonal map schema, two tiny maps, named spawns/exits, and a pure collision representation. Add schema and coordinate-boundary tests.
 - [x] **M1.4 — Movement and input.** Implement four-direction tile-step movement with interpolation, facing, collision, and a single input owner. Include keyboard and a minimal touch-control path; prevent menu/input leakage.
 - [x] **M1.5 — Interaction and lifecycle.** Add one NPC message, one interactable, repeatable door transitions, transition cancellation/error reporting, and scene-owned cleanup. Avoid hardcoding a map-specific scene class.
-- [ ] **M1.6 — Build and diagnostics.** Add visible build/map diagnostics and browser smoke tests. Create validation/build CI when permissions allow. Configure and verify a static preview only if the required hosting access is available. Source/build/browser CI and diagnostics already exist; next record baseline frame/resource timings, check the remaining acceptance cases, and clearly distinguish a build from a deployment.
+- [x] **M1.6 — Build, diagnostics and baseline.** Existing source/content/build CI and production-browser preview are retained. `npm run benchmark` records seven warmed ten-second workloads and a timed 40-door tour, with actual source/environment, raw callback intervals, sampled resources, Debug state and bounded probe ownership. [BASELINE.md](BASELINE.md) consolidates acceptance and [the selected record](benchmarks/M1-2026-09-18.json) preserves measured summaries. Candidate 26a7e827 passed all three environments in run 35397588184. CPU/GPU/heap budgets, long-session stability and real phones are not certified. No new public deployment is implied.
 
 ### Acceptance
 
@@ -81,7 +81,7 @@ The burst is cosmetic: removing it cannot break the interaction. Inspect the pix
 
 **Defer:** theme editor, extra visual tiers, recolored variants, fake inventory/party screens, new source packing and Python as a browser runtime requirement.
 
-After this bounded packet, complete M1.6 with the skinned current slice: identify browser/environment/commit, map, viewport, duration, effects setting and Debug-open/closed workload. Do not replace a performance report with assertions about tiny PNG size, and do not reopen general UI redesign before the baseline.
+The subsequent M1.6 baseline is now recorded in [BASELINE.md](BASELINE.md). Proceed to M2 state and the first chest/inventory proof, with N1 alongside its menu. Preserve the skin rather than reopening general UI redesign; future performance comparisons must identify environment, source, map, viewport, duration, effects and Debug state.
 
 ## N1 — Direct menu and choice navigation
 
@@ -259,6 +259,6 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**M1.6 — Closeout and baseline.** W1 is complete. Retain the skinned two-room slice and record a reproducible frame/resource workload with browser/environment/commit, map, viewport, duration, effects and Debug visibility. Existing diagnostics, source/content checks and production-browser CI are not recreated as scaffolding. Static deployment is conditional on verified hosting access and user direction. Do not turn this closeout into another skin redesign or theme catalog.
+**M2.1 — Authoritative session state and placed-object deltas.** M1.6 is complete with a recorded baseline. Preserve the skinned two-room experience while building the first state/chest/inventory proof: one chest grants its item once, and remains opened across room travel. Deliver N1 direct navigation alongside the first real inventory menu. Session persistence is not reload durability until the storage packet passes.
 
-After closeout, M2 establishes state/inventory/saves, with N1 beside the first menu; G1 applies those primitives to conditional access; M3 proves conversations and the connected quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. Those new capabilities remain unchecked until implemented and verified.
+M2 then adds safe saves/export and the distinct-map resource audit; G1 applies shared facts and transactions to conditional access; M3 proves conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. These gameplay capabilities remain unchecked until implemented and verified. Reuse `npm run benchmark` for comparable future measurements; do not reopen the settled skin or treat a headless baseline as phone certification.

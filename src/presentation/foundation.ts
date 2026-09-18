@@ -57,6 +57,10 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
 
     create(): void {
+      try { this.createMap(); } catch (cause) { this.fail(cause); }
+    }
+
+    private createMap(): void {
       if (phase === 'error') return;
       // A single scene presents any validated map; no map-specific geometry lives here.
       const requiredFrames = new Set([...Object.values(map.legend), ...map.objects.map((object) => object.frame),
@@ -118,6 +122,10 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
 
     update(_time: number, delta: number): void {
+      try { this.updateMap(delta); } catch (cause) { this.fail(cause); }
+    }
+
+    private updateMap(delta: number): void {
       if (!this.inputOwner || !this.hero || !this.emitter || phase !== 'ready') return;
       advanceActor(this.actor, this.inputOwner.direction(), delta, this.walkable);
       const position = actorPosition(this.actor, TILE);
@@ -132,6 +140,16 @@ export function createFoundation(elements: FoundationElements, onError: (message
           if (available > 0) this.emitter.explode(Math.min(BURST_SIZE, available), this.hero.x, this.hero.y);
         }
       }
+    }
+
+    private fail(cause: unknown): void {
+      if (phase === 'error') return;
+      phase = 'error';
+      this.inputOwner?.clear();
+      elements.burst.disabled = true;
+      elements.restart.disabled = true;
+      console.error('[RPGameworks] Map scene failed', cause);
+      onError(`Map scene failed: ${cause instanceof Error ? cause.message : String(cause)}`);
     }
 
     private release(): void {

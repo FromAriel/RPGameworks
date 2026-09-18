@@ -1,65 +1,53 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 17, 2026, requested launch-focus/controller follow-up after M1.3. GitHub CI timestamps for this work are September 18 UTC.
+**Updated:** September 17, 2026, controller-recovery repair. CI timestamps for this work are September 18 UTC.
 
 ## Current phase
 
-**M1.1–M1.3 implemented and tested.** The foundation now has two data-authored maps, one reusable scene, canonical schemas, shared structural/semantic validation, compiled collision data, and on-demand loading. The full M1 room-to-room RPG milestone is **not complete**.
+**M1.1–M1.3 implemented and tested; M1 is not complete.** Two data-authored maps share one reusable Phaser scene, validated schemas, compiled collision data, and on-demand loading. The 20 × 12 Workshop and 24 × 14 Pillar Gallery can be selected in a development preview that reloads the page. Named exits and destination spawns are validated metadata only. There are no gameplay door transitions, NPC conversations, inventory, saves, combat, or full PixelFX recipes yet.
 
-The 20 × 12 Workshop and 24 × 14 Pillar Gallery can be selected in the development preview. The selector deliberately reloads the page. Named exits and target spawns are validated metadata only; stepping onto an exit does not yet trigger a gameplay transition. There is no NPC conversation, inventory, save game, combat, or full PixelFX recipe system.
+Keyboard focus is requested once after readiness without stealing an intentionally focused setting. Standard browser controllers support left-stick/D-pad movement and an A-button cosmetic burst, with device selection, deadzone, axes/inversion, button remapping, local preferences, and neutral rearming. Physical Elite Series 2 behavior is not certified.
 
-**Input follow-up:** The viewport now receives keyboard focus once at first readiness, without stealing deliberate settings focus. Standard browser controllers have left-stick/D-pad movement, an A-button cosmetic burst, and a configuration panel for device selection, deadzone, axes/inversion, and button remapping. Local preferences, visible fallbacks, neutral rearming, and settings/focus input gating are implemented. Physical Elite Series 2 verification remains outstanding. See [INPUT.md](INPUT.md).
+## Latest repair: page errors and controller recovery
 
-## What works
+The prior global error handler treated every unhandled page error as a fatal game error. During startup this could set the failure flag and suppress the viewport's initial focus. That application defect is repaired: unattributed page errors remain visible warnings and console errors, while explicit load/startup/scene failures still report fatal errors.
 
-- Canonical JSON game/map schemas, stable namespaced map and placement IDs, and map-local spawn/layer/exit IDs.
-- Two authored maps with tile layers, collision rows, static objects, named entrances, and cross-map exit references. The gallery demonstrates internal walls and a solid placed pillar.
-- Build-time generation of standalone browser validators and TypeScript declarations from the same schemas. Ajv 8.20.0 and json-schema-to-typescript 15.0.4 are exact development-only additions; previously locked package versions/integrities were preserved.
-- A content compiler that validates before replacing generated output, emits one hashed JSON file per map plus a compact manifest, and refuses broken references or invalid data.
-- Runtime loading of only the manifest and selected map, with schema/identity/spawn checking, bounded response sizes, timeout, cancellation, and visible failure reporting.
-- Deeply frozen copied map definitions and a private byte-grid collision representation. Movement collision uses constant-time lookup, not scans of every placed object.
-- One reusable Phaser map scene, bounded camera follow, original atlas, 320 × 192 logical canvas, and integer pixel scaling.
-- Existing scoped keyboard/pointer input, movement, reduced-motion settings, 64-particle ceiling, restart cleanup, and diagnostics preserved. Controller input joins the same scene input owner and existing update loop. The controller service and settings UI have one app lifetime.
-- Strict TypeScript/checked-JavaScript checks, **123 unit tests**, and **30 production-browser scenarios**. The 40 new unit cases and 12 new browser scenarios cover controller interpretation, focus, configuration, persistence, disconnection, and lifecycle behavior. Browser controller readings are synthetic fixtures, not physical-device tests.
+**Activate controller** enables input, closes configuration, rescans exposed devices, resets the latch, and focuses the viewport. It does not pair hardware or override browser permission/device exposure. Visible status distinguishes undetected devices, API errors, disabled input, focus/settings pause, and neutral-stick waiting. Detection can refresh through the existing 4 Hz UI timer even when a map cannot load. There is no additional game loop.
 
-## Toolchain and commands
+**Controller configuration → Show diagnostic report** produces bounded selectable text containing build/runtime, device/mapping/input, focus/settings, and last-page-error data. Nothing is uploaded automatically. Review before sharing. The underlying source of Ariel's checksum-corruption message remains unconfirmed; do not delete browser data or call the hardware failure solved from automated tests alone. See [CONTROLLER-RECOVERY.md](CONTROLLER-RECOVERY.md).
 
-The accepted Node ranges remain `>=22.16.0 <23 || >=24.15.0 <25`. The Node 24 compatibility fix is preserved, including strict engine checking, synchronized package/lockfile metadata, and the Windows CI leg. No Node/npm downgrade is needed for Ariel's reported setup.
+## Established boundaries
 
-After pulling, use `npm ci --include=dev` to install the committed dependency graph. This input follow-up adds no dependencies. `npm run dev` prepares assets/maps and starts the local development server. `npm run validate` performs content validation without replacing the emitted pack; `npm run content` rebuilds map payloads. While the development server is already running, manually rebuild content and refresh after editing map JSON; no content watcher is implemented yet.
+Canonical game/map schemas generate standalone validators and TypeScript declarations. The content compiler resolves references before replacing emitted output, then writes a compact manifest and individually hashed maps. Runtime fetches only the selected map, validates it, and applies bounded size/timeout/cancellation handling. Definitions are copied/deeply frozen; collision is a private byte grid with constant-time lookups.
 
-`npm run check` performs source checks, unit tests, content validation, and production building. Browser checks use `npm run test:browser` after installing the configured Playwright Chromium browser. Commands generate ignored schema outputs automatically.
+The renderer retains a 320 × 192 logical canvas, integer scaling, bounded camera follow, nine original generated atlas frames, one active map scene, and a 64-particle cosmetic ceiling. Movement is pure domain code. Input has explicit scene ownership; controller service/UI have app ownership. Scoped listeners and restart cleanup remain tested. Cosmetic effects never determine RPG outcomes.
 
-## Verification and provenance
+This repair changes no package versions, lockfile, map schema, controller preference format, save format, or Node compatibility range. Current dependency pins remain Phaser 4.2.1, TypeScript 7.0.2, Vite 8.3.0, Vitest 5.0.1, Playwright 1.63.0, Node types 22.20.3, Ajv 8.20.0, and json-schema-to-typescript 15.0.4.
 
-The input source revision **`ac86f175bf471b609c8abf484e6318234e4bc278`** passed [GitHub Actions run 35297625726](https://github.com/FromAriel/RPGameworks/actions/runs/35297625726) on Linux/Node 22.16.0, Linux/Node 24.15.0, and Windows/Node 24.15.0. Node 24 jobs used npm 11.6.2. All three legs passed strict installation, source checks, 123 unit tests, production builds, and 30 Chromium browser scenarios. Local source/unit/build checks also passed. Local browser navigation remained administratively blocked; actual browser evidence is from CI. Desktop and narrow settings screenshots were inspected. The final delivery's own normal CI is the authority for its exact commit identity; the temporary workspace-export workflow is excluded from the delivered tree.
+## Commands and verification
 
-This input follow-up does not change dependencies, Node compatibility, map/game schemas, or authored rooms. It introduces only browser-local controller preference format v1, not gameplay saves. The original map verification below remains historical evidence for that earlier slice.
+Node `>=22.16.0 <23 || >=24.15.0 <25` remains accepted with strict engine checks. Ariel's Node 24.15.0 / npm 11.6.2 is in the CI matrix. Use `npm ci --include=dev` after a fresh checkout, then `npm run dev`. No dependency reinstall or Node/npm change is introduced by this repair.
 
-The map source revision **`6c7a8d08c3eab217381bd3d24434c5eba3c9e3d7`** passed [GitHub Actions run 35294045478](https://github.com/FromAriel/RPGameworks/actions/runs/35294045478) on all three matrix legs: Linux/Node 22.16.0, Linux/Node 24.15.0, and Windows/Node 24.15.0. Node 24 jobs used npm 11.6.2. Installation, typechecking, unit tests, production-browser checks, and portable builds all passed. The clean main delivery receives a separate normal CI run; that run is the authority for its exact final commit identity.
+`npm run check` runs source checks, unit tests, content validation, and production building. `npm run test:browser` runs production-browser scenarios after installing Playwright Chromium. `npm run validate` checks content without replacing output; `npm run content` rebuilds content. While a dev server is running, rebuild content and refresh after JSON edits; a content watcher is not implemented.
 
-The first map CI attempt passed all 83 unit tests and 17 of 18 browser scenarios. One test read a page execution context during the selector's intentional navigation. It now waits for document load before polling the new runtime, without weakening assertions. See [MAPS.md](MAPS.md).
+The repair source **`0ea8825d4460d26412d4d15a3e9ae9b8c35a775c`** passed [CI run 35307998894](https://github.com/FromAriel/RPGameworks/actions/runs/35307998894) on Linux/Node 22, Linux/Node 24, and Windows/Node 24. Every leg passed strict installation, source checks, **129 unit tests**, **37 Chromium browser scenarios**, and production builds. Node 24 jobs used npm 11.6.2. A final documentation/handoff commit receives its own normal CI run; check that exact commit before describing its status.
 
-Browser scenarios preserve the eight original regressions and add selected-map network assertions, gallery collision/named spawn behavior, preview selection/restarts, a third content-only fixture, malformed/blocked/wrong-ID/missing-frame failures, unknown selections, and missing-manifest handling. The network assertion checks actual requests to ensure the gallery is not fetched when the workshop loads. Successful gallery and narrow-workshop screenshots were inspected.
+New regressions inject the reported checksum text as unrelated promise rejections before and after startup, verify continued focus/movement, exercise activation and reports, preserve API-error details, test detection despite failed maps, distinguish neutral waiting, and keep genuine scene update exceptions fatal. Intentional-error assertions do not relax existing no-uncaught-error tests. The report screenshot was inspected. Controller readings are synthetic, not hardware measurements.
 
-Local Node 22 source checks, 83 unit tests, content validation, and builds also passed using the genuine CI-exported dependency installation. Local browser navigation was blocked by the environment (`ERR_BLOCKED_BY_ADMINISTRATOR`), so no local browser pass is claimed. Actual browser evidence comes from hosted Chromium on Windows and Linux. Those are not tests of Ariel's own device or proof of Android/iOS support.
+Local Node 22 source/unit/content/build checks passed with genuine CI-exported locked dependencies. Local Chromium navigation was administratively blocked before app loading, so local browser success is not claimed. Browser evidence is from GitHub-hosted Windows/Linux runners. The temporary source-export workflow is excluded from delivery; normal CI remains read-only.
 
-Original foundation evidence remains in [FOUNDATION.md](FOUNDATION.md), and Node 24 repair evidence in [TOOLCHAIN.md](TOOLCHAIN.md). The temporary dependency preparation workflow is absent from the delivered tree; normal CI retains read-only repository permissions.
+Earlier evidence is preserved in [INPUT.md](INPUT.md), [MAPS.md](MAPS.md), [FOUNDATION.md](FOUNDATION.md), and [TOOLCHAIN.md](TOOLCHAIN.md). These are historical records, not substitutes for the current commit's CI.
 
 ## Next concrete packet
 
-**M1.4/M1.5 — Interaction and room-to-room integration.** Add one NPC message, one interactable, modal input ownership, and actual door transitions using existing map/spawn references. Validate/load a destination before establishing it as active. Handle repeated requests, failure/cancellation, re-entry, and outgoing ownership cleanup. Do not create a separate scene subclass for each room.
+**M1.4/M1.5 — Interaction and room-to-room integration.** Add one NPC message, one interactable, modal input ownership, and gameplay door transitions using existing map/spawn references. Validate/load a destination before activation; handle duplicate requests, failure/cancellation, re-entry, and outgoing cleanup. Do not create a scene subclass per map.
 
-Keep movement, lazy content, schema generation, original assets, Node 24 support, controller configuration/focus gates, and existing tests intact. Route new dialogue/interaction actions through explicit ownership; do not let a held controller press both close a message and trigger an exploration action. Do not introduce saves, combat, a visual editor, custom WebGL, or general scripting in this packet. The full M1 acceptance criteria still require interaction and real transitions; preview reloads and scene restarts do not substitute for them.
+Preserve controller configuration, focus/neutral safety, page-error isolation, lazy content, schema generation, Node 24 compatibility, and current tests. A held controller press must not both dismiss a message and trigger exploration. Do not expand into saves, combat, a visual editor, custom WebGL, or a general scripting system.
 
-## Compatibility and limits
+## Open limits and handoff
 
-This introduces map/game schema version 1. There is no prior save format to migrate. Future ID or schema changes require explicit compatibility decisions. Generated JSON and validator/type files are build products, not alternate authoring sources.
+No public deployment, Tiled importer, regional asset-cache/lease proof, long-session memory plateau, real-device performance certification, Safari/Firefox coverage, or Android/iOS hardware verification is supplied. Map limits/resource counts are not frame-rate guarantees. The Phaser-containing bundle remains approximately 1.38 MB minified / 361 KB estimated gzip; the warning is intentionally visible.
 
-No public deployment, Tiled importer, per-region asset lease/cache, performance certification, long-session memory plateau, Safari/Firefox coverage, or Android/iOS hardware verification is supplied. Map size bounds and resource counts are not frame-rate guarantees. Build size warnings remain visible: the Phaser-containing chunk is about 1.38 MB minified / 361 KB estimated gzip.
+Map/game schema v1 and controller preferences v1 exist; no gameplay save format exists to migrate. Future ID/schema changes need explicit compatibility decisions. Generated outputs are not authoring sources. Project license, final art/story direction, full device support, and measured budgets remain open. Naming availability/SEO remain unproven; preserve [RESEARCH.md](RESEARCH.md).
 
-Project licensing, final story/art direction, full device support, and measured budgets remain open. RPGameworks is the chosen working name; complete name availability and SEO performance are not established. Preserve [RESEARCH.md](RESEARCH.md)'s unresolved naming note.
-
-## Handoff rule
-
-Inspect the actual current branch/ref, AGENTS.md, this status, and the next roadmap packet before editing. Preserve unrelated work, use non-forced ref updates, and report actual source/build/browser/deployment outcomes separately. Update this file after the next verified packet.
+Read actual main, AGENTS.md, this status and the next roadmap packet before editing. Preserve unrelated work, update refs without force, and distinguish source/build/browser/deployment outcomes. Keep continuity in this file, with detailed historical evidence in the linked records.

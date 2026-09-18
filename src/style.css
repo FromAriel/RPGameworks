@@ -64,3 +64,7 @@ footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #293648; dis
 .controller-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 #controller-status, #controller-message { overflow-wrap: anywhere; font-size: .9rem; }
 @media (max-width: 420px) { .controller-grid { grid-template-columns: 1fr; } }
+
+#page-error-notice { border-left: 3px solid #c9a869; padding: 0.5rem 0.75rem; overflow-wrap: anywhere; }
+#controller-brief { flex: 1 1 16rem; font-size: 0.85rem; overflow-wrap: anywhere; }
+#controller-report { display: block; width: 100%; max-width: 100%; margin: 0.5rem 0; font: 0.8rem/1.45 monospace; }

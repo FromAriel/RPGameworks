@@ -23,6 +23,10 @@ Open the local address Vite prints. Asset and map generation run automatically b
 
 The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**; **Space** triggers a cosmetic pixel burst. The on-screen direction buttons also accept pointer input. **Restart room** exercises scene disposal/recreation. The **Cosmetic particles** checkbox turns the burst off without changing movement; reduced-motion preference disables it initially.
 
+### Controller recovery
+
+Use **Activate controller** to close settings, rescan and focus the game. Release the buttons and center the stick briefly. The visible status now distinguishes detected-but-paused input, neutral waiting, API problems, and no exposed controller. **Controller configuration → Show diagnostic report** gives selectable troubleshooting data without uploading it. Unattributed page errors are warnings, not automatically fatal game failures; genuine startup/scene failures remain separately reported. See [controller recovery](docs/CONTROLLER-RECOVERY.md).
+
 ### Controller configuration
 
 Open **Controller configuration** below the movement controls. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move** and **A for the cosmetic pixel burst**. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; no extra dependency or account is required.
@@ -61,7 +65,7 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **123 unit tests and 30 browser scenarios**, including 40 controller unit cases and 12 input/configuration browser scenarios. Controller readings are simulated in browser tests, not captured from physical hardware. See [INPUT.md](docs/INPUT.md) for the latest verification and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
+`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **129 unit tests and 37 browser scenarios**, including controller input, startup-error isolation and recovery checks. Controller readings are simulated in browser tests, not captured from physical hardware. See [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for the latest repair verification, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
 
 GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows with Node 24.15.0. Node 24 jobs use npm 11.6.2. Each matrix leg retains a `browser-build-<label>` artifact and `browser-evidence-<label>` report. Those artifacts are build/test outputs, not a deployed website. The standard workflow has read-only repository permissions.
 
@@ -95,6 +99,7 @@ Maps are data now, not new scene subclasses. The next packet connects NPC intera
 
 | Document | Purpose |
 | --- | --- |
+| [Controller recovery](docs/CONTROLLER-RECOVERY.md) | Page-error isolation, activation, diagnostics, and verification |
 | [Input and controller configuration](docs/INPUT.md) | Launch focus, controller mappings, safety gates, preferences, and test limits |
 | [Map-data slice](docs/MAPS.md) | Map authoring, compiler, tests, known limits, and handoff |
 | [Current status](docs/STATUS.md) | Actual progress and the next concrete task |

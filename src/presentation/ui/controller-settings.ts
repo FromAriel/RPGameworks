@@ -7,7 +7,7 @@ const standardNames = ['A / bottom', 'B / right', 'X / left', 'Y / top', 'LB', '
 const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst' };
 
 /** Build the small settings UI once; telemetry uses the app's existing 4 Hz refresh. */
-export function mountControllerSettings(root: HTMLDetailsElement, controller: GamepadController, stage: HTMLElement): { refresh(): void; dispose(): void } {
+export function mountControllerSettings(root: HTMLDetailsElement, controller: GamepadController, stage: HTMLElement, appReport: () => object): { refresh(): void; dispose(): void } {
   const lifetime = new AbortController();
   function get<T extends HTMLElement>(selector: string): T {
     const node = root.querySelector<T>(selector);
@@ -26,6 +26,9 @@ export function mountControllerSettings(root: HTMLDetailsElement, controller: Ga
   const message = get<HTMLElement>('#controller-message');
   const live = get<HTMLElement>('#controller-live');
   const status = get<HTMLElement>('#controller-status');
+  const brief = document.querySelector<HTMLElement>('#controller-brief');
+  const activate = document.querySelector<HTMLButtonElement>('#controller-activate');
+  const report = get<HTMLTextAreaElement>('#controller-report');
   const bindings = new Map<PadAction, HTMLSelectElement>();
   let deviceSignature = '';
   let validationMessage = '';
@@ -73,11 +76,33 @@ export function mountControllerSettings(root: HTMLDetailsElement, controller: Ga
   get<HTMLButtonElement>('#controller-reset').addEventListener('click', () => {
     controller.configure(defaultControllerConfig()); controller.select(null); validationMessage = ''; sync(); refresh();
   }, options);
-  get<HTMLButtonElement>('#controller-return').addEventListener('click', () => {
-    root.open = false; controller.reset(); stage.focus({ preventScroll: true });
+  function returnToGame(): void {
+    root.open = false;
+    controller.rescan();
+    stage.focus({ preventScroll: true });
+    refresh();
+  }
+  get<HTMLButtonElement>('#controller-return').addEventListener('click', returnToGame, options);
+  activate?.addEventListener('click', () => {
+    if (!controller.settings.enabled) controller.configure({ ...controller.settings, enabled: true });
+    sync(); returnToGame();
+  }, options);
+  get<HTMLButtonElement>('#controller-rescan').addEventListener('click', () => {
+    controller.rescan(); refresh();
+  }, options);
+  get<HTMLButtonElement>('#controller-report-button').addEventListener('click', () => {
+    controller.refreshDetection();
+    report.value = JSON.stringify({
+      ...appReport(), browser: navigator.userAgent, origin: location.origin,
+      viewportFocused: stage.contains(document.activeElement), settingsOpen: root.open,
+      controller: controller.diagnostics(),
+    }, null, 2);
+    get<HTMLElement>('#controller-report-area').hidden = false;
+    report.focus({ preventScroll: true }); report.select();
   }, options);
 
   function refresh(): void {
+    controller.refreshDetection();
     const signature = JSON.stringify([controller.selectedIndex, ...controller.devices.map((pad) => [pad.index, pad.id, pad.mapping])]);
     if (signature !== deviceSignature) {
       deviceSignature = signature; devices.replaceChildren(); option(devices, 'auto', 'Automatic (standard controller first)');
@@ -86,7 +111,9 @@ export function mountControllerSettings(root: HTMLDetailsElement, controller: Ga
       if (selected !== null && !controller.devices.some((pad) => pad.index === selected)) option(devices, selected, `${selected}: disconnected`);
       devices.value = selected === null ? 'auto' : String(selected);
     }
-    if (status.textContent !== controller.status) status.textContent = controller.status;
+    const controllerStatus = controller.status;
+    if (status.textContent !== controllerStatus) status.textContent = controllerStatus;
+    if (brief && brief.textContent !== controllerStatus) brief.textContent = controllerStatus;
     message.textContent = validationMessage || controller.persistenceStatus;
     if (root.open) {
       const pad = controller.current;

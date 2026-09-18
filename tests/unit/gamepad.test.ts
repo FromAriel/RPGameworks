@@ -12,7 +12,7 @@ describe('controller configuration', () => {
     const config = defaultControllerConfig(); const parsed = parseControllerConfig(JSON.parse(JSON.stringify(config)));
     expect(parsed).toEqual(config); expect(parsed?.buttons).not.toBe(config.buttons);
   });
-  it.each([null, [], {}, 'config', { ...defaultControllerConfig(), version: 2 },
+  it.each([null, [], {}, 'config', { ...defaultControllerConfig(), version: 3 },
     { ...defaultControllerConfig(), enabled: 'true' }, { ...defaultControllerConfig(), extra: 1 },
     { ...defaultControllerConfig(), deadzone: NaN }, { ...defaultControllerConfig(), deadzone: 0 },
     { ...defaultControllerConfig(), deadzone: 1 }, { ...defaultControllerConfig(), axisX: 20 },
@@ -54,9 +54,9 @@ describe('controller directions', () => {
 describe('controller input ownership', () => {
   it('requires neutral before first activation and emits a button edge just once', () => {
     const latch = new PadLatch(), config = defaultControllerConfig();
-    expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: null, burst: false });
+    expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: null, burst: false, interact: false, cancel: false });
     latch.sample(pad(), config, true);
-    expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: 'right', burst: true });
+    expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: 'right', burst: true, interact: false, cancel: false });
     expect(latch.sample(pad([1, 0], [0]), config, true).burst).toBe(false);
     latch.sample(pad(), config, true); expect(latch.sample(pad([0, 0], [0]), config, true).burst).toBe(true);
   });
@@ -75,7 +75,7 @@ describe('controller input ownership', () => {
   });
   it('does not apply the previous controller state to a new device in the same slot', () => {
     const latch = new PadLatch(), config = defaultControllerConfig(); latch.sample(pad(), config, true);
-    expect(latch.sample(pad([1, 0], [0], 'different pad'), config, true)).toEqual({ direction: null, burst: false });
+    expect(latch.sample(pad([1, 0], [0], 'different pad'), config, true)).toEqual({ direction: null, burst: false, interact: false, cancel: false });
   });
   it('does not assume a standard mapping on unknown layouts', () => {
     const latch = new PadLatch(), config = defaultControllerConfig(); const unknown = { ...pad(), mapping: '' };
@@ -87,6 +87,6 @@ describe('controller input ownership', () => {
   it('does not consume gameplay when disabled or out of focus', () => {
     const latch = new PadLatch(), config = defaultControllerConfig(); latch.sample(pad(), config, true);
     config.enabled = false;
-    expect(latch.sample(pad([1, 1], [0]), config, true)).toEqual({ direction: null, burst: false });
+    expect(latch.sample(pad([1, 1], [0]), config, true)).toEqual({ direction: null, burst: false, interact: false, cancel: false });
   });
 });

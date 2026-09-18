@@ -76,6 +76,8 @@ test('settings freeze input, save deadzone/remapping, and resume only after cont
   await fakePads(page); await ready(page); await neutral(page);
   await page.locator('#controller-settings summary').click();
   await page.locator('#controller-deadzone').evaluate((element: HTMLInputElement) => { element.value = '45'; element.dispatchEvent(new Event('change', { bubbles: true })); });
+  // X is now assigned to interaction by default; explicitly free it before rebinding.
+  await page.locator('#controller-button-interact').selectOption('-1');
   await page.locator('#controller-button-burst').selectOption('2');
   await setPad(page, [1, 0], [2]); await rest(page);
   const initial = await snapshot(page); expect(initial.burstRequests).toBe(0); expect(initial.actorTile.x).toBe(10);
@@ -127,6 +129,8 @@ test('corrupt preferences and unavailable storage have visible fallbacks', async
   await ready(page); await page.locator('#controller-settings summary').click();
   await expect(page.locator('#controller-message')).toContainText('defaults');
   await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('full', 'QuotaExceededError'); }; });
+  // X is now assigned to interaction by default; explicitly free it before rebinding.
+  await page.locator('#controller-button-interact').selectOption('-1');
   await page.locator('#controller-button-burst').selectOption('2');
   await expect(page.locator('#controller-message')).toContainText('session only');
   await expect(page.locator('#error')).toBeHidden();

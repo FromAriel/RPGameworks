@@ -60,6 +60,15 @@ export async function loadSelectedMap(base: URL, query: URLSearchParams, signal:
   const pack = new URL('generated/content/', base);
   const game = readGame(await fetchContent(new URL('game.json', pack), signal));
   const id = query.get('map') ?? game.start.mapId;
+  const spawnId = query.get('spawn') ?? (query.has('map') ? undefined : game.start.spawnId);
+  return loadMapDestination(base, game, id, spawnId, signal);
+}
+
+/** Uses the already validated registry; never reloads or bundles neighbouring maps. */
+export async function loadMapDestination(
+  base: URL, game: GameManifest, id: string, requestedSpawn: string | undefined, signal: AbortSignal,
+): Promise<LoadedMap> {
+  const pack = new URL('generated/content/', base);
   const entry = game.maps.find((candidate) => candidate.id === id);
   if (!entry) throw new Error(`Unknown map ID: ${id}. Choose a map registered in game.json.`);
   const map = readMap(await fetchContent(new URL(entry.file, pack), signal), entry.file);
@@ -68,7 +77,7 @@ export async function loadSelectedMap(base: URL, query: URLSearchParams, signal:
   for (const exit of map.exits) {
     if (!game.maps.some((candidate) => candidate.id === exit.targetMap)) throw new Error(`${map.id}: unregistered exit target ${exit.targetMap}`);
   }
-  const spawnId = query.get('spawn') ?? (query.has('map') ? map.defaultSpawn : game.start.spawnId);
+  const spawnId = requestedSpawn ?? map.defaultSpawn;
   const spawn = map.spawns.find((candidate) => candidate.id === spawnId);
   if (!spawn) throw new Error(`${map.id}: unknown spawn ID ${spawnId}`);
   if (signal.aborted) throw signal.reason;

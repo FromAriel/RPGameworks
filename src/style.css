@@ -68,3 +68,14 @@ footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #293648; dis
 #page-error-notice { border-left: 3px solid #c9a869; padding: 0.5rem 0.75rem; overflow-wrap: anywhere; }
 #controller-brief { flex: 1 1 16rem; font-size: 0.85rem; overflow-wrap: anywhere; }
 #controller-report { display: block; width: 100%; max-width: 100%; margin: 0.5rem 0; font: 0.8rem/1.45 monospace; }
+
+/* Native modal stays usable at narrow widths and never interpolates authored HTML. */
+#interaction-dialog { color: inherit; background: #192331; border: 2px solid #88c2c3;
+  border-radius: 8px; width: min(520px, calc(100vw - 32px)); max-height: 85vh; padding: 24px;
+  overflow: auto; box-shadow: 0 16px 64px #0009; }
+#interaction-dialog::backdrop { background: #070e18b3; }
+#interaction-dialog h2 { margin: 0 0 16px; overflow-wrap: anywhere; }
+#dialog-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; font-size: 1rem; }
+#dialog-page { min-height: 1.2em; margin-top: 0; }
+.dialog-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+#interaction-dialog [hidden] { display: none; }

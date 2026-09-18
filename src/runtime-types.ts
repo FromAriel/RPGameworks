@@ -1,5 +1,13 @@
 export interface RuntimeSnapshot {
   phase: 'booting' | 'ready' | 'error' | 'stopped';
+  inputMode: 'exploration' | 'message' | 'transition' | 'transition-error';
+  messageId: string | null;
+  messagePage: number;
+  interactionTarget: string | null;
+  transitions: number;
+  cancelledTransitions: number;
+  failedTransitions: number;
+  transitionError: string | null;
   scene: string;
   mapId: string;
   mapName: string;

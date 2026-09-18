@@ -137,6 +137,31 @@ export function readMap(value, file = 'map.json', frames) {
       }
     }
   });
+  const messages = map.messages ?? [];
+  unique(messages, '/messages');
+  const strings = map.strings?.en ?? {};
+  for (const [key, text] of Object.entries(strings)) {
+    if (!text.trim()) issue(`/strings/en/${key}`, 'String must contain visible text', text);
+  }
+  messages.forEach((message, index) => {
+    for (const key of [message.speakerKey, ...message.pages]) {
+      if (!Object.hasOwn(strings, key)) issue(`/messages/${index}`, 'Missing English string', key);
+    }
+  });
+  const interactionCells = new Set();
+  map.objects.forEach((object, index) => {
+    if (!object.messageId) return;
+    if (!messages.some((message) => message.id === object.messageId)) {
+      issue(`/objects/${index}/messageId`, 'Message does not exist', object.messageId);
+    }
+    const cell = `${object.x},${object.y}`;
+    if (interactionCells.has(cell)) issue(`/objects/${index}`, 'Ambiguous interaction cell', cell);
+    interactionCells.add(cell);
+    if (![grid.canEnter(object.x - 1, object.y), grid.canEnter(object.x + 1, object.y),
+      grid.canEnter(object.x, object.y - 1), grid.canEnter(object.x, object.y + 1)].some(Boolean)) {
+      issue(`/objects/${index}`, 'Interaction has no walkable adjacent tile', cell);
+    }
+  });
   if (issues.length) throw new ContentError(issues);
   return freezeCopy(map);
 }

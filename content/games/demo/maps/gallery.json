@@ -46,7 +46,16 @@
   ],
   "objects": [
     {"id": "demo:object.gallery.pillar", "frame": "wall", "x": 6, "y": 6, "solid": true},
-    {"id": "demo:object.gallery.sigil", "frame": "sigil", "x": 18, "y": 6, "solid": false}
+    {"id": "demo:object.gallery.sigil", "frame": "sigil", "x": 18, "y": 6, "solid": false},
+    {"id": "demo:object.gallery.plaque", "frame": "plaque", "x": 4, "y": 4, "solid": true, "messageId": "gallery-plaque"},
+    {"id": "demo:object.gallery.door", "frame": "door", "x": 1, "y": 6, "solid": false}
   ],
-  "exits": [{"id": "to-workshop", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-gallery"}]
+  "exits": [{"id": "to-workshop", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-gallery"}],
+  "strings": {"en": {
+    "plaque.name": "Brass plaque",
+    "plaque.text": "THE PILLAR GALLERY\n\nMany rooms. One world. Only the room you occupy needs to be awake.\n\nThe western doorway returns to the Workshop."
+  }},
+  "messages": [
+    {"id": "gallery-plaque", "speakerKey": "plaque.name", "pages": ["plaque.text"]}
+  ]
 }

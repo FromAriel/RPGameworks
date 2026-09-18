@@ -1,6 +1,6 @@
 import { chooseGamepad, collectGamepads } from './gamepad-reader';
 import type { PadEnumeration, PadIdentity } from './gamepad-reader';
-import { CONTROLLER_KEY, NO_PAD_INPUT, PadLatch, axisValue, buttonPressed, defaultControllerConfig, parseControllerConfig } from './gamepad-model';
+import { LEGACY_CONTROLLER_KEY, CONTROLLER_KEY, NO_PAD_INPUT, PadLatch, axisValue, buttonPressed, defaultControllerConfig, parseControllerConfig } from './gamepad-model';
 import type { ControllerConfig, PadInput, PadState } from './gamepad-model';
 
 export interface GamepadSource {
@@ -33,10 +33,18 @@ export class GamepadController implements GamepadSource {
 
   constructor() {
     try {
-      const text = localStorage.getItem(CONTROLLER_KEY);
+      const current = localStorage.getItem(CONTROLLER_KEY);
+      const text = current ?? localStorage.getItem(LEGACY_CONTROLLER_KEY);
       if (text !== null) {
         const parsed = text.length <= 4096 ? parseControllerConfig(JSON.parse(text)) : null;
-        if (parsed) this.config = parsed;
+        if (parsed) {
+          this.config = parsed;
+          if (current === null) {
+            this.storageMessage = 'Previous bindings preserved; interaction and cancel bindings added.';
+            try { localStorage.setItem(CONTROLLER_KEY, JSON.stringify(parsed)); }
+            catch { this.storageMessage += ' Migration works for this session only; storage is unavailable.'; }
+          }
+        }
         else this.storageMessage = 'Invalid saved settings ignored; defaults are active.';
       }
     } catch { this.storageMessage = 'Saved settings unavailable; using defaults for this session.'; }

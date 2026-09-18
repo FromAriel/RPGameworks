@@ -4,11 +4,13 @@
 
 RPGameworks is being built a playable piece at a time: ordinary TypeScript/JavaScript, small active maps, a persistent world, and a composable cosmetic effects layer. The repository is the initial authoring environment; no paid coding agent, desktop RPG editor, runtime AI service, or game server is required by the design.
 
-## Current build: data-authored map preview
+## Current build: two-room interaction slice
 
-The foundation now loads maps from validated JSON. The 20 × 12 Workshop and larger 24 × 14 Pillar Gallery share one reusable Phaser scene, tile-step movement, collision, original atlas, and bounded particles. A map selector reloads into either room; the camera follows the actor on maps larger than the logical viewport.
+The 20 × 12 Workshop and 24 × 14 Pillar Gallery are now connected by working doors. Walk up to Mara, the workshop caretaker, face her, and open her two-page greeting. Visit the gallery and examine its brass plaque, then return through the western doorway. Messages, placement IDs, exits, and arrival points are authored in validated JSON rather than map-specific scene classes.
 
-This completes the **M1.3 map-data slice**, not the complete M1 two-room RPG milestone. Named exits and their destination spawns are validated metadata only: **walking through a door does not change rooms yet**. NPC conversations, gameplay transitions, persistence, inventory, and the full PixelFX recipe system remain future work. No public deployment is configured.
+**M1.4/M1.5 implement interaction and room travel.** Doors retain the current browser document and prepare their destination before activation; a failed load offers Retry or Stay here, and a pending load can be cancelled. The development map dropdown remains a separate full-page preview. Inventory, saves, branching quests, battle, and the full PixelFX recipe system are not implemented. M1.6 closeout still includes a recorded performance baseline; no public deployment is configured.
+
+See [the interaction implementation and verification](docs/INTERACTIONS.md) and [current status](docs/STATUS.md).
 
 ## Run locally
 
@@ -21,7 +23,7 @@ npm run dev
 
 Open the local address Vite prints. Asset and map generation run automatically before development starts. Do not open `index.html` directly with a `file://` URL.
 
-The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**; **Space** triggers a cosmetic pixel burst. The on-screen direction buttons also accept pointer input. **Restart room** exercises scene disposal/recreation. The **Cosmetic particles** checkbox turns the burst off without changing movement; reduced-motion preference disables it initially.
+The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**. **E / Enter** interacts with the adjacent object you face and advances messages; **Escape** closes a message or cancels travel. **Space** triggers a cosmetic pixel burst during exploration and advances an already-open message. The on-screen direction buttons also accept pointer input. **Restart room** exercises scene disposal/recreation. The **Cosmetic particles** checkbox turns the burst off without changing movement; reduced-motion preference disables it initially.
 
 ### Controller recovery
 
@@ -31,11 +33,11 @@ Use **Activate controller** to close settings, rescan and focus the game. Releas
 
 Native input now follows the supplied working MouseJoy reader: one app-owned frame sampler, retained connected-device selection, and no requirement to focus the viewport div for controller movement. Settings, form editing and inactive tabs still pause gameplay. **Open MouseJoy-style controller test** in the panel runs a minimal independent reader on the same server. See [the comparison, tests and remaining hardware uncertainty](docs/MOUSEJOY-PARITY.md).
 
-Open **Controller configuration** below the movement controls. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move** and **A for the cosmetic pixel burst**. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; no extra dependency or account is required.
+Open **Controller configuration** below the movement controls. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move** and **A for the cosmetic pixel burst**, **X to interact/advance**, and **B to close/cancel**. These are defaults: prior remapped buttons and axes are preserved during migration to controller preferences v2; new actions take unused buttons when necessary. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; no extra dependency or account is required.
 
 The browser may require a controller button press before exposing a connected device. Press and release once, center the stick, and use **Return to game** after configuration. Input pauses while settings are open; an already-started tile step finishes. Reconnection or return from an input-blocking pause requires neutral controls before gameplay resumes, preventing held-button surprises. Keyboard input remains available when the controller API is absent or blocked.
 
-These bindings use what the browser exposes. Independent Elite paddle inputs, firmware profile editing, rumble, and controller-only menu navigation are not promised. See [input behavior, configuration, and verification](docs/INPUT.md).
+Messages and travel recovery can be controlled without a mouse. Controller-only navigation of the configuration panel itself remains out of scope. These bindings use what the browser exposes. Independent Elite paddle inputs, firmware profile editing, rumble, and controller-only configuration navigation are not promised. See [input behavior, configuration, and verification](docs/INPUT.md).
 
 For a production build and local preview, run the build first and start preview only after it succeeds:
 
@@ -67,7 +69,7 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **151 unit tests and 42 browser scenarios**, including controller input, startup-error isolation and recovery checks. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the latest comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
+`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **178 unit tests and 56 browser scenarios**, including modal ownership, failure/cancellation, controller preference migration, and a 40-transfer room tour. See [INTERACTIONS.md](docs/INTERACTIONS.md) for execution evidence. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the preceding comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
 
 GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows with Node 24.15.0. Node 24 jobs use npm 11.6.2. Each matrix leg retains a `browser-build-<label>` artifact and `browser-evidence-<label>` report. Those artifacts are build/test outputs, not a deployed website. The standard workflow has read-only repository permissions.
 
@@ -75,32 +77,35 @@ GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows wit
 
 Edit the canonical records in `content/games/demo/maps/`, and register maps in `content/games/demo/game.json`. Run `npm run validate` for schema and cross-reference checks. `npm run content` rebuilds map payloads; refresh the development page afterward. Development startup and production builds run this automatically. Live file watching for content compilation is not implemented yet.
 
-Map IDs are independent of filenames. `?map=demo:map.gallery&spawn=from-workshop` selects a registered map/spawn for preview, relative to the app's existing URL. The selector performs a full page load, not a game-world transition. Each load fetches only the compact manifest and selected map; neighbouring room data is not downloaded eagerly.
+Map IDs are independent of filenames. `?map=demo:map.gallery&spawn=from-workshop` selects a registered map/spawn for preview, relative to the app's existing URL. The selector performs a full page load; gameplay doors do not. Initial startup fetches the compact manifest and selected map. Door use fetches only its registered destination payload; neighbouring room data is not downloaded eagerly.
 
-Generated JSON payloads, standalone validators, and schema-derived TypeScript declarations are ignored build outputs. Do not edit them. [Map authoring and verification](docs/MAPS.md) describes units, boundaries, diagnostics, and the next slice.
+Generated JSON payloads, standalone validators, and schema-derived TypeScript declarations are ignored build outputs. Do not edit them. [Map authoring and verification](docs/MAPS.md) describes units, boundaries, and the earlier map slice. [Interaction authoring](docs/INTERACTIONS.md) covers the added messages and working doors.
 
 ## Source boundaries
 
 | Location | Responsibility |
 | --- | --- |
-| `src/domain/` | Pure movement, compiled collision grids, and viewport arithmetic |
+| `src/domain/` | Pure movement, collision, facing interactions, finite messages, exit-entry guards, and viewport arithmetic |
+| `src/runtime/transition.ts` | Single pending transfer, cancellation, and stale-result rejection |
 | `schemas/`, `src/content/` | Canonical schemas, generated validators/types, and shared semantic checks |
 | `src/platform/map-loader.ts` | Bounded, cancellable manifest/selected-map loading |
 | `src/platform/input.ts` | One abortable keyboard/pointer/controller input owner per scene lifetime |
 | `src/platform/gamepad-model.ts`, `src/platform/gamepad.ts` | Validated bindings, neutral/edge handling, and one app-owned browser controller adapter |
 | `src/presentation/ui/controller-settings.ts` | Semantic controller configuration and bounded-rate telemetry |
-| `src/presentation/foundation.ts` | One data-backed map scene, original atlas loading, camera, bounded emitter, and cleanup |
+| `src/presentation/foundation.ts`, `map-view.ts` | Reusable scene, explicit room visual ownership, safe transitions, camera, and cosmetic particles |
+| `src/presentation/ui/interaction-dialog.ts` | Native modal presenter; authored strings remain literal text |
 | `src/main.ts`, `src/style.css`, `index.html` | Accessible controls, diagnostics, errors, and responsive page layout |
 | `assets/source/` | Original placeholder pixel patterns and provenance |
 | `tools/` | Asset generation, schema generation, and validated map compilation |
 | `tests/` | Domain, asset, package-policy, map, loader, controller, and production-browser checks |
 
-Maps are data now, not new scene subclasses. The next packet connects NPC interaction and gameplay door transitions while preserving the existing tests.
+Maps and simple messages are data, not new scene subclasses. The next packet closes M1.6 diagnostics/performance acceptance before M2 adds persistent state, inventory, and safe saves.
 
 ## Documentation
 
 | Document | Purpose |
 | --- | --- |
+| [Interaction and room travel](docs/INTERACTIONS.md) | Current messages, controls, door lifecycle, compatibility, and tests |
 | [Controller recovery](docs/CONTROLLER-RECOVERY.md) | Page-error isolation, activation, diagnostics, and verification |
 | [Input and controller configuration](docs/INPUT.md) | Launch focus, controller mappings, safety gates, preferences, and test limits |
 | [Map-data slice](docs/MAPS.md) | Map authoring, compiler, tests, known limits, and handoff |
@@ -115,6 +120,6 @@ Maps are data now, not new scene subclasses. The next packet connects NPC intera
 
 ## Known limits and licensing
 
-Browser checks use Chromium on hosted Linux and Windows runners, including software WebGL and Canvas. Narrow viewport checks are not proof of Android/iOS device support. The Phaser-containing chunk is about 1.38 MB minified with a roughly 361 KB Vite-reported gzip estimate; its size warning is deliberately not hidden. Real-device performance, heap/GPU profiling, and other browser engines remain unverified.
+Browser checks use Chromium on hosted Linux and Windows runners, including software WebGL and Canvas. Narrow viewport checks are not proof of Android/iOS device support. The Phaser-containing chunk is about 1.38 MB minified with a roughly 362 KB Vite-reported gzip estimate; its size warning is deliberately not hidden. Real-device performance, heap/GPU profiling, and other browser engines remain unverified.
 
 **RPGameworks** is the working name; complete naming availability and search performance are not guaranteed. A project license has not been selected. Original placeholder artwork is documented in `assets/source/README.md`; third-party dependencies retain their own licenses. Do not interpret this repository as granting a license to future code or assets.

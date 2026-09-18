@@ -40,6 +40,18 @@
     {"id": "start", "x": 10, "y": 6, "facing": "down"},
     {"id": "from-gallery", "x": 17, "y": 6, "facing": "left"}
   ],
-  "objects": [{"id": "demo:object.workshop.sigil", "frame": "sigil", "x": 10, "y": 5, "solid": false}],
-  "exits": [{"id": "to-gallery", "x": 18, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-workshop"}]
+  "objects": [
+    {"id": "demo:object.workshop.sigil", "frame": "sigil", "x": 10, "y": 5, "solid": false},
+    {"id": "demo:object.workshop.caretaker", "frame": "caretaker", "x": 10, "y": 8, "solid": true, "messageId": "caretaker-intro"},
+    {"id": "demo:object.workshop.door", "frame": "door", "x": 18, "y": 6, "solid": false}
+  ],
+  "exits": [{"id": "to-gallery", "x": 18, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-workshop"}],
+  "strings": {"en": {
+    "caretaker.name": "Mara — Workshop caretaker",
+    "caretaker.welcome": "Welcome to the Workshop. These little rooms are the beginning of a much larger world.",
+    "caretaker.gallery": "The lit doorway to the east leads into the Pillar Gallery. Read the brass plaque there, then come back. The sparks are just for show."
+  }},
+  "messages": [
+    {"id": "caretaker-intro", "speakerKey": "caretaker.name", "pages": ["caretaker.welcome", "caretaker.gallery"]}
+  ]
 }

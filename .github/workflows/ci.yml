@@ -1,7 +1,7 @@
 name: Foundation checks
 on:
   push:
-    branches: [main, work/m1-foundation, work/node24-compat, work/m1-maps, work/input-controller, work/controller-recovery, work/mousejoy-parity]
+    branches: [main, work/m1-foundation, work/node24-compat, work/m1-maps, work/input-controller, work/controller-recovery, work/mousejoy-parity, work/m1-interactions]
   pull_request:
 permissions:
   contents: read

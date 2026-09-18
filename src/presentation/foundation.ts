@@ -2,17 +2,20 @@ import Phaser from 'phaser';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
 import { integerScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
+import { MessageSession } from '../domain/interaction';
+import type { MapExit } from '../domain/interaction';
+import { TransitionTask } from '../runtime/transition';
+import { loadMapDestination } from '../platform/map-loader';
+import type { InputMode } from '../platform/input';
+import { MapView, ATLAS, TILE } from './map-view';
+import { InteractionDialog } from './ui/interaction-dialog';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 
 const WIDTH = 320;
 const HEIGHT = 192;
-const TILE = 16;
-const ATLAS = 'foundation';
 const SCENE = 'rpgameworks:map';
-const PARTICLE_CAP = 64;
-const BURST_SIZE = 24;
 
 export interface FoundationElements {
   stage: HTMLElement;
@@ -22,11 +25,13 @@ export interface FoundationElements {
   effects: HTMLInputElement;
   gamepad: GamepadSource;
   canPlay: () => boolean;
+  dialog: HTMLDialogElement;
+  interact: HTMLButtonElement;
 }
 
 export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
-  const { map, spawn, collision } = content;
-  const spawnActor = () => ({ ...createActor(spawn.x, spawn.y), facing: spawn.facing });
+  const spawnActor = () => ({ ...createActor(content.spawn.x, content.spawn.y), facing: content.spawn.facing });
+  let transitions = 0, cancelledTransitions = 0, failedTransitions = 0;
   let starts = 0;
   let stops = 0;
   let phase: RuntimeSnapshot['phase'] = 'booting';
@@ -37,13 +42,16 @@ export function createFoundation(elements: FoundationElements, onError: (message
   const appLifetime = new AbortController();
 
   class MapScene extends Phaser.Scene {
-    actor = spawnActor();
+    room: MapView | null = null;
     inputOwner: InputController | null = null;
-    emitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
-    hero: Phaser.GameObjects.Sprite | null = null;
-    bursts = 0;
+    mode: InputMode = 'exploration';
+    message: MessageSession | null = null;
+    transitionError: string | null = null;
     private sceneLifetime: AbortController | null = null;
-    private readonly walkable = collision.canEnter;
+    private transfer = new TransitionTask<LoadedMap>();
+    private generation = 0;
+    private lastExit: MapExit | null = null;
+    private readonly dialog = new InteractionDialog(elements.dialog);
 
     constructor() { super(SCENE); }
 
@@ -57,68 +65,34 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
 
     create(): void {
-      try { this.createMap(); } catch (cause) { this.fail(cause); }
-    }
-
-    private createMap(): void {
-      if (phase === 'error') return;
-      // A single scene presents any validated map; no map-specific geometry lives here.
-      const requiredFrames = new Set([...Object.values(map.legend), ...map.objects.map((object) => object.frame),
-        'hero-up', 'hero-down', 'hero-left', 'hero-right', 'spark']);
-      for (const frame of requiredFrames) {
-        if (!this.textures.get(ATLAS).has(frame)) {
-          phase = 'error'; onError(`${map.id}: atlas frame does not exist: ${frame}`); return;
-        }
-      }
-      this.actor = spawnActor();
-      this.bursts = 0;
-      starts += 1;
-      current = this;
-      this.sceneLifetime = new AbortController();
-      this.cameras.main.setRoundPixels(true);
-      map.layers.forEach((layer, layerIndex) => {
-        layer.rows.forEach((row, y) => {
-          for (let x = 0; x < row.length; x += 1) {
-            const symbol = row[x]!;
-            if (symbol !== '.') this.add.image(x * TILE, y * TILE, ATLAS, map.legend[symbol]!).setOrigin(0).setDepth(layerIndex / 10);
-          }
-        });
-      });
-      for (const object of map.objects) {
-        this.add.image(object.x * TILE, object.y * TILE, ATLAS, object.frame).setOrigin(0).setDepth(0.5);
-      }
-      const initial = actorPosition(this.actor, TILE);
-      this.hero = this.add.sprite(initial.x, initial.y, ATLAS, `hero-${spawn.facing}`).setDepth(1);
-      this.cameras.main.setBounds(0, 0, map.width * TILE, map.height * TILE);
-      this.cameras.main.startFollow(this.hero, true, 1, 1);
-      this.emitter = this.add.particles(0, 0, ATLAS, {
-        frame: 'spark',
-        emitting: false,
-        lifespan: { min: 220, max: 480 },
-        speed: { min: 22, max: 70 },
-        angle: { min: 0, max: 360 },
-        gravityY: 28,
-        alpha: { start: 1, end: 0 },
-        quantity: BURST_SIZE,
-        maxParticles: PARTICLE_CAP,
-        maxAliveParticles: PARTICLE_CAP,
-        blendMode: Phaser.BlendModes.NORMAL,
-      });
-      this.emitter.setDepth(2);
-      this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst, elements.gamepad, elements.canPlay);
-      elements.effects.addEventListener('change', () => {
-        if (!elements.effects.checked) this.emitter?.killAll();
-      }, { signal: this.sceneLifetime.signal });
-      elements.restart.addEventListener('click', () => {
-        this.inputOwner?.clear();
-        this.scene.restart();
-      }, { signal: this.sceneLifetime.signal });
-      this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
-      this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
-      elements.burst.disabled = false;
-      elements.restart.disabled = false;
-      phase = 'ready';
-      scheduleResize();
+      try {
+        if (phase === 'error' || disposed) return;
+        // Register cleanup before constructing anything that can fail.
+        this.sceneLifetime = new AbortController();
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
+        this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
+        this.transfer = new TransitionTask<LoadedMap>();
+        this.mode = 'exploration'; this.message = null; this.transitionError = null;
+        this.cameras.main.setRoundPixels(true);
+        this.room = new MapView(this, content);
+        this.room.show();
+        this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
+          elements.gamepad, elements.canPlay, elements.dialog);
+        starts += 1;
+        current = this;
+        elements.effects.addEventListener('change', () => {
+          if (!elements.effects.checked) this.room?.emitter.killAll();
+        }, { signal: this.sceneLifetime.signal });
+        elements.restart.addEventListener('click', () => {
+          // Restart is deliberately unavailable while a message or transfer owns input.
+          if (this.mode !== 'exploration' || !elements.canPlay()) return;
+          this.inputOwner?.clear();
+          this.scene.restart();
+        }, { signal: this.sceneLifetime.signal });
+        elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
+        phase = 'ready';
+        scheduleResize();
+      } catch (cause) { this.fail(cause); }
     }
 
     update(_time: number, delta: number): void {
@@ -126,44 +100,108 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
 
     private updateMap(delta: number): void {
-      if (!this.inputOwner || !this.hero || !this.emitter || phase !== 'ready') return;
-      advanceActor(this.actor, this.inputOwner.direction(), delta, this.walkable);
-      const position = actorPosition(this.actor, TILE);
-      this.hero.setPosition(Math.round(position.x), Math.round(position.y));
-      const frame = `hero-${this.actor.facing}`;
-      if (this.hero.frame.name !== frame) this.hero.setFrame(frame);
-      if (this.inputOwner.consumeBurst()) {
-        this.bursts += 1;
-        if (elements.effects.checked) {
-          // Saturation drops decoration, not movement or other game state.
-          const available = Math.max(0, PARTICLE_CAP - this.emitter.getAliveParticleCount());
-          if (available > 0) this.emitter.explode(Math.min(BURST_SIZE, available), this.hero.x, this.hero.y);
-        }
+      const input = this.inputOwner, room = this.room;
+      if (!input || !room || phase !== 'ready') return;
+      const direction = input.direction(); // One gameplay consumption of the sampled controller.
+      const interact = input.consumeInteract(), cancel = input.consumeCancel(), burst = input.consumeBurst();
+      if (this.mode !== 'exploration') {
+        if (cancel) this.cancelModal();
+        else if (interact && this.mode === 'message') {
+          if (this.message?.advance()) this.showMessage();
+          else this.resume();
+        } else if (interact && this.mode === 'transition-error' && this.lastExit) this.startTransition(this.lastExit);
+        return;
       }
+      const target = interact ? room.target(room.actor) : null;
+      if (target) {
+        this.message = new MessageSession(target, content.map.strings?.en ?? {});
+        this.setMode('message');
+        this.showMessage();
+        return; // The same input frame cannot both start dialogue and emit a burst.
+      }
+      advanceActor(room.actor, direction, delta, content.collision.canEnter, (tile) => {
+        const exit = room.exits.arrive(tile);
+        if (!exit) return true;
+        this.startTransition(exit);
+        return false; // Commit a safe tile checkpoint; no extra movement debt across a door.
+      });
+      room.sync();
+      if (this.mode === 'exploration' && burst) room.burst(elements.effects.checked);
+    }
+
+    private setMode(mode: InputMode): void {
+      this.mode = mode; this.inputOwner?.setMode(mode);
+      const locked = mode !== 'exploration';
+      elements.burst.disabled = locked; elements.restart.disabled = locked; elements.interact.disabled = locked;
+    }
+    private showMessage(): void {
+      const message = this.message!;
+      this.dialog.show(message.speaker, message.text, `${message.page} / ${message.total}`,
+        message.page === message.total ? 'Close message' : 'Next page', 'Close');
+    }
+    private resume(): void {
+      this.dialog.close(); this.message = null;
+      this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
+    }
+    private cancelModal(): void {
+      if (this.mode === 'transition') {
+        this.generation += 1; this.transfer.cancel(); cancelledTransitions += 1;
+      }
+      this.resume();
+    }
+
+    private startTransition(exit: MapExit): void {
+      void this.enter(exit).catch((cause) => this.fail(cause));
+    }
+
+    private async enter(exit: MapExit): Promise<void> {
+      if (!this.sceneLifetime || this.sceneLifetime.signal.aborted || this.transfer.pending ||
+          (this.mode !== 'exploration' && this.mode !== 'transition-error')) return;
+      const generation = ++this.generation;
+      const lifetime = this.sceneLifetime;
+      this.lastExit = exit; this.transitionError = null;
+      this.setMode('transition');
+      this.dialog.show('Opening doorway', 'Preparing the next room. You can cancel and stay here.', '', null, 'Cancel travel');
+      const result = await this.transfer.run(
+        (signal) => loadMapDestination(new URL(import.meta.env.BASE_URL, document.baseURI), content.game,
+          exit.targetMap, exit.targetSpawn, signal),
+        (next) => {
+          // Construct/validate the new view while the old view is still usable.
+          const old = this.room!;
+          const prepared = new MapView(this, next);
+          try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
+          this.room = prepared; content = next;
+          try { old.destroy(); } catch (cause) { this.fail(cause); } // Cleanup failure is fatal, not a false rollback.
+          transitions += 1;
+        },
+      );
+      if (lifetime.signal.aborted || generation !== this.generation || phase !== 'ready') return;
+      if (result.kind === 'failed') {
+        failedTransitions += 1;
+        this.transitionError = result.error.message.slice(0, 2000);
+        this.setMode('transition-error');
+        this.dialog.show('The doorway could not open', this.transitionError, 'Your current room is unchanged.', 'Retry', 'Stay here');
+      } else this.resume();
     }
 
     private fail(cause: unknown): void {
       if (phase === 'error') return;
       phase = 'error';
-      this.inputOwner?.clear();
-      elements.burst.disabled = true;
-      elements.restart.disabled = true;
+      this.generation += 1; this.transfer.cancel(); this.dialog.close(); this.inputOwner?.clear();
+      elements.burst.disabled = true; elements.restart.disabled = true; elements.interact.disabled = true;
       console.error('[RPGameworks] Map scene failed', cause);
       onError(`Map scene failed: ${cause instanceof Error ? cause.message : String(cause)}`);
     }
 
     private release(): void {
       if (!this.sceneLifetime) return;
-      this.sceneLifetime.abort();
-      this.sceneLifetime = null;
-      this.inputOwner?.dispose();
-      this.inputOwner = null;
-      this.emitter?.killAll();
-      this.emitter = null;
-      this.hero = null;
+      this.sceneLifetime.abort(); this.sceneLifetime = null;
+      this.generation += 1; this.transfer.dispose();
+      this.dialog.close(); this.message = null;
+      this.inputOwner?.dispose(); this.inputOwner = null;
+      this.room?.destroy(); this.room = null;
       stops += 1;
       if (current === this) current = null;
-      // Phaser owns and disposes this scene's display list, including the emitter.
       this.events.off(Phaser.Scenes.Events.DESTROY, this.release, this);
       this.events.off(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
     }
@@ -211,10 +249,17 @@ export function createFoundation(elements: FoundationElements, onError: (message
 
   return {
     snapshot(): RuntimeSnapshot {
-      const actor = current?.actor ?? spawnActor();
+      const { map, spawn, collision } = content;
+      const room = current?.room;
+      const actor = room?.actor ?? spawnActor();
       const position = actorPosition(actor, TILE);
       return {
         phase, scene: SCENE, starts, stops,
+        inputMode: current?.mode ?? 'exploration',
+        messageId: current?.message?.id ?? null, messagePage: current?.message?.page ?? 0,
+        interactionTarget: room?.target(actor)?.objectId ?? null,
+        transitions, cancelledTransitions, failedTransitions,
+        transitionError: current?.transitionError ?? null,
         mapId: map.id, mapName: map.name, mapWidth: map.width, mapHeight: map.height,
         spawnId: spawn.id, loadedMaps: disposed ? 0 : 1, collisionCells: collision.cellCount,
         blockedCells: collision.blockedCells, placedObjects: map.objects.length, exits: map.exits.length,
@@ -225,9 +270,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
         activeScenes: game.scene.getScenes(true).length,
         displayObjects: current?.children.length ?? 0,
         textureCount: game.textures.getTextureKeys().length,
-        aliveParticles: current?.emitter?.getAliveParticleCount() ?? 0,
-        pooledParticles: current?.emitter?.getParticleCount() ?? 0,
-        burstRequests: current?.bursts ?? 0,
+        aliveParticles: room?.emitter?.getAliveParticleCount() ?? 0,
+        pooledParticles: room?.emitter?.getParticleCount() ?? 0,
+        burstRequests: room?.bursts ?? 0,
         effectsEnabled: elements.effects.checked,
         renderer: game.renderer?.type === Phaser.WEBGL ? 'WebGL' : game.renderer?.type === Phaser.CANVAS ? 'Canvas' : 'Starting',
         phaser: Phaser.VERSION,
@@ -244,6 +289,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       appLifetime.abort();
       elements.burst.disabled = true;
       elements.restart.disabled = true;
+      elements.interact.disabled = true;
       game.destroy(true);
     },
   };

@@ -1,10 +1,11 @@
 import type { Direction } from '../domain/movement';
 
-export const CONTROLLER_KEY = 'rpgameworks.controller.v1';
-export const ACTIONS = ['up', 'down', 'left', 'right', 'burst'] as const;
+export const LEGACY_CONTROLLER_KEY = 'rpgameworks.controller.v1';
+export const CONTROLLER_KEY = 'rpgameworks.controller.v2';
+export const ACTIONS = ['up', 'down', 'left', 'right', 'burst', 'interact', 'cancel'] as const;
 export type PadAction = typeof ACTIONS[number];
 export interface ControllerConfig {
-  version: 1;
+  version: 2;
   enabled: boolean;
   allowUnmapped: boolean;
   deadzone: number;
@@ -22,13 +23,13 @@ export interface PadState {
   readonly axes: readonly number[];
   readonly buttons: readonly (number | { readonly pressed: boolean; readonly value: number })[];
 }
-export interface PadInput { direction: Direction | null; burst: boolean }
-export const NO_PAD_INPUT: Readonly<PadInput> = Object.freeze({ direction: null, burst: false });
+export interface PadInput { direction: Direction | null; burst: boolean; interact: boolean; cancel: boolean }
+export const NO_PAD_INPUT: Readonly<PadInput> = Object.freeze({ direction: null, burst: false, interact: false, cancel: false });
 
 export function defaultControllerConfig(): ControllerConfig {
-  return { version: 1, enabled: true, allowUnmapped: false, deadzone: 0.25,
+  return { version: 2, enabled: true, allowUnmapped: false, deadzone: 0.25,
     axisX: 0, axisY: 1, invertX: false, invertY: false,
-    buttons: { up: 12, down: 13, left: 14, right: 15, burst: 0 } };
+    buttons: { up: 12, down: 13, left: 14, right: 15, burst: 0, interact: 2, cancel: 1 } };
 }
 
 /** Stored preferences are untrusted; never coerce invalid values into live bindings. */
@@ -36,20 +37,30 @@ export function parseControllerConfig(value: unknown): ControllerConfig | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const v = value as Record<string, unknown>;
   const keys = ['version', 'enabled', 'allowUnmapped', 'deadzone', 'axisX', 'axisY', 'invertX', 'invertY', 'buttons'];
-  if (Object.keys(v).some((key) => !keys.includes(key)) || v.version !== 1) return null;
+  if (Object.keys(v).some((key) => !keys.includes(key)) || (v.version !== 1 && v.version !== 2)) return null;
   for (const key of ['enabled', 'allowUnmapped', 'invertX', 'invertY']) if (typeof v[key] !== 'boolean') return null;
   if (typeof v.deadzone !== 'number' || !Number.isFinite(v.deadzone) || v.deadzone < 0.05 || v.deadzone > 0.9) return null;
   const index = (n: unknown, max: number): boolean => typeof n === 'number' && Number.isInteger(n) && n >= -1 && n <= max;
   if (!index(v.axisX, 15) || !index(v.axisY, 15) || (v.axisX !== -1 && v.axisX === v.axisY)) return null;
   if (!v.buttons || typeof v.buttons !== 'object' || Array.isArray(v.buttons)) return null;
   const bindings = v.buttons as Record<string, unknown>;
-  if (Object.keys(bindings).length !== ACTIONS.length || ACTIONS.some((a) => !index(bindings[a], 63))) return null;
-  const assigned = ACTIONS.map((a) => bindings[a]).filter((n) => n !== -1);
+  const actions = v.version === 1 ? ACTIONS.slice(0, 5) : ACTIONS;
+  if (Object.keys(bindings).length !== actions.length || actions.some((a) => !index(bindings[a], 63))) return null;
+  const assigned = actions.map((a) => bindings[a]).filter((n) => n !== -1);
   if (new Set(assigned).size !== assigned.length) return null;
-  return { version: 1, enabled: v.enabled as boolean, allowUnmapped: v.allowUnmapped as boolean,
+  const migrated = { ...bindings } as Record<PadAction, number>;
+  if (v.version === 1) {
+    const used = new Set(assigned);
+    for (const [action, preferred] of [['interact', 2], ['cancel', 1]] as const) {
+      const free = [preferred, ...Array.from({ length: 64 }, (_, i) => i)].find((button) => !used.has(button));
+      migrated[action] = free ?? -1;
+      if (free !== undefined) used.add(free);
+    }
+  }
+  return { version: 2, enabled: v.enabled as boolean, allowUnmapped: v.allowUnmapped as boolean,
     deadzone: v.deadzone, axisX: v.axisX as number, axisY: v.axisY as number,
     invertX: v.invertX as boolean, invertY: v.invertY as boolean,
-    buttons: { ...bindings } as Record<PadAction, number> };
+    buttons: migrated };
 }
 
 export function axisValue(pad: PadState, index: number): number {
@@ -88,11 +99,13 @@ export class PadLatch {
   private identity = '';
   private armed = false;
   private wasBurst = false;
+  private wasInteract = false;
+  private wasCancel = false;
   private previous: Direction | null = null;
-  private readonly result: PadInput = { direction: null, burst: false };
+  private readonly result: PadInput = { direction: null, burst: false, interact: false, cancel: false };
 
   get waitingForNeutral(): boolean { return !this.armed; }
-  reset(): void { this.identity = ''; this.armed = false; this.wasBurst = false; this.previous = null; }
+  reset(): void { this.identity = ''; this.armed = false; this.wasBurst = false; this.wasInteract = false; this.wasCancel = false; this.previous = null; }
 
   sample(pad: PadState | null, config: ControllerConfig, active: boolean): Readonly<PadInput> {
     if (!active || !config.enabled || !pad?.connected || (pad.mapping !== 'standard' && !config.allowUnmapped)) {
@@ -101,18 +114,22 @@ export class PadLatch {
     const identity = `${pad.index}:${pad.id}:${pad.mapping}`;
     if (identity !== this.identity) { this.reset(); this.identity = identity; }
     const burst = buttonPressed(pad, config.buttons.burst);
+    const interact = buttonPressed(pad, config.buttons.interact);
+    const cancel = buttonPressed(pad, config.buttons.cancel);
     if (!this.armed) {
       const neutral = Math.abs(axisValue(pad, config.axisX)) <= config.deadzone &&
         Math.abs(axisValue(pad, config.axisY)) <= config.deadzone &&
         ACTIONS.every((action) => !buttonPressed(pad, config.buttons[action]));
       if (neutral) this.armed = true;
-      this.wasBurst = burst;
+      this.wasBurst = burst; this.wasInteract = interact; this.wasCancel = cancel;
       return NO_PAD_INPUT;
     }
     this.previous = padDirection(pad, config, this.previous);
     this.result.direction = this.previous;
     this.result.burst = burst && !this.wasBurst;
-    this.wasBurst = burst;
+    this.result.interact = interact && !this.wasInteract;
+    this.result.cancel = cancel && !this.wasCancel;
+    this.wasBurst = burst; this.wasInteract = interact; this.wasCancel = cancel;
     return this.result;
   }
 }

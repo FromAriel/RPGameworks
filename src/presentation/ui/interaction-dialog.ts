@@ -5,6 +5,7 @@ export class InteractionDialog {
   private readonly title: HTMLElement;
   private readonly text: HTMLElement;
   private readonly page: HTMLElement;
+  private readonly scroll: HTMLElement;
   private readonly advance: HTMLButtonElement;
   private readonly cancel: HTMLButtonElement;
 
@@ -15,12 +16,14 @@ export class InteractionDialog {
       return value;
     };
     this.title = get('#dialog-title'); this.text = get('#dialog-text'); this.page = get('#dialog-page');
+    this.scroll = get('.dialog-scroll');
     this.advance = get('#dialog-advance'); this.cancel = get('#dialog-cancel');
   }
 
   show(title: string, text: string, page: string, advanceLabel: string | null, cancelLabel: string): void {
     // Authored content is text, never HTML. Newlines and wrapping are handled by CSS.
     this.title.textContent = title; this.text.textContent = text; this.page.textContent = page;
+    this.scroll.scrollTop = 0; // A new page starts at its beginning, not the last page's scroll position.
     this.advance.hidden = advanceLabel === null;
     this.advance.textContent = advanceLabel ?? '';
     this.cancel.textContent = cancelLabel;

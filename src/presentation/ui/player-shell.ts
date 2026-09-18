@@ -40,6 +40,7 @@ export function mountPlayerShell(
   function select(next: ToolTab, focus = true): void {
     onInputBoundary();
     tab = next;
+    get('tools-title').textContent = next === 'options' ? 'Settings' : 'Debug';
     if (next !== 'options') settings.open = false;
     tabs.forEach((button, i) => {
       const selected = i === (next === 'options' ? 0 : 1);

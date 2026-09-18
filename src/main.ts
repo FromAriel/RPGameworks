@@ -1,4 +1,6 @@
 import './style.css';
+import './presentation/skin/windowskin.css';
+import { mountWindowskin } from './presentation/ui/windowskin';
 import { mountPlayerShell } from './presentation/ui/player-shell';
 import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
@@ -42,6 +44,8 @@ const controllerUI = mountControllerSettings(controllerPanel, controller, stage,
   fatalGameError: failed ? error.textContent : null,
   pageErrors: pageErrors.snapshot(),
 }), () => shell.close());
+
+const windowSkin = mountWindowskin();
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;
 
@@ -112,6 +116,7 @@ function dispose(): void {
   handle?.destroy();
   controllerUI.dispose();
   shell.dispose();
+  windowSkin.dispose();
   controller.dispose();
   handle = null;
   delete window.__RPGAMEWORKS__;

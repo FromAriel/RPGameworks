@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.5 · **Date:** September 18, 2026 · **Status:** M1.1–M1.5 and player shell implemented; W1 is next, then outstanding M1.6 closeout. New skin/stateful-gameplay work is approved planning only. See STATUS for verification.
+**Version:** 0.6 · **Date:** September 18, 2026 · **Status:** M1.1–M1.5, player shell and W1 base skin implemented; M1.6 closeout is next. Stateful gameplay remains pending. See STATUS for verification.
 
 Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -14,7 +14,7 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 
 ## Approved near-term sequence
 
-**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 is the explicitly approved insertion; it does not complete M1.6 or authorize a general theme editor. Each stage is delivered in bounded packets with its own acceptance. No pending checkbox below was completed by this documentation update.
+**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 is the explicitly approved insertion; it does not complete M1.6 or authorize a general theme editor. Each stage is delivered in bounded packets with its own acceptance. W1 has now been implemented and verified; all later work remains pending. See [WINDOW-SKIN](WINDOW-SKIN.md) for exact source/audit, scope and candidate evidence.
 
 ## Milestone overview
 
@@ -50,7 +50,7 @@ This milestone includes README, PLAN, PIXELFX, ROADMAP, STATUS, RESEARCH, and AG
 
 **Player-visible outcome:** Open the game, see a small pixel room, move around, talk to an NPC, walk through a door into a second room, return, and trigger one tiny visual burst.
 
-**Checkpoint:** The two validated maps now have a caretaker message, readable plaque, modal keyboard/pointer/controller input, and real door travel without reloading the document. Destination preparation, cancellation, Retry/Stay recovery, and explicit outgoing room cleanup are implemented. The player-shell baseline has 190 unit tests and 65 browser scenarios; the earlier 178/56 interaction suite is historical. See [INTERACTIONS.md](INTERACTIONS.md), [PLAYER-SHELL.md](PLAYER-SHELL.md) and [STATUS.md](STATUS.md) for recorded execution evidence, not new test results from this planning update. M1.6 remains open for a recorded frame/resource baseline and full acceptance consolidation; no public deployment is claimed.
+**Checkpoint:** The two validated maps now have a caretaker message, readable plaque, modal keyboard/pointer/controller input, and real door travel without reloading the document. Destination preparation, cancellation, Retry/Stay recovery, and explicit outgoing room cleanup are implemented. The W1 slice has 207 unit tests and 78 browser scenarios; the preceding shell (190/65) and interaction (178/56) suites are historical. See [WINDOW-SKIN.md](WINDOW-SKIN.md), [INTERACTIONS.md](INTERACTIONS.md) and [STATUS.md](STATUS.md) for recorded execution evidence. M1.6 remains open for a recorded frame/resource baseline and full acceptance consolidation; no public deployment is claimed.
 
 ### Work packets
 
@@ -69,13 +69,15 @@ The burst is cosmetic: removing it cannot break the interaction. Inspect the pix
 
 **Defer:** Full inventory, quests, battle, material masks, generic event scripting, a map editor, and custom shaders.
 
-## W1 — Base skin integration (next)
+## W1 — Base skin integration (implemented)
 
 **Outcome:** Mara's existing message window and Settings use Ariel's edited base skin, a live title opening, and a real section divider. Keep the default game view clean and tools optional. Detailed art identity, packing, joining and acceptance rules: [NEXT-SLICES](NEXT-SLICES.md).
 
-- [ ] **W1.1 — Source and seam audit.** Retrieve the exact edited PNG and companion kit; record original bytes/hash, alpha, dimensions, extraction rectangles and provenance. Audit ports/shoulders against the actual edit. Preserve it rather than regenerating the older sample or silently repainting mismatches. Asset import is not done in this planning commit.
-- [ ] **W1.2 — Minimum production compositor.** Implement the fixed corners, repeats/plain remainder plus complete mirrored ending, title brackets, fills and dividers needed by those real surfaces. Retain the full format's named roles for future use, with no per-stamp DOM explosion or per-frame border rebuild.
-- [ ] **W1.3 — Integration and acceptance.** Preserve semantic text/input/modal behavior, readable responsive content and current shell defaults. Check real dialogue/Settings, long titles, narrow/wide and odd/remainder dimensions, selected/focused states, revised-alpha composition, disposal and skin-load fallback. Record any unresolved seam explicitly.
+- [x] **W1.1 — Source and seam audit.** Retrieve the exact edited PNG and companion kit; record original bytes/hash, alpha, dimensions, extraction rectangles and provenance. Audit ports/shoulders against the actual edit. Preserve it rather than regenerating the older sample or silently repainting mismatches. The selected source is now imported; see WINDOW-SKIN for its exact identity and retained seam warnings.
+- [x] **W1.2 — Minimum production compositor.** Implement the fixed corners, repeats/plain remainder plus complete mirrored ending, title brackets, fills and dividers needed by those real surfaces. Retain the full format's named roles for future use, with no per-stamp DOM explosion or per-frame border rebuild.
+- [x] **W1.3 — Integration and acceptance.** Preserve semantic text/input/modal behavior, readable responsive content and current shell defaults. Check real dialogue/Settings, long titles, narrow/wide and odd/remainder dimensions, selected/focused states, revised-alpha composition, disposal and skin-load fallback. Record any unresolved seam explicitly.
+
+**Delivery evidence:** Candidate `75bed7605ed6d4eb857cc92027d0ebc25b86e420` passed 207 unit tests and 78 production-browser scenarios across Windows/Node 24 and Linux/Node 22/24 in [run 35369541935](https://github.com/FromAriel/RPGameworks/actions/runs/35369541935). The exact edited PNG, production manifest, known connector/alpha audit and adapted full slot explainer are preserved in the repository. Right-edge plain spans use an explicitly documented derived port profile; eight original shoulder differences remain recorded and the unused D6 attachment is not claimed compatible. Live titles/divider, bounded invalidation, load fallback, fixed long-message actions and input/lifecycle regressions are covered. STATUS identifies the next task; final main CI remains authoritative.
 
 **Defer:** theme editor, extra visual tiers, recolored variants, fake inventory/party screens, new source packing and Python as a browser runtime requirement.
 
@@ -257,8 +259,6 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**W1 — Base skin integration.** Use Ariel's edited sheet identified in NEXT-SLICES, not the original generated sample. Import the exact source and companion contract, audit geometry/alpha/ports without silently repainting, and apply a minimal compositor to existing dialogue and Settings with title brackets and one real divider. Preserve full-area play, hidden tools and semantic input. Finish its regression/visual evidence and handoff; do not build a theme catalog or fake menu screens.
+**M1.6 — Closeout and baseline.** W1 is complete. Retain the skinned two-room slice and record a reproducible frame/resource workload with browser/environment/commit, map, viewport, duration, effects and Debug visibility. Existing diagnostics, source/content checks and production-browser CI are not recreated as scaffolding. Static deployment is conditional on verified hosting access and user direction. Do not turn this closeout into another skin redesign or theme catalog.
 
-**Then M1.6 — Closeout and baseline:** retain the working slice and record a reproducible frame/resource workload with browser/environment/commit, map, viewport, duration, effects and Debug visibility. Existing diagnostics, source/content checks and production-browser CI are not recreated as scaffolding. Static deployment is conditional on verified hosting access and user direction.
-
-After closeout, M2 establishes state/inventory/saves, with N1 beside the first menu; G1 applies those primitives to conditional access; M3 proves conversations and the connected quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. New capabilities remain unchecked until implemented and verified.
+After closeout, M2 establishes state/inventory/saves, with N1 beside the first menu; G1 applies those primitives to conditional access; M3 proves conversations and the connected quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. Those new capabilities remain unchecked until implemented and verified.

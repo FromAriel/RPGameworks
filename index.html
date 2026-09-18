@@ -28,14 +28,17 @@
       </div>
       <noscript><p class="game-notice">JavaScript is required to enter this world.</p></noscript>
     </main>
-    <aside id="tools-panel" tabindex="-1" aria-label="Game menu and developer tools" hidden>
-      <header class="panel-heading"><h2>RPGameworks</h2><button id="tools-close" type="button" aria-label="Close game menu">×</button></header>
+    <aside data-window-skin="frame" id="tools-panel" tabindex="-1" aria-label="Game menu and developer tools" hidden>
+      <header class="panel-heading skin-heading"><h2 id="tools-title" data-skin-title>Settings</h2></header>
+      <div class="panel-toolbar">
       <div class="panel-tabs" role="tablist" aria-label="Menu sections">
         <button id="options-tab" type="button" role="tab" aria-selected="true" aria-controls="options-panel">Settings</button>
         <button id="debug-tab" type="button" role="tab" aria-selected="false" aria-controls="debug-panel" tabindex="-1">Debug</button>
       </div>
+      <button id="tools-close" type="button" aria-label="Close game menu">×</button></div>
+      <div class="tools-scroll">
       <section id="options-panel" role="tabpanel" aria-labelledby="options-tab">
-        <h3>Display & controls</h3>
+        <h3 class="skin-divider" data-window-skin="divider"><span data-skin-title>Display &amp; controls</span></h3>
         <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
         <p class="hint">Respects reduced motion. Effects never change game rules.</p>
         <label class="setting"><input id="touch-enabled" type="checkbox" /> On-screen controls</label>
@@ -88,6 +91,7 @@
       <section id="debug-panel" role="tabpanel" aria-labelledby="debug-tab" hidden>
         <div class="stage-heading"><span id="map-title">LOADING MAP</span><span id="render-label">BOOTING</span></div>
         <p id="status" role="status">Loading renderer…</p>
+        <p id="skin-status" class="hint" role="status">Window skin loads when a window is opened.</p>
         <p id="page-error-notice" class="hint" role="status" hidden></p>
         <label class="map-picker" for="map-preview">Preview map (reloads the page)<select id="map-preview" disabled></select></label>
         <dl id="diagnostics" aria-label="Runtime diagnostics"></dl>
@@ -96,11 +100,14 @@
         <footer><span>BUILD</span><span id="build-label">0.1.0</span></footer>
       </section>
       <button id="tools-resume" class="resume-button" type="button">Return to game</button>
+      </div>
     </aside>
-    <dialog id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
+    <dialog data-window-skin="frame" id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
+      <header class="skin-heading"><h2 id="dialog-title" data-skin-title></h2></header>
+      <div class="dialog-scroll">
       <p id="dialog-page" class="eyebrow"></p>
-      <h2 id="dialog-title"></h2>
       <div id="dialog-text"></div>
+      </div>
       <div class="dialog-actions">
         <button id="dialog-advance" data-action="interact" type="button">Next page</button>
         <button id="dialog-cancel" data-action="cancel" class="secondary" type="button">Close</button>

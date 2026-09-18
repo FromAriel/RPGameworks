@@ -4,9 +4,11 @@
 
 RPGameworks is being built a playable piece at a time: ordinary TypeScript/JavaScript, small active maps, a persistent world, and a composable cosmetic effects layer. The repository is the initial authoring environment; no paid coding agent, desktop RPG editor, runtime AI service, or game server is required by the design.
 
-## Current build: player-first two-room slice
+## Current build: skinned player-first two-room slice
 
 **The game now fills the browser viewport**, centered on a black background with crisp whole-pixel enlargement. The small **Menu** button opens Settings; **F2** opens Debug directly. Both are closed at launch. On wide screens the drawer can sit beside live gameplay; click the play area to keep playing with the readout visible. Controller options, instructions, map preview, build information and runtime counters remain available without occupying the normal game screen. See [the player interface](docs/PLAYER-SHELL.md).
+
+**Your edited base windowskin is integrated.** Mara’s conversation and the Settings/Debug drawer use the exact source sheet, live bracketed titles, and a real Settings divider. Long titles wrap into a header; long message bodies scroll while their actions stay available. Skin loading is lazy and decoration failures leave usable plain windows. See [the tile format, source identity, connector audit and implementation](docs/WINDOW-SKIN.md).
 
 The 20 × 12 Workshop and 24 × 14 Pillar Gallery are now connected by working doors. Walk up to Mara, the workshop caretaker, face her, and open her two-page greeting. Visit the gallery and examine its brass plaque, then return through the western doorway. Messages, placement IDs, exits, and arrival points are authored in validated JSON rather than map-specific scene classes.
 
@@ -71,7 +73,7 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **190 unit tests and 65 browser scenarios**, including modal ownership, failure/cancellation, controller preference migration, and a 40-transfer room tour. See [PLAYER-SHELL.md](docs/PLAYER-SHELL.md) for current UI verification and [INTERACTIONS.md](docs/INTERACTIONS.md) for the preceding gameplay slice. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the preceding comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
+`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **207 unit tests and 78 browser scenarios**, including modal ownership, failure/cancellation, controller preference migration, and a 40-transfer room tour. See [WINDOW-SKIN.md](docs/WINDOW-SKIN.md) for W1 verification and [PLAYER-SHELL.md](docs/PLAYER-SHELL.md) for the preceding shell and [INTERACTIONS.md](docs/INTERACTIONS.md) for the preceding gameplay slice. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the preceding comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
 
 GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows with Node 24.15.0. Node 24 jobs use npm 11.6.2. Each matrix leg retains a `browser-build-<label>` artifact and `browser-evidence-<label>` report. Those artifacts are build/test outputs, not a deployed website. The standard workflow has read-only repository permissions.
 
@@ -96,18 +98,22 @@ Generated JSON payloads, standalone validators, and schema-derived TypeScript de
 | `src/presentation/ui/controller-settings.ts` | Semantic controller configuration and bounded-rate telemetry |
 | `src/presentation/foundation.ts`, `map-view.ts` | Reusable scene, explicit room visual ownership, safe transitions, camera, and cosmetic particles |
 | `src/presentation/ui/player-shell.ts` | Closed-by-default settings/debug drawer, keyboard access and optional touch overlay |
+| `src/presentation/skin/`, `src/presentation/ui/windowskin.ts` | Bounded source-pixel composition, live title measurement, lazy atlas loading and disposal |
+| `assets/source/ui/base/` | Exact edited skin, full tile manifest, connector/alpha audit and provenance |
 | `src/presentation/ui/interaction-dialog.ts` | Native modal presenter; authored strings remain literal text |
 | `src/main.ts`, `src/style.css`, `index.html` | Accessible controls, diagnostics, errors, and responsive page layout |
 | `assets/source/` | Original placeholder pixel patterns and provenance |
 | `tools/` | Asset generation, schema generation, and validated map compilation |
 | `tests/` | Domain, asset, package-policy, map, loader, controller, and production-browser checks |
 
-Maps and simple messages are data, not new scene subclasses. The next packet closes M1.6 diagnostics/performance acceptance before M2 adds persistent state, inventory, and safe saves.
+W1 base-skin integration is complete; optional extra tile renderers and a theme editor remain deferred. Maps and simple messages are data, not new scene subclasses. The next packet closes M1.6 diagnostics/performance acceptance before M2 adds persistent state, inventory, and safe saves.
 
 ## Documentation
 
 | Document | Purpose |
 | --- | --- |
+| [Base windowskin](docs/WINDOW-SKIN.md) | Runtime integration, complete tile format, preserved source, known seams and verification |
+| [Approved next slices](docs/NEXT-SLICES.md) | Shared state, conditional access, menu navigation and branching-dialogue contracts |
 | [Player interface](docs/PLAYER-SHELL.md) | Full-viewport play, black letterboxing, optional tools, input boundaries and verification |
 | [Interaction and room travel](docs/INTERACTIONS.md) | Current messages, controls, door lifecycle, compatibility, and tests |
 | [Controller recovery](docs/CONTROLLER-RECOVERY.md) | Page-error isolation, activation, diagnostics, and verification |

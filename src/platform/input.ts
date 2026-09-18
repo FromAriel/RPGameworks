@@ -53,7 +53,7 @@ export class InputController {
       }
     }, options);
     window.addEventListener('keyup', (event) => this.held.delete(event.code), options);
-    stage.addEventListener('focusout', () => this.clear(), options);
+    stage.addEventListener('focusout', () => this.clearLocal(), options);
     window.addEventListener('blur', () => this.clear(), options);
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.clear(); }, options);
     burstButton.addEventListener('click', () => { if (this.canPlay()) this.burstQueued = true; }, options);
@@ -79,7 +79,7 @@ export class InputController {
         }
       }, options);
       button.addEventListener('keyup', (event) => this.held.delete(`button:${event.code}`), options);
-      button.addEventListener('blur', () => this.clear(), options);
+      button.addEventListener('blur', () => this.clearLocal(), options);
     }
   }
 
@@ -100,6 +100,8 @@ export class InputController {
     return result;
   }
 
-  clear(): void { this.held.clear(); this.burstQueued = false; this.gamepad?.reset(); }
+  // Element focus changes release keyboard/pointer state, not a page-owned pad.
+  private clearLocal(): void { this.held.clear(); this.burstQueued = false; }
+  clear(): void { this.clearLocal(); this.gamepad?.reset(); }
   dispose(): void { this.clear(); this.lifetime.abort(); }
 }

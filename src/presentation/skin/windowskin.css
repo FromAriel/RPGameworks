@@ -25,6 +25,7 @@
 #interaction-dialog[open] { display: flex; flex-direction: column; }
 #interaction-dialog[data-skin-state="ready"] { background-color: transparent; box-shadow: none; }
 .dialog-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 4px 8px; scrollbar-gutter: stable; }
+#interaction-dialog .dialog-actions { flex: none; padding: 4px 8px 0; }
 #dialog-page { color: #8da5bc; }
 @media (min-width: 768px) and (min-height: 500px) {
   #interaction-dialog { --skin-scale: 2; padding: 20px 40px 36px; }

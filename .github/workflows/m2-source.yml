@@ -1,0 +1,20 @@
+name: M2 source
+on:
+  push:
+    branches: [work/m2-session-inventory]
+    paths: [.github/workflows/m2-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar HEAD > source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2-source
+          path: source.tar
+          retention-days: 2

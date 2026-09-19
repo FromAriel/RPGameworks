@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ItemCatalog",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "capacity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,31}:item\\.[a-z][a-z0-9.-]{0,95}$"
+          },
+          "nameKey": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "descriptionKey": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "maxStack": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          }
+        },
+        "required": [
+          "id",
+          "nameKey",
+          "descriptionKey",
+          "maxStack"
+        ]
+      }
+    },
+    "strings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "en": {
+          "type": "object",
+          "maxProperties": 512,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[\\s\\S]{1,1500}$"
+          }
+        }
+      },
+      "required": [
+        "en"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "capacity",
+    "items",
+    "strings"
+  ]
+}

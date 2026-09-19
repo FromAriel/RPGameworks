@@ -38,7 +38,11 @@ export { expect };
 
 /** Reach controls through the real closed-by-default player menu. */
 export async function openTools(page: Page, tab: 'options' | 'debug' = 'options'): Promise<void> {
-  if (await page.locator('#tools-panel').isHidden()) await page.locator('#tools-toggle').click();
+  if (await page.locator('#tools-panel').isHidden()) {
+    if (await page.locator('#inventory-dialog').isHidden()) await page.locator('#tools-toggle').click();
+    await expect.poll(async () => await page.locator('#inventory-dialog').isVisible() || await page.locator('#tools-panel').isVisible()).toBe(true);
+    if (await page.locator('#inventory-dialog').isVisible()) await page.locator('#inventory-settings').click();
+  }
   const button = page.locator(`#${tab}-tab`);
   if (await button.getAttribute('aria-selected') !== 'true') await button.click();
   await expect(page.locator(`#${tab}-panel`)).toBeVisible();

@@ -224,6 +224,6 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   await expect(page.locator('#controller-button-burst')).toHaveValue('2');
   await expect(page.locator('#controller-button-interact')).not.toHaveValue('2');
   await expect(page.locator('#controller-deadzone')).toHaveValue('40');
-  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('rpgameworks.controller.v2')!).version)).toBe(2);
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('rpgameworks.controller.v3')!).version)).toBe(3);
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('rpgameworks.controller.v1')!).version)).toBe(1);
 });

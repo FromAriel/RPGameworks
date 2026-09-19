@@ -50,7 +50,8 @@
           "x": {"type": "integer", "minimum": 0, "maximum": 127},
           "y": {"type": "integer", "minimum": 0, "maximum": 127},
           "solid": {"type": "boolean"},
-          "messageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}
+          "messageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+          "chest": {"type": "object", "additionalProperties": false, "properties": {"itemId": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:item\\.[a-z][a-z0-9.-]{0,95}$"}, "quantity": {"type": "integer", "minimum": 1, "maximum": 9999}, "openedFrame": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"}, "openedMessageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}, "emptyMessageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}}, "required": ["itemId", "quantity", "openedFrame", "openedMessageId", "emptyMessageId"]}
         }, "required": ["id", "frame", "x", "y", "solid"]
       }
     },

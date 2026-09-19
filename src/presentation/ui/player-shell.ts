@@ -6,7 +6,8 @@ export function mountPlayerShell(
   onInputBoundary: () => void,
   onChange: () => void,
   canOpen: () => boolean,
-): { readonly debugVisible: boolean; readonly ownsInput: boolean; close(): void; dispose(): void } {
+  onGameMenu?: () => void,
+): { readonly debugVisible: boolean; readonly ownsInput: boolean; close(): void; open(tab: ToolTab): void; dispose(): void } {
   const get = <T extends HTMLElement>(id: string): T => {
     const value = document.getElementById(id);
     if (!value) throw new Error(`Missing player shell element: ${id}`);
@@ -68,7 +69,7 @@ export function mountPlayerShell(
     if (canOpen() && !document.querySelector('dialog[open]')) stage.focus({ preventScroll: true });
     onChange();
   }
-  toggle.addEventListener('click', () => open('options'), options);
+  toggle.addEventListener('click', () => { if (onGameMenu && canOpen()) onGameMenu(); else open('options'); }, options);
   get('tools-close').addEventListener('click', close, options);
   get('tools-resume').addEventListener('click', close, options);
   tabs.forEach((button, i) => {
@@ -80,7 +81,9 @@ export function mountPlayerShell(
     }, options);
   });
   // Entering the panel releases gameplay immediately, including between two frame polls.
-  panel.addEventListener('focusin', onInputBoundary, options);
+  panel.addEventListener('focusin', event => {
+    if (!(event.relatedTarget instanceof Node) || !panel.contains(event.relatedTarget)) onInputBoundary();
+  }, options);
   panel.addEventListener('pointerdown', (event) => {
     onInputBoundary();
     if (!(event.target instanceof HTMLElement) || !event.target.closest('button, input, select, textarea, a, summary')) {
@@ -97,12 +100,12 @@ export function mountPlayerShell(
     event.preventDefault(); event.stopImmediatePropagation();
     if (event.code === 'F2') {
       if (!panel.hidden && tab === 'debug') close(); else open('debug');
-    } else if (panel.hidden) open('options'); else close();
+    } else if (panel.hidden) { if (onGameMenu) onGameMenu(); else open('options'); } else close();
   }, { ...options, capture: true });
   return {
     get debugVisible() { return !panel.hidden && tab === 'debug'; },
     get ownsInput() { return !panel.hidden && panel.contains(document.activeElement); },
-    close,
+    close, open,
     dispose(): void {
       if (disposed) return;
       disposed = true; lifetime.abort();

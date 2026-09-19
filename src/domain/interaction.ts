@@ -3,7 +3,7 @@ import type { Actor, Tile } from './movement';
 
 export type MapExit = MapDefinition['exits'][number];
 export type MapMessage = NonNullable<MapDefinition['messages']>[number];
-export interface MessageTarget { objectId: string; message: MapMessage }
+export interface MessageTarget { objectId: string; message: MapMessage; chest?: MapDefinition['objects'][number] }
 const offsets = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] } as const;
 
 /** Build one lookup per resident room, not a per-frame scan of every object. */
@@ -11,10 +11,11 @@ export function createInteractionLookup(map: MapDefinition): (actor: Actor) => M
   const messages = new Map((map.messages ?? []).map((message) => [message.id, message]));
   const cells = new Map<string, MessageTarget>();
   for (const object of map.objects) {
-    if (!object.messageId) continue;
-    const message = messages.get(object.messageId);
+    const messageId = object.chest?.openedMessageId ?? object.messageId;
+    if (!messageId) continue;
+    const message = messages.get(messageId);
     if (!message) throw new Error(`${map.id}: missing message ${object.messageId}`);
-    cells.set(`${object.x},${object.y}`, { objectId: object.id, message });
+    cells.set(`${object.x},${object.y}`, { objectId: object.id, message, ...(object.chest ? {chest:object} : {}) });
   }
   return (actor) => {
     if (actor.motion) return null;

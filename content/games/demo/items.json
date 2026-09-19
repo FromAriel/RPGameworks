@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "capacity": 32,
+  "items": [
+    {
+      "id": "demo:item.lens",
+      "nameKey": "lens.name",
+      "descriptionKey": "lens.description",
+      "maxStack": 1
+    }
+  ],
+  "strings": {
+    "en": {
+      "lens.name": "Polished lens",
+      "lens.description": "A clear glass lens in a silver mounting. It catches the gallery light. Keep it safe; someone may be looking for it."
+    }
+  }
+}

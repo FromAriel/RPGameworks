@@ -4,7 +4,7 @@ import type { GamepadController } from '../../platform/gamepad';
 
 const standardNames = ['A / bottom', 'B / right', 'X / left', 'Y / top', 'LB', 'RB', 'LT', 'RT',
   'View', 'Menu', 'Left stick click', 'Right stick click', 'D-pad up', 'D-pad down', 'D-pad left', 'D-pad right', 'Guide'];
-const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst', interact: 'Interact / advance', cancel: 'Cancel / close' };
+const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst', interact: 'Interact / advance', cancel: 'Cancel / close', menu: 'Game menu / inventory' };
 
 /** Build the small settings UI once; telemetry uses the app's existing 4 Hz refresh. */
 export function mountControllerSettings(root: HTMLDetailsElement, controller: GamepadController, stage: HTMLElement, appReport: () => object, onReturn: () => void = () => {}): { refresh(): void; dispose(): void } {
@@ -37,12 +37,13 @@ export function mountControllerSettings(root: HTMLDetailsElement, controller: Ga
     const node = document.createElement('option'); node.value = String(value); node.textContent = label; select.append(node);
   }
   for (const select of [x, y]) {
+    select.dataset.exclusiveGroup = 'axes';
     option(select, -1, 'Off');
     for (let i = 0; i < 16; i += 1) option(select, i, `${i}${i < 4 ? ` — ${['Left stick X', 'Left stick Y', 'Right stick X', 'Right stick Y'][i]}` : ''}`);
   }
   for (const action of ACTIONS) {
     const label = document.createElement('label'); label.textContent = actionNames[action];
-    const select = document.createElement('select'); select.id = `controller-button-${action}`;
+    const select = document.createElement('select'); select.id = `controller-button-${action}`; select.dataset.exclusiveGroup = 'buttons';
     option(select, -1, 'Unassigned');
     for (let i = 0; i < 64; i += 1) option(select, i, `${i}${standardNames[i] ? ` — ${standardNames[i]}` : ''}`);
     label.append(select); get<HTMLElement>('#controller-bindings').append(label); bindings.set(action, select);

@@ -48,14 +48,20 @@
     {"id": "demo:object.gallery.pillar", "frame": "wall", "x": 6, "y": 6, "solid": true},
     {"id": "demo:object.gallery.sigil", "frame": "sigil", "x": 18, "y": 6, "solid": false},
     {"id": "demo:object.gallery.plaque", "frame": "plaque", "x": 4, "y": 4, "solid": true, "messageId": "gallery-plaque"},
-    {"id": "demo:object.gallery.door", "frame": "door", "x": 1, "y": 6, "solid": false}
+    {"id": "demo:object.gallery.door", "frame": "door", "x": 1, "y": 6, "solid": false},
+    {"id": "demo:object.gallery.lens-chest", "frame": "chest-closed", "x": 8, "y": 8, "solid": true, "chest": {"itemId": "demo:item.lens", "quantity": 1, "openedFrame": "chest-open", "openedMessageId": "lens-found", "emptyMessageId": "chest-empty"}}
   ],
   "exits": [{"id": "to-workshop", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-gallery"}],
   "strings": {"en": {
+    "chest.name": "Gallery chest",
+    "chest.found": "You found a polished lens.\n\nIt is now in your inventory. Open the game menu to inspect it.",
+    "chest.empty": "The chest is empty. You already took the lens.",
     "plaque.name": "Brass plaque",
     "plaque.text": "THE PILLAR GALLERY\n\nMany rooms. One world. Only the room you occupy needs to be awake.\n\nThe western doorway returns to the Workshop."
   }},
   "messages": [
+    {"id": "lens-found", "speakerKey": "chest.name", "pages": ["chest.found"]},
+    {"id": "chest-empty", "speakerKey": "chest.name", "pages": ["chest.empty"]},
     {"id": "gallery-plaque", "speakerKey": "plaque.name", "pages": ["plaque.text"]}
   ]
 }

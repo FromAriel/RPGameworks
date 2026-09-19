@@ -1,9 +1,11 @@
 import validateMap from './generated/map-validator.mjs';
 import validateGame from './generated/game-validator.mjs';
+import validateItems from './generated/items-validator.mjs';
 import { createCollision } from '../domain/map.mjs';
 
 /** @typedef {import('./generated/map.js').MapDefinition} MapDefinition */
 /** @typedef {import('./generated/game.js').GameManifest} GameManifest */
+/** @typedef {import('./generated/items.js').ItemCatalog} ItemCatalog */
 /** @typedef {{file: string, id: string, path: string, message: string, value: unknown}} ContentIssue */
 const MAX_ISSUES = 20;
 
@@ -71,6 +73,39 @@ export function readGame(value, file = 'game.json') {
   if (!ids.has(data.start.mapId)) issues.push({file, id: data.id, path: '/start/mapId', message: 'Start map is not registered', value: data.start.mapId});
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
+}
+
+/** @param {unknown} value @param {string} file @returns {ItemCatalog} */
+export function readItems(value, file = 'items.json') {
+  if (!validateItems(value)) schemaFailure(value, file, validateItems.errors);
+  const data = /** @type {ItemCatalog} */ (value);
+  /** @type {ContentIssue[]} */ const issues = [];
+  const ids = new Set();
+  data.items.forEach((item, index) => {
+    if (ids.has(item.id)) issues.push({file, id:item.id, path:`/items/${index}/id`, message:'Duplicate item ID', value:item.id});
+    ids.add(item.id);
+    for (const key of [item.nameKey, item.descriptionKey]) {
+      if (!Object.hasOwn(data.strings.en, key)) issues.push({file, id:item.id, path:`/items/${index}`, message:'Missing item string', value:key});
+    }
+  });
+  for (const [key, text] of Object.entries(data.strings.en)) {
+    if (!text.trim()) issues.push({file, id:'catalog', path:`/strings/en/${key}`, message:'String must contain visible text', value:text});
+  }
+  if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
+  return freezeCopy(data);
+}
+
+/** @param {MapDefinition} map @param {ItemCatalog} catalog @param {string} file */
+export function validateMapItems(map, catalog, file = 'map.json') {
+  const items = new Map(catalog.items.map(item => [item.id, item]));
+  /** @type {ContentIssue[]} */ const issues = [];
+  map.objects.forEach((object, index) => {
+    if (!object.chest) return;
+    const item = items.get(object.chest.itemId);
+    if (!item) issues.push({file, id:map.id, path:`/objects/${index}/chest/itemId`, message:'Unknown chest item', value:object.chest.itemId});
+    else if (object.chest.quantity > item.maxStack) issues.push({file, id:map.id, path:`/objects/${index}/chest/quantity`, message:'Chest quantity exceeds item stack limit', value:object.chest.quantity});
+  });
+  if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
 }
 
 /** Structural and local semantic validation; shared by build tools and browser.
@@ -150,9 +185,14 @@ export function readMap(value, file = 'map.json', frames) {
   });
   const interactionCells = new Set();
   map.objects.forEach((object, index) => {
-    if (!object.messageId) return;
-    if (!messages.some((message) => message.id === object.messageId)) {
-      issue(`/objects/${index}/messageId`, 'Message does not exist', object.messageId);
+    if (!object.messageId && !object.chest) return;
+    if (object.messageId && object.chest) issue(`/objects/${index}`, 'Choose messageId or chest, not both', object.id);
+    if (object.chest) {
+      if (!object.solid) issue(`/objects/${index}/solid`, 'A chest must be a solid adjacent interaction', object.solid);
+      if (available && !available.has(object.chest.openedFrame)) issue(`/objects/${index}/chest/openedFrame`, 'Atlas frame does not exist', object.chest.openedFrame);
+    }
+    for (const id of object.chest ? [object.chest.openedMessageId, object.chest.emptyMessageId] : [object.messageId]) {
+      if (!messages.some(message => message.id === id)) issue(`/objects/${index}`, 'Message does not exist', id);
     }
     const cell = `${object.x},${object.y}`;
     if (interactionCells.has(cell)) issue(`/objects/${index}`, 'Ambiguous interaction cell', cell);
@@ -167,9 +207,9 @@ export function readMap(value, file = 'map.json', frames) {
 }
 
 /** Complete build-time graph checks. Runtime does not fetch all maps to repeat them.
- * @param {GameManifest} game @param {ReadonlyMap<string, MapDefinition>} maps
+ * @param {GameManifest} game @param {ReadonlyMap<string, MapDefinition>} maps @param {ItemCatalog=} catalog
  */
-export function validateWorld(game, maps) {
+export function validateWorld(game, maps, catalog) {
   /** @type {ContentIssue[]} */ const issues = [];
   const objectIds = new Set();
   const registered = new Set(game.maps.map((entry) => entry.id));
@@ -180,6 +220,7 @@ export function validateWorld(game, maps) {
   for (const entry of game.maps) {
     const map = maps.get(entry.id);
     if (!map || map.id !== entry.id) { issue(entry.file, entry.id, '/id', 'Registered map is missing or has a different ID', map?.id); continue; }
+    if (catalog) validateMapItems(map, catalog, entry.file);
     for (const object of map.objects) {
       if (objectIds.has(object.id)) issue(entry.file, map.id, '/objects', 'Duplicate world placement ID', object.id);
       objectIds.add(object.id);

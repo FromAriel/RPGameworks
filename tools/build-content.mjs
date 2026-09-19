@@ -3,7 +3,7 @@ import { readFileSync, statSync, realpathSync, mkdirSync, mkdtempSync, writeFile
 import { dirname, resolve, relative, sep, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { readGame, readMap, validateWorld } from '../src/content/validation.mjs';
+import { readGame, readMap, readItems, validateWorld } from '../src/content/validation.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -26,7 +26,15 @@ try {
     if (map.id !== entry.id) throw new Error(`${entry.file} /id: expected ${entry.id}, found ${map.id}`);
     maps.set(entry.id, map);
   }
-  validateWorld(game, maps);
+  let catalogData = {schemaVersion:1, capacity:32, items:[], strings:{en:{}}};
+  if (game.itemsFile) {
+    const file = realpathSync(join(source,game.itemsFile));
+    const rel = relative(source,file);
+    if (rel === '..' || rel.startsWith('..' + sep)) throw new Error(`${game.itemsFile}: file escapes the content root`);
+    catalogData = readJSON(file);
+  }
+  const catalog = readItems(catalogData);
+  validateWorld(game, maps, catalog);
   let tileCount = 0;
   for (const map of maps.values()) tileCount += map.width * map.height;
   console.log(`Validated ${maps.size} maps, ${tileCount} cells, ${[...maps.values()].reduce((n, m) => n + m.exits.length, 0)} exits. All spawn, frame and cross-map references resolve.`);
@@ -45,7 +53,13 @@ try {
         writeFileSync(join(staging, file), text);
         return {id: entry.id, file};
       });
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game, maps: entries}) + '\n');
+      let itemsFile;
+      if (game.itemsFile) {
+        const text = JSON.stringify(catalog) + '\n';
+        itemsFile = `items.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;
+        writeFileSync(join(staging, itemsFile), text);
+      }
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game, ...(itemsFile ? {itemsFile} : {}), maps: entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

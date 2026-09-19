@@ -11,7 +11,7 @@ import type { PadState } from '../../src/platform/gamepad-model';
 const workshop = (): MapDefinition => JSON.parse(readFileSync('content/games/demo/maps/workshop.json', 'utf8'));
 const legacy = () => {
   const current = defaultControllerConfig();
-  const { interact: _interact, cancel: _cancel, ...buttons } = current.buttons;
+  const { interact: _interact, cancel: _cancel, menu: _menu, ...buttons } = current.buttons;
   return { ...current, version: 1, buttons };
 };
 
@@ -126,7 +126,7 @@ describe('controller action compatibility', () => {
   it('migrates v1 without overwriting existing custom buttons or axes', () => {
     const old = legacy(); old.buttons.burst=2; old.buttons.left=1; old.axisX=2; old.axisY=3;
     const migrated=parseControllerConfig(old)!;
-    expect(migrated.version).toBe(2); expect(migrated.axisX).toBe(2);
+    expect(migrated.version).toBe(3); expect(migrated.axisX).toBe(2);
     for (const [action,value] of Object.entries(old.buttons)) expect(migrated.buttons[action as keyof typeof old.buttons]).toBe(value);
     expect(new Set(ACTIONS.map((action)=>migrated.buttons[action])).size).toBe(ACTIONS.length);
     expect(old).not.toHaveProperty('buttons.interact');

@@ -59,6 +59,8 @@ test('menu tabs support keyboard navigation and repeated opening does not recrea
   await openRoom(page); const initial = await snapshot(page);
   for (let i = 0; i < 8; i += 1) {
     await page.keyboard.press('Escape');
+    await expect(page.locator('#inventory-dialog')).toBeVisible();
+    await page.locator('#inventory-settings').click();
     await expect(page.locator('#options-tab')).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#debug-tab')).toBeFocused();

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { actorPosition, createActor } from '../domain/movement';
 import { createInteractionLookup, ExitLatch } from '../domain/interaction';
+import { validateMapItems } from '../content/validation.mjs';
+import type { SessionState } from '../domain/session';
 import type { LoadedMap } from '../platform/map-loader';
 
 export const TILE = 16;
@@ -21,13 +23,16 @@ export class MapView {
   bursts = 0;
   private readonly objects: Visual[] = [];
   private disposed = false;
+  private stateRevision = -1;
+  private readonly chests: {object: LoadedMap['map']['objects'][number]; visual: Phaser.GameObjects.Image}[] = [];
 
-  constructor(private readonly scene: Phaser.Scene, readonly content: LoadedMap) {
+  constructor(private readonly scene: Phaser.Scene, readonly content: LoadedMap, private readonly session: SessionState) {
     const { map, spawn } = content;
+    validateMapItems(map, session.catalog, map.id);
     this.actor = { ...createActor(spawn.x, spawn.y), facing: spawn.facing };
     this.target = createInteractionLookup(map);
     this.exits = new ExitLatch(map.exits, spawn);
-    const frames = new Set([...Object.values(map.legend), ...map.objects.map((object) => object.frame),
+    const frames = new Set([...Object.values(map.legend), ...map.objects.flatMap(object => object.chest ? [object.frame, object.chest.openedFrame] : [object.frame]),
       'hero-up', 'hero-down', 'hero-left', 'hero-right', 'spark']);
     for (const frame of frames) {
       if (!scene.textures.get(ATLAS).has(frame)) throw new Error(`${map.id}: atlas frame does not exist: ${frame}`);
@@ -40,7 +45,9 @@ export class MapView {
         }
       }));
       for (const object of map.objects) {
-        this.own(scene.add.image(object.x * TILE, object.y * TILE, ATLAS, object.frame).setOrigin(0).setDepth(0.5));
+        const frame = object.chest && session.opened(object.id) ? object.chest.openedFrame : object.frame;
+        const visual = this.own(scene.add.image(object.x * TILE, object.y * TILE, ATLAS, frame).setOrigin(0).setDepth(0.5));
+        if (object.chest) this.chests.push({object,visual});
       }
       const position = actorPosition(this.actor, TILE);
       this.hero = this.own(scene.add.sprite(position.x, position.y, ATLAS, `hero-${spawn.facing}`).setDepth(1));
@@ -60,6 +67,10 @@ export class MapView {
     for (const object of this.objects) object.setVisible(true);
   }
   sync(): void {
+    if (this.stateRevision !== this.session.snapshot().revision) {
+      this.stateRevision = this.session.snapshot().revision;
+      for (const {object,visual} of this.chests) visual.setFrame(this.session.opened(object.id) ? object.chest!.openedFrame : object.frame);
+    }
     const position = actorPosition(this.actor, TILE);
     this.hero.setPosition(Math.round(position.x), Math.round(position.y));
     const frame = `hero-${this.actor.facing}`;
@@ -75,6 +86,6 @@ export class MapView {
     if (this.disposed) return;
     this.disposed = true;
     for (let i = this.objects.length - 1; i >= 0; i -= 1) this.objects[i]!.destroy();
-    this.objects.length = 0;
+    this.objects.length = 0; this.chests.length = 0;
   }
 }

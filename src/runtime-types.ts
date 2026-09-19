@@ -1,6 +1,9 @@
+import type { SessionSnapshot } from './domain/session';
+
 export interface RuntimeSnapshot {
+  session: SessionSnapshot;
   phase: 'booting' | 'ready' | 'error' | 'stopped';
-  inputMode: 'exploration' | 'message' | 'transition' | 'transition-error';
+  inputMode: 'exploration' | 'message' | 'transition' | 'transition-error' | 'inventory';
   messageId: string | null;
   messagePage: number;
   interactionTarget: string | null;
@@ -39,6 +42,7 @@ export interface RuntimeSnapshot {
 }
 
 export interface FoundationHandle {
+  openInventory(): void;
   clearInput(): void;
   snapshot(): RuntimeSnapshot;
   destroy(): void;

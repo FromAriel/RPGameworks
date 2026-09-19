@@ -1,4 +1,8 @@
 import './style.css';
+import './presentation/ui/inventory.css';
+import { loadItemCatalog } from './platform/item-loader';
+import { SessionState } from './domain/session';
+import { MenuNavigation } from './presentation/ui/menu-navigation';
 import './presentation/skin/windowskin.css';
 import { mountWindowskin } from './presentation/ui/windowskin';
 import { mountPlayerShell } from './presentation/ui/player-shell';
@@ -37,7 +41,8 @@ const controller = new GamepadController();
 const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
 const loadingNotice = required<HTMLElement>('#loading-notice');
 const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.reset(); }, () => drawDiagnostics(),
-  () => !handle || handle.snapshot().inputMode === 'exploration');
+  () => !handle || handle.snapshot().inputMode === 'exploration',
+  () => { if (handle && !failed) { shell.close(); handle.openInventory(); } else shell.open('options'); });
 const controllerUI = mountControllerSettings(controllerPanel, controller, stage, () => ({
   build: __BUILD_ID__, version: __APP_VERSION__,
   runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
@@ -45,7 +50,16 @@ const controllerUI = mountControllerSettings(controllerPanel, controller, stage,
   pageErrors: pageErrors.snapshot(),
 }), () => shell.close());
 
+const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel'), () => {
+  if (controllerPanel.open) { controllerPanel.open = false; controller.reset(); controllerPanel.querySelector<HTMLElement>('summary')?.focus(); }
+  else shell.close();
+});
 const windowSkin = mountWindowskin();
+function inventoryPrompt(): string {
+  const buttons = controller.settings.buttons;
+  const label = (index: number): string => index === -1 ? 'unassigned' : `button ${index}`;
+  return `Arrows / stick select · E / Enter / ${label(buttons.interact)} inspect · Escape / ${label(buttons.cancel)} back · I / ${label(buttons.menu)} menu`;
+}
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;
 
@@ -68,7 +82,7 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
+    const message = snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or close it to resume exploring.' : snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
@@ -115,6 +129,7 @@ function dispose(): void {
   appLifetime.abort();
   handle?.destroy();
   controllerUI.dispose();
+  toolsNavigation.dispose();
   shell.dispose();
   windowSkin.dispose();
   controller.dispose();
@@ -161,9 +176,22 @@ async function start(): Promise<void> {
       location.assign(url);
     }, { signal: appLifetime.signal });
     required<HTMLElement>('#map-title').textContent = content.map.name;
+    const catalog = await loadItemCatalog(new URL(import.meta.env.BASE_URL, document.baseURI), content, appLifetime.signal);
+    const session = new SessionState(catalog);
     const { createFoundation } = await import('./presentation/foundation');
     if (disposed) return;
     handle = createFoundation({
+      session,
+      inventory: required<HTMLDialogElement>('#inventory-dialog'),
+      inventoryPrompt,
+      openSettings: () => shell.open('options'),
+      closeTools: () => shell.close(),
+      toolsOwnInput: () => shell.ownsInput || controllerPanel.open,
+      updateTools: delta => {
+        const active = !document.hidden && document.hasFocus();
+        const pad = controller.poll(active);
+        if (active) toolsNavigation.sample(pad,delta); else toolsNavigation.reset();
+      },
       stage,
       controls: required<HTMLElement>('.controls'),
       burst: required<HTMLButtonElement>('#burst'),

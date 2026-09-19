@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import type { SessionState } from '../domain/session';
+import { InventoryMenu } from './ui/inventory';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
 import { viewportScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
@@ -18,6 +20,13 @@ const HEIGHT = 192;
 const SCENE = 'rpgameworks:map';
 
 export interface FoundationElements {
+  session: SessionState;
+  inventory: HTMLDialogElement;
+  inventoryPrompt: () => string;
+  openSettings: () => void;
+  closeTools: () => void;
+  toolsOwnInput: () => boolean;
+  updateTools: (deltaMs: number) => void;
   stage: HTMLElement;
   controls: HTMLElement;
   burst: HTMLButtonElement;
@@ -53,6 +62,17 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private generation = 0;
     private lastExit: MapExit | null = null;
     private readonly dialog = new InteractionDialog(elements.dialog);
+    private inventory: InventoryMenu | null = null;
+    private menuPending = false;
+
+    openInventory(): void {
+      if (phase !== 'ready' || this.mode !== 'exploration') return;
+      if (this.room?.actor.motion) { this.menuPending = true; this.inputOwner?.clear(); return; }
+      this.menuPending = false;
+      elements.closeTools();
+      this.setMode('inventory');
+      this.inventory?.open();
+    }
 
     constructor() { super(SCENE); }
 
@@ -73,12 +93,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
         this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
         this.transfer = new TransitionTask<LoadedMap>();
-        this.mode = 'exploration'; this.message = null; this.transitionError = null;
+        this.mode = 'exploration'; this.message = null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
-        this.room = new MapView(this, content);
+        this.room = new MapView(this, content, elements.session);
         this.room.show();
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
-          elements.gamepad, elements.canPlay, elements.dialog);
+          elements.gamepad, elements.canPlay, elements.dialog, elements.inventory);
         starts += 1;
         current = this;
         elements.effects.addEventListener('change', () => {
@@ -91,6 +111,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
           this.scene.restart();
         }, { signal: this.sceneLifetime.signal });
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
+        this.inventory = new InventoryMenu(elements.inventory, elements.session,
+          () => this.resume(), () => { this.resume(); elements.openSettings(); }, elements.inventoryPrompt);
         phase = 'ready';
         scheduleResize();
       } catch (cause) { this.fail(cause); }
@@ -103,8 +125,27 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private updateMap(delta: number): void {
       const input = this.inputOwner, room = this.room;
       if (!input || !room || phase !== 'ready') return;
+      if (document.hidden) return;
+      if (this.menuPending) {
+        advanceActor(room.actor,null,delta,content.collision.canEnter); room.sync();
+        if (!room.actor.motion) {
+          this.menuPending = false;
+          const exit = room.exits.arrive(room.actor.tile);
+          if (exit) this.startTransition(exit); else this.openInventory();
+        }
+        return;
+      }
+      if (this.mode === 'exploration' && elements.toolsOwnInput()) {
+        elements.updateTools(delta); // Same sampler, consumed by tools OR gameplay, never both.
+        return;
+      }
       const direction = input.direction(); // One gameplay consumption of the sampled controller.
-      const interact = input.consumeInteract(), cancel = input.consumeCancel(), burst = input.consumeBurst();
+      const interact = input.consumeInteract(), cancel = input.consumeCancel(), burst = input.consumeBurst(), menu = input.consumeMenu();
+      if (this.mode === 'inventory') {
+        this.inventory?.sample({direction,interact,cancel,menu,burst:false},delta);
+        return;
+      }
+      if (this.mode === 'exploration' && menu) { this.openInventory(); return; }
       if (this.mode !== 'exploration') {
         if (cancel) this.cancelModal();
         else if (interact && this.mode === 'message') {
@@ -115,7 +156,19 @@ export function createFoundation(elements: FoundationElements, onError: (message
       }
       const target = interact ? room.target(room.actor) : null;
       if (target) {
-        this.message = new MessageSession(target, content.map.strings?.en ?? {});
+        if (target.chest) {
+          const result = elements.session.claim(target.chest);
+          if (result.kind === 'rejected') {
+            if (result.reason !== 'capacity' && result.reason !== 'stack-limit') throw new Error(`Invalid chest transaction: ${result.reason}`);
+            this.setMode('message');
+            this.dialog.show('Chest unopened', 'There is not enough room for this item. The chest and your inventory are unchanged.', '', 'Close message', 'Close');
+            return;
+          }
+          const id = result.kind === 'already-claimed' ? target.chest.chest!.emptyMessageId : target.chest.chest!.openedMessageId;
+          const message = content.map.messages!.find(candidate => candidate.id === id)!;
+          this.message = new MessageSession({...target,message},content.map.strings!.en);
+          room.sync();
+        } else this.message = new MessageSession(target, content.map.strings?.en ?? {});
         this.setMode('message');
         this.showMessage();
         return; // The same input frame cannot both start dialogue and emit a burst.
@@ -141,7 +194,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         message.page === message.total ? 'Close message' : 'Next page', 'Close');
     }
     private resume(): void {
-      this.dialog.close(); this.message = null;
+      this.dialog.close(); this.inventory?.close(); this.message = null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
     private cancelModal(): void {
@@ -169,7 +222,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         (next) => {
           // Construct/validate the new view while the old view is still usable.
           const old = this.room!;
-          const prepared = new MapView(this, next);
+          const prepared = new MapView(this, next, elements.session);
           try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
           this.room = prepared; content = next;
           try { old.destroy(); } catch (cause) { this.fail(cause); } // Cleanup failure is fatal, not a false rollback.
@@ -188,7 +241,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private fail(cause: unknown): void {
       if (phase === 'error') return;
       phase = 'error';
-      this.generation += 1; this.transfer.cancel(); this.dialog.close(); this.inputOwner?.clear();
+      this.generation += 1; this.transfer.cancel(); this.dialog.close(); this.inventory?.close(); this.inputOwner?.clear();
       elements.burst.disabled = true; elements.restart.disabled = true; elements.interact.disabled = true;
       console.error('[RPGameworks] Map scene failed', cause);
       onError(`Map scene failed: ${cause instanceof Error ? cause.message : String(cause)}`);
@@ -199,6 +252,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.sceneLifetime.abort(); this.sceneLifetime = null;
       this.generation += 1; this.transfer.dispose();
       this.dialog.close(); this.message = null;
+      this.inventory?.dispose(); this.inventory = null;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;
       stops += 1;
@@ -257,13 +311,14 @@ export function createFoundation(elements: FoundationElements, onError: (message
 
   return {
     clearInput(): void { current?.inputOwner?.clear(); },
+    openInventory(): void { current?.openInventory(); },
     snapshot(): RuntimeSnapshot {
       const { map, spawn, collision } = content;
       const room = current?.room;
       const actor = room?.actor ?? spawnActor();
       const position = actorPosition(actor, TILE);
       return {
-        phase, scene: SCENE, starts, stops,
+        phase, scene: SCENE, starts, stops, session: elements.session.snapshot(),
         inputMode: current?.mode ?? 'exploration',
         messageId: current?.message?.id ?? null, messagePage: current?.message?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,

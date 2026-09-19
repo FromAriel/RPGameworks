@@ -5,8 +5,8 @@ const directionKeys: Record<string, Direction> = {
   ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
 };
-export type InputMode = 'exploration' | 'message' | 'transition' | 'transition-error';
-type Action = 'burst' | 'interact' | 'cancel';
+export type InputMode = 'exploration' | 'message' | 'transition' | 'transition-error' | 'inventory';
+type Action = 'burst' | 'interact' | 'cancel' | 'menu';
 
 /** Focus once at readiness, without stealing focus from a control used during loading. */
 export function focusGameWhenIdle(stage: HTMLElement): void {
@@ -32,7 +32,7 @@ export function gamepadFocusAllowed(ownedModal?: HTMLElement): boolean {
 export class InputController {
   private readonly lifetime = new AbortController();
   private readonly held = new Map<string, Direction>();
-  private readonly queued = { burst: false, interact: false, cancel: false };
+  private readonly queued = { burst: false, interact: false, cancel: false, menu: false };
   private mode: InputMode = 'exploration';
 
   constructor(
@@ -42,12 +42,13 @@ export class InputController {
     private readonly gamepad: GamepadSource | null = null,
     private readonly canPlay: () => boolean = () => true,
     private readonly modal?: HTMLDialogElement,
+    private readonly inventoryModal?: HTMLDialogElement,
   ) {
     const options = { signal: this.lifetime.signal };
     const keyboard = (event: KeyboardEvent): void => {
       if (!this.canPlay()) return;
       const direction = directionKeys[event.code];
-      const action: Action | null = event.code === 'Escape' ? 'cancel' :
+      const action: Action | null = event.code === 'KeyI' ? 'menu' : event.code === 'Escape' ? 'cancel' :
         event.code === 'KeyE' || event.code === 'Enter' ? 'interact' :
         event.code === 'Space' ? (this.mode === 'exploration' ? 'burst' : 'interact') : null;
       if (direction || action) event.preventDefault();
@@ -109,11 +110,13 @@ export class InputController {
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(this.mode === 'exploration' ? undefined : this.modal));
+    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(this.mode === 'inventory' ? this.inventoryModal : this.mode === 'exploration' ? undefined : this.modal));
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.queue('burst');
     if (pad?.interact) this.queue('interact');
     if (pad?.cancel) this.queue('cancel');
+    if (pad?.menu) this.queue('menu');
+    if (this.mode === 'inventory') return pad?.direction ?? null;
     if (this.mode !== 'exploration') return null;
     let result: Direction | null = null;
     for (const direction of this.held.values()) result = direction;
@@ -124,9 +127,10 @@ export class InputController {
   consumeBurst(): boolean { return this.consume('burst'); }
   consumeInteract(): boolean { return this.consume('interact'); }
   consumeCancel(): boolean { return this.consume('cancel'); }
+  consumeMenu(): boolean { return this.consume('menu'); }
   focus(): void { this.stage.focus({ preventScroll: true }); }
   private clearLocal(): void {
-    this.held.clear(); this.queued.burst = false; this.queued.interact = false; this.queued.cancel = false;
+    this.held.clear(); this.queued.burst = false; this.queued.interact = false; this.queued.cancel = false; this.queued.menu = false;
   }
   clear(): void { this.clearLocal(); this.gamepad?.reset(); }
   dispose(): void { this.clear(); this.lifetime.abort(); }

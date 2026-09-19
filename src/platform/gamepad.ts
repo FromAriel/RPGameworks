@@ -4,7 +4,7 @@ import { LEGACY_CONTROLLER_KEY, PREVIOUS_CONTROLLER_KEY, CONTROLLER_KEY, NO_PAD_
 import type { ControllerConfig, PadInput, PadState } from './gamepad-model';
 
 export interface GamepadSource {
-  poll(active: boolean): Readonly<PadInput>;
+  poll(active: boolean, purpose?: 'gameplay' | 'menu'): Readonly<PadInput>;
   reset(): void;
 }
 
@@ -30,6 +30,7 @@ export class GamepadController implements GamepadSource {
   private lastScan = -Infinity;
   private lastPoll: number | null = null;
   private gameplayRequested = false;
+  private inputPurpose: 'gameplay' | 'menu' = 'gameplay';
 
   constructor() {
     try {
@@ -81,6 +82,8 @@ export class GamepadController implements GamepadSource {
     const prefix = `${name} · ${this.chosen.mapping || 'custom'} · `;
     if (document.hidden) return prefix + 'Paused: browser tab is hidden.';
     if (!document.hasFocus()) return prefix + 'Paused: focus the game tab, not DevTools or another window.';
+    if (this.inputPurpose === 'menu') return prefix + 'Detected; gameplay paused. Menu navigation ' +
+      (this.latch.waitingForNeutral ? 'waiting for neutral controls.' : 'ready.');
     if (!this.gameplayRequested) return prefix + 'Detected; gameplay paused. Close settings or finish editing a form control to resume.';
     return prefix + (this.latch.waitingForNeutral ? 'Waiting for neutral: center the selected stick and release mapped buttons.' : 'Ready');
   }
@@ -137,11 +140,12 @@ export class GamepadController implements GamepadSource {
 
   rescan(): void { this.reset(); this.scan(); }
 
-  poll(active: boolean): Readonly<PadInput> {
+  poll(active: boolean, purpose: 'gameplay' | 'menu' = 'gameplay'): Readonly<PadInput> {
     if (this.disposed) return NO_PAD_INPUT;
     this.refreshDetection();
     this.lastPoll = performance.now();
-    this.gameplayRequested = active;
+    this.inputPurpose = purpose;
+    this.gameplayRequested = active && purpose === 'gameplay';
     return this.latch.sample(this.chosen, this.config, active && !document.hidden && document.hasFocus());
   }
 
@@ -157,7 +161,7 @@ export class GamepadController implements GamepadSource {
       apiAvailable: typeof navigator.getGamepads === 'function',
       documentFocused: document.hasFocus(), documentHidden: document.hidden,
       selectedIndex: this.selectedIndex, detectedCount: this.pads.length,
-      chosenIndex: this.chosen?.index ?? null, gameplayRequested: this.gameplayRequested,
+      chosenIndex: this.chosen?.index ?? null, gameplayRequested: this.gameplayRequested, inputPurpose: this.inputPurpose,
       waitingForNeutral: this.latch.waitingForNeutral,
       lastGameplayPollAgeMs: this.lastPoll === null ? null : Math.round(performance.now() - this.lastPoll),
       status: this.status, persistence: this.storageMessage, settings: this.settings,

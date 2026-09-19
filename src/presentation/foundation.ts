@@ -125,7 +125,10 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private updateMap(delta: number): void {
       const input = this.inputOwner, room = this.room;
       if (!input || !room || phase !== 'ready') return;
-      if (document.hidden) return;
+      // Input clears on hiding. Preserve the established committed-step behavior
+      // when the engine still updates: finish only that step, never start new input.
+      // A pending menu request is discarded rather than opening a modal while hidden.
+      if (document.hidden) this.menuPending = false;
       if (this.menuPending) {
         advanceActor(room.actor,null,delta,content.collision.canEnter); room.sync();
         if (!room.actor.motion) {

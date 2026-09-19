@@ -110,7 +110,7 @@ export class InputController {
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(this.mode === 'inventory' ? this.inventoryModal : this.mode === 'exploration' ? undefined : this.modal));
+    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(this.mode === 'inventory' ? this.inventoryModal : this.mode === 'exploration' ? undefined : this.modal), this.mode === 'inventory' ? 'menu' : 'gameplay');
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.queue('burst');
     if (pad?.interact) this.queue('interact');

@@ -39,6 +39,15 @@ describe('app-owned native sampler', () => {
     expect(service.poll(true)).toEqual({ direction:'right', burst:true, interact:false, cancel:false, menu:false });
     expect(service.poll(true)).toEqual({ direction:'right', burst:false, interact:false, cancel:false, menu:false });
   });
+  it('routes the same sampled controller to menus while reporting gameplay paused', () => {
+    raw = [device()]; tick(); service.poll(true, 'menu');
+    raw = [{ ...device(), axes:[0.85,0], buttons:[1] }]; tick();
+    expect(service.poll(true, 'menu').direction).toBe('right');
+    expect(service.diagnostics()).toMatchObject({ gameplayRequested:false, inputPurpose:'menu' });
+    expect(service.status).toContain('gameplay paused');
+    service.reset(); service.poll(true);
+    expect(service.diagnostics()).toMatchObject({ gameplayRequested:true, inputPurpose:'gameplay' });
+  });
   it('does not multiply native reads when a scene requests input more than once', () => {
     raw = [device()]; tick(); const calls = read.mock.calls.length;
     service.poll(false); service.poll(true); service.poll(true);

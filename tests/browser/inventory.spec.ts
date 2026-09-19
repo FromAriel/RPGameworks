@@ -78,9 +78,13 @@ test('menu queued during movement stops at a safe tile and cannot move or burst 
   await expect.poll(async()=>(await snapshot(page)).moving,{intervals:[10]}).toBe(true);
   await page.keyboard.press('KeyI');await page.keyboard.up('ArrowRight');
   await expect(page.locator('#inventory-dialog')).toBeVisible();const before=await snapshot(page);
-  await page.keyboard.down('ArrowRight');await page.keyboard.press('Space');await page.waitForTimeout(200);await page.keyboard.up('ArrowRight');
+  await page.keyboard.down('ArrowRight');
+  await expect(page.locator('#inventory-close')).toBeFocused();
+  await page.keyboard.press('Space'); // Confirm Return to game, not an exploration burst.
+  await expect(page.locator('#inventory-dialog')).toBeHidden();
+  await page.waitForTimeout(200);await page.keyboard.up('ArrowRight');
   const after=await snapshot(page);expect(after.actorTile).toEqual(before.actorTile);expect(after.burstRequests).toBe(before.burstRequests);
-  await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();
+  await expect(page.locator('#stage')).toBeFocused();
 });
 
 test('controller Menu opens inventory, keeps held inputs isolated, and cancel restores exploration',async({page})=>{

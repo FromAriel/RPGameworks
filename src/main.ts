@@ -42,7 +42,7 @@ const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
 const loadingNotice = required<HTMLElement>('#loading-notice');
 const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.reset(); }, () => drawDiagnostics(),
   () => !handle || handle.snapshot().inputMode === 'exploration',
-  () => { if (handle && !failed) { shell.close(); handle.openInventory(); } else shell.open('options'); });
+  () => { if (handle?.snapshot().phase === 'ready' && !failed) { shell.close(); handle.openInventory(); } else shell.open('options'); });
 const controllerUI = mountControllerSettings(controllerPanel, controller, stage, () => ({
   build: __BUILD_ID__, version: __APP_VERSION__,
   runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
@@ -189,7 +189,7 @@ async function start(): Promise<void> {
       toolsOwnInput: () => shell.ownsInput || controllerPanel.open,
       updateTools: delta => {
         const active = !document.hidden && document.hasFocus();
-        const pad = controller.poll(active);
+        const pad = controller.poll(active, 'menu');
         if (active) toolsNavigation.sample(pad,delta); else toolsNavigation.reset();
       },
       stage,

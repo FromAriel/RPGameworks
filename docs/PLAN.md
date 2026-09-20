@@ -1,8 +1,8 @@
 # RPGameworks — Master Plan
 
-**Version:** 0.1 · **Planning date:** September 17, 2026 · **Owner:** Ariel / FromAriel
+**Version:** 0.2 · **Planning date:** September 17, 2026 · **Last architectural review:** September 20, 2026 · **Owner:** Ariel / FromAriel
 
-**Implementation status:** Planning only. This document defines intended behavior, not existing features, completed tests, measured performance, or a deployed game. The repository contained only a title README before this planning change.
+**Implementation status:** Architectural reference. Implementation has progressed beyond the original documentation-only baseline; [STATUS](STATUS.md) and the actual repository own current feature and verification truth. This document defines intended behavior and does not by itself prove a feature, test result, measurement, deployment, or completed game.
 
 **Product statement:** A browser-native, data-driven 2D JRPG construction framework, built a playable piece at a time, with a small dependable runtime and a composable pixel-art effects system.
 
@@ -14,6 +14,7 @@
 - [PixelFX specification](PIXELFX.md): effect vocabulary, compositing, pixel-art rules, budgets, and experiments.
 - [Implementation roadmap](ROADMAP.md): ordered work packets and acceptance gates.
 - [Current status and handoff](STATUS.md): what actually exists and what to do next.
+- [Full JRPG build-out strategy](JRPG-BUILDOUT.md): detailed route from the current state spine through battle, economy, a finishable chapter, and release.
 - [Research and naming notes](RESEARCH.md): checked primary sources, dated dependency information, naming caveats, and search strategy.
 - [Repository working rules](../AGENTS.md): instructions for future human and assistant contributors.
 
@@ -26,6 +27,8 @@ RPGameworks should make it practical for Ariel to describe a change in ordinary 
 The initial game style is an old-school, single-player JRPG: tile-based exploration, small rooms and outdoor maps, NPC conversations, event triggers, persistent choices, inventory, quests, and eventually party-based combat. The platform should accommodate unusual rules later without requiring all those rules to be designed now.
 
 The aspiration is a framework that can support a substantial game with many regions and hundreds of maps. That is an architectural direction, not a promise of finished content or a performance benchmark. The first success is a convincing, maintainable small game.
+
+The immediate integration target is a small chapter with a beginning, persistent exploration, a quest, preparation, battles, a boss, saves, failure recovery, and a clear ending. Completing that vertical slice is the proof that the framework can make a whole JRPG; [JRPG-BUILDOUT](JRPG-BUILDOUT.md) expands the staged route without enlarging the current implementation packet.
 
 The repository acts as the initial editor. Content is ordinary files with stable IDs, schemas, and readable diffs. Browser tools can be added over the same formats once a repeated authoring problem justifies them.
 

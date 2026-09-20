@@ -1,8 +1,8 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.8 · **Date:** September 20, 2026 · **Status:** M1/W1 complete; the M2 chest/inventory transaction and N1 navigation owner are delivered. Declared facts/conditions, saves and later gameplay remain pending. See STATUS for verification.
+**Version:** 0.9 · **Date:** September 20, 2026 · **Status:** M1/W1 complete; the M2 chest/inventory transaction and N1 navigation owner are delivered. Declared facts/conditions, saves and later gameplay remain pending. See STATUS for verification.
 
-Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
+Architecture: [Master Plan](PLAN.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
 ## Delivery rules
 
@@ -29,7 +29,7 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 | M3 | Data-authored quest slice | M2 + G1; N1 for choices | Conditional dialogue, micro-quest, second-content proof, validation |
 | M4 | PixelFX v1 and laboratory | M1–M3 | Recipe-driven catalog, lifecycle tests, quality controls |
 | M5 | Playable turn-based battle | M2–M4 | Domain battle rules, presentation independence, reliable rewards |
-| M6 | Expanding region and residency proof | M3; M5 for battle integration | Many-map fixture, bounded assets, elapsed-time behavior |
+| M6 | Complete chapter and expanding-region proof | M3; M5 for battle integration | Finishable chapter, many-map fixture, bounded assets, elapsed-time behavior |
 | M7 | Release hardening | M1–M6 | Real-device tests, failure recovery, verified static release |
 | M8 | Targeted browser authoring tools | Stable schemas and demonstrated editing friction | Validated export/import using production formats |
 | M9 | Advanced optional extensions | A stable playable release | Separate experiments with measured benefits |
@@ -188,6 +188,7 @@ Record measured capacity separately from the provisional 500/1,500/4,000 particl
 - [ ] **M5.4 — Presentation sequence.** Show already-resolved results through animation, PixelFX, numbers, and audio. Add skip/accelerate/reduced-effects behavior without changing outcomes.
 - [ ] **M5.5 — Reward and defeat rules.** Cover simultaneous defeat, repeated completion callbacks, rewards, escape if included, and game-over/retry behavior.
 - [ ] **M5.6 — Controlled expansion.** Add a small party, one equipment modifier, a skill, and a status effect only after the minimum battle passes its tests.
+- [ ] **M5.7 — Preparation and economy loop.** Add transactional currency, one shop, usable items, equip/unequip comparison, and one paid rest/recovery point. Keep prices and rules authored and validated; do not introduce crafting or a generalized economy engine.
 
 ### Acceptance
 
@@ -195,26 +196,31 @@ Headless tests resolve a battle without Phaser. Replaying the same initial state
 
 Battle saves remain checkpoint-only unless a separately tested serialization design is added.
 
+Before M5 exits, the player can prepare for a second battle through at least one purchase, item use, equipment decision, recovery service, or progression reward. Charges, inventory changes and derived statistics commit atomically and remain correct after save/load.
+
 **Defer:** Real-time swarms, multiplayer combat, universal skill trees, hundreds of statuses, and an arbitrary formula interpreter.
 
-## M6 — Expansive world proof
+## M6 — Complete chapter and expansive-world proof
 
-**Player-visible outcome:** Move through a larger test region without rising memory use, and see appropriate changes when returning after game time advances.
+**Player-visible outcome:** Finish a small coherent JRPG chapter, then move through a larger test region without rising memory use and see appropriate changes when returning after game time advances.
 
 ### Work packets
 
-- [ ] **M6.1 — Content expansion fixture.** Build a modest authored region and a generated validation/stress pack. Distinguish synthetic map counts from actual designed playable content.
-- [ ] **M6.2 — On-demand residency.** Bundle by region/shared dependency, prefetch only where useful, and evict unreferenced resources under a budget. Exercise more unique maps than fit in the cache.
-- [ ] **M6.3 — World clock.** Implement explicit advance policies for travel/rest and a central due-event schedule. Keep hidden-tab wall-clock progression disabled by default.
-- [ ] **M6.4 — Catch-up examples.** Add one shop refresh, one NPC schedule, and one quest deadline. Resolve global consequences independently of whether a region is loaded.
-- [ ] **M6.5 — Large active map fixture.** Profile a 128 × 128-tile map with configurable static and moving actors. Introduce finer culling or bounded pathfinding only where the workload demonstrates need.
-- [ ] **M6.6 — Compatibility and content tour.** Run saved-game regression fixtures, asset ownership checks, and a scripted tour through the region and its battles.
+- [ ] **M6.1 — Small complete chapter gate.** Finish an authored beginning-to-ending chapter using exploration, the lens quest, a safe hub, preparation/economy, route or dungeon traversal, battles, a boss and a clear ending. Keep the scope small enough to test every required route and supported input flow.
+- [ ] **M6.2 — Content expansion fixture.** Build a modest authored region and a generated validation/stress pack. Distinguish synthetic map counts from actual designed playable content.
+- [ ] **M6.3 — On-demand residency.** Bundle by region/shared dependency, prefetch only where useful, and evict unreferenced resources under a budget. Exercise more unique maps than fit in the cache.
+- [ ] **M6.4 — World clock.** Implement explicit advance policies for travel/rest and a central due-event schedule. Keep hidden-tab wall-clock progression disabled by default.
+- [ ] **M6.5 — Catch-up examples.** Add one shop refresh, one NPC schedule, and one quest deadline. Resolve global consequences independently of whether a region is loaded.
+- [ ] **M6.6 — Large active map fixture.** Profile a 128 × 128-tile map with configurable static and moving actors. Introduce finer culling or bounded pathfinding only where the workload demonstrates need.
+- [ ] **M6.7 — Compatibility and content tour.** Run saved-game regression fixtures, asset ownership checks, a fresh-to-ending production playthrough, and a scripted tour through the wider region and its battles.
 
 ### Acceptance
 
 Distant content does not inflate per-frame actor processing. Resident resource counts plateau according to cache policy. Loading a region twice does not apply elapsed-time rewards or penalties twice. Scheduled NPCs do not duplicate across maps.
 
 A global deadline triggers on game-time advancement even if its associated town is not visited. Catch-up work is bounded and cannot replay millions of missed frame ticks.
+
+The complete chapter can be started from a fresh profile, saved and exported at named checkpoints, recovered from supported failures, and finished without debug tools. Its exact production artifact receives a human playthrough; automated coverage and a successful build are recorded separately from that playtest.
 
 **Defer:** Seamless entire-world streaming and simulated offscreen travel unless a concrete game feature requires them.
 
@@ -266,3 +272,5 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 **M2.3 — Declared facts, bounded conditions and conditional object states.** Build on the delivered session placement/inventory transaction and N1 owner. Add only the typed all/any/not checks, one-shot markers, ordered state/fallback behavior and registered actions exercised by the next content proof. Specify interaction/state-change ownership and bounded active-object refresh; do not add arbitrary JSON execution or claim reload durability.
 
 M2.4/M2.5 then add safe saves/export and failure/concurrency acceptance; M2.6 adds the distinct-map resource audit. G1 applies shared facts and transactions to conditional access; M3 proves conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. These gameplay capabilities remain unchecked until implemented and verified. Reuse `npm run benchmark` for comparable future measurements; do not reopen the settled skin or treat a headless baseline as phone certification.
+
+The detailed continuation through deterministic battle, party/progression, preparation/economy, the first complete chapter, content scale and release is recorded in [JRPG-BUILDOUT](JRPG-BUILDOUT.md). It is a sequencing companion, not evidence that those later systems exist.

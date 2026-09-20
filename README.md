@@ -4,15 +4,15 @@
 
 RPGameworks is being built a playable piece at a time: ordinary TypeScript/JavaScript, small active maps, a persistent world, and a composable cosmetic effects layer. The repository is the initial authoring environment; no paid coding agent, desktop RPG editor, runtime AI service, or game server is required by the design.
 
-## Current build: skinned player-first two-room slice
+## Current build: skinned two-room state and inventory slice
 
-**The game now fills the browser viewport**, centered on a black background with crisp whole-pixel enlargement. The small **Menu** button opens Settings; **F2** opens Debug directly. Both are closed at launch. On wide screens the drawer can sit beside live gameplay; click the play area to keep playing with the readout visible. Controller options, instructions, map preview, build information and runtime counters remain available without occupying the normal game screen. See [the player interface](docs/PLAYER-SHELL.md).
+**The game fills the browser viewport**, centered on a black background with crisp whole-pixel enlargement. The small **Menu** button opens the skinned Inventory; its Settings action reaches the existing configuration panel, and **F2** still opens Debug directly. These windows are closed at launch. On wide screens the drawer can sit beside live gameplay; click the play area to keep playing with the readout visible. Controller options, instructions, map preview, build information and runtime counters remain available without occupying the normal game screen. See [current status](docs/STATUS.md) and [the player interface](docs/PLAYER-SHELL.md).
 
 **Your edited base windowskin is integrated.** Mara’s conversation and the Settings/Debug drawer use the exact source sheet, live bracketed titles, and a real Settings divider. Long titles wrap into a header; long message bodies scroll while their actions stay available. Skin loading is lazy and decoration failures leave usable plain windows. See [the tile format, source identity, connector audit and implementation](docs/WINDOW-SKIN.md).
 
-The 20 × 12 Workshop and 24 × 14 Pillar Gallery are now connected by working doors. Walk up to Mara, the workshop caretaker, face her, and open her two-page greeting. Visit the gallery and examine its brass plaque, then return through the western doorway. Messages, placement IDs, exits, and arrival points are authored in validated JSON rather than map-specific scene classes.
+The 20 × 12 Workshop and 24 × 14 Pillar Gallery are connected by working doors. Walk up to Mara, the workshop caretaker, face her, and open her two-page greeting. The Gallery contains a chest at tile (8,8) holding one **Polished lens**. Opening it grants the item and marks that stable placement as opened in one transaction; interacting again reports it empty. Door travel, returning to the Gallery, and restarting the room preserve the opened chest and Inventory during the current browser session. Messages, items, placement IDs, exits, and arrival points are authored and validated rather than embedded in map-specific scene classes.
 
-**M1.4/M1.5 implement interaction and room travel.** Doors retain the current browser document and prepare their destination before activation; a failed load offers Retry or Stay here, and a pending load can be cancelled. The development map dropdown remains a separate full-page preview. Inventory, saves, branching quests, battle, and the full PixelFX recipe system are not implemented. M1.6 foundation closeout now includes a [reproducible frame/resource baseline](docs/BASELINE.md); no public deployment is configured. M2 session state and a one-shot chest/inventory slice are next.
+**The current persistence is session-only.** Reloading or closing the page, or using the development map-preview reload, starts fresh. Gameplay save slots, export/import, item use/discard/equipment, branching quests, battle, and the full PixelFX recipe system are not implemented. Doors still prepare their destination before activation, offer Retry or Stay here after a failed load, and permit a pending load to be cancelled. M1.6 foundation closeout includes a [reproducible frame/resource baseline](docs/BASELINE.md); no public deployment is configured. M2.3 declared facts, bounded conditions, and conditional object states are next.
 
 See [the interaction implementation and verification](docs/INTERACTIONS.md) and [current status](docs/STATUS.md).
 
@@ -27,7 +27,7 @@ npm run dev
 
 Open the local address Vite prints. Asset and map generation run automatically before development starts. Do not open `index.html` directly with a `file://` URL.
 
-The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**. **E / Enter** interacts with the adjacent object you face and advances messages; **Escape** closes a message or cancels travel. **Space** triggers a cosmetic pixel burst during exploration and advances an already-open message. During exploration, **Escape** opens/closes the menu and **F2** toggles Debug; dialogue and travel keep their existing Escape behavior. **Menu → Settings → On-screen controls** enables the pointer buttons, which are hidden by default on desktop and automatic on touch-first devices. **Menu → Debug → Restart room** exercises scene disposal/recreation. **Menu → Settings → Cosmetic particles** turns the burst off without changing movement; reduced-motion preference disables it initially. The drawer is not restored on reload. Below the logical canvas size only, proportional downscaling avoids cropping; enlargement stays integer-scaled.
+The room receives keyboard focus automatically when the first scene is ready; an initial click is no longer required. A control deliberately focused during loading keeps its focus. Move with **WASD or arrow keys**. **E / Enter** interacts with the adjacent object you face and advances messages; **Escape** closes a message or cancels travel. **Space** triggers a cosmetic pixel burst during exploration and advances an already-open message. During exploration, **I** or **Escape** opens Inventory and **F2** toggles Debug; dialogue and travel keep their existing Escape behavior. Arrow keys move Inventory selection, **E / Enter** inspects/confirms, and **Escape** returns. Use **Inventory → Settings → On-screen controls** to enable the pointer buttons, which are hidden by default on desktop and automatic on touch-first devices. **F2 → Restart room** exercises scene disposal/recreation. **Inventory → Settings → Cosmetic particles** turns the burst off without changing movement; reduced-motion preference disables it initially. The drawer is not restored on reload. Below the logical canvas size only, proportional downscaling avoids cropping; enlargement stays integer-scaled.
 
 ### Controller recovery
 
@@ -37,11 +37,11 @@ Use **Menu → Settings → Activate controller** to close settings, rescan and 
 
 Native input now follows the supplied working MouseJoy reader: one app-owned frame sampler, retained connected-device selection, and no requirement to focus the viewport div for controller movement. Settings, form editing and inactive tabs still pause gameplay. **Open MouseJoy-style controller test** in the panel runs a minimal independent reader on the same server. See [the comparison, tests and remaining hardware uncertainty](docs/MOUSEJOY-PARITY.md).
 
-Open **Menu → Settings → Controller configuration**. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move** and **A for the cosmetic pixel burst**, **X to interact/advance**, and **B to close/cancel**. These are defaults: prior remapped buttons and axes are preserved during migration to controller preferences v2; new actions take unused buttons when necessary. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; no extra dependency or account is required.
+Open **Inventory → Settings → Controller configuration**. Standard Xbox/Elite-style defaults use the **left stick or D-pad to move/select**, **A for the cosmetic pixel burst**, **X to interact/advance/confirm**, **B to close/cancel**, and **Menu / button 9** to open Inventory. These are defaults: prior remapped buttons and axes are preserved during migration to controller preferences v3, with the new Menu action assigned without overwriting existing choices. The panel provides device selection, deadzone adjustment, axis selection/inversion, button remapping, and a live input readout. Settings save locally in this browser; gameplay Inventory does not yet persist across reload. No extra dependency or account is required.
 
 The browser may require a controller button press before exposing a connected device. Press and release once, center the stick, and use **Return to game** after configuration. Input pauses while settings are open; an already-started tile step finishes. Reconnection or return from an input-blocking pause requires neutral controls before gameplay resumes, preventing held-button surprises. Keyboard input remains available when the controller API is absent or blocked.
 
-Messages and travel recovery can be controlled without a mouse. Controller-only navigation of the configuration panel itself remains out of scope. These bindings use what the browser exposes. Independent Elite paddle inputs, firmware profile editing, rumble, and controller-only configuration navigation are not promised. See [input behavior, configuration, and verification](docs/INPUT.md).
+Messages, Inventory, Settings, Debug controls, and travel recovery can be controlled without a mouse. Future dialogue choices and save screens still require their own acceptance. These bindings use what the browser exposes. Independent Elite paddle inputs, firmware profile editing, and rumble are not promised. See [input behavior, configuration, and verification](docs/INPUT.md).
 
 For a production build and local preview, run the build first and start preview only after it succeeds:
 
@@ -73,7 +73,7 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **216 unit tests and 81 functional browser scenarios**, plus **eight separate benchmark workloads**, including modal ownership, failure/cancellation, controller preference migration, and a 40-transfer room tour. See [WINDOW-SKIN.md](docs/WINDOW-SKIN.md) for W1 verification and [PLAYER-SHELL.md](docs/PLAYER-SHELL.md) for the preceding shell and [INTERACTIONS.md](docs/INTERACTIONS.md) for the preceding gameplay slice. Controller readings are simulated in browser tests, not captured from physical hardware. See [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md) for the preceding comparison repair and [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md) for page-error isolation, [INPUT.md](docs/INPUT.md) for the initial controller slice and [MAPS.md](docs/MAPS.md) for the preceding 83-test/18-scenario map slice. The original [foundation verification record](docs/FOUNDATION.md) describes the first 19 unit tests; [the toolchain repair record](docs/TOOLCHAIN.md) covers the three package-policy checks and Node 24/Windows validation.
+`check` runs strict TypeScript/checked-JavaScript checking, unit tests, content validation, and a production build. Browser tests run against a production build under `/RPGameworks/`, not just the Vite development server. The current suite has **252 unit tests and 95 functional browser scenarios**, plus **eight separate benchmark workloads**. Current coverage includes transactional chest collection, duplicate-reward prevention, failed inventory operations, collect/travel/return behavior, controller preference migration and reconnects, repeated menu openings, and a gameplay-collected scrolling list; earlier suites retain modal ownership, travel failure/cancellation, and the 40-transfer room tour. See [current status](docs/STATUS.md) for the latest delivery evidence. Controller readings are simulated in browser tests, not captured from physical hardware. Historical detail remains in [WINDOW-SKIN.md](docs/WINDOW-SKIN.md), [PLAYER-SHELL.md](docs/PLAYER-SHELL.md), [INTERACTIONS.md](docs/INTERACTIONS.md), [MOUSEJOY-PARITY.md](docs/MOUSEJOY-PARITY.md), [CONTROLLER-RECOVERY.md](docs/CONTROLLER-RECOVERY.md), [INPUT.md](docs/INPUT.md), [MAPS.md](docs/MAPS.md), [FOUNDATION.md](docs/FOUNDATION.md), and [TOOLCHAIN.md](docs/TOOLCHAIN.md).
 
 GitHub Actions checks Linux with Node 22.16.0 and Node 24.15.0, plus Windows with Node 24.15.0. Node 24 jobs use npm 11.6.2. Each matrix leg retains a `browser-build-<label>` artifact and `browser-evidence-<label>` report. Those artifacts are build/test outputs, not a deployed website. The standard workflow has read-only repository permissions.
 
@@ -100,7 +100,7 @@ Generated JSON payloads, standalone validators, and schema-derived TypeScript de
 
 | Location | Responsibility |
 | --- | --- |
-| `src/domain/` | Pure movement, collision, facing interactions, finite messages, exit-entry guards, and viewport arithmetic |
+| `src/domain/` | Pure movement, collision, facing interactions, finite messages, session inventory/placement transactions, exit-entry guards, and viewport arithmetic |
 | `src/runtime/transition.ts` | Single pending transfer, cancellation, and stale-result rejection |
 | `schemas/`, `src/content/` | Canonical schemas, generated validators/types, and shared semantic checks |
 | `src/platform/map-loader.ts` | Bounded, cancellable manifest/selected-map loading |
@@ -108,7 +108,7 @@ Generated JSON payloads, standalone validators, and schema-derived TypeScript de
 | `src/platform/gamepad-model.ts`, `src/platform/gamepad.ts` | Validated bindings, neutral/edge handling, and one app-owned browser controller adapter |
 | `src/presentation/ui/controller-settings.ts` | Semantic controller configuration and bounded-rate telemetry |
 | `src/presentation/foundation.ts`, `map-view.ts` | Reusable scene, explicit room visual ownership, safe transitions, camera, and cosmetic particles |
-| `src/presentation/ui/player-shell.ts` | Closed-by-default settings/debug drawer, keyboard access and optional touch overlay |
+| `src/presentation/ui/player-shell.ts` | Inventory-first player menu, Settings/Debug routes, direct semantic navigation and optional touch overlay |
 | `src/presentation/skin/`, `src/presentation/ui/windowskin.ts` | Bounded source-pixel composition, live title measurement, lazy atlas loading and disposal |
 | `assets/source/ui/base/` | Exact edited skin, full tile manifest, connector/alpha audit and provenance |
 | `src/presentation/ui/interaction-dialog.ts` | Native modal presenter; authored strings remain literal text |
@@ -117,7 +117,7 @@ Generated JSON payloads, standalone validators, and schema-derived TypeScript de
 | `tools/` | Asset generation, schema generation, and validated map compilation |
 | `tests/` | Domain, asset, package-policy, map, loader, controller, and production-browser checks |
 
-W1 base-skin integration is complete; optional extra tile renderers and a theme editor remain deferred. Maps and simple messages are data, not new scene subclasses. M1.6 diagnostics/performance acceptance is recorded; the next packet starts M2 session state and the chest/inventory proof, with safe saves afterward.
+W1 base-skin integration and the first M2 session chest/Inventory slice are complete; optional extra tile renderers and a theme editor remain deferred. Maps, items, placements, and simple messages are data, not new scene subclasses. M1.6 diagnostics/performance acceptance is recorded; the next packet is M2.3 declared facts, bounded conditions, and conditional object states, with safe saves afterward.
 
 ## Documentation
 
@@ -126,6 +126,7 @@ W1 base-skin integration is complete; optional extra tile renderers and a theme 
 | [Foundation baseline](docs/BASELINE.md) | Reproduction, measured results, metric limits and consolidated M1 acceptance |
 | [Base windowskin](docs/WINDOW-SKIN.md) | Runtime integration, complete tile format, preserved source, known seams and verification |
 | [Approved next slices](docs/NEXT-SLICES.md) | Shared state, conditional access, menu navigation and branching-dialogue contracts |
+| [Full JRPG build-out strategy](docs/JRPG-BUILDOUT.md) | Detailed route through state, quests, battle, economy, a finishable chapter, scale and release |
 | [Player interface](docs/PLAYER-SHELL.md) | Full-viewport play, black letterboxing, optional tools, input boundaries and verification |
 | [Interaction and room travel](docs/INTERACTIONS.md) | Current messages, controls, door lifecycle, compatibility, and tests |
 | [Controller recovery](docs/CONTROLLER-RECOVERY.md) | Page-error isolation, activation, diagnostics, and verification |

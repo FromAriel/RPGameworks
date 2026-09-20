@@ -62,6 +62,8 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Existing users need onl
 
 Reuse the delivered session transaction and N1 navigation owner. Specify event ownership, re-entry/repeat behavior, stationary-player state changes and bounded active-object refresh before adding content. N1.2 disabled-choice/item acceptance remains pending until a real disabled state exists; N1.3 choices arrive with M3. Full reload durability waits for M2.4/M2.5 IndexedDB, export/import and failure acceptance, and M2.6 adds the asset-ownership/distinct-map audit. Then G1 key/switch access and M3 conditional conversations/missing-lens quest use the same facts and transactions. Preserve out-of-order discovery and the second-content proof.
 
+The longer route from this state spine through battle, party/progression, economy, a finishable chapter, content scale and release is detailed in [JRPG-BUILDOUT](JRPG-BUILDOUT.md). That companion expands planning only; it does not change the next packet or claim those systems exist.
+
 ## Limits and continuity
 
 No item use/discard/equipment, gameplay saves, conditional access, branching quest, combat, full PixelFX recipes, public release, regional asset leases, long-session memory plateau, other-browser or Android/iOS certification. The delivered controller navigation covers Inventory and existing Settings/Debug controls, not future dialogue choices or unavailable save screens. A callback-paced tiny scene is not proof of GPU headroom or the master plan's large-map/particle budgets. The existing Phaser-containing bundle warning remains visible.

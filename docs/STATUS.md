@@ -1,12 +1,22 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 18, 2026, M1.6 baseline and foundation closeout.
+**Updated:** September 20, 2026, first M2 chest/inventory and N1 navigation delivery.
 
 ## Current phase
 
-**M1.1–M1.6, the player-first shell and W1 base skin are complete. M2 session state/chest is next.** This packet adds a reproducible benchmark and consolidates foundation acceptance. It does not implement inventory, saves, conditional doors, branching conversations or N1 menu navigation. The running game, maps, artwork, bindings and clean player screen are unchanged from `af647f2ea584db462f587cf26bc17c65d1e54b09`.
+**M1.1–M1.6 and W1 remain complete; the first M2 session-state/inventory slice and N1 navigation owner are now implemented. M2.3 declared facts, bounded conditions and conditional object states are next.** The Pillar Gallery has one session-owned chest, the inventory is a real skinned player menu, and keyboard/controller focus navigation uses the existing input sampler rather than a virtual mouse. Browser-reload durability, save/export, conditional doors, branching conversations and item use remain pending.
 
-The optional Debug drawer remains closed on reload; there is no new always-on profiler or visible instrumentation. The benchmark is a separate development/test command whose probe is injected only in test pages. No runtime CPU work is added to ordinary play by this packet.
+The optional Debug drawer remains separate from Inventory and closed on reload. The benchmark remains a separate development/test command whose probe is injected only in test pages. No public deployment is implied by this delivery.
+
+## M2 chest/inventory and N1 acceptance
+
+The Gallery chest at tile (8,8), stable placement ID `demo:object.gallery.lens-chest`, grants one `demo:item.lens` (Polished lens). `SessionState` owns frozen inventory and placement snapshots above room-scene lifetime. Its transaction validates and aggregates all changes before committing the item count and the chest's declared `opened` fact together. A rejected capacity, stack, item or revision operation changes neither inventory, placement facts nor revision; a repeated claim reports the authored empty-chest message instead of granting again.
+
+The opened frame and interaction reconstruct from the placement fact after real room travel and a room restart. Reloading the document—including the developer map-preview reload—starts a new session deliberately. No IndexedDB slot, export/import or save-format promise exists yet, and the Inventory window says so directly.
+
+Menu, I or Escape opens the skinned Inventory during exploration. It provides an empty state plus item name, quantity and description; Settings is an explicit route from Inventory and F2 still opens Debug. Keyboard arrows and the existing controller stick/D-pad move semantic focus, E/Enter or X confirms, and Escape or B returns. Direction repeat is bounded, selection scrolls into view, and held inputs are cleared across movement/modal/settings/reconnect boundaries. Controller preferences migrate from v2 to v3 by preserving every existing assignment and adding Menu on button 9 or the first unoccupied button.
+
+Candidate **`cf534f912f39e931d7448e9d577f6bee7fe252b7`** passed [run 35437641180](https://github.com/FromAriel/RPGameworks/actions/runs/35437641180): strict source/content/build checks, **252 unit tests, 95 functional Chromium scenarios and eight benchmark workloads** on Windows/Node 24.15.0 and Linux/Node 22.16.0/24.15.0. Local Windows verification on September 20 with Node 24.15.0/npm 11.6.2 also passed `npm run check` and all 95 browser scenarios. The existing large Phaser chunk warning remains; no Firefox/WebKit, physical-controller, phone, browser-save or hosted-distribution acceptance is claimed.
 
 ## M1.6 measurement and acceptance
 
@@ -24,13 +34,13 @@ The candidate passed its first full matrix. Local source checking, 216 unit test
 
 ## Preserved player experience
 
-Launch shows the full-browser black-letterboxed game with a small Menu button. The logical world is 320 × 192 and uses the largest fitting integer enlargement, with the existing constrained-size fallback. Menu/Escape opens Settings; F2 opens Debug. Wide screens dock the drawer; narrow screens overlay it. Dialogue/travel retains input priority and fatal game errors stay visible outside Debug.
+Launch shows the full-browser black-letterboxed game with a small Menu button. The logical world is 320 × 192 and uses the largest fitting integer enlargement, with the existing constrained-size fallback. Menu, I or Escape opens Inventory during exploration; Inventory's Settings button opens the existing tools, and F2 opens Debug directly. Wide screens dock the tools drawer; narrow screens overlay it. Dialogue/travel retains input priority and fatal game errors stay visible outside Debug.
 
 Mara is at Workshop (10,8), two tiles below the initial player. Move one tile down, face her and interact. The eastern door (18,6) leads to Gallery `from-workshop` (2,6). The plaque at (4,4) is adjacent/facing-based; the west door (1,6) returns at Workshop `from-gallery` (17,6).
 
-WASD/arrows move; E/Enter interacts or advances; Escape closes/cancels a modal; Space is cosmetic during exploration and advances an open message. Controller defaults remain left stick/D-pad movement, X interaction, B cancel and A burst, subject to saved remapping. Preference v2 and its migration remain intact. Direct controller-only menu navigation is future N1, not controller detection. Ariel attributed the earlier device-exposure failure to Chrome; do not reopen that resolved investigation.
+WASD/arrows move; E/Enter interacts or advances; Escape closes/cancels a modal and opens Inventory from exploration; I also opens/closes Inventory; Space is cosmetic during exploration and advances an open message. Controller defaults remain left stick/D-pad movement or menu selection, X interaction/confirm, B cancel, A burst and Menu/button 9 for Inventory, subject to saved remapping. Preference v2 migrates to v3 without overwriting existing assignments. Ariel attributed the earlier device-exposure failure to Chrome; do not reopen that resolved investigation.
 
-The reusable scene/input owner, app-owned sampler, lazy destination loading, cancellation/stale-result rejection, Retry/Stay and explicit outgoing-view disposal are unchanged. No dependencies, lockfile, Node range, gameplay schema, licensing, settings reset or deployment changed. Only the benchmark command, tests, CI artifact step, ignored report directories and documentation were added; temporary source-export workflow is excluded from the delivered tree.
+The reusable scene/input owner, app-owned sampler, lazy destination loading, cancellation/stale-result rejection, Retry/Stay and explicit outgoing-view disposal are preserved. Item and map schemas now validate the catalog, chest references, quantities, messages and frames; generated packs keep the catalog separately loadable. Dependencies, lockfile, Node range, licensing, settings reset and deployment remain unchanged.
 
 ## Preserved skin and source identity
 
@@ -42,18 +52,18 @@ Mara/travel, the Settings/Debug frame and its labeled divider use the bounded, l
 
 Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Existing users need only pull this update; no package reinstall is required because dependency versions and the lockfile did not change. Fresh checkouts use `npm ci --include=dev`. Keep `npm run dev` running on its reported address (port 5173 with strict conflict handling).
 
-`npm run check`: strict source checks, 216 unit tests, validated content and production build. `npm run test:browser`: 81 functional Chromium scenarios. `npm run benchmark`: eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
+`npm run check`: strict source checks, 252 unit tests, validated content and production build. `npm run test:browser`: 95 functional Chromium scenarios. `npm run benchmark`: eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
 
 `node tools/audit-windowskin.mjs` retains the exact-art audit (`--write` changes its report, not the PNG). Existing `npm run validate` and `npm run content` remain; no content watcher was added. Benchmarks do not configure hosting or publish a site.
 
 ## Next concrete packet
 
-**M2.1 — Authoritative session state, then the chest/inventory transaction slice.** Read [NEXT-SLICES](NEXT-SLICES.md), [ROADMAP](ROADMAP.md) and [Decision 0001](decisions/0001-base-skin-and-stateful-exploration.md). Keep immutable authored definitions, persistent-in-session placement deltas, transient simulation and presentation objects separate. Use stable placement IDs and declared typed facts, not ad-hoc flags on sprites. First playable proof: open one chest, grant its item once, travel away/back, and reconstruct the opened chest with the right item count. Failed inventory operations must not partly claim it.
+**M2.3 — Declared facts, bounded conditions and conditional object states.** Read [NEXT-SLICES](NEXT-SLICES.md), [ROADMAP](ROADMAP.md) and [Decision 0001](decisions/0001-base-skin-and-stateful-exploration.md). Generalize the proven placement/inventory transaction without turning JSON into arbitrary code: typed fact/placement/item checks, bounded all/any/not, one-shot markers, ordered conditional object states with an explicit fallback, and the smallest registered action vocabulary exercised by content.
 
-Deliver **N1 direct keyboard/controller selection with the first real inventory menu**, not a virtual mouse or a new detection backend. Initially state survives room travel only; full reload durability waits for M2.4/M2.5 IndexedDB, export/import and failure acceptance. M2.6 adds the planned asset-ownership/distinct-map audit. Then G1 key/switch access and M3 conditional conversations/missing-lens quest use the same facts and transactions. Preserve out-of-order discovery and the second-content proof. M4/M5/M6 remain later. Do not add these systems to M1.6 or reopen the settled skin design.
+Reuse the delivered session transaction and N1 navigation owner. Specify event ownership, re-entry/repeat behavior, stationary-player state changes and bounded active-object refresh before adding content. N1.2 disabled-choice/item acceptance remains pending until a real disabled state exists; N1.3 choices arrive with M3. Full reload durability waits for M2.4/M2.5 IndexedDB, export/import and failure acceptance, and M2.6 adds the asset-ownership/distinct-map audit. Then G1 key/switch access and M3 conditional conversations/missing-lens quest use the same facts and transactions. Preserve out-of-order discovery and the second-content proof.
 
 ## Limits and continuity
 
-No inventory, gameplay saves, branching quest, combat, full PixelFX recipes, public release, regional asset leases, long-session memory plateau, controller-only tools navigation, other-browser or Android/iOS certification. A callback-paced tiny scene is not proof of GPU headroom or the master plan's large-map/particle budgets. The existing Phaser-containing bundle warning remains visible. This baseline closes the first foundation milestone, not release hardening or all future performance targets.
+No item use/discard/equipment, gameplay saves, conditional access, branching quest, combat, full PixelFX recipes, public release, regional asset leases, long-session memory plateau, other-browser or Android/iOS certification. The delivered controller navigation covers Inventory and existing Settings/Debug controls, not future dialogue choices or unavailable save screens. A callback-paced tiny scene is not proof of GPU headroom or the master plan's large-map/particle budgets. The existing Phaser-containing bundle warning remains visible.
 
 Earlier source/test records remain in [WINDOW-SKIN](WINDOW-SKIN.md), [PLAYER-SHELL](PLAYER-SHELL.md), [INTERACTIONS](INTERACTIONS.md), [MOUSEJOY-PARITY](MOUSEJOY-PARITY.md), [CONTROLLER-RECOVERY](CONTROLLER-RECOVERY.md), [INPUT](INPUT.md), [MAPS](MAPS.md), [FOUNDATION](FOUNDATION.md) and [TOOLCHAIN](TOOLCHAIN.md). Their prior counts/next-task language do not supersede this status. Before editing, read current main, AGENTS and the next roadmap packet; preserve unrelated work and use non-forced parent-aware commits.

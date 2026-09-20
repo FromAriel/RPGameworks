@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.7 · **Date:** September 18, 2026 · **Status:** M1 foundation, player shell and W1 base skin complete; M2 session state/chest is next. Stateful gameplay remains pending. See STATUS for verification.
+**Version:** 0.8 · **Date:** September 20, 2026 · **Status:** M1/W1 complete; the M2 chest/inventory transaction and N1 navigation owner are delivered. Declared facts/conditions, saves and later gameplay remain pending. See STATUS for verification.
 
 Architecture: [Master Plan](PLAN.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -14,7 +14,7 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 
 ## Approved near-term sequence
 
-**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 is the explicitly approved insertion; it does not complete M1.6 or authorize a general theme editor. Each stage is delivered in bounded packets with its own acceptance. W1 and M1.6 have now been implemented and verified; M2/N1 and later gameplay remain pending. See [WINDOW-SKIN](WINDOW-SKIN.md) for exact source/audit, scope and candidate evidence.
+**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 and M1.6 are verified. The first M2 chest/inventory transaction and N1 navigation owner are now delivered; generic declared conditions, storage and later gameplay remain pending. Each later stage still requires its own bounded implementation and acceptance. See [STATUS](STATUS.md) for current evidence and [WINDOW-SKIN](WINDOW-SKIN.md) for the retained art audit.
 
 ## Milestone overview
 
@@ -87,11 +87,13 @@ The subsequent M1.6 baseline is now recorded in [BASELINE.md](BASELINE.md). Proc
 
 **Scheduling:** reuse the current input/sampler; deliver the core with or before M2.2's first real inventory menu. Integrate choices during M3.1. This is not new controller detection and does not require a virtual cursor.
 
-- [ ] **N1.1 — Navigation owner.** Direct directional selection/focus, confirm/cancel, scroll-to-selection, bounded held repeat and predictable focus restoration for actual lists/tabs/controls. Include controller access to the player menu and existing Settings, preserve bindings, and explicitly validate/migrate any additional Menu action.
+- [x] **N1.1 — Navigation owner.** Direct directional selection/focus, confirm/cancel, scroll-to-selection, bounded held repeat and predictable focus restoration for actual lists/tabs/controls. Include controller access to the player menu and existing Settings, preserve bindings, and explicitly validate/migrate any additional Menu action.
 - [ ] **N1.2 — First inventory/menu acceptance.** Test keyboard/controller/pointer handoff, scrolling, disabled items, nested settings, remapping, disconnect/reconnect and held-input leakage. Prompts reflect configured actions; no hidden menu can keep exploration blocked.
 - [ ] **N1.3 — Dialogue choices.** Reuse the model for M3.1 visible/disabled/hidden choices, preserving stable selection and a cancel/fallback path. No second incompatible navigation system.
 
 Keep Debug separate from player Inventory/Journal/Party/save functions. Add those entries only when their models work. New Game / Continue / Load follows M2.4/M2.5 storage; protect existing progress rather than adding a nonfunctional title screen.
+
+**N1 evidence:** The first Inventory and existing Settings/Debug controls share one semantic navigation owner and the existing sampled controller. Keyboard/controller/pointer handoff, scrolling, remapping, nested Settings, reconnects, held-input isolation and repeated opening are covered. N1.2 remains open because a real disabled item/choice state has not been authored yet; do not manufacture one merely to close the checkbox. N1.3 remains paired with M3 dialogue choices.
 
 ## M2 — Persistent state and trustworthy saves
 
@@ -99,8 +101,8 @@ Keep Debug separate from player Inventory/Journal/Party/save functions. Add thos
 
 ### Work packets
 
-- [ ] **M2.1 — State layers.** Implement immutable definitions, persistent deltas, transient map state, and separate presentation objects. Give placed objects stable instance IDs. Declare fact types/defaults/ownership/persistence; chest/switch/lock state belongs to instances, not art/templates. Prepare ordered conditional object states with fallback and state-driven appearance/interaction, without claiming storage durability yet.
-- [ ] **M2.2 — Inventory transaction.** Add bounded stackable items, item grants/removals, a basic inventory menu, and atomic checks. Deliver it with N1 core navigation. Test invalid/full inventory and repeated grants; failure cannot partly claim a chest or lose its reward.
+- [ ] **M2.1 — State layers.** Implement immutable definitions, persistent deltas, transient map state, and separate presentation objects. Give placed objects stable instance IDs. Declare fact types/defaults/ownership/persistence; chest/switch/lock state belongs to instances, not art/templates. Prepare ordered conditional object states with fallback and state-driven appearance/interaction, without claiming storage durability yet. The session-owned inventory/placement subset and chest reconstruction are delivered; generic ordered conditional states remain with M2.3.
+- [x] **M2.2 — Inventory transaction.** Add bounded stackable items, item grants/removals, a basic inventory menu, and atomic checks. Deliver it with N1 core navigation. Test invalid/full inventory and repeated grants; failure cannot partly claim a chest or lose its reward.
 - [ ] **M2.3 — Declared facts and one-shot actions.** Add bounded pure all/any/not, typed fact/placement/item checks, one-shot markers and a minimal registered action vocabulary. All rewards use one atomic domain path. Specify Interact/Enter/explicit State changed ownership, re-entry/repeat scope, stationary-player condition changes, hydration and bounded reaction behavior; implement only exercised policies. Update affected active objects on relevant commits, not through global frame scans. Quest checks arrive with M3.
 - [ ] **M2.4 — Safe storage.** Implement an IndexedDB adapter, versioned envelope, safe checkpoints, previous-valid-revision preservation, and clear save status. Add export/import with size/schema validation for facts, inventory and placement deltas. Supply functional player save/load/Continue access only with this capability, distinct from Debug, with explicit progress-replacement confirmation.
 - [ ] **M2.5 — Failure and concurrency fixtures.** Test unavailable storage, quota failure, invalid import, corrupt/future-version saves, stale tab revisions, and interrupted writes. Preserve usable prior data.
@@ -113,6 +115,8 @@ The chest remains opened across both map changes and a full reload. Item totals 
 Saving during unsupported modal activity is explicitly deferred or disabled. No promise of mid-script or mid-battle saving is implied.
 
 **Defer:** Cloud sync, arbitrary save repair, unlimited undo history, and a full scripting language.
+
+**First-slice evidence:** Candidate `cf534f912f39e931d7448e9d577f6bee7fe252b7` passed 252 unit tests, 95 functional Chromium scenarios and eight benchmark workloads across Windows/Node 24 and Linux/Node 22/24 in [run 35437641180](https://github.com/FromAriel/RPGameworks/actions/runs/35437641180). One Polished lens chest grants and opens atomically, reconstructs after travel/restart, rejects partial failure, and resets only with the intentionally non-durable browser session. STATUS records controls, migration, local verification and remaining limits.
 
 ## G1 — Conditional access integration
 
@@ -259,6 +263,6 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**M2.1 — Authoritative session state and placed-object deltas.** M1.6 is complete with a recorded baseline. Preserve the skinned two-room experience while building the first state/chest/inventory proof: one chest grants its item once, and remains opened across room travel. Deliver N1 direct navigation alongside the first real inventory menu. Session persistence is not reload durability until the storage packet passes.
+**M2.3 — Declared facts, bounded conditions and conditional object states.** Build on the delivered session placement/inventory transaction and N1 owner. Add only the typed all/any/not checks, one-shot markers, ordered state/fallback behavior and registered actions exercised by the next content proof. Specify interaction/state-change ownership and bounded active-object refresh; do not add arbitrary JSON execution or claim reload durability.
 
-M2 then adds safe saves/export and the distinct-map resource audit; G1 applies shared facts and transactions to conditional access; M3 proves conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. These gameplay capabilities remain unchecked until implemented and verified. Reuse `npm run benchmark` for comparable future measurements; do not reopen the settled skin or treat a headless baseline as phone certification.
+M2.4/M2.5 then add safe saves/export and failure/concurrency acceptance; M2.6 adds the distinct-map resource audit. G1 applies shared facts and transactions to conditional access; M3 proves conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. These gameplay capabilities remain unchecked until implemented and verified. Reuse `npm run benchmark` for comparable future measurements; do not reopen the settled skin or treat a headless baseline as phone certification.

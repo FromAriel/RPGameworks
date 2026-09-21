@@ -104,13 +104,15 @@
     </aside>
     <dialog data-window-skin="frame" id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
       <header class="skin-heading"><h2 id="dialog-title" data-skin-title></h2></header>
+      <div id="dialog-scroll-above" hidden></div>
       <div class="dialog-scroll">
       <p id="dialog-page" class="eyebrow"></p>
       <div id="dialog-text"></div>
       </div>
+      <div id="dialog-scroll-below" hidden></div>
       <div class="dialog-actions">
-        <button id="dialog-advance" data-action="interact" type="button">Next page</button>
-        <button id="dialog-cancel" data-action="cancel" class="secondary" type="button">Close</button>
+        <button id="dialog-advance" data-action="interact" type="button" class="ui-action-button" data-intent="primary">Next page</button>
+        <button id="dialog-cancel" data-action="cancel" type="button" class="ui-action-button" data-intent="secondary">Close</button>
       </div>
     </dialog>
     <dialog data-window-skin="frame" id="inventory-dialog" aria-labelledby="inventory-title">
@@ -138,7 +140,7 @@
       <div class="save-body">
         <p id="save-status" role="status" aria-live="polite">Reading local save slots…</p>
         <div id="save-slots" aria-label="Manual save slots"></div>
-        <div class="save-actions">
+        <div class="save-toolbar">
           <label class="button-label">Import save<input id="save-import" type="file" accept="application/json,.json" /></label>
           <button id="save-load-import" type="button" hidden>Load validated import for this session</button>
           <button id="save-export-current" type="button" class="secondary">Export current session</button>

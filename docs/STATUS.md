@@ -1,10 +1,10 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 20, 2026, Ariel accepted U1.2 and retained the glow as an optional component treatment.
+**Updated:** September 21, 2026, Ariel accepted the U1.3a dialogue migration and Save/Load spacing captures; U1.3b Inventory normalization is next.
 
 ## Current phase
 
-**M1.1–M1.6, W1, M2.1–M2.6, U1.1, and U1.2 are implemented and accepted on `main` or in the current working delivery candidate.** The Workshop Astral semantic token layer now has opt-in production controls for actions, selectable rows, tabs, status, meters, prompts, insets, scroll affordances and confirmations. Existing real screens are deliberately unchanged until U1.3.
+**M1.1–M1.6, W1, M2.1–M2.6, U1.1, U1.2, and U1.3a (dialogue migration plus the accepted Save/Load spacing fix) are implemented and accepted.** The Workshop Astral semantic token layer now has opt-in production controls for actions, selectable rows, tabs, status, meters, prompts, insets, scroll affordances and confirmations. The dialogue screen is the first real screen migrated onto the shared components; Inventory, Save/Load components, and Settings are deliberately unchanged until U1.3b–U1.3d.
 
 U1.1 is accepted for direct publication on `main`; hosted exact-commit CI remains deferred rather than implied. Ariel's earlier M2 smoke report that it “seems to work” still does not constitute the full M2 manual acceptance route or physical-controller certification. Other browsers/devices and any deployment remain separate. The optional Debug drawer remains separate from Inventory and closed on reload. The benchmark remains a separate development/test command whose probe is injected only in test pages.
 
@@ -21,6 +21,16 @@ The exact implementation/reference commit is `0cade5ae7632f22bede9323989acbcfc2e
 Unit coverage pins all approved colors and aliases, checks 4.5:1 normal-text and 3:1 indicator thresholds, and explicitly prohibits violet and danger as normal text on the hover surface. Browser coverage reads computed tokens, exercises controller-selected cyan plus neutral focus, retains adjacent disabled reasons, removes decorative art in forced colors, and preserves state information under reduced motion.
 
 Local verification passes `npm run check` with **286 unit/content tests** and the optimized production build, plus **113 functional Chromium scenarios**. The exact windowskin audit, `npm audit`, relative documentation links, and `git diff --check` pass. The existing large Phaser chunk warning remains. Benchmarks were deliberately not rerun because this packet adds static CSS and test/documentation work, not runtime behavior.
+
+## U1.3a dialogue normalization — accepted
+
+`#dialog-advance` and `#dialog-cancel` now carry the shared `ui-action-button` treatment with `primary`/`secondary` intents, and `.dialog-scroll` hosts the shared scroll affordance ("More above"/"More below" literal-text indicators) mounted lazily on first show by `InteractionDialog` and disposed with scene release, so a restarted scene remounts without accumulating observers. The windowskin frame, live titles, fixed action bar, and all dialogue behavior are unchanged; dialogue button rules were removed from `windowskin.css` and the Tools panel keeps its rules for U1.3c. Input flows through the existing `data-action` wiring; no second activation path was added.
+
+The button treatment normalizes the component contract: 600-weight 14px labels, 44px touch targets (each dialog is 2px taller), component padding, and the flat raised fill without the pre-U1.3 rest-state inner ring. The [U1.3a candidate captures](ui-reference/u1.3/dialogue/README.md) record the two changed dialogue states and the exact comparison. Ariel accepted those captures on 2026-09-21; the accepted U1.1 files remain the historical pre-migration reference.
+
+Ariel's live test of the working tree also produced a Save/Load spacing fix (request, not U1.3a scope): the bottom action row now uses a dedicated `.save-toolbar` with aligned import control and larger gaps, the slot list clears the section divider, and slot rows gained vertical padding. All 9 functional save scenarios pass. The [save-spacing captures](ui-reference/u1.3/save-spacing/README.md) record the resulting 5 changed Save/Load states; Ariel accepted them in the same review on 2026-09-21. The accepted post-migration baseline for dialogue and Save/Load lives under `docs/ui-reference/u1.3/`; the U1.1 set remains untouched.
+
+Local verification passes `npm run check` with **289 unit/content tests** and the optimized production build, plus **127 functional Chromium scenarios** (one unrelated controller-disconnect inventory scenario failed once in the first sequential run and passed 3/3 isolated and in the full rerun; it is noted as an observed timing flake, not a U1.3a regression). The exact windowskin audit, `npm audit`, and `git diff --check` pass. Benchmarks were deliberately not rerun: the production runtime change is one lazy scroll listener, one ResizeObserver, and button styling. The existing large Phaser chunk warning remains.
 
 ## U1.2 shared components — accepted
 
@@ -88,7 +98,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Existing users need onl
 
 ## Next concrete packet
 
-**Begin U1.3 existing-screen normalization.** Migrate one existing screen at a time onto the accepted shared components, starting with the smallest low-risk surface and preserving the U1.1 references after every conversion. Do not add dead Party, Journal, Equipment or Battle destinations. Once U1.1–U1.3 are accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
+**Begin U1.3b Inventory normalization.** Migrate Inventory item rows onto the shared selectable row, the control hint onto the shared prompt legend, the detail block onto the inset region, the three action buttons onto shared intents, and the list/body scroller onto the shared affordance. Update the row-text functional assertions to the component's semantic structure while preserving selection, focus, scrolling, and empty-state behavior. Produce separately reviewed captures for the changed Inventory states; keep Save/Load, Settings, and dialogue captures byte-identical to their accepted references. Do not add dead Party, Journal, Equipment or Battle destinations. After U1.3c (Settings tabs) and U1.3d (Save/Load components plus the confirmation-controller swap Ariel approves separately), G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
 
 N1.3 remains paired with M3 dialogue choices. Later UI patterns extend alongside the gameplay systems that actually need them: dialogue/Journal in M3, party/equipment/shop/battle in M5, and title/Continue/credits in M6/M7. The longer route from this state spine through a finishable JRPG remains detailed in [JRPG-BUILDOUT](JRPG-BUILDOUT.md).
 

@@ -278,7 +278,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if (!this.sceneLifetime) return;
       this.sceneLifetime.abort(); this.sceneLifetime = null;
       this.generation += 1; this.transfer.dispose();
-      this.dialog.close(); this.message = null;
+      this.dialog.dispose(); this.message = null;
       this.inventory?.dispose(); this.inventory = null;this.saveMenu?.dispose();this.saveMenu=null;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;

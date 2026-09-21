@@ -10,12 +10,13 @@
 .tools-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 0 8px 6px; }
 .panel-tabs button[aria-selected="true"] { border-bottom-color: var(--ui-selection); border-bottom-width: 3px; font-weight: 750; }
 .panel-tabs button[aria-selected="true"]::before { content: '› '; }
-#tools-panel button, #interaction-dialog button { border-radius: 0; border-color: var(--ui-line-strong); background-color: var(--ui-surface-raised); box-shadow: inset 0 0 0 2px var(--ui-surface); }
-#tools-panel button.secondary, #interaction-dialog button.secondary { background-color: var(--ui-surface); border-color: var(--ui-line-weak); }
-#tools-panel button:hover:not(:disabled), #interaction-dialog button:hover:not(:disabled) { background-color: var(--ui-surface-hover); text-decoration: underline; text-underline-offset: 3px; }
-#tools-panel button:active:not(:disabled), #interaction-dialog button:active:not(:disabled) { box-shadow: inset 2px 2px #080e18; transform: translateY(1px); }
-#tools-panel :focus-visible, #interaction-dialog :focus-visible { outline: var(--ui-focus-width) dashed var(--ui-focus-ring); outline-offset: var(--ui-focus-offset); }
-#tools-panel button:disabled, #interaction-dialog button:disabled { opacity: .55; text-decoration: line-through; cursor: not-allowed; }
+/* Tools-panel controls remain here until U1.3c. Dialogue buttons moved to components.css (U1.3a). */
+#tools-panel button { border-radius: 0; border-color: var(--ui-line-strong); background-color: var(--ui-surface-raised); box-shadow: inset 0 0 0 2px var(--ui-surface); }
+#tools-panel button.secondary { background-color: var(--ui-surface); border-color: var(--ui-line-weak); }
+#tools-panel button:hover:not(:disabled) { background-color: var(--ui-surface-hover); text-decoration: underline; text-underline-offset: 3px; }
+#tools-panel button:active:not(:disabled) { box-shadow: inset 2px 2px #080e18; transform: translateY(1px); }
+#tools-panel :focus-visible { outline: var(--ui-focus-width) dashed var(--ui-focus-ring); outline-offset: var(--ui-focus-offset); }
+#tools-panel button:disabled { opacity: .55; text-decoration: line-through; cursor: not-allowed; }
 .stage-heading { color: var(--ui-information-muted); }
 .skin-divider { position: relative; display: flex; justify-content: center; align-items: center; min-height: 32px; margin: 8px 0 18px; text-align: center; color: var(--ui-information-muted); line-height: 1.5; border-bottom: 1px solid var(--ui-line-weak); }
 .skin-divider [data-skin-title] { display: inline-block; max-width: calc(100% - 80px); overflow-wrap: anywhere; font-size: 13px; }
@@ -32,7 +33,7 @@
   #interaction-dialog #dialog-title { max-width: calc(100% - 128px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  #tools-panel button:active, #interaction-dialog button:active { transform: none; }
+  #tools-panel button:active { transform: none; }
 }
 @media (forced-colors: active) {
   [data-window-skin] { background-image: none !important; }

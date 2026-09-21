@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Browser-native JRPG framework: first rendering foundation",
-  "engines": {"node": ">=22.16.0 <23 || >=24.15.0 <25"},
+  "engines": {
+    "node": ">=22.16.0 <23 || >=24.15.0 <25"
+  },
   "scripts": {
     "assets": "node tools/generate-assets.mjs",
     "predev": "npm run assets && npm run content",
@@ -25,7 +27,10 @@
     "validate": "npm run schemas && node tools/build-content.mjs --check",
     "pretest": "npm run schemas"
   },
-  "dependencies": {"phaser": "4.2.1"},
+  "dependencies": {
+    "happy-dom": "20.14.5",
+    "phaser": "4.2.1"
+  },
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.3",

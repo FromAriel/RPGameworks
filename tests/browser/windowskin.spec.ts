@@ -134,6 +134,8 @@ for(const fault of ['missing','wrong-size','timeout'] as const) {
 test('Settings remains usable on a narrow screen with a visible focus cue', async ({page},info) => {
  await page.setViewportSize({width:390,height:844});await openRoom(page);await openTools(page);
  await expect(page.locator('#tools-panel')).toHaveAttribute('data-skin-state','ready');
+ const closeBox=await page.locator('#tools-close').boundingBox();
+ expect(closeBox!.width).toBeGreaterThanOrEqual(44); // Shared touch-target token at compact width.
  await page.keyboard.press('Tab');
  const outline=await page.evaluate(()=>document.activeElement?getComputedStyle(document.activeElement).outlineStyle:'none');
  expect(outline).toBe('dashed');

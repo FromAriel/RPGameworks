@@ -30,10 +30,8 @@ h3 { font-size: 14px; margin: 22px 0 14px; }
 #tools-panel { position: absolute; z-index: 20; right: 0; top: 0; bottom: 0; width: min(var(--panel-width), 100%); padding: max(var(--ui-frame-clearance-compact), var(--ui-safe-top)) max(var(--ui-frame-clearance-compact), var(--ui-safe-right)) max(var(--ui-frame-clearance-compact), var(--ui-safe-bottom)) var(--ui-frame-clearance-compact); overflow: auto; overscroll-behavior: contain; background: var(--ui-surface-tools); border-left: 1px solid #414855; box-shadow: -10px 0 40px #0007; scrollbar-color: #5d6678 #12161f; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; }
 .panel-heading h2 { letter-spacing: .04em; }
-#tools-close { font-size: 22px; background: transparent; border-color: transparent; width: 42px; padding: 0; }
-.panel-tabs { display: flex; border-bottom: 1px solid #3b4353; gap: 8px; margin-bottom: 18px; }
-.panel-tabs button { flex: 1; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--ui-text-muted); }
-.panel-tabs button[aria-selected="true"] { color: #fff; border-bottom-color: var(--ui-authored-importance); }
+#tools-close { font-size: 22px; width: var(--ui-touch-target); padding: 0; }
+.panel-tabs { margin-bottom: 18px; }
 .resume-button { width: 100%; margin-top: 24px; }
 summary { cursor: pointer; padding: 10px 0; font-size: 13px; font-weight: 600; }
 .help-panel { border-block: 1px solid #343b49; margin: 18px 0; }

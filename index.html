@@ -31,11 +31,11 @@
     <aside data-window-skin="frame" id="tools-panel" tabindex="-1" aria-label="Settings and developer tools" hidden>
       <header class="panel-heading skin-heading"><h2 id="tools-title" data-skin-title>Settings</h2></header>
       <div class="panel-toolbar">
-      <div class="panel-tabs" role="tablist" aria-label="Menu sections">
+      <div class="panel-tabs ui-tabs" id="tools-tabs" role="tablist" aria-label="Menu sections">
         <button id="options-tab" type="button" role="tab" aria-selected="true" aria-controls="options-panel">Settings</button>
         <button id="debug-tab" type="button" role="tab" aria-selected="false" aria-controls="debug-panel" tabindex="-1">Debug</button>
       </div>
-      <button id="tools-close" type="button" aria-label="Close settings and tools">×</button></div>
+      <button id="tools-close" type="button" class="ui-action-button" data-intent="secondary" aria-label="Close settings and tools">×</button></div>
       <div class="tools-scroll">
       <section id="options-panel" role="tabpanel" aria-labelledby="options-tab">
         <h3 class="skin-divider" data-window-skin="divider"><span data-skin-title>Display &amp; controls</span></h3>
@@ -49,7 +49,7 @@
           <p class="hint">I or Escape opens Inventory during exploration. Its Settings button opens these tools. F2 toggles Debug. Click the play area to play with the panel still visible.</p>
         </details>
         <div class="controller-actions">
-          <button id="controller-activate" type="button" class="secondary">Activate controller</button>
+          <button id="controller-activate" type="button" class="ui-action-button" data-intent="secondary">Activate controller</button>
           <span id="controller-brief" role="status">Checking controller detection…</span>
         </div>
       <details id="controller-settings" class="controller-panel">
@@ -73,8 +73,8 @@
         <pre id="controller-live" aria-label="Live controller inputs"></pre>
         <p id="controller-message" role="status"></p>
         <div class="controller-actions">
-          <button id="controller-rescan" type="button" class="secondary">Rescan controllers</button>
-          <button id="controller-report-button" type="button" class="secondary">Show diagnostic report</button>
+          <button id="controller-rescan" type="button" class="ui-action-button" data-intent="secondary">Rescan controllers</button>
+          <button id="controller-report-button" type="button" class="ui-action-button" data-intent="secondary">Show diagnostic report</button>
         </div>
         <div id="controller-report-area" hidden>
           <label for="controller-report">Controller diagnostic report (select and copy to share)</label>
@@ -82,8 +82,8 @@
           <p class="hint">Captured only when requested. Includes browser/device data, settings and the last page error; nothing is uploaded automatically. Review before sharing.</p>
         </div>
         <div class="controller-actions">
-          <button id="controller-reset" type="button" class="secondary">Reset controller defaults</button>
-          <button id="controller-return" type="button">Return to game</button>
+          <button id="controller-reset" type="button" class="ui-action-button" data-intent="secondary">Reset controller defaults</button>
+          <button id="controller-return" type="button" class="ui-action-button" data-intent="primary">Return to game</button>
         </div>
         <p class="hint">Browser-local preferences only. Elite paddles may mirror other buttons or be hidden by the browser. Hardware profiles remain in Xbox Accessories; independent paddles and rumble are not promised.</p>
       </details>
@@ -99,7 +99,7 @@
         <p class="hint">Live readout. Click the play area to resume controls while keeping this panel visible. Settings and text fields never drive the character.</p>
         <footer><span>BUILD</span><span id="build-label">0.1.0</span></footer>
       </section>
-      <button id="tools-resume" class="resume-button" type="button">Return to game</button>
+      <button id="tools-resume" class="resume-button ui-action-button" data-intent="primary" type="button">Return to game</button>
       </div>
     </aside>
     <dialog data-window-skin="frame" id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">

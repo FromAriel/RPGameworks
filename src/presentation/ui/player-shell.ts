@@ -1,3 +1,5 @@
+import { mountTabs, type TabsController } from './components';
+
 export type ToolTab = 'options' | 'debug';
 
 /** Page chrome only. Never reads or mutates world state. */
@@ -18,8 +20,6 @@ export function mountPlayerShell(
   const settings = get<HTMLDetailsElement>('controller-settings');
   const touch = get<HTMLElement>('touch-controls');
   const touchEnabled = get<HTMLInputElement>('touch-enabled');
-  const tabs = [get<HTMLButtonElement>('options-tab'), get<HTMLButtonElement>('debug-tab')];
-  const sections = [get<HTMLElement>('options-panel'), get<HTMLElement>('debug-panel')];
   const coarse = window.matchMedia('(pointer: coarse)');
   const lifetime = new AbortController();
   const options = { signal: lifetime.signal };
@@ -38,19 +38,24 @@ export function mountPlayerShell(
     if (!touchOverride) { touchEnabled.checked = coarse.matches; applyTouch(); }
   }, options);
 
-  function select(next: ToolTab, focus = true): void {
-    onInputBoundary();
+  // The shared tabs controller is the single selection path: tablist listeners, roving
+  // tabindex, panel visibility, keyboard arrows/Home/End and the notification callback
+  // all live here, so every selection notifies exactly once. apply() is presentation
+  // sync only; the focusin/pointerdown handlers below own input-boundary clears when
+  // ownership actually transfers into the panel, so entering never clears twice and
+  // internal tab navigation never resets controller sampling mid-navigation.
+  // MenuNavigation remains the only controller-direction owner.
+  const tabsController: TabsController = mountTabs(get('tools-tabs'), (id) => {
+    apply(id === 'options-tab' ? 'options' : 'debug');
+  });
+  function apply(next: ToolTab): void {
     tab = next;
     get('tools-title').textContent = next === 'options' ? 'Settings' : 'Debug';
     if (next !== 'options') settings.open = false;
-    tabs.forEach((button, i) => {
-      const selected = i === (next === 'options' ? 0 : 1);
-      button.setAttribute('aria-selected', String(selected));
-      button.tabIndex = selected ? 0 : -1;
-      sections[i]!.hidden = !selected;
-    });
-    if (focus) tabs[next === 'options' ? 0 : 1]!.focus({ preventScroll: true });
     onChange();
+  }
+  function select(next: ToolTab, focus = true): void {
+    tabsController.select(next === 'options' ? 'options-tab' : 'debug-tab', focus);
   }
   function open(next: ToolTab): void {
     if (!canOpen() || document.querySelector('dialog[open]')) return;
@@ -72,14 +77,6 @@ export function mountPlayerShell(
   toggle.addEventListener('click', () => { if (onGameMenu && canOpen()) onGameMenu(); else open('options'); }, options);
   get('tools-close').addEventListener('click', close, options);
   get('tools-resume').addEventListener('click', close, options);
-  tabs.forEach((button, i) => {
-    button.addEventListener('click', () => select(i === 0 ? 'options' : 'debug'), options);
-    button.addEventListener('keydown', (event) => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      select(event.key === 'Home' ? 'options' : event.key === 'End' ? 'debug' : i === 0 ? 'debug' : 'options');
-    }, options);
-  });
   // Entering the panel releases gameplay immediately, including between two frame polls.
   panel.addEventListener('focusin', event => {
     if (!(event.relatedTarget instanceof Node) || !panel.contains(event.relatedTarget)) onInputBoundary();
@@ -108,7 +105,7 @@ export function mountPlayerShell(
     close, open,
     dispose(): void {
       if (disposed) return;
-      disposed = true; lifetime.abort();
+      disposed = true; lifetime.abort(); tabsController.dispose();
       panel.hidden = true; settings.open = false;
       document.body.classList.remove('tools-open');
       toggle.setAttribute('aria-expanded', 'false');

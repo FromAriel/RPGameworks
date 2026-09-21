@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MapDefinition } from '../../src/content/generated/map';
 import type { ResolvedObjectState } from '../../src/domain/object-state';
-import { actorOccupiedCells, applySolidityChanges, createDynamicCollision } from '../../src/domain/collision-view';
+import { actorOccupiedCells, applySolidityChanges, createDynamicCollision, resolvedCanEnter } from '../../src/domain/collision-view';
 import type { SolidityChange } from '../../src/domain/collision-view';
 import { advanceActor, createActor } from '../../src/domain/movement';
 import type { Actor } from '../../src/domain/movement';
@@ -104,6 +104,19 @@ describe('occupied-cell policy: closing gates defer instead of trapping', () => 
     expect([...actorOccupiedCells(actor)]).toEqual(['1,1', '2,1']);
     for (let i = 0; i < 3; i += 1) advanceActor(actor, 'right', 40, () => true); // Completes the step inside the 50 ms delta cap.
     expect([...actorOccupiedCells(actor)]).toEqual(['2,1']);
+  });
+  it('blocks an unrestorable checkpoint save while the actor stands on a deferral-closing gate, and allows it after leaving', () => {
+    const map = gateMap(); const view = createDynamicCollision(map, [resolved('test:object.gate', false)]);
+    const actor = createActor(1, 1), step = () => { for (let i = 0; i < 4; i += 1) advanceActor(actor, 'right', 40, view.canEnter); };
+    let current = [resolved('test:object.gate', false)];
+    const canonical = () => resolvedCanEnter(map, current, actor.tile.x, actor.tile.y); // What a restored session from the current resolution would compute.
+    step(); expect(actor.tile).toEqual({ x: 2, y: 1 });
+    expect(canonical()).toBe(true); // While the gate is open the tile is a legitimate checkpoint.
+    expect(view.update(current = [resolved('test:object.gate', true)], actorOccupiedCells(actor)).deferred).toHaveLength(1); // Close defers; the fact is already committed.
+    expect(canonical()).toBe(false); // Save/export must refuse here: the stored session resolves this tile solid.
+    step(); // Player leaves; the deferral applies.
+    expect(view.release(actorOccupiedCells(actor)).applied).toHaveLength(1);
+    expect(canonical()).toBe(true); // Attempting save from the neighbouring tile is legitimate again.
   });
 });
 

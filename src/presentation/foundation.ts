@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { SessionController } from '../runtime/session-controller';
 import { InventoryMenu } from './ui/inventory';
 import { SaveMenu } from './ui/save-menu';
-import type { SaveEnvelopeV1 } from '../domain/save';
+import type { SaveCheckpoint,SaveEnvelopeV1 } from '../domain/save';
 import { SessionState } from '../domain/session';
 import type { SaveService } from '../runtime/save-service';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
@@ -124,7 +124,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
         this.inventory = new InventoryMenu(elements.inventory, elements.session,
           () => this.resume(), () => { this.resume(); elements.openSettings(); },()=>this.openSaves(),elements.inventoryPrompt);
-        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory(),elements.saveConfirmation,()=>this.inputOwner?.clear());
+        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory(),elements.saveConfirmation,()=>this.inputOwner?.clear(),reason=>this.checkpointReason(reason));
         phase = 'ready';
         scheduleResize();
       } catch (cause) { this.fail(cause); }
@@ -212,6 +212,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private openSaves():void{if(this.mode!=='inventory')return;this.inventory?.close();this.setMode('save');void this.saveMenu?.open().catch(cause=>this.fail(cause));}
     private returnToInventory():void{if(this.mode!=='save')return;this.setMode('inventory');this.inventory?.open();}
     private checkpoint(){const room=this.room!;return{mapId:room.content.map.id,tile:{...room.actor.tile},facing:room.actor.facing};}
+    /** Refuses a write whose checkpoint the saved session could not restore (standing on a deferral-closing gate); the player stays put with a visible reason. */
+    private checkpointReason(checkpoint:SaveCheckpoint):string|null{return this.room&&this.room.checkpointBlocked(checkpoint.tile)?'Cannot save here: the gate beneath you is still closing. Step off it, then save or export again.':null;}
     private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
       if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');

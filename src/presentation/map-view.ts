@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { actorPosition,createActor } from '../domain/movement';
 import { createInteractionLookup,ExitLatch } from '../domain/interaction';
-import { actorOccupiedCells,createDynamicCollision } from '../domain/collision-view';
+import { actorOccupiedCells,createDynamicCollision,resolvedCanEnter } from '../domain/collision-view';
 import type { DynamicCollision } from '../domain/collision-view';
 import type { ResolvedObjectState } from '../domain/object-state';
 import { objectDependencies,objectFrames,resolveObjectState } from '../domain/object-state';
+import type { Tile } from '../domain/movement';
 import type { DependencyKey,SessionState } from '../domain/session';
 import type { SessionController } from '../runtime/session-controller';
 import type { LoadedMap } from '../platform/map-loader';
@@ -43,6 +44,8 @@ export class MapView{
     if(updated.length)this.collision.update(updated,actorOccupiedCells(this.actor));
   }
   get occupant():ReadonlySet<string>{return actorOccupiedCells(this.actor);}
+  /** Canonical (deferral-free) check: a save or export whose checkpoint restores into a room that resolves this tile solid would be unloadable. */
+  checkpointBlocked(tile:Tile):boolean{return !resolvedCanEnter(this.content.map,[...this.states.values()],tile.x,tile.y);}
   releaseDeferred():void{this.collision.release(this.occupant);}
   sync():void{const position=actorPosition(this.actor,TILE);this.hero.setPosition(Math.round(position.x),Math.round(position.y));const frame=`hero-${this.actor.facing}`;if(this.hero.frame.name!==frame)this.hero.setFrame(frame);}
   burst(enabled:boolean):void{this.bursts+=1;if(!enabled)return;const available=Math.max(0,PARTICLE_CAP-this.emitter.getAliveParticleCount());if(available>0)this.emitter.explode(Math.min(BURST_SIZE,available),this.hero.x,this.hero.y);}

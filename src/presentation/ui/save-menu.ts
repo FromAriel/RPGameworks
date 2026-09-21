@@ -19,7 +19,7 @@ export class SaveMenu{
   private disposed=false;private imported:SaveEnvelopeV1|null=null;private busy=false;
   constructor(readonly element:HTMLDialogElement,private readonly service:SaveService,private readonly sessions:SessionController,
     private readonly checkpoint:()=>SaveCheckpoint,private readonly load:(envelope:SaveEnvelopeV1)=>Promise<void>,private readonly closeOwner:()=>void,
-    confirmationParts:ConfirmationDialogParts,clearInputs:()=>void){
+    confirmationParts:ConfirmationDialogParts,clearInputs:()=>void,private readonly checkpointReason:(checkpoint:SaveCheckpoint)=>string|null=()=>null){
     const get=<T extends HTMLElement>(id:string):T=>{const node=element.querySelector<T>(`#${id}`);if(!node)throw new Error(`Missing save element: ${id}`);return node;};
     this.list=get('save-slots');this.loadImport=get('save-load-import');
     this.statusPresenter=mountStatus(get('save-status'));
@@ -110,7 +110,8 @@ export class SaveMenu{
     }
     this.busy=true;
     try{
-      if(action==='save'){const result=await this.service.save(slotId,this.checkpoint(),this.sessions.current);if(result.kind==='written')this.set('success','Progress saved.');else if(result.kind==='stale')this.set('warning','Another tab changed this slot. Slot details were refreshed; review before trying again.');else this.set('failure',`Save failed (${result.reason}): ${result.message}`);}
+      if(action==='save'){const refusal=this.checkpointReason(this.checkpoint());if(refusal){this.set('failure',refusal);return;} // No confirm, no write, no movement: the player stays on the tile with the reason.
+        const result=await this.service.save(slotId,this.checkpoint(),this.sessions.current);if(result.kind==='written')this.set('success','Progress saved.');else if(result.kind==='stale')this.set('warning','Another tab changed this slot. Slot details were refreshed; review before trying again.');else this.set('failure',`Save failed (${result.reason}): ${result.message}`);}
       else if(action==='load'){await this.load(await this.service.load(slotId));if(!this.disposed)this.set('success','Save loaded.');return;} // Exploration focus wins after an in-place load.
       else if(action==='export'){const envelope=await this.service.load(slotId);if(this.disposed)return;this.download(envelope);this.set('success','Save exported.');}
       else if(action==='import'&&importedSnapshot){const result=await this.service.storeImport(slotId,importedSnapshot);if(this.disposed)return;if(result.kind==='written'){this.set('success','Import stored. Load the slot when ready.');if(this.imported===importedSnapshot){this.imported=null;this.loadImport.hidden=true;}}else if(result.kind==='stale')this.set('warning','Another tab changed this slot. Review it before importing again.');else this.set('failure',`Import failed (${result.reason}): ${result.message}`);}
@@ -135,7 +136,8 @@ export class SaveMenu{
     catch(error){if(!this.disposed)this.set('failure',error instanceof Error?error.message:String(error));}
     finally{this.busy=false;}
   }
-  private exportCurrent():void{try{this.download(createEnvelope('slot-1',1,this.service.context,this.checkpoint(),this.sessions.current));this.set('success','Current session exported. It was not written to a local slot.');}catch(error){this.set('failure',error instanceof Error?error.message:String(error));}}
+  private exportCurrent():void{try{const checkpoint=this.checkpoint();const refusal=this.checkpointReason(checkpoint);if(refusal){this.set('failure',refusal);return;}
+    this.download(createEnvelope('slot-1',1,this.service.context,checkpoint,this.sessions.current));this.set('success','Current session exported. It was not written to a local slot.');}catch(error){this.set('failure',error instanceof Error?error.message:String(error));}}
   private download(envelope:SaveEnvelopeV1):void{const blob=new Blob([this.service.exportText(envelope)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`${envelope.gameId.replace(':','-')}-${envelope.slotId}-r${envelope.storageRevision}.json`;link.click();queueMicrotask(()=>URL.revokeObjectURL(url));}
   private cancel():void{this.close();this.closeOwner();}
   close():void{this.navigation.reset();if(this.element.open)this.element.close();}

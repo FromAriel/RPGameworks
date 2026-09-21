@@ -35,10 +35,28 @@ export interface DynamicCollision {
   release(occupied: ReadonlySet<string>): SolidityOutcome;
 }
 
-/** Build the view once per room from the validated map and its freshly resolved object states. Authored wall rows always block and are never overridden. */
-export function createDynamicCollision(map: MapDefinition, initial: Iterable<ResolvedObjectState>): DynamicCollision {
+/** Canonical, deferral-free passability: what a fresh room from these resolved states would compute. Used by checkpoint save gating and load validation, so a tile the saved session resolves as solid can never restore. */
+export function resolvedCanEnter(map: MapDefinition, states: Iterable<ResolvedObjectState>, x: number, y: number): boolean {
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= map.width || y >= map.height) return false;
+  if (wallsOf(map).has(cell(x, y))) return false;
+  for (const state of states) {
+    if (!state.solid) continue;
+    const placement = map.objects.find(object => object.id === state.objectId);
+    if (placement && placement.x === x && placement.y === y) return false;
+  }
+  return true;
+}
+
+/** Authored wall rows compiled once; identical semantics to the static grid's wall contribution. */
+export function wallsOf(map: MapDefinition): ReadonlySet<string> {
   const walls = new Set<string>();
   map.collision.forEach((row, y) => [...row].forEach((symbol, x) => { if (symbol !== '.') walls.add(cell(x, y)); }));
+  return walls;
+}
+
+/** Build the view once per room from the validated map and its freshly resolved object states. Authored wall rows always block and are never overridden. */
+export function createDynamicCollision(map: MapDefinition, initial: Iterable<ResolvedObjectState>): DynamicCollision {
+  const walls = wallsOf(map);
   const placements = new Map(map.objects.map(object => [object.id, object]));
   const blocked = new Set<string>();
   /** Deferred solidify requests keyed by placement, so a fresher state resolution replaces or cancels a stale one. */

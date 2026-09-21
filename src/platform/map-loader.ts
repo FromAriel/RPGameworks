@@ -1,6 +1,6 @@
 import { readGame, readMap } from '../content/validation.mjs';
 import { createCollision } from '../domain/map.mjs';
-import { createDynamicCollision } from '../domain/collision-view';
+import { resolvedCanEnter } from '../domain/collision-view';
 import { resolveObjectState } from '../domain/object-state';
 import type { SessionState } from '../domain/session';
 import type { GameManifest } from '../content/generated/game';
@@ -93,7 +93,7 @@ export async function loadMapCheckpoint(
   facing: MapDefinition['spawns'][number]['facing'], candidate: SessionState, signal: AbortSignal,
 ): Promise<LoadedMap> {
   const loaded = await loadMapDestination(base, game, mapId, undefined, signal);
-  const view = createDynamicCollision(loaded.map, loaded.map.objects.map(object => resolveObjectState(object, candidate)));
-  if (!view.canEnter(tile.x, tile.y)) throw new Error(`Saved checkpoint ${tile.x},${tile.y} is blocked or outside ${mapId}`);
+  const states = loaded.map.objects.map(object => resolveObjectState(object, candidate));
+  if (!resolvedCanEnter(loaded.map, states, tile.x, tile.y)) throw new Error(`Saved checkpoint ${tile.x},${tile.y} is blocked or outside ${mapId}`);
   return { ...loaded, spawn: Object.freeze({ id: 'saved-checkpoint', x: tile.x, y: tile.y, facing }) };
 }

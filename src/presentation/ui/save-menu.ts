@@ -8,6 +8,7 @@ import { mountConfirmation, mountStatus } from './components';
 import { MenuNavigation } from './menu-navigation';
 
 interface SlotRequest { readonly title:string; readonly body:string; readonly confirmLabel:string }
+const occupied=(slotId:SaveSlotId,service:Pick<SaveService,'slots'>):boolean=>!!service.slots().find(slot=>slot.slotId===slotId)?.record;
 
 export class SaveMenu{
   private readonly navigation:MenuNavigation;private readonly lifetime=new AbortController();private readonly list:HTMLElement;
@@ -103,15 +104,22 @@ export class SaveMenu{
     const slotId=button.dataset.slot as SaveSlotId,action=button.dataset.slotAction!;
     // Snapshot now: whatever the dialog previews is exactly what a confirmation stores.
     const importedSnapshot=action==='import'?this.imported:null;
-    const occupied=!action.startsWith('load')&&!!this.service.slots().find(slot=>slot.slotId===slotId)?.record;
-    if((action==='save'&&occupied)||action==='load'||action==='import'||action==='recover'){
+    // Capture the checkpoint once and refuse it BEFORE any overwrite confirmation, so
+    // a player on a deferral-closing gate never confirms a save that cannot happen.
+    const checkpoint=action==='save'?this.checkpoint():null;
+    const preRefusal=checkpoint?this.checkpointReason(checkpoint):null;
+    if(preRefusal){this.set('failure',preRefusal);return;}
+    if((action==='save'&&occupied(slotId,this.service))||action==='load'||action==='import'||action==='recover'){
       if(!await this.confirm(this.request(action,slotId,importedSnapshot))){if(!this.disposed)this.set('information','Action cancelled. Nothing was changed.');return;}
       if(this.disposed)return;
     }
     this.busy=true;
     try{
-      if(action==='save'){const refusal=this.checkpointReason(this.checkpoint());if(refusal){this.set('failure',refusal);return;} // No confirm, no write, no movement: the player stays on the tile with the reason.
-        const result=await this.service.save(slotId,this.checkpoint(),this.sessions.current);if(result.kind==='written')this.set('success','Progress saved.');else if(result.kind==='stale')this.set('warning','Another tab changed this slot. Slot details were refreshed; review before trying again.');else this.set('failure',`Save failed (${result.reason}): ${result.message}`);}
+      if(action==='save'){
+        // Confirmation cannot authorize an invalid checkpoint: recheck the captured payload immediately before writing.
+        const postRefusal=checkpoint&&this.checkpointReason(checkpoint);
+        if(postRefusal){this.set('failure',postRefusal);return;}
+        const result=await this.service.save(slotId,checkpoint!,this.sessions.current);if(result.kind==='written')this.set('success','Progress saved.');else if(result.kind==='stale')this.set('warning','Another tab changed this slot. Slot details were refreshed; review before trying again.');else this.set('failure',`Save failed (${result.reason}): ${result.message}`);}
       else if(action==='load'){await this.load(await this.service.load(slotId));if(!this.disposed)this.set('success','Save loaded.');return;} // Exploration focus wins after an in-place load.
       else if(action==='export'){const envelope=await this.service.load(slotId);if(this.disposed)return;this.download(envelope);this.set('success','Save exported.');}
       else if(action==='import'&&importedSnapshot){const result=await this.service.storeImport(slotId,importedSnapshot);if(this.disposed)return;if(result.kind==='written'){this.set('success','Import stored. Load the slot when ready.');if(this.imported===importedSnapshot){this.imported=null;this.loadImport.hidden=true;}}else if(result.kind==='stale')this.set('warning','Another tab changed this slot. Review it before importing again.');else this.set('failure',`Import failed (${result.reason}): ${result.message}`);}

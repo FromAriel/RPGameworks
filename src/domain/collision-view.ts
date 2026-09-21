@@ -41,7 +41,8 @@ export function createDynamicCollision(map: MapDefinition, initial: Iterable<Res
   map.collision.forEach((row, y) => [...row].forEach((symbol, x) => { if (symbol !== '.') walls.add(cell(x, y)); }));
   const placements = new Map(map.objects.map(object => [object.id, object]));
   const blocked = new Set<string>();
-  const pending: SolidityChange[] = [];
+  /** Deferred solidify requests keyed by placement, so a fresher state resolution replaces or cancels a stale one. */
+  const pending = new Map<string, SolidityChange>();
   for (const state of initial) {
     const placement = placements.get(state.objectId);
     if (!placement) throw new Error(`Unknown placement solidity: ${state.objectId}`);
@@ -58,16 +59,19 @@ export function createDynamicCollision(map: MapDefinition, initial: Iterable<Res
         if (!placement) throw new Error(`Unknown placement solidity: ${state.objectId}`);
         const at = cell(placement.x, placement.y);
         if (state.solid) { if (!walls.has(at) && !blocked.has(at)) changes.push({ objectId: state.objectId, x: placement.x, y: placement.y, solid: true }); }
-        else if (blocked.has(at)) changes.push({ objectId: state.objectId, x: placement.x, y: placement.y, solid: false });
+        else {
+          if (blocked.has(at)) changes.push({ objectId: state.objectId, x: placement.x, y: placement.y, solid: false });
+          pending.delete(state.objectId); // An unrequested close that is still queued must not outlive the open state.
+        }
       }
       const outcome = applySolidityChanges(changes, occupied, blocked);
-      pending.push(...outcome.deferred);
+      for (const change of outcome.deferred) pending.set(change.objectId, change); // Latest resolution wins; repeated refreshes keep one entry.
       return { applied: outcome.applied, deferred: outcome.deferred };
     },
     release(occupied) {
-      const retry = pending.splice(0, pending.length);
+      const retry = [...pending.values()]; pending.clear();
       const outcome = applySolidityChanges(retry, occupied, blocked);
-      pending.push(...outcome.deferred);
+      for (const change of outcome.deferred) pending.set(change.objectId, change);
       return outcome;
     },
   };

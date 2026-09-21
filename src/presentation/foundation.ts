@@ -216,7 +216,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog},envelope.session);
-      const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,signal),next=>{
+      const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
         const prepared=new MapView(this,next,candidate);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
       });

@@ -1,5 +1,8 @@
 import { readGame, readMap } from '../content/validation.mjs';
 import { createCollision } from '../domain/map.mjs';
+import { createDynamicCollision } from '../domain/collision-view';
+import { resolveObjectState } from '../domain/object-state';
+import type { SessionState } from '../domain/session';
 import type { GameManifest } from '../content/generated/game';
 import type { MapDefinition } from '../content/generated/map';
 
@@ -84,8 +87,13 @@ export async function loadMapDestination(
   return { game, map, spawn, collision: createCollision(map) };
 }
 
-export async function loadMapCheckpoint(base:URL,game:GameManifest,mapId:string,tile:{readonly x:number;readonly y:number},facing:MapDefinition['spawns'][number]['facing'],signal:AbortSignal):Promise<LoadedMap>{
-  const loaded=await loadMapDestination(base,game,mapId,undefined,signal);
-  if(!loaded.collision.canEnter(tile.x,tile.y))throw new Error(`Saved checkpoint ${tile.x},${tile.y} is blocked or outside ${mapId}`);
-  return{...loaded,spawn:Object.freeze({id:'saved-checkpoint',x:tile.x,y:tile.y,facing})};
+/** Validates the saved tile against the candidate session's resolved dynamic collision view, not just the static grid, so a checkpoint on an open state-solid gate restores while an authored wall, out-of-bounds tile, or genuinely closed gate stays rejected. */
+export async function loadMapCheckpoint(
+  base: URL, game: GameManifest, mapId: string, tile: { readonly x: number; readonly y: number },
+  facing: MapDefinition['spawns'][number]['facing'], candidate: SessionState, signal: AbortSignal,
+): Promise<LoadedMap> {
+  const loaded = await loadMapDestination(base, game, mapId, undefined, signal);
+  const view = createDynamicCollision(loaded.map, loaded.map.objects.map(object => resolveObjectState(object, candidate)));
+  if (!view.canEnter(tile.x, tile.y)) throw new Error(`Saved checkpoint ${tile.x},${tile.y} is blocked or outside ${mapId}`);
+  return { ...loaded, spawn: Object.freeze({ id: 'saved-checkpoint', x: tile.x, y: tile.y, facing }) };
 }

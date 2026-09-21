@@ -65,6 +65,28 @@ describe('occupied-cell policy: closing gates defer instead of trapping', () => 
     expect(applySolidityChanges([{ objectId: 'g', x: 2, y: 1, solid: false }], new Set(['2,1']), blocked).deferred).toHaveLength(0);
     expect(applySolidityChanges([{ objectId: 'g', x: 3, y: 1, solid: true }], new Set(['2,1']), new Set()).applied).toHaveLength(1);
   });
+  it('cancels a queued close when the state reopens the gate before the actor leaves', () => {
+    const map = gateMap(); const view = createDynamicCollision(map, [resolved('test:object.gate', false)]);
+    const actor = createActor(1, 1), step = () => { for (let i = 0; i < 4; i += 1) advanceActor(actor, 'right', 40, view.canEnter); };
+    step(); expect(actor.tile).toEqual({ x: 2, y: 1 });
+    expect(view.update([resolved('test:object.gate', true)], actorOccupiedCells(actor)).deferred).toHaveLength(1);
+    expect(view.update([resolved('test:object.gate', false)], actorOccupiedCells(actor)).deferred).toHaveLength(0);
+    step(); // Leaving releases the boundary; nothing stale may close the reopened gate.
+    expect(actor.tile).toEqual({ x: 3, y: 1 });
+    expect(view.release(actorOccupiedCells(actor)).applied).toHaveLength(0);
+    expect(view.canEnter(2, 1)).toBe(true); // The resolved state says open; the stale deferred close must be gone.
+  });
+  it('collapses repeated occupied refreshes into one pending close that applies exactly once', () => {
+    const map = gateMap(); const view = createDynamicCollision(map, [resolved('test:object.gate', false)]);
+    const occupied = new Set(['2,1']);
+    view.update([resolved('test:object.gate', true)], occupied);
+    for (let i = 0; i < 5; i += 1) view.update([resolved('test:object.gate', true)], occupied);
+    const stillHere = view.release(occupied);
+    expect(stillHere.applied).toHaveLength(0); expect(stillHere.deferred).toHaveLength(1);
+    const applied = view.release(new Set(['3,1'])); // Actor gone.
+    expect(applied.applied).toHaveLength(1); expect(view.canEnter(2, 1)).toBe(false);
+    expect(view.release(new Set([])).applied).toHaveLength(0); // No duplicate close persists.
+  });
   it('keeps a still-occupied deferred change pending across releases', () => {
     const blocked = new Set<string>();
     const deferred = applySolidityChanges([{ objectId: 'g', x: 2, y: 1, solid: true }], new Set(['2,1']), blocked).deferred;

@@ -9,9 +9,15 @@ import { SaveService } from '../../src/runtime/save-service';
 
 const json=(path:string):unknown=>JSON.parse(readFileSync(path,'utf8')) as unknown;
 const definitions=()=>({items:readItems(json('content/games/demo/items.json')),facts:readFacts(json('content/games/demo/facts.json'))});
-const stateIndex=():StateIndex=>({schemaVersion:1,gameId:'demo:game.foundation',saveCompatibilityVersion:1,
-  maps:[{id:'demo:map.workshop',name:"Mara's Workshop",width:20,height:12,spawns:['start','from-gallery']},{id:'demo:map.gallery',name:'The Pillar Gallery',width:24,height:14,spawns:['start','from-workshop']}],
-  itemIds:['demo:item.lens'],factIds:['demo:fact.gallery.plaque-read'],placementIds:['demo:object.gallery.plaque','demo:object.gallery.lens-chest']});
+/** Derived from the authored demo pack so content additions cannot strand these tests on a stale index. */
+const stateIndex=():StateIndex=>{
+  const items=readItems(json('content/games/demo/items.json')),facts=readFacts(json('content/games/demo/facts.json'));
+  const maps=(['maps/workshop.json','maps/gallery.json'] as const).map(path=>json(`content/games/demo/${path}`)) as unknown as {id:string;name:string;width:number;height:number;spawns:{id:string}[];objects:{id:string}[]}[];
+  return validateStateIndex({schemaVersion:1,gameId:'demo:game.foundation',saveCompatibilityVersion:1,
+    maps:maps.map((map)=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map((spawn)=>spawn.id)})),
+    itemIds:items.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),
+    placementIds:maps.flatMap((map)=>map.objects.map(object=>object.id))});
+};
 const context=():SaveContext=>({gameId:'demo:game.foundation',saveCompatibilityVersion:1,index:validateStateIndex(stateIndex())});
 const checkpoint=()=>({mapId:'demo:map.gallery',tile:{x:7,y:8},facing:'right' as const});
 const progressed=()=>{const session=new SessionState(definitions());session.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true},{type:'changeItem',itemId:'demo:item.lens',delta:1},{type:'markPlacementOpened',placementId:'demo:object.gallery.lens-chest'}]});return session;};
@@ -41,7 +47,7 @@ describe('versioned save envelopes',()=>{
   it('round-trips only pure persistent state and checkpoint data',()=>{
     const envelope=createEnvelope('slot-1',3,context(),checkpoint(),progressed(),new Date('2026-09-20T12:00:00.000Z'));
     expect(validateSaveEnvelope(structuredClone(envelope),context())).toEqual(envelope);
-    expect(envelope.session).toEqual({inventory:{'demo:item.lens':1},facts:{'demo:fact.gallery.plaque-read':true},placements:{'demo:object.gallery.lens-chest':{opened:true}}});
+    expect(envelope.session).toEqual({inventory:{'demo:item.lens':1},facts:{'demo:fact.gallery.plaque-read':true,'demo:fact.gallery.gate-open':false},placements:{'demo:object.gallery.lens-chest':{opened:true}}});
     expect(JSON.stringify(envelope)).not.toMatch(/revision":1|dialog|particle|controller/i);
   });
   it.each([

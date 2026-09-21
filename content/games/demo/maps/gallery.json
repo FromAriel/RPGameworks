@@ -52,6 +52,19 @@
       {"id": "unread", "fallback": true, "frame": "plaque", "visible": true, "interaction": {"messageId": "gallery-plaque-discovered", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.plaque-read", "value": true}]}}
     ]},
     {"id": "demo:object.gallery.door", "frame": "door", "x": 1, "y": 6, "solid": false},
+    {"id": "demo:object.gallery.entrance-gate", "frame": "door", "x": 14, "y": 6, "solid": true, "states": [
+      {"id": "open", "when": {"type": "factEquals", "factId": "demo:fact.gallery.gate-open", "value": true}, "frame": "door", "visible": false, "solid": false},
+      {"id": "closed", "fallback": true, "frame": "door", "visible": true, "solid": true}
+    ]},
+    {"id": "demo:object.gallery.gate-switch", "frame": "sigil", "x": 13, "y": 6, "solid": true, "states": [
+      {"id": "on", "when": {"type": "factEquals", "factId": "demo:fact.gallery.gate-open", "value": true}, "frame": "sigil", "visible": true, "interaction": {"messageId": "gate-switch-off", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.gate-open", "value": false}]}},
+      {"id": "off", "fallback": true, "frame": "sigil", "visible": true, "interaction": {"messageId": "gate-switch-on", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.gate-open", "value": true}]}}
+    ]},
+    {"id": "demo:object.gallery.storeroom-door", "frame": "door", "x": 20, "y": 3, "solid": true, "states": [
+      {"id": "unlocked", "when": {"type": "placementOpened", "placementId": "self", "value": true}, "frame": "door", "visible": false, "solid": false},
+      {"id": "locked", "fallback": true, "frame": "door", "visible": true, "solid": true, "interaction": {"messageId": "storeroom-unlock", "rejectionMessageId": "storeroom-locked", "prerequisites": {"type": "itemAtLeast", "itemId": "demo:item.brass-key", "quantity": 1}, "actions": [{"type": "markPlacementOpened", "placementId": "self"}]}}
+    ]},
+    {"id": "demo:object.gallery.key-chest", "frame": "chest-closed", "x": 22, "y": 1, "solid": true, "chest": {"itemId": "demo:item.brass-key", "quantity": 1, "openedFrame": "chest-open", "openedMessageId": "key-found", "emptyMessageId": "key-empty"}},
     {"id": "demo:object.gallery.lens-chest", "frame": "chest-closed", "x": 8, "y": 8, "solid": true, "states": [
       {"id": "opened", "when": {"type": "placementOpened", "placementId": "self", "value": true}, "frame": "chest-open", "visible": true, "interaction": {"messageId": "chest-empty"}},
       {"id": "closed", "fallback": true, "frame": "chest-closed", "visible": true, "interaction": {"messageId": "lens-found", "rejectionMessageId": "chest-full", "actions": [{"type": "changeItem", "itemId": "demo:item.lens", "delta": 1}, {"type": "markPlacementOpened", "placementId": "self"}]}}
@@ -63,6 +76,15 @@
     "chest.found": "You found a polished lens.\n\nIt is now in your inventory. Open the game menu to inspect it.",
     "chest.empty": "The chest is empty. You already took the lens.",
     "chest.full": "There is not enough room for this item. The chest and your inventory are unchanged.",
+    "keychest.name": "Narrow crate",
+    "key.found": "A small brass key rests at the bottom of the crate.\n\nIt is stamped with the shape of a gate bolt and is now in your inventory.",
+    "key.empty": "The crate holds nothing but straw now.",
+    "switch.name": "Gate lever",
+    "switch.on": "You pull the lever down. Somewhere behind the tall arch, a gate clatters open.",
+    "switch.off": "You push the lever back up. The gate grinds shut again.",
+    "storeroom.name": "Brass storeroom door",
+    "storeroom.locked": "The storeroom door is locked tight.\n\nYou need a key. Maybe the gallery caretaker keeps one somewhere.",
+    "storeroom.unlock": "The brass key turns,\n\nThe storeroom is unlocked. Passing through is not part of this proof yet; wait for the next packet.",
     "plaque.name": "Brass plaque",
     "plaque.discovered": "THE PILLAR GALLERY\n\nYou trace the old lettering. A hidden line glows beneath your hand:\n\nA polished lens once focused the gallery's light.",
     "plaque.read": "The revealed line still glows:\n\nA polished lens once focused the gallery's light.\n\nThe western doorway returns to the Workshop."
@@ -71,6 +93,12 @@
     {"id": "lens-found", "speakerKey": "chest.name", "pages": ["chest.found"]},
     {"id": "chest-empty", "speakerKey": "chest.name", "pages": ["chest.empty"]},
     {"id": "chest-full", "speakerKey": "chest.name", "pages": ["chest.full"]},
+    {"id": "key-found", "speakerKey": "keychest.name", "pages": ["key.found"]},
+    {"id": "key-empty", "speakerKey": "keychest.name", "pages": ["key.empty"]},
+    {"id": "gate-switch-on", "speakerKey": "switch.name", "pages": ["switch.on"]},
+    {"id": "gate-switch-off", "speakerKey": "switch.name", "pages": ["switch.off"]},
+    {"id": "storeroom-unlock", "speakerKey": "storeroom.name", "pages": ["storeroom.unlock"]},
+    {"id": "storeroom-locked", "speakerKey": "storeroom.name", "pages": ["storeroom.locked"]},
     {"id": "gallery-plaque-discovered", "speakerKey": "plaque.name", "pages": ["plaque.discovered"]},
     {"id": "gallery-plaque-read", "speakerKey": "plaque.name", "pages": ["plaque.read"]}
   ]

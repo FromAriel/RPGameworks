@@ -17,7 +17,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   await openRoom(page,'?map=demo:map.gallery');
   let state=await snapshot(page);
   expect(state.mapWidth).toBe(24);expect(state.mapHeight).toBe(14);expect(state.collisionCells).toBe(336);
-  expect(state.displayObjects).toBe(343);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);
+  expect(state.displayObjects).toBe(347);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);
   await page.keyboard.down('ArrowRight');
   await expect.poll(async()=>(await snapshot(page)).actorTile.x).toBe(5);
   await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');

@@ -7,12 +7,20 @@
       "nameKey": "lens.name",
       "descriptionKey": "lens.description",
       "maxStack": 1
+    },
+    {
+      "id": "demo:item.brass-key",
+      "nameKey": "key.name",
+      "descriptionKey": "key.description",
+      "maxStack": 1
     }
   ],
   "strings": {
     "en": {
       "lens.name": "Polished lens",
-      "lens.description": "A clear glass lens in a silver mounting. It catches the gallery light. Keep it safe; someone may be looking for it."
+      "lens.description": "A clear glass lens in a silver mounting. It catches the gallery light. Keep it safe; someone may be looking for it.",
+      "key.name": "Brass key",
+      "key.description": "A small brass key with the shape of a gate bolt stamped on its head. Nothing in this gallery looks finished yet; something may be waiting for it."
     }
   }
 }

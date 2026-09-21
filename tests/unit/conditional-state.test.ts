@@ -4,6 +4,7 @@ import { readFacts, readItems, readMap } from '../../src/content/validation.mjs'
 import { objectDependencies, resolveObjectState } from '../../src/domain/object-state';
 import { MAX_CONDITION_DEPTH, MAX_CONDITION_NODES, SessionState, validateCondition } from '../../src/domain/session';
 import type { Condition } from '../../src/domain/session';
+import type { Placement } from '../../src/domain/session';
 
 const json=(path:string):unknown=>JSON.parse(readFileSync(path,'utf8')) as unknown;
 const definitions=()=>({items:readItems(json('content/games/demo/items.json')),facts:readFacts(json('content/games/demo/facts.json'))});
@@ -40,5 +41,43 @@ describe('bounded conditions and ordered object states',()=>{
     const map=readMap(json('content/games/demo/maps/gallery.json')),plaque=map.objects.find(object=>object.id==='demo:object.gallery.plaque')!,state=session();
     expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'unread',frame:'plaque'});expect([...objectDependencies(plaque)]).toEqual(['fact:demo:fact.gallery.plaque-read']);
     state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'read',frame:'plaque-read'});
+  });
+  const gate=():Placement=>{
+    const map=structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
+    const gate:Placement={id:'demo:object.gallery.test-gate',frame:'door',x:2,y:7,solid:true,states:[
+      {id:'open',when:{type:'factEquals',factId:'demo:fact.gallery.plaque-read',value:true},frame:'door',visible:true,solid:false,interaction:{messageId:'gallery-plaque-read'}},
+      {id:'locked',fallback:true,frame:'door',visible:true,interaction:{messageId:'gallery-plaque-discovered',rejectionMessageId:'chest-full',prerequisites:{type:'itemAtLeast',itemId:'demo:item.lens',quantity:1},actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]}}
+    ]};
+    map.objects.push(gate);return readMap(map).objects.find(object=>object.id==='demo:object.gallery.test-gate')!;
+  };
+  describe('G1.1 state-scoped passability and access-gated interactions',()=>{
+    it('resolves solid from the winning state and falls back to the placement otherwise',()=>{
+      const state=session();
+      expect(resolveObjectState(gate(),state)).toMatchObject({stateId:'locked',solid:true});
+      state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});
+      expect(resolveObjectState(gate(),state)).toMatchObject({stateId:'open',solid:false});
+    });
+    it('resolves interaction prerequisites and reports them as object dependencies',()=>{
+      const object=gate(),dependencies=objectDependencies(object);
+      expect(dependencies.has('fact:demo:fact.gallery.plaque-read')).toBe(true);
+      expect(dependencies.has('item:demo:item.lens')).toBe(true);
+      expect(resolveObjectState(object,session()).interaction).toMatchObject({messageId:'gallery-plaque-discovered',rejectionMessageId:'chest-full',prerequisites:{type:'itemAtLeast',itemId:'demo:item.lens',quantity:1}});
+    });
+    it('denies the locked gate without the key, unlocks with the key, and never re-runs the unlock',()=>{
+      const state=session(),object=gate(),locked=resolveObjectState(object,state).interaction!;
+      const attempt=()=>state.transact({actions:locked.actions,prerequisites:locked.prerequisites!},object.id);
+      const before=state.snapshot();
+      expect(attempt()).toMatchObject({kind:'rejected',reason:'condition'});expect(state.snapshot()).toBe(before);
+      state.transact({actions:[{type:'changeItem',itemId:'demo:item.lens',delta:1}]});
+      expect(attempt()).toMatchObject({kind:'committed'});
+      expect(resolveObjectState(object,state)).toMatchObject({stateId:'open',solid:false});
+      expect(attempt()).toMatchObject({kind:'unchanged'});
+    });
+    it('satisfies already-unlocked access without the key through first-match state order',()=>{
+      const state=session(),object=gate();
+      state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});
+      expect(resolveObjectState(object,state).interaction).toMatchObject({messageId:'gallery-plaque-read'});
+      expect(resolveObjectState(object,state).interaction!.prerequisites).toBeUndefined();
+    });
   });
 });

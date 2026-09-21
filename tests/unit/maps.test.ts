@@ -3,7 +3,7 @@ import { readFileSync, mkdtempSync, rmSync, writeFileSync, readdirSync, cpSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readMap, readGame, validateWorld, ContentError } from '../../src/content/validation.mjs';
+import { readMap, readGame, readItems, readFacts, validateMapItems, validateMapFacts, validateWorld, ContentError } from '../../src/content/validation.mjs';
 import { createCollision } from '../../src/domain/map.mjs';
 import { createActor, advanceActor } from '../../src/domain/movement';
 import type { MapDefinition } from '../../src/content/generated/map';
@@ -119,6 +119,29 @@ describe('manifest and world references', () => {
       else plaque.states![1]!.interaction!.actions=[{type:'markPlacementOpened',placementId:'demo:object.missing'}];
       expect(()=>validateWorld(game,new Map([[a.id,a],[b.id,b]]))).toThrow(`Unknown ${kind} placement`);
     }
+  });
+  describe('interaction prerequisites (G1.1 access contract)',()=>{
+    const plaqueState=(map:MapDefinition)=>map.objects.find(object=>object.id==='demo:object.gallery.plaque')!.states![1]!.interaction!;
+    it('requires a denial message so rejection never crashes the runtime',()=>{
+      const map=gallery();plaqueState(map).prerequisites={type:'factEquals',factId:'demo:fact.gallery.plaque-read',value:true};
+      expect(()=>readMap(map,'bad.json',frames)).toThrow('Access-gated interaction requires rejectionMessageId');
+    });
+    it('rejects unknown items and facts referenced by an access condition',()=>{
+      const catalog=readItems(json('content/games/demo/items.json'));
+      const itemed=gallery();plaqueState(itemed).prerequisites={type:'itemAtLeast',itemId:'demo:item.missing',quantity:1};
+      expect(()=>validateMapItems(itemed,catalog,'bad.json')).toThrow('Unknown condition item');
+      const facted=gallery();plaqueState(facted).prerequisites={type:'factEquals',factId:'demo:fact.missing',value:true};
+      expect(()=>validateMapFacts(facted,readFacts(json('content/games/demo/facts.json')),'bad.json')).toThrow('Unknown condition fact');
+    });
+    it('rejects unknown placements referenced by an access condition',()=>{
+      const a=workshop(),b=gallery(),game=manifest();plaqueState(b).prerequisites={type:'placementOpened',placementId:'demo:object.missing',value:true};
+      expect(()=>validateWorld(game,new Map([[a.id,a],[b.id,b]]))).toThrow('Unknown condition placement');
+    });
+    it('accepts a fully referenced access condition on authored content',()=>{
+      const map=gallery();plaqueState(map).prerequisites={type:'factEquals',factId:'demo:fact.gallery.plaque-read',value:true};
+      expect(validateMapItems(map,readItems(json('content/games/demo/items.json')),'ok.json')).toBeUndefined();
+      expect(validateMapFacts(map,readFacts(json('content/games/demo/facts.json')),'ok.json')).toBeUndefined();
+    });
   });
   it.each(['map','spawn','start','placement','missing'])('rejects broken world %s reference',kind=>{
     const a=workshop(), b=gallery(), game=manifest();

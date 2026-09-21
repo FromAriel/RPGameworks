@@ -26,6 +26,7 @@
       "properties":{
         "messageId":{"type":"string","pattern":"^[a-z][a-z0-9_-]{0,63}$"},
         "rejectionMessageId":{"type":"string","pattern":"^[a-z][a-z0-9_-]{0,63}$"},
+        "prerequisites":{"$ref":"#/definitions/condition"},
         "actions":{"type":"array","minItems":1,"maxItems":16,"items":{"$ref":"#/definitions/action"}}
       },
       "required":["messageId"]
@@ -38,6 +39,7 @@
         "fallback":{"const":true},
         "frame":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,63}$"},
         "visible":{"type":"boolean"},
+        "solid":{"type":"boolean"},
         "interaction":{"$ref":"#/definitions/interaction"}
       },
       "required":["id","frame","visible"],

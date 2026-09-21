@@ -1,6 +1,14 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 21, 2026, Ariel accepted U1.3d with its reconciliations; U1.3 is complete and G1.1 is the next packet.
+**Updated:** September 21, 2026, G1.1a (state-scoped passability and access-gated interactions) is implemented and locally verified; U1.3 and G1.1a are complete, Slice 2 (dynamic collision) is next.
+
+## G1.1a conditional access contract — domain and schema (delivered, unwired to gameplay)
+
+`ObjectState` gains an optional per-state `solid` (fallback stays the placement-level `solid`; `resolveObjectState` now resolves solidity from the winning state so Slice 2's dynamic collision view can consume it), and `Interaction` gains an authored `prerequisites` condition using the same vocabulary and semantics as `TransactionRequest.prerequisites` (src/domain/session.ts:32): evaluated against the session at interact time and rechecked at commitment. Denial rides the existing transaction-rejection path (src/presentation/foundation.ts:178-181) — a rejected attempt shows the state's `rejectionMessageId` once per deliberate attempt and commits nothing, so a key lock is pure content: an ordered `unlocked` state rule (key-present-OR-already-unlocked comes free from first-match ordering) plus a locked fallback with `prerequisites: itemAtLeast(key)` and a `setFact`/`markPlacementOpened self` unlock action. Switch gates toggle via two fact-keyed states; no new action or condition vocabulary was required.
+
+`objectDependencies` now includes interaction prerequisite dependencies; content validation rejects unknown facts/items/placements referenced from `prerequisites` in all four walkers and requires `rejectionMessageId` on any access-gated interaction (the runtime throws on a rejection message that is missing). The `foundation.ts` interact path passes `prerequisites` into the session transaction. No demo content changed; existing maps, saves, and captures are untouched, and the static collision grid still honors only placement-level solids — honoring state solidity dynamically is Slice 2.
+
+Verification: `npm run check` passes with **298 unit/content tests** (up from 290: per-state solid resolution, prerequisite dependency extraction, key-present/already-unlocked ordering, denial-without-key → committed-with-key/never-rerun, and four prerequisite-reference validation rejections) and the optimized production build; `git diff --check` passes. Benchmarks were deliberately not rerun (bounded pure-domain additions, no runtime behavior change). The exact windowskin audit, browser scenarios, and `npm audit` were not rerun this slice; the browser gates and U1 capture set are untouched by these domain-only changes. The large Phaser chunk warning remains.
 
 ## Current phase
 

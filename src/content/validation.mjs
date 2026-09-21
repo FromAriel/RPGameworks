@@ -126,6 +126,7 @@ export function validateMapItems(map, catalog, file = 'map.json') {
     }
     object.states?.forEach((state,stateIndex)=>{
       if(state.when)conditionItems(state.when,`/objects/${index}/states/${stateIndex}/when`);
+      if(state.interaction?.prerequisites)conditionItems(state.interaction.prerequisites,`/objects/${index}/states/${stateIndex}/interaction/prerequisites`);
       state.interaction?.actions?.forEach((action,actionIndex)=>{
         if(action.type==='changeItem'&&!items.has(action.itemId))issues.push({file,id:map.id,path:`/objects/${index}/states/${stateIndex}/interaction/actions/${actionIndex}/itemId`,message:'Unknown action item',value:action.itemId});
       });
@@ -156,6 +157,7 @@ export function validateMapFacts(map,catalog,file='map.json'){
       if(seen.has(state.id))issues.push({file,id:object.id,path:`${path}/id`,message:'Duplicate object state ID',value:state.id});seen.add(state.id);
       if(state.fallback){fallbacks+=1;if(stateIndex!==states.length-1)issues.push({file,id:object.id,path,message:'Fallback state must be last',value:state.id});}
       if(state.when)conditionFn(state.when,`${path}/when`,1,{count:0},object.id);
+      if(state.interaction?.prerequisites)conditionFn(state.interaction.prerequisites,`${path}/interaction/prerequisites`,1,{count:0},object.id);
       state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='setFact'&&!facts.has(action.factId))issues.push({file,id:object.id,path:`${path}/interaction/actions/${actionIndex}/factId`,message:'Unknown action fact',value:action.factId});});
     });
     if(fallbacks!==1)issues.push({file,id:object.id,path:`/objects/${index}/states`,message:'Exactly one fallback state is required',value:fallbacks});
@@ -204,7 +206,10 @@ export function readMap(value, file = 'map.json', frames) {
   map.objects.forEach((object, index) => {
     if (object.x >= map.width || object.y >= map.height) issue(`/objects/${index}`, 'Object outside map bounds', {x: object.x, y: object.y});
     if (available && !available.has(object.frame)) issue(`/objects/${index}/frame`, 'Atlas frame does not exist', object.frame);
-    object.states?.forEach((state,stateIndex)=>{if(available&&!available.has(state.frame))issue(`/objects/${index}/states/${stateIndex}/frame`,'Atlas frame does not exist',state.frame);});
+    object.states?.forEach((state,stateIndex)=>{
+      if(available&&!available.has(state.frame))issue(`/objects/${index}/states/${stateIndex}/frame`,'Atlas frame does not exist',state.frame);
+      if(state.interaction?.prerequisites&&!state.interaction.rejectionMessageId)issue(`/objects/${index}/states/${stateIndex}/interaction`,'Access-gated interaction requires rejectionMessageId',state.id);
+    });
     const cell = `${object.x},${object.y}`;
     if (object.solid && solidCells.has(cell)) issue(`/objects/${index}`, 'Overlapping solid objects', cell);
     if (object.solid) solidCells.add(cell);
@@ -294,7 +299,7 @@ export function validateWorld(game, maps, catalog) {
     else if(condition.type==='not')placementReferences(condition.condition,file,mapId,`${path}/condition`,selfId);
     else if(condition.type==='placementOpened'&&condition.placementId!=='self'&&!objectIds.has(condition.placementId))issue(file,mapId,`${path}/placementId`,'Unknown condition placement',condition.placementId);
   }
-  for(const entry of game.maps){const map=maps.get(entry.id);map?.objects.forEach((object,objectIndex)=>object.states?.forEach((state,stateIndex)=>{if(state.when)placementReferences(state.when,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/when`,object.id);state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='markPlacementOpened'&&action.placementId!=='self'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/actions/${actionIndex}/placementId`,'Unknown action placement',action.placementId);});}));}
+  for(const entry of game.maps){const map=maps.get(entry.id);map?.objects.forEach((object,objectIndex)=>object.states?.forEach((state,stateIndex)=>{if(state.when)placementReferences(state.when,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/when`,object.id);if(state.interaction?.prerequisites)placementReferences(state.interaction.prerequisites,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/prerequisites`,object.id);state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='markPlacementOpened'&&action.placementId!=='self'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/actions/${actionIndex}/placementId`,'Unknown action placement',action.placementId);});}));}
   const start = maps.get(game.start.mapId);
   if (!start?.spawns.some((spawn) => spawn.id === game.start.spawnId)) issue('game.json', game.id, '/start/spawnId', 'Start spawn does not exist', game.start.spawnId);
   if (maps.size !== game.maps.length) issue('game.json', game.id, '/maps', 'Registered and supplied map counts differ', maps.size);

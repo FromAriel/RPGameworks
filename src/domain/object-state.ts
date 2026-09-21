@@ -3,7 +3,7 @@ import type { Condition, DependencyKey, SessionAction, SessionState } from './se
 import { conditionDependencies } from './session';
 
 export type Placement=MapDefinition['objects'][number];
-export interface ResolvedInteraction{readonly messageId:string;readonly rejectionMessageId?:string;readonly actions:readonly SessionAction[]}
+export interface ResolvedInteraction{readonly messageId:string;readonly rejectionMessageId?:string;readonly prerequisites?:Condition;readonly actions:readonly SessionAction[]}
 export interface ResolvedObjectState{readonly objectId:string;readonly stateId:string;readonly frame:string;readonly visible:boolean;readonly solid:boolean;readonly interaction?:ResolvedInteraction}
 
 function authoredStates(object:Placement):readonly NonNullable<Placement['states']>[number][]{
@@ -15,11 +15,16 @@ function authoredStates(object:Placement):readonly NonNullable<Placement['states
   return [{id:'default',fallback:true,frame:object.frame,visible:true,...(object.messageId?{interaction:{messageId:object.messageId}}:{})}] as readonly NonNullable<Placement['states']>[number][];
 }
 export function objectDependencies(object:Placement):ReadonlySet<DependencyKey>{
-  const keys=new Set<DependencyKey>();for(const state of authoredStates(object))if(state.when)for(const key of conditionDependencies(state.when as Condition,object.id))keys.add(key);return keys;
+  const keys=new Set<DependencyKey>();
+  for(const state of authoredStates(object)){
+    if(state.when)for(const key of conditionDependencies(state.when as Condition,object.id))keys.add(key);
+    if(state.interaction?.prerequisites)for(const key of conditionDependencies(state.interaction.prerequisites as Condition,object.id))keys.add(key);
+  }
+  return keys;
 }
 export function objectFrames(object:Placement):readonly string[]{return authoredStates(object).map(state=>state.frame);}
 export function resolveObjectState(object:Placement,session:SessionState):ResolvedObjectState{
   const states=authoredStates(object);const state=states.find(candidate=>candidate.when?session.evaluate(candidate.when as Condition,object.id):candidate.fallback)??states.at(-1)!;
-  const interaction=state.interaction?{messageId:state.interaction.messageId,...(state.interaction.rejectionMessageId?{rejectionMessageId:state.interaction.rejectionMessageId}:{}),actions:(state.interaction.actions??[]) as readonly SessionAction[]}:undefined;
-  return{objectId:object.id,stateId:state.id,frame:state.frame,visible:state.visible,solid:object.solid,...(interaction?{interaction}:{})};
+  const interaction=state.interaction?{messageId:state.interaction.messageId,...(state.interaction.rejectionMessageId?{rejectionMessageId:state.interaction.rejectionMessageId}:{}),...(state.interaction.prerequisites?{prerequisites:state.interaction.prerequisites as Condition}:{}),actions:(state.interaction.actions??[]) as readonly SessionAction[]}:undefined;
+  return{objectId:object.id,stateId:state.id,frame:state.frame,visible:state.visible,solid:state.solid??object.solid,...(interaction?{interaction}:{})};
 }

@@ -175,7 +175,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         let state=room.resolve(target.objectId);if(!state?.interaction)return;
         let messageId=state.interaction.messageId;
         if(state.interaction.actions.length){
-          const result=elements.session.transact({actions:state.interaction.actions},target.objectId);
+          const result=elements.session.transact({actions:state.interaction.actions,...(state.interaction.prerequisites?{prerequisites:state.interaction.prerequisites}:{})},target.objectId);
           if(result.kind==='rejected'){
             if(!state.interaction.rejectionMessageId)throw new Error(`Interaction transaction rejected: ${result.reason}`);
             messageId=state.interaction.rejectionMessageId;

@@ -1,20 +1,22 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 20, 2026, U1.1 local implementation candidate awaiting visual acceptance.
+**Updated:** September 20, 2026, U1.1 accepted and complete; U1.2 is next.
 
 ## Current phase
 
-**M1.1–M1.6, W1, and M2.1–M2.6 are implemented on `main`; U1.1 is implemented and locally verified but remains open for Ariel's visual acceptance.** The Workshop Astral semantic token layer now covers structural surfaces, text, lines, cyan selection/information, brass authored importance, violet magic, outcome states, typography, four-pixel spacing, focus, safe areas, touch targets, frame clearance, and reduced-motion timing. The migration changes no gameplay, layout, navigation, artwork, schema, dependency, or save behavior.
+**M1.1–M1.6, W1, M2.1–M2.6, and U1.1 are implemented on `main`; Ariel approved the U1.1 real-screen reference set after local verification.** The Workshop Astral semantic token layer covers structural surfaces, text, lines, cyan selection/information, brass authored importance, violet magic, outcome states, typography, four-pixel spacing, focus, safe areas, touch targets, frame clearance, and reduced-motion timing. The migration changes no gameplay, layout, navigation, artwork, schema, dependency, or save behavior.
 
-This is a local candidate, not a published-main or CI claim. Ariel reported that an initial manual try “seems to work”; that is useful smoke feedback, not yet a recorded completion of the full M2 manual acceptance route or physical-controller certification. Other browsers/devices and any deployment remain separate. The optional Debug drawer remains separate from Inventory and closed on reload. The benchmark remains a separate development/test command whose probe is injected only in test pages.
+U1.1 is accepted for direct publication on `main`; hosted exact-commit CI remains deferred rather than implied. Ariel's earlier M2 smoke report that it “seems to work” still does not constitute the full M2 manual acceptance route or physical-controller certification. Other browsers/devices and any deployment remain separate. The optional Debug drawer remains separate from Inventory and closed on reload. The benchmark remains a separate development/test command whose probe is injected only in test pages.
 
 GitHub Actions usage is currently exhausted. Do not intentionally trigger hosted workflows, push merely to seek CI evidence, or describe deferred CI as passed. Continue with applicable local verification and preserve the exact-commit CI gate for when quota becomes available again; no workflow-file change is required merely to keep local work local.
 
-## U1.1 visual reference and token candidate
+## U1.1 visual reference and token baseline
 
 `src/presentation/ui/tokens.css` is imported before every existing stylesheet. Current dialogue, Inventory, Save/Load, Settings and global-shell values resolve through semantic tokens while retaining their previous computed values. Cyan remains selection and navigation; the neutral white dashed ring remains focus-visible and may appear with a cyan selected state. Brass remains limited to existing authored-important roles. Violet and success/warning/danger are defined for real future consumers but are not added decoratively to current screens. Debug-specific dense and diagnostic styling remains separate.
 
 The dedicated production-build reference scenario captures 12 consistently named real screens: six 1100×850 states, three 390×844 keyboard states, one 390×844 touch-first state, and two forced-colors states. The tracked [U1.1 reference manifest](ui-reference/u1.1/README.md) records viewport, input, skin, content, fixed display time, capture command, and the local-publication boundary. All 12 matched pre/post PNG pairs are byte-identical by SHA-256; the [comparison record](ui-reference/u1.1/COMPARISON.md) reports zero changed captures. Concept images remain directional only and contributed no invented production assets or layouts.
+
+The exact implementation/reference commit is `0cade5ae7632f22bede9323989acbcfc2e472c9c`. Ariel approved the captured baseline on September 20, 2026. The implementation and acceptance commits carry `[skip ci]`; no hosted workflow execution is claimed while GitHub Actions quota is exhausted.
 
 Unit coverage pins all approved colors and aliases, checks 4.5:1 normal-text and 3:1 indicator thresholds, and explicitly prohibits violet and danger as normal text on the hover surface. Browser coverage reads computed tokens, exercises controller-selected cyan plus neutral focus, retains adjacent disabled reasons, removes decorative art in forced colors, and preserves state information under reduced motion.
 
@@ -76,9 +78,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Existing users need onl
 
 ## Next concrete packet
 
-**U1.1 visual acceptance, then U1.2.** Ariel should review the tracked real-screen reference set at wide, narrow, touch-first, forced-colors, populated, empty and storage-unavailable states. If accepted, record the final commit in the manifest, mark U1.1 complete, and commit/push directly to `main` with an explicit CI-skip marker while GitHub Actions quota remains exhausted. Hosted exact-commit CI stays deferred.
-
-After that acceptance, **U1.2 — Core components and UI gallery** introduces shared production action, row, tab, status, meter, prompt, scrolling, inset and confirmation components plus a test-only gallery. U1.3 then deliberately normalizes existing layouts. Do not add dead Party, Journal, Equipment or Battle destinations. Once the U1 foundation is accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
+**U1.2 — Core components and UI gallery.** Introduce shared production action, row, tab, status, meter, prompt, scrolling, inset and confirmation components plus a test-only gallery. Preserve the accepted U1.1 images as the current no-layout-change reference. U1.3 then deliberately normalizes existing layouts. Do not add dead Party, Journal, Equipment or Battle destinations. Once the U1 foundation is accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
 
 N1.3 remains paired with M3 dialogue choices. Later UI patterns extend alongside the gameplay systems that actually need them: dialogue/Journal in M3, party/equipment/shop/battle in M5, and title/Continue/credits in M6/M7. The longer route from this state spine through a finishable JRPG remains detailed in [JRPG-BUILDOUT](JRPG-BUILDOUT.md).
 

@@ -5,7 +5,8 @@ This folder contains the post-refactor candidate captured from the production bu
 ## Source identity
 
 - Candidate base commit: `224efbbe721ceb798bb81eefa50059266c746eb9`
-- Candidate state: local U1.1 working tree on `main`; the final commit is intentionally pending Ariel's visual acceptance.
+- Exact implementation/reference commit: `0cade5ae7632f22bede9323989acbcfc2e472c9c`
+- Acceptance: approved by Ariel on 2026-09-20.
 - Build path: optimized Vite production build served at `/RPGameworks/`
 - Capture command: `npx playwright test tests/browser/ui-reference.spec.ts`
 - Capture date: 2026-09-20
@@ -13,7 +14,7 @@ This folder contains the post-refactor candidate captured from the production bu
 - Content time: fixed at `2026-09-20T19:00:00.000Z` so save metadata is reproducible.
 - Input state: keyboard unless the filename says `touch` or `forced-colors`; the token assertion also exercises controller-selected focus with a synthetic standard gamepad.
 
-The final commit field must be filled when this candidate is accepted and committed. Hosted CI evidence remains deferred while GitHub Actions quota is exhausted.
+Hosted exact-commit CI evidence remains deferred while GitHub Actions quota is exhausted. Both the implementation and acceptance commits use the repository's agreed `[skip ci]` publication boundary.
 
 ## Captures
 
@@ -34,4 +35,4 @@ The final commit field must be filled when this candidate is accepted and commit
 
 ## Review boundary
 
-Automated checks verify source values, contrast, focus semantics, forced-colors structure, reduced-motion state retention, and capture equivalence. Ariel's review decides whether this reference set becomes the approved baseline. U1.1 remains open until that decision.
+Automated checks verify source values, contrast, focus semantics, forced-colors structure, reduced-motion state retention, and capture equivalence. Ariel reviewed and approved this reference set as the U1.1 baseline. Later deliberate visual changes must create a separately reviewed reference rather than silently replacing these files.

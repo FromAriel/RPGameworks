@@ -1,6 +1,6 @@
 # RPGameworks — UI Visual Language and System Plan
 
-**Version:** 0.3 · **Date:** September 20, 2026 · **Status:** Workshop Astral tokens and real-screen references are locally implemented; U1.1 awaits Ariel's visual acceptance in [ROADMAP](ROADMAP.md).
+**Version:** 0.3 · **Date:** September 20, 2026 · **Status:** Workshop Astral tokens and real-screen references are implemented, locally verified, and accepted; U1.2 is next in [ROADMAP](ROADMAP.md).
 
 ## Purpose and authority
 
@@ -263,7 +263,7 @@ Title/start, Continue, New Game, slot selection, settings, credits and postgame 
 - Replace duplicated raw values in the existing player-facing styles with semantic tokens only where the rendered result is intentionally unchanged. Do not normalize screen layouts or introduce new components until U1.2/U1.3.
 - Record before/after captures at the same states and viewports.
 
-**Local candidate evidence:** [The real-screen reference set and manifest](ui-reference/u1.1/README.md) contains 12 post-refactor production captures across wide, compact, touch-first, populated, empty, unavailable-storage and forced-colors states. [The matched comparison](ui-reference/u1.1/COMPARISON.md) reports all 12 PNG pairs byte-identical. `tokens.css` is the implemented source of truth; unit and browser tests cover exact values, aliases, contrast, focus-plus-selection, disabled reasons, forced colors and reduced motion. Ariel's visual review remains outstanding, so ROADMAP correctly leaves U1.1 unchecked.
+**Acceptance evidence:** [The real-screen reference set and manifest](ui-reference/u1.1/README.md) contains 12 post-refactor production captures across wide, compact, touch-first, populated, empty, unavailable-storage and forced-colors states. [The matched comparison](ui-reference/u1.1/COMPARISON.md) reports all 12 PNG pairs byte-identical. `tokens.css` is the implemented source of truth; unit and browser tests cover exact values, aliases, contrast, focus-plus-selection, disabled reasons, forced colors and reduced motion. Ariel approved the reference set, and ROADMAP records U1.1 complete.
 
 **Gate:** no player flow changes; the skin audit remains exact; matched captures show no unintended layout/visual drift; contrast/focus checks and applicable local browser tests pass; Ariel reviews the real-screen reference separately from the already approved concept direction. GitHub Actions evidence remains deferred while the account quota is exhausted and must not be implied by local acceptance.
 
@@ -320,4 +320,4 @@ Every implemented UI packet should select the applicable rows rather than claimi
 
 This plan does not authorize a skin replacement, theme editor, custom font purchase, icon pack, title-screen implementation, dead menu destinations, canvas-only text UI, virtual controller cursor, arbitrary animation system, battle mock disconnected from M5 rules, or redesign of Debug into a player-facing screen.
 
-The next implementation packet is **U1.1 only**. U1 should establish a durable visual baseline without becoming a long detour from G1 and M3 gameplay. During the current GitHub Actions quota exhaustion, work remains local and must not intentionally trigger hosted workflows; deferred exact-commit CI is recorded as a publication boundary rather than silently omitted.
+The next implementation packet is **U1.2 only**. It adds shared production components and a test-only component gallery against the accepted U1.1 baseline without redesigning all real screens at once. During the current GitHub Actions quota exhaustion, publication uses the agreed CI-skip marker; deferred exact-commit CI is recorded as a boundary rather than silently implied.

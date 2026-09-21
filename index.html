@@ -150,13 +150,13 @@
         <div id="save-slots" aria-label="Manual save slots"></div>
         <div class="save-toolbar">
           <label class="button-label">Import save<input id="save-import" type="file" accept="application/json,.json" /></label>
-          <button id="save-load-import" type="button" hidden>Load validated import for this session</button>
-          <button id="save-export-current" type="button" class="secondary">Export current session</button>
-          <button id="save-refresh" type="button" class="secondary">Refresh slots</button>
+          <button id="save-load-import" type="button" class="ui-action-button" data-intent="danger" hidden>Load validated import for this session</button>
+          <button id="save-export-current" type="button" class="ui-action-button" data-intent="secondary">Export current session</button>
+          <button id="save-refresh" type="button" class="ui-action-button" data-intent="secondary">Refresh slots</button>
         </div>
         <p class="hint">Saving is available only at a stationary exploration checkpoint. Import and Load replace the current unsaved session only after confirmation. Save files are plain local JSON.</p>
       </div>
-      <div class="dialog-actions"><button id="save-close" type="button">Return to Inventory</button></div>
+      <div class="dialog-actions"><button id="save-close" type="button" class="ui-action-button" data-intent="primary">Return to Inventory</button></div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -15,7 +15,7 @@ import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
 import { MapView, ATLAS, TILE } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
-import type { PromptEntry } from './ui/components';
+import type { ConfirmationDialogParts, PromptEntry } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
@@ -28,6 +28,7 @@ export interface FoundationElements {
   session: SessionController;
   inventory: HTMLDialogElement;
   saveDialog: HTMLDialogElement;
+  saveConfirmation: ConfirmationDialogParts;
   saves: SaveService;
   base: URL;
   inventoryPrompt: () => PromptEntry[];
@@ -123,7 +124,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
         this.inventory = new InventoryMenu(elements.inventory, elements.session,
           () => this.resume(), () => { this.resume(); elements.openSettings(); },()=>this.openSaves(),elements.inventoryPrompt);
-        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory());
+        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory(),elements.saveConfirmation,()=>this.inputOwner?.clear());
         phase = 'ready';
         scheduleResize();
       } catch (cause) { this.fail(cause); }

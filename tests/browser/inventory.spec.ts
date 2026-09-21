@@ -157,7 +157,7 @@ test('repeated inventory opens preserve state, scene counts and single atlas loa
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);const before=await snapshot(page);
   for(let i=0;i<12;i++) {await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();}
   const after=await snapshot(page);expect(after.session).toEqual(before.session);expect(after.starts).toBe(before.starts);expect(after.displayObjects).toBe(before.displayObjects);
-  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(5);
+  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(6);
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false})));
   await expect(page.locator('#inventory-list button')).toHaveCount(0);expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
 });

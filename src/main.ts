@@ -11,6 +11,7 @@ import { SaveService } from './runtime/save-service';
 import { IndexedDbSaveRepository } from './platform/save-repository';
 import { loadStateIndex } from './platform/state-index-loader';
 import { MenuNavigation } from './presentation/ui/menu-navigation';
+import { createConfirmationDialog, type ConfirmationDialogParts } from './presentation/ui/components';
 import './presentation/skin/windowskin.css';
 import { mountWindowskin } from './presentation/ui/windowskin';
 import { mountPlayerShell } from './presentation/ui/player-shell';
@@ -64,6 +65,10 @@ const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel')
   if (controllerPanel.open) { controllerPanel.open = false; controller.reset(); controllerPanel.querySelector<HTMLElement>('summary')?.focus(); }
   else shell.close();
 });
+// The Save/Load confirmation frame must exist before the compositor snapshots
+// [data-window-skin] surfaces, or it would never receive the shared skin.
+const saveConfirmation: ConfirmationDialogParts = createConfirmationDialog('save-confirmation');
+document.body.append(saveConfirmation.dialog);
 const windowSkin = mountWindowskin();
 function inventoryPrompt(): PromptEntry[] {
   const buttons = controller.settings.buttons;
@@ -204,6 +209,7 @@ async function start(): Promise<void> {
       session,
       inventory: required<HTMLDialogElement>('#inventory-dialog'),
       saveDialog:required<HTMLDialogElement>('#save-dialog'),
+      saveConfirmation,
       saves:saveService,
       base,
       inventoryPrompt,

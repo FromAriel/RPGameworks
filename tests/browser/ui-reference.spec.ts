@@ -158,6 +158,14 @@ test.describe('U1.1 real-screen references', () => {
     await page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' }).click();
     await expect(page.locator('#save-status')).toContainText('Progress saved');
     await capture(page.locator('#save-dialog'), 'u1-save-populated-1100x850.png', info);
+    await page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' }).click();
+    const confirmation = page.locator('#save-confirmation');
+    await expect(confirmation).toBeVisible();
+    await expect(confirmation).toContainText('Replace Slot 1?');
+    await expect(confirmation.getByRole('button', { name: 'Cancel' })).toBeFocused();
+    await capture(confirmation, 'u1-save-confirmation-1100x850.png', info);
+    await page.keyboard.press('Escape');
+    await expect(confirmation).toBeHidden();
   });
 
   test('captures unavailable-storage feedback', async ({ page }, info) => {

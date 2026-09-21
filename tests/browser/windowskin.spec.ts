@@ -104,7 +104,7 @@ test('repeated menu and dialogue use keeps decoration and input ownership bounde
     await openTools(page);await closeTools(page);await page.keyboard.press('KeyE');await expect(page.locator(dialog)).toBeVisible();
   }
   expect((await snapshot(page)).starts).toBe(initial.starts);expect((await snapshot(page)).displayObjects).toBe(initial.displayObjects);
-  await expect(page.locator('[data-window-skin]')).toHaveCount(5);await expect(page.locator('canvas')).toHaveCount(1);
+  await expect(page.locator('[data-window-skin]')).toHaveCount(6);await expect(page.locator('canvas')).toHaveCount(1);
   await page.keyboard.press('Enter');await expect.poll(async()=>(await snapshot(page)).messagePage).toBe(2);
 });
 
@@ -152,7 +152,7 @@ test('application disposal clears decoration and cancels future invalidations', 
   await page.setViewportSize({width:901,height:707});
   await page.evaluate(()=>{ document.getElementById('tools-panel')!.hidden=false; document.getElementById('tools-title')!.textContent='Disposed'; });
   await page.waitForTimeout(200);
-  expect(await paintings(page)).toEqual(['0','0','0','0','0']);
+  expect(await paintings(page)).toEqual(['0','0','0','0','0','0']);
   expect(await page.locator('[data-window-skin]').evaluateAll(es=>es.every(e=>!(e as HTMLElement).style.backgroundImage))).toBe(true);
   expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
 });

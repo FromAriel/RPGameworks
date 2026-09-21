@@ -16,8 +16,13 @@ export function focusGameWhenIdle(stage: HTMLElement): void {
   }
 }
 
-/** Only our currently owned modal may receive gamepad actions through a modal gate. */
+/** Only our currently owned modal may receive gamepad actions through a modal gate.
+ *  A pending confirmation supersedes the gate solely for the modal that owns it (the
+ *  owner is declared on the confirmation dialog); an unrelated open confirmation never
+ *  unlocks polling. Behind-modal menus stay inert and separately gated in their sampling. */
 export function gamepadFocusAllowed(ownedModal?: HTMLElement): boolean {
+  const confirmation = document.querySelector<HTMLDialogElement>('dialog[open].ui-confirmation');
+  if (confirmation && ownedModal && confirmation.dataset.ownerModal === ownedModal.id) return true;
   for (const modal of document.querySelectorAll('dialog[open], [aria-modal="true"]')) {
     if (modal !== ownedModal) return false;
   }

@@ -174,8 +174,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if (target) {
         let state=room.resolve(target.objectId);if(!state?.interaction)return;
         let messageId=state.interaction.messageId;
-        if(state.interaction.actions.length){
-          const result=elements.session.transact({actions:state.interaction.actions,...(state.interaction.prerequisites?{prerequisites:state.interaction.prerequisites}:{})},target.objectId);
+        const prerequisites=state.interaction.prerequisites;
+        if(prerequisites&&!elements.session.evaluate(prerequisites,target.objectId)){
+          // Denial reports once per deliberate attempt and never runs the actions.
+          if(!state.interaction.rejectionMessageId)throw new Error(`Access-gated interaction without rejection message: ${target.objectId}`);
+          messageId=state.interaction.rejectionMessageId;
+        }else if(state.interaction.actions.length){
+          const result=elements.session.transact({actions:state.interaction.actions,...(prerequisites?{prerequisites}:{})},target.objectId);
           if(result.kind==='rejected'){
             if(!state.interaction.rejectionMessageId)throw new Error(`Interaction transaction rejected: ${result.reason}`);
             messageId=state.interaction.rejectionMessageId;

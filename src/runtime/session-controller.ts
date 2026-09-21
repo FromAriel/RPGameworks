@@ -7,6 +7,7 @@ export class SessionController {
   constructor(private active:SessionState){}
   get current():SessionState{return this.active;}
   get subscriberCount():number{return this.listeners.size;}
+  evaluate(condition:Parameters<SessionState['evaluate']>[0],selfId?:string):boolean{return this.active.evaluate(condition,selfId);}
   transact(request:TransactionRequest,selfId?:string):TransactionResult{
     const result=this.active.transact(request,selfId);
     if(result.kind==='committed')for(const entry of this.listeners)if([...result.changed].some(key=>entry.dependencies.has(key)))entry.listener(result);

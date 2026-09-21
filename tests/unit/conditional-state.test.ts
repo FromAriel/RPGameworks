@@ -42,11 +42,11 @@ describe('bounded conditions and ordered object states',()=>{
     expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'unread',frame:'plaque'});expect([...objectDependencies(plaque)]).toEqual(['fact:demo:fact.gallery.plaque-read']);
     state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'read',frame:'plaque-read'});
   });
-  const gate=():Placement=>{
+  const gate=(actionless=false):Placement=>{
     const map=structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
     const gate:Placement={id:'demo:object.gallery.test-gate',frame:'door',x:2,y:7,solid:true,states:[
       {id:'open',when:{type:'factEquals',factId:'demo:fact.gallery.plaque-read',value:true},frame:'door',visible:true,solid:false,interaction:{messageId:'gallery-plaque-read'}},
-      {id:'locked',fallback:true,frame:'door',visible:true,interaction:{messageId:'gallery-plaque-discovered',rejectionMessageId:'chest-full',prerequisites:{type:'itemAtLeast',itemId:'demo:item.lens',quantity:1},actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]}}
+      {id:'locked',fallback:true,frame:'door',visible:true,interaction:{...(actionless?{messageId:'gallery-plaque-discovered',rejectionMessageId:'chest-full',prerequisites:{type:'itemAtLeast',itemId:'demo:item.lens',quantity:1}}:{messageId:'gallery-plaque-discovered',rejectionMessageId:'chest-full',prerequisites:{type:'itemAtLeast',itemId:'demo:item.lens',quantity:1},actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]})}}
     ]};
     map.objects.push(gate);return readMap(map).objects.find(object=>object.id==='demo:object.gallery.test-gate')!;
   };
@@ -72,6 +72,16 @@ describe('bounded conditions and ordered object states',()=>{
       expect(attempt()).toMatchObject({kind:'committed'});
       expect(resolveObjectState(object,state)).toMatchObject({stateId:'open',solid:false});
       expect(attempt()).toMatchObject({kind:'unchanged'});
+    });
+    it('resolves prerequisite-only access without actions and evaluates eligibility against the session context',()=>{
+      const object=gate(true),state=session(),resolved=resolveObjectState(object,state).interaction!;
+      expect(resolved.actions).toEqual([]);
+      expect(resolved.prerequisites).toMatchObject({type:'itemAtLeast',itemId:'demo:item.lens',quantity:1});
+      expect(state.evaluate(resolved.prerequisites!,object.id)).toBe(false);
+      state.transact({actions:[{type:'changeItem',itemId:'demo:item.lens',delta:1}]});
+      expect(state.evaluate(resolved.prerequisites!,object.id)).toBe(true);
+      const gated=structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
+      expect(()=>readMap(gated)).not.toThrow();
     });
     it('satisfies already-unlocked access without the key through first-match state order',()=>{
       const state=session(),object=gate();

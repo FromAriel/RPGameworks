@@ -1,6 +1,6 @@
 # RPGameworks — UI Visual Language and System Plan
 
-**Version:** 0.3 · **Date:** September 20, 2026 · **Status:** Workshop Astral tokens and real-screen references are implemented, locally verified, and accepted; U1.2 is next in [ROADMAP](ROADMAP.md).
+**Version:** 0.4 · **Date:** September 20, 2026 · **Status:** Workshop Astral tokens/references and the U1.2 component/gallery system are accepted; U1.3 existing-screen normalization is next in [ROADMAP](ROADMAP.md).
 
 ## Purpose and authority
 
@@ -273,6 +273,8 @@ Title/start, Continue, New Game, slot selection, settings, credits and postgame 
 - Render every supported state in a test-only UI gallery at wide, compact, touch-first and forced-colors layouts.
 - Add lightweight visual-regression references for geometry and state, plus semantic/controller tests for behavior.
 
+**Accepted evidence:** The implemented ownership, fallback and input contracts plus the U1.3 migration map are recorded in [U1-COMPONENTS](U1-COMPONENTS.md). The test-only Vite entry imports the production token, component, navigation and windowskin modules without entering the normal game bundle. The accepted treatment brightens only the new component-level brass text with a half-black outline and retains an opt-in, default-off opacity-only glow pulse; reduced-motion and forced-color fallbacks retain meaning without animation. Local checks pass 289 unit/content tests and 127 Chromium scenarios, including 14 gallery scenarios; all 12 accepted U1.1 captures remain byte-identical. Ariel accepted the gallery on September 20, 2026.
+
 **Gate:** every component has a defined owner, fallback and input behavior; gallery components are the production components; no duplicate navigation system is introduced.
 
 ### U1.3 — Normalize existing screens
@@ -320,4 +322,4 @@ Every implemented UI packet should select the applicable rows rather than claimi
 
 This plan does not authorize a skin replacement, theme editor, custom font purchase, icon pack, title-screen implementation, dead menu destinations, canvas-only text UI, virtual controller cursor, arbitrary animation system, battle mock disconnected from M5 rules, or redesign of Debug into a player-facing screen.
 
-The next implementation packet is **U1.2 only**. It adds shared production components and a test-only component gallery against the accepted U1.1 baseline without redesigning all real screens at once. During the current GitHub Actions quota exhaustion, publication uses the agreed CI-skip marker; deferred exact-commit CI is recorded as a boundary rather than silently implied.
+The next gate is **U1.3 existing-screen normalization**. Migrate existing screens onto the accepted components one at a time without redesigning them all at once, retaining matched references and behavioral checks for each surface. During the current GitHub Actions quota exhaustion, any authorized publication uses the agreed CI-skip marker; deferred exact-commit CI is recorded as a boundary rather than silently implied.

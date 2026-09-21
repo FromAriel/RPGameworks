@@ -1,10 +1,10 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 20, 2026, U1.1 accepted and complete; U1.2 is next.
+**Updated:** September 20, 2026, Ariel accepted U1.2 and retained the glow as an optional component treatment.
 
 ## Current phase
 
-**M1.1–M1.6, W1, M2.1–M2.6, and U1.1 are implemented on `main`; Ariel approved the U1.1 real-screen reference set after local verification.** The Workshop Astral semantic token layer covers structural surfaces, text, lines, cyan selection/information, brass authored importance, violet magic, outcome states, typography, four-pixel spacing, focus, safe areas, touch targets, frame clearance, and reduced-motion timing. The migration changes no gameplay, layout, navigation, artwork, schema, dependency, or save behavior.
+**M1.1–M1.6, W1, M2.1–M2.6, U1.1, and U1.2 are implemented and accepted on `main` or in the current working delivery candidate.** The Workshop Astral semantic token layer now has opt-in production controls for actions, selectable rows, tabs, status, meters, prompts, insets, scroll affordances and confirmations. Existing real screens are deliberately unchanged until U1.3.
 
 U1.1 is accepted for direct publication on `main`; hosted exact-commit CI remains deferred rather than implied. Ariel's earlier M2 smoke report that it “seems to work” still does not constitute the full M2 manual acceptance route or physical-controller certification. Other browsers/devices and any deployment remain separate. The optional Debug drawer remains separate from Inventory and closed on reload. The benchmark remains a separate development/test command whose probe is injected only in test pages.
 
@@ -21,6 +21,16 @@ The exact implementation/reference commit is `0cade5ae7632f22bede9323989acbcfc2e
 Unit coverage pins all approved colors and aliases, checks 4.5:1 normal-text and 3:1 indicator thresholds, and explicitly prohibits violet and danger as normal text on the hover surface. Browser coverage reads computed tokens, exercises controller-selected cyan plus neutral focus, retains adjacent disabled reasons, removes decorative art in forced colors, and preserves state information under reduced motion.
 
 Local verification passes `npm run check` with **286 unit/content tests** and the optimized production build, plus **113 functional Chromium scenarios**. The exact windowskin audit, `npm audit`, relative documentation links, and `git diff --check` pass. The existing large Phaser chunk warning remains. Benchmarks were deliberately not rerun because this packet adds static CSS and test/documentation work, not runtime behavior.
+
+## U1.2 shared components — accepted
+
+The component layer uses native controls and literal text, with explicit disposal for listeners, observers, pending confirmations and focus restoration. Cyan selection and the neutral focus ring remain independent; disabled controls retain adjacent reasons; status and meter colors always have text or structural cues. Tabs reuse the existing `MenuNavigation` controller adapter rather than introducing a second directional system. Confirmation defaults to Cancel, rejects overlapping requests, clears input through caller-owned boundary hooks and resolves a pending request as cancelled on disposal. The current review iteration brightens component-level brass text to `#f2dda6` with Ariel's requested 1px half-black outline, without recoloring accepted U1.1 screens.
+
+The gallery also exposes an optional pulse for meters, selected rows/tabs and highlighted actions. It uses one pseudo-element and an 1800ms opacity-only CSS animation rather than a script or gameplay timer. The toggle defaults off; reduced motion retains a static glow, forced colors removes it, and all underlying labels, borders and selected states remain present.
+
+The separate test-only gallery imports the real tokens, components, navigation owner and windowskin compositor. It is built to ignored `.tmp/ui-gallery-dist` and never enters the normal production bundle. Its static matrix and interactive lane cover wide, compact, touch-first, forced colors, reduced motion, 2× page enlargement, long literal text, skin failure, hover/focus/pressed/selected/disabled/busy states, scrolling, keyboard/controller/pointer parity, confirmation recovery and 40 repeated observer lifecycles. See [U1-COMPONENTS](U1-COMPONENTS.md) for ownership and the U1.3 migration map.
+
+The local gate passes `npm run check` with **289 unit/content tests** and the optimized production build, plus **127 functional Chromium scenarios**, including 14 gallery scenarios. Fresh U1.1 captures match all 12 accepted reference PNGs byte-for-byte by SHA-256, so current game screens have no recorded visual drift. The exact windowskin audit, `npm audit`, relative documentation links and tracked-diff whitespace check also pass. Ariel accepted the gallery on September 20, 2026, including the brighter outlined brass and the glow as an optional, default-off treatment. U1.2 is complete; hosted exact-commit CI remains deferred while GitHub Actions quota is unavailable.
 
 ## Complete M2 state, save, and lifecycle acceptance
 
@@ -72,13 +82,13 @@ Mara/travel, the Settings/Debug frame and its labeled divider use the bounded, l
 
 Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Existing users need only pull this update; no package reinstall is required because dependency versions and the lockfile did not change. Fresh checkouts use `npm ci --include=dev`. Keep `npm run dev` running on its reported address (port 5173 with strict conflict handling).
 
-`npm run check`: strict source checks, 286 unit/content tests, validated content and production build. `npm run test:browser`: 113 functional Chromium scenarios. `npm run benchmark`: eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
+`npm run check`: strict source checks, 289 unit/content tests, validated content and production build. `npm run test:browser`: sequential production/gallery builds and 127 functional Chromium scenarios. `npm run benchmark`: eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
 
 `node tools/audit-windowskin.mjs` retains the exact-art audit (`--write` changes its report, not the PNG). Existing `npm run validate` and `npm run content` remain; no content watcher was added. Benchmarks do not configure hosting or publish a site.
 
 ## Next concrete packet
 
-**U1.2 — Core components and UI gallery.** Introduce shared production action, row, tab, status, meter, prompt, scrolling, inset and confirmation components plus a test-only gallery. Preserve the accepted U1.1 images as the current no-layout-change reference. U1.3 then deliberately normalizes existing layouts. Do not add dead Party, Journal, Equipment or Battle destinations. Once the U1 foundation is accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
+**Begin U1.3 existing-screen normalization.** Migrate one existing screen at a time onto the accepted shared components, starting with the smallest low-risk surface and preserving the U1.1 references after every conversion. Do not add dead Party, Journal, Equipment or Battle destinations. Once U1.1–U1.3 are accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
 
 N1.3 remains paired with M3 dialogue choices. Later UI patterns extend alongside the gameplay systems that actually need them: dialogue/Journal in M3, party/equipment/shop/battle in M5, and title/Continue/credits in M6/M7. The longer route from this state spine through a finishable JRPG remains detailed in [JRPG-BUILDOUT](JRPG-BUILDOUT.md).
 

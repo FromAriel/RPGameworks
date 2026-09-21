@@ -4,6 +4,7 @@ public/generated/
 playwright-report/
 test-results/
 coverage/
+.tmp/
 .env
 .env.*
 !.env.example

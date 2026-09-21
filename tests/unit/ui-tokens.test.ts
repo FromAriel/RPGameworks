@@ -42,6 +42,9 @@ describe('Workshop Astral UI tokens', () => {
     expect(token('ui-information')).toBe('var(--ui-cyan)');
     expect(token('ui-authored-importance')).toBe('var(--ui-brass)');
     expect(token('ui-magic')).toBe('var(--ui-violet)');
+    expect(token('ui-authored-text-bright')).toBe('#f2dda6');
+    expect(token('ui-authored-text-outline')).toBe('rgb(0 0 0 / 50%)');
+    expect(token('ui-glow-pulse-duration')).toBe('1800ms');
     expect(token('ui-touch-target')).toBe('44px');
   });
 
@@ -55,7 +58,7 @@ describe('Workshop Astral UI tokens', () => {
   });
 
   test('ordinary semantic accents meet normal-text contrast on every standard surface', () => {
-    const accentNames = ['ui-cyan', 'ui-brass', 'ui-success', 'ui-warning'] as const;
+    const accentNames = ['ui-cyan', 'ui-brass', 'ui-authored-text-bright', 'ui-success', 'ui-warning'] as const;
     for (const accentName of accentNames) {
       for (const surfaceName of surfaceNames) {
         expect(contrast(token(accentName), token(surfaceName)), `${accentName} on ${surfaceName}`).toBeGreaterThanOrEqual(4.5);

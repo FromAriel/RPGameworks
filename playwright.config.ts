@@ -17,10 +17,18 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1100, height: 850 } } },
   ],
-  webServer: {
-    command: 'npm run build -- --base=/RPGameworks/ && npm run preview -- --port 4173 --strictPort --base=/RPGameworks/',
-    url: 'http://127.0.0.1:4173/RPGameworks/',
-    reuseExistingServer: false,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'npm run preview -- --port 4173 --strictPort --base=/RPGameworks/',
+      url: 'http://127.0.0.1:4173/RPGameworks/',
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+    {
+      command: 'npm run preview:ui-gallery',
+      url: 'http://127.0.0.1:4174/ui-gallery/',
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
 });

@@ -1,4 +1,5 @@
 import './presentation/ui/tokens.css';
+import './presentation/ui/components.css';
 import './style.css';
 import './presentation/ui/inventory.css';
 import './presentation/ui/save-menu.css';

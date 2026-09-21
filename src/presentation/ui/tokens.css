@@ -51,6 +51,8 @@
   --ui-selection-line: #bde5f4;
   --ui-authored-heading: #e3d1a5;
   --ui-authored-label: #c6bdac;
+  --ui-authored-text-bright: #f2dda6;
+  --ui-authored-text-outline: rgb(0 0 0 / 50%);
   --ui-information-muted: #b4cddd;
   --ui-danger-text-soft: #f0d4d4;
   --ui-danger-line-soft: #ae8282;
@@ -85,6 +87,7 @@
   --ui-focus-width: 2px;
   --ui-focus-offset: 3px;
   --ui-motion-fast: 120ms;
+  --ui-glow-pulse-duration: 1800ms;
   --ui-motion-reduced: 0ms;
 }
 

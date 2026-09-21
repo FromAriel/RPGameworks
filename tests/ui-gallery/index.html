@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Test-only RPGameworks production UI component gallery." />
+    <title>RPGameworks UI Gallery</title>
+  </head>
+  <body>
+    <main id="gallery-shell">
+      <section id="gallery-window" data-window-skin="frame" aria-labelledby="gallery-title">
+        <header class="gallery-heading"><h1 id="gallery-title" data-skin-title>Workshop Astral Components</h1></header>
+        <p id="gallery-note">Test-only review surface. These are the production components; this page is not shipped with the game.</p>
+        <p id="skin-status" role="status">Loading the base window skin…</p>
+        <section aria-labelledby="state-matrix-title">
+          <h2 id="state-matrix-title">State matrix</h2>
+          <div id="state-matrix" class="gallery-grid"></div>
+        </section>
+        <section aria-labelledby="interaction-lane-title">
+          <h2 id="interaction-lane-title">Interactive lane</h2>
+          <div id="interactive-lane"></div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="/gallery.ts"></script>
+  </body>
+</html>

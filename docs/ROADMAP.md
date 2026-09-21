@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 1.0 · **Date:** September 20, 2026 · **Status:** M1/W1, N1.1–N1.2, M2 and U1.1 are complete. U1.2 shared production components and the test-only gallery are next. See STATUS for verification and publication boundaries.
+**Version:** 1.0 · **Date:** September 20, 2026 · **Status:** M1/W1, N1.1–N1.2, M2, U1.1 and U1.2 are complete. U1.3 existing-screen normalization is next. See STATUS for verification and publication boundaries.
 
 Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -14,7 +14,7 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 
 ## Approved near-term sequence
 
-**W1 skin → M1.6 baseline → M2 state/inventory/saves with N1 navigation → U1 UI foundation → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** M1/W1, N1.1–N1.2, M2 and U1.1 are implemented, locally verified and accepted. U1.2–U1.3 continue standardizing the existing real screens before party, quest, shop and battle interfaces multiply one-off styles; later U1 extensions travel with the gameplay milestone that needs them. Each stage still requires its own bounded implementation and acceptance. See [STATUS](STATUS.md) for current evidence, [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) for the visual/component contract and [WINDOW-SKIN](WINDOW-SKIN.md) for the retained art audit.
+**W1 skin → M1.6 baseline → M2 state/inventory/saves with N1 navigation → U1 UI foundation → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** M1/W1, N1.1–N1.2, M2, U1.1 and U1.2 are implemented, locally verified and accepted. U1.3 now standardizes the existing real screens before party, quest, shop and battle interfaces multiply one-off styles. See [STATUS](STATUS.md) for current evidence, [U1-COMPONENTS](U1-COMPONENTS.md) for ownership/migration, [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) for the visual contract and [WINDOW-SKIN](WINDOW-SKIN.md) for the retained art audit.
 
 ## Milestone overview
 
@@ -126,7 +126,7 @@ Saving during unsupported modal activity is explicitly deferred or disabled. No 
 The detailed direction, tokens, component contracts, full-JRPG screen patterns and acceptance matrix live in [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md). U1 is a focused foundation, not a theme editor or permission to build empty Party/Battle/Journal screens.
 
 - [x] **U1.1 — Visual references and token baseline.** The approved reference contains 12 real production captures at matched wide, compact, touch-first, failure and forced-colors states. Workshop Astral semantic cyan/brass/violet and outcome-state tokens centralize color, type, spacing, focus, safe-area and target-size values without changing gameplay behavior. All matched pre/post captures are byte-identical; Ariel separately accepted the reference set.
-- [ ] **U1.2 — Core components and UI gallery.** Implement reusable production controls for actions, rows, tabs, status, meters, prompt legends, scrolling, insets and confirmations. Render every applicable state in a test-only gallery using the real compositor and components, with semantic input and bounded-lifecycle coverage.
+- [x] **U1.2 — Core components and UI gallery.** The production controls and isolated gallery are implemented, locally verified and visually accepted. The accepted treatment includes brighter outlined component-level brass and a default-off, optional opacity-only glow pulse for meters, selected rows/tabs and highlighted actions.
 - [ ] **U1.3 — Existing-screen normalization.** Move dialogue, Inventory, Save/Load and player-facing Settings onto the approved tokens and components. Preserve Debug separation, exact skin identity, plain/forced-color fallback, long text, storage recovery and all existing keyboard/controller/pointer behavior.
 - [ ] **U1.4 — Gameplay extensions.** Add choice/Journal patterns with M3, battle/party/equipment/shop patterns with M5, and title/Continue/credits patterns only when their domain behavior exists. Update the shared standard when an implemented feature establishes a reusable rule.
 - [ ] **U1.5 — Cohesion and accessibility gate.** Before release, complete the cross-screen input tour, responsive/text-enlargement/reduced-motion/forced-color checks, prompt/copy/focus audit and separate human visual review.
@@ -286,7 +286,7 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**U1.2 — Core components and UI gallery.** Implement the shared production action button, list row, tabs, status message, meter, prompt legend, scroll affordance, inset region and confirmation patterns. Render every supported state in a test-only gallery using the real compositor and components; preserve the U1.1 reference as the no-layout-change baseline.
+**U1.3 existing-screen normalization.** Migrate dialogue, Inventory, Save/Load and player-facing Settings one screen at a time onto the accepted U1.2 components while preserving the U1.1 references and all existing behavior.
 
 U1.2 adds shared production components and the test-only gallery; U1.3 normalizes the real screens. G1 then applies the completed M2 facts, conditions, actions, session activation and save compatibility contracts to the first passability-changing access rule. M3 follows with conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 

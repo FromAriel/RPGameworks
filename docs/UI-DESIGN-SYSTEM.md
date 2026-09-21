@@ -1,6 +1,6 @@
 # RPGameworks — UI Visual Language and System Plan
 
-**Version:** 0.2 · **Date:** September 20, 2026 · **Status:** Visual direction approved by Ariel; implementation remains packet-gated in [ROADMAP](ROADMAP.md).
+**Version:** 0.3 · **Date:** September 20, 2026 · **Status:** Workshop Astral tokens and real-screen references are locally implemented; U1.1 awaits Ariel's visual acceptance in [ROADMAP](ROADMAP.md).
 
 ## Purpose and authority
 
@@ -80,27 +80,27 @@ Use semantic names in CSS and tests; avoid scattering raw colors through individ
 
 | Token | Initial value | Role |
 | --- | --- | --- |
-| `--ui-bg-world` | `#000000` | Letterbox and world surround |
+| `--ui-world` | `#000000` | Letterbox and world surround |
 | `--ui-surface-strong` | `#0e1724` | Primary fallback window fill |
 | `--ui-surface` | `#111a29` | Standard framed surface |
 | `--ui-surface-raised` | `#182838` | Controls and selected regions |
 | `--ui-surface-hover` | `#243f54` | Hover/active preview only |
-| `--ui-line` | `#425974` | Secondary dividers and inactive outlines |
+| `--ui-line-weak` | `#425974` | Secondary dividers and inactive outlines |
 | `--ui-line-strong` | `#8da5bc` | Primary frame/control outline |
-| `--ui-text` | `#e7edf5` | Primary text |
+| `--ui-text-primary` | `#e7edf5` | Primary text |
 | `--ui-text-muted` | `#a9b1c1` | Secondary metadata; must retain tested contrast |
-| `--ui-focus` | `#f1f6fa` | High-contrast keyboard/controller focus outline |
+| `--ui-focus-ring` | `#f1f6fa` | High-contrast keyboard/controller focus outline |
 | `--ui-cyan` | `#87cbe6` | Interactive selection, navigation and informational emphasis |
 | `--ui-brass` | `#c9b78b` | Authored importance, headings, rewards and crafted value |
-| `--ui-violet` | candidate `#a58cf0` | Magic, MP, enchantments and supernatural status |
+| `--ui-violet` | `#a58cf0` | Magic, MP, enchantments and supernatural status |
 | `--ui-selection` | `var(--ui-cyan)` | Semantic alias for the current selection |
-| `--ui-accent` | `var(--ui-brass)` | Semantic alias for authored emphasis |
+| `--ui-authored-importance` | `var(--ui-brass)` | Semantic alias for authored emphasis |
 | `--ui-magic` | `var(--ui-violet)` | Semantic alias for magical content |
-| `--ui-success` | candidate `#7fc79a` | Successful committed result |
-| `--ui-warning` | candidate `#e0b76a` | Recoverable risk or unsaved progress |
-| `--ui-danger` | candidate `#df8585` | Destructive/fatal action only |
+| `--ui-success` | `#7fc79a` | Successful committed result |
+| `--ui-warning` | `#e0b76a` | Recoverable risk or unsaved progress |
+| `--ui-danger` | `#df8585` | Destructive/fatal action only |
 
-The existing cyan and brass values anchor the first implementation. Violet and the three outcome colors are candidate values, not locked production colors. U1.1 must render them against every relevant surface, check text/non-text contrast, check common color-vision deficiencies, and tune them as a coordinated set. Outcome colors stay semantically separate from the identity accents: success is not “cyan,” warnings are not automatically “brass,” and magical danger is not communicated by violet alone.
+U1.1 locks these initial defaults and tests their supported surface combinations. Primary, muted, title and diagnostic text meet 4.5:1 on strong, standard, raised and hover surfaces. Cyan, brass, success and warning also meet 4.5:1 on those surfaces. Violet and danger meet 4.5:1 on strong, standard and raised surfaces and at least 3:1 as indicators on hover, but are explicitly prohibited as ordinary hover-surface body text. Outcome colors stay semantically separate from the identity accents: success is not “cyan,” warnings are not automatically “brass,” and magical danger is not communicated by violet alone.
 
 ### Accent discipline
 
@@ -262,6 +262,8 @@ Title/start, Continue, New Game, slot selection, settings, credits and postgame 
 - Add one small player-UI token source for surfaces, lines, text, accents, outcome states, typography, spacing, safe areas, target sizes and reduced-motion timing. Keep Debug-only density and diagnostic colors namespaced.
 - Replace duplicated raw values in the existing player-facing styles with semantic tokens only where the rendered result is intentionally unchanged. Do not normalize screen layouts or introduce new components until U1.2/U1.3.
 - Record before/after captures at the same states and viewports.
+
+**Local candidate evidence:** [The real-screen reference set and manifest](ui-reference/u1.1/README.md) contains 12 post-refactor production captures across wide, compact, touch-first, populated, empty, unavailable-storage and forced-colors states. [The matched comparison](ui-reference/u1.1/COMPARISON.md) reports all 12 PNG pairs byte-identical. `tokens.css` is the implemented source of truth; unit and browser tests cover exact values, aliases, contrast, focus-plus-selection, disabled reasons, forced colors and reduced motion. Ariel's visual review remains outstanding, so ROADMAP correctly leaves U1.1 unchecked.
 
 **Gate:** no player flow changes; the skin audit remains exact; matched captures show no unintended layout/visual drift; contrast/focus checks and applicable local browser tests pass; Ariel reviews the real-screen reference separately from the already approved concept direction. GitHub Actions evidence remains deferred while the account quota is exhausted and must not be implied by local acceptance.
 

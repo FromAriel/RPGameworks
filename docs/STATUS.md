@@ -1,14 +1,24 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 20, 2026, complete local M2 state/save/lifecycle candidate.
+**Updated:** September 20, 2026, U1.1 local implementation candidate awaiting visual acceptance.
 
 ## Current phase
 
-**M1.1–M1.6, W1, and M2.1–M2.6 are implemented and locally verified on `codex/m2-state-saves`; U1 player-interface standardization is next.** The Gallery plaque proves declared facts and ordered object states, the lens chest uses the same atomic action resolver, and three manual IndexedDB slots support in-place load plus JSON export/import. Save and object subscriptions remain bounded through repeated reconstruction and a twelve-map test-only residency tour.
+**M1.1–M1.6, W1, and M2.1–M2.6 are implemented on `main`; U1.1 is implemented and locally verified but remains open for Ariel's visual acceptance.** The Workshop Astral semantic token layer now covers structural surfaces, text, lines, cyan selection/information, brass authored importance, violet magic, outcome states, typography, four-pixel spacing, focus, safe areas, touch targets, frame clearance, and reduced-motion timing. The migration changes no gameplay, layout, navigation, artwork, schema, dependency, or save behavior.
 
 This is a local candidate, not a published-main or CI claim. Ariel reported that an initial manual try “seems to work”; that is useful smoke feedback, not yet a recorded completion of the full M2 manual acceptance route or physical-controller certification. Other browsers/devices and any deployment remain separate. The optional Debug drawer remains separate from Inventory and closed on reload. The benchmark remains a separate development/test command whose probe is injected only in test pages.
 
 GitHub Actions usage is currently exhausted. Do not intentionally trigger hosted workflows, push merely to seek CI evidence, or describe deferred CI as passed. Continue with applicable local verification and preserve the exact-commit CI gate for when quota becomes available again; no workflow-file change is required merely to keep local work local.
+
+## U1.1 visual reference and token candidate
+
+`src/presentation/ui/tokens.css` is imported before every existing stylesheet. Current dialogue, Inventory, Save/Load, Settings and global-shell values resolve through semantic tokens while retaining their previous computed values. Cyan remains selection and navigation; the neutral white dashed ring remains focus-visible and may appear with a cyan selected state. Brass remains limited to existing authored-important roles. Violet and success/warning/danger are defined for real future consumers but are not added decoratively to current screens. Debug-specific dense and diagnostic styling remains separate.
+
+The dedicated production-build reference scenario captures 12 consistently named real screens: six 1100×850 states, three 390×844 keyboard states, one 390×844 touch-first state, and two forced-colors states. The tracked [U1.1 reference manifest](ui-reference/u1.1/README.md) records viewport, input, skin, content, fixed display time, capture command, and the local-publication boundary. All 12 matched pre/post PNG pairs are byte-identical by SHA-256; the [comparison record](ui-reference/u1.1/COMPARISON.md) reports zero changed captures. Concept images remain directional only and contributed no invented production assets or layouts.
+
+Unit coverage pins all approved colors and aliases, checks 4.5:1 normal-text and 3:1 indicator thresholds, and explicitly prohibits violet and danger as normal text on the hover surface. Browser coverage reads computed tokens, exercises controller-selected cyan plus neutral focus, retains adjacent disabled reasons, removes decorative art in forced colors, and preserves state information under reduced motion.
+
+Local verification passes `npm run check` with **286 unit/content tests** and the optimized production build, plus **113 functional Chromium scenarios**. The exact windowskin audit, `npm audit`, relative documentation links, and `git diff --check` pass. The existing large Phaser chunk warning remains. Benchmarks were deliberately not rerun because this packet adds static CSS and test/documentation work, not runtime behavior.
 
 ## Complete M2 state, save, and lifecycle acceptance
 
@@ -24,7 +34,7 @@ Malformed/current-versus-previous data, wrong games, future/incompatible version
 
 Menu, I or Escape opens the skinned Inventory during exploration. It provides an empty state plus item name, quantity and description; Settings is an explicit route from Inventory and F2 still opens Debug. Keyboard arrows and the existing controller stick/D-pad move semantic focus, E/Enter or X confirms, and Escape or B returns. Direction repeat is bounded, selection scrolls into view, and held inputs are cleared across movement/modal/settings/reconnect boundaries. Controller preferences migrate from v2 to v3 by preserving every existing assignment and adding Menu on button 9 or the first unoccupied button.
 
-The prior M2.2 candidate **`cf534f912f39e931d7448e9d577f6bee7fe252b7`** passed [run 35437641180](https://github.com/FromAriel/RPGameworks/actions/runs/35437641180). For the current uncommitted local candidate, `npm run check` passes **281 unit/content tests** and the optimized production build; all **106 functional Chromium scenarios** and **eight benchmark workloads** pass. `npm audit` reports zero vulnerabilities, the exact-art windowskin audit is unchanged, relative documentation links and `git diff --check` pass. The existing large Phaser chunk warning remains.
+The prior M2.2 candidate **`cf534f912f39e931d7448e9d577f6bee7fe252b7`** passed [run 35437641180](https://github.com/FromAriel/RPGameworks/actions/runs/35437641180). The later complete-M2 local gate passed **281 unit/content tests**, **106 functional Chromium scenarios**, the optimized production build, and **eight benchmark workloads**. Those historical counts describe the M2 closeout; the current U1.1 counts are recorded above. The existing large Phaser chunk warning remains.
 
 ## M1.6 measurement and acceptance
 
@@ -60,15 +70,15 @@ Mara/travel, the Settings/Debug frame and its labeled divider use the bounded, l
 
 Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Existing users need only pull this update; no package reinstall is required because dependency versions and the lockfile did not change. Fresh checkouts use `npm ci --include=dev`. Keep `npm run dev` running on its reported address (port 5173 with strict conflict handling).
 
-`npm run check`: strict source checks, 281 unit/content tests, validated content and production build. `npm run test:browser`: 106 functional Chromium scenarios. `npm run benchmark`: eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
+`npm run check`: strict source checks, 286 unit/content tests, validated content and production build. `npm run test:browser`: 113 functional Chromium scenarios. `npm run benchmark`: eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
 
 `node tools/audit-windowskin.mjs` retains the exact-art audit (`--write` changes its report, not the PNG). Existing `npm run validate` and `npm run content` remain; no content watcher was added. Benchmarks do not configure hosting or publish a site.
 
 ## Next concrete packet
 
-**U1.1 — Visual references and token baseline.** Use the existing production dialogue, Inventory, Save/Load, Settings and failure states to establish one annotated visual reference and a semantic token layer for color, type, spacing, focus, safe areas and control targets. Ariel approved the combined **Workshop Astral** direction: Workshop Night structure, cyan interaction/focus, Brass Observatory importance/reward accents and Luminous Archive violet magic/battle accents. Preserve Ariel's exact windowskin and all current behavior. See [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md).
+**U1.1 visual acceptance, then U1.2.** Ariel should review the tracked real-screen reference set at wide, narrow, touch-first, forced-colors, populated, empty and storage-unavailable states. If accepted, record the final commit in the manifest, mark U1.1 complete, and commit/push directly to `main` with an explicit CI-skip marker while GitHub Actions quota remains exhausted. Hosted exact-commit CI stays deferred.
 
-U1.2 then introduces the shared production components and a test-only UI gallery; U1.3 normalizes the existing real screens. Do not add dead Party, Journal, Equipment or Battle destinations. Once the U1 foundation is accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
+After that acceptance, **U1.2 — Core components and UI gallery** introduces shared production action, row, tab, status, meter, prompt, scrolling, inset and confirmation components plus a test-only gallery. U1.3 then deliberately normalizes existing layouts. Do not add dead Party, Journal, Equipment or Battle destinations. Once the U1 foundation is accepted, G1 applies the completed M2 condition/action/session/save spine to a visible key lock and switch gate with explicit unmet-requirement feedback and safe dynamic passability.
 
 N1.3 remains paired with M3 dialogue choices. Later UI patterns extend alongside the gameplay systems that actually need them: dialogue/Journal in M3, party/equipment/shop/battle in M5, and title/Continue/credits in M6/M7. The longer route from this state spine through a finishable JRPG remains detailed in [JRPG-BUILDOUT](JRPG-BUILDOUT.md).
 

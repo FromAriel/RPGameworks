@@ -55,7 +55,9 @@ test('chest grants once, reconstructs after actual room travel and room restart,
   await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
   expect((await snapshot(page)).session).toEqual(state);
   await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await expect(page.locator('[data-item-id="'+lens+'"]')).toHaveText('Polished lens × 1');
+  const lensRow=page.locator('[data-item-id="'+lens+'"]');
+  await expect(lensRow.locator('.ui-list-row__label')).toHaveText('Polished lens');
+  await expect(lensRow.locator('.ui-list-row__trailing')).toHaveText('× 1');
   await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-state','ready');
   await page.screenshot({path:info.outputPath('m2-inventory-wide.png')});
   await page.reload();await expect.poll(()=>page.evaluate(()=>window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');

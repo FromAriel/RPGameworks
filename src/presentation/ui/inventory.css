@@ -3,20 +3,15 @@
 #inventory-dialog::backdrop { background:var(--ui-backdrop); }
 .inventory-body { min-height:0; overflow:auto; }
 .inventory-columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; }
+.inventory-list-frame { min-width:0; }
 #inventory-list { display:flex; flex-direction:column; gap:6px; max-height:44vh; overflow:auto; padding:3px; }
 #inventory-list:empty { display:none; }
-#inventory-list:empty + #inventory-detail { grid-column:1/-1; }
-#inventory-list button { text-align:left; overflow-wrap:anywhere; min-height:var(--ui-touch-target); border-left:4px solid transparent; }
-#inventory-list button[aria-pressed="true"] { background:var(--ui-selection-surface); border-left-color:var(--ui-selection-line); }
-#inventory-list button[aria-pressed="true"]::before { content:'▸ '; }
-#inventory-detail { padding:4px 10px; border-left:1px solid var(--ui-line-content); overflow-wrap:anywhere; }
-#item-name { margin:0 0 12px; }
+.inventory-columns:has(#inventory-list:empty) #inventory-detail { grid-column:1/-1; }
 #item-description { white-space:pre-wrap; line-height:1.6; }
 #inventory-dialog .dialog-actions { flex-shrink:0; }
-@media(max-width:600px) { #inventory-dialog { --skin-scale:1; padding:var(--ui-frame-clearance-compact); } .inventory-columns { grid-template-columns:1fr; gap:12px; } #inventory-list { max-height:25vh; } #inventory-detail { border-left:0; border-top:1px solid var(--ui-line-content); padding:12px 3px; } }
+@media(max-width:600px) { #inventory-dialog { --skin-scale:1; padding:var(--ui-frame-clearance-compact); } .inventory-columns { grid-template-columns:1fr; gap:12px; } #inventory-list { max-height:25vh; } }
 
 #inventory-dialog[data-skin-state="ready"] { background-color:transparent; border-color:transparent; }
 #inventory-title { color:var(--ui-text-title); font-family:var(--ui-font-title); font-weight:600; font-size:var(--ui-text-heading); line-height:1.4; letter-spacing:.03em; text-align:center; max-width:calc(100% - 96px); margin:0; overflow-wrap:anywhere; }
-#inventory-dialog button { border-radius:0; }
 #inventory-dialog :focus-visible { outline:var(--ui-focus-width) dashed var(--ui-focus-ring); outline-offset:var(--ui-focus-offset); }
 @media (forced-colors:active) { #inventory-dialog { background-color:Canvas; outline:2px solid CanvasText; } }

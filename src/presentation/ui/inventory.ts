@@ -1,6 +1,7 @@
 import type { SessionController } from '../../runtime/session-controller';
 import { MenuNavigation } from './menu-navigation';
 import type { PadInput } from '../../platform/gamepad-model';
+import { createListRow, mountPromptLegend, mountScrollAffordance, type ListRowHandle, type PromptEntry, type PromptLegendPresenter, type ScrollAffordanceController } from './components';
 
 /** Read-only inspection menu. Item use/discard wait for authored gameplay rules. */
 export class InventoryMenu {
@@ -8,18 +9,28 @@ export class InventoryMenu {
   private readonly lifetime = new AbortController();
   private selected: string | null = null;
   private revision = -1;
-  private readonly buttons = new Map<string, HTMLButtonElement>();
+  private readonly rows = new Map<string, ListRowHandle>();
   private readonly list: HTMLElement;
   private readonly title: HTMLElement;
   private readonly description: HTMLElement;
   private readonly quantity: HTMLElement;
+  private readonly legend: PromptLegendPresenter;
+  private readonly affordances: ScrollAffordanceController[] = [];
   constructor(readonly element: HTMLDialogElement, private readonly sessions: SessionController,
-    close: () => void, settings: () => void, saves:()=>void, private readonly prompt: () => string) {
+    close: () => void, settings: () => void, saves:()=>void, private readonly promptEntries: () => PromptEntry[]) {
     const get = <T extends HTMLElement>(id: string): T => {
       const node = element.querySelector<T>(`#${id}`); if (!node) throw new Error(`Missing inventory element: ${id}`); return node;
     };
+    const body = element.querySelector<HTMLElement>('.inventory-body');
+    if (!body) throw new Error('Missing inventory element: .inventory-body');
     this.list = get('inventory-list'); this.title = get('item-name');
     this.description = get('item-description'); this.quantity = get('item-quantity');
+    this.legend = mountPromptLegend(get('inventory-prompt'));
+    // Closed dialogs have no layout; availability resolves when the ResizeObserver sees real sizes.
+    this.affordances.push(
+      mountScrollAffordance(body, get('inventory-body-above'), get('inventory-body-below')),
+      mountScrollAffordance(this.list, get('inventory-list-above'), get('inventory-list-below')),
+    );
     const options = {signal:this.lifetime.signal};
     this.navigation = new MenuNavigation(element, close);
     element.addEventListener('cancel', event => {event.preventDefault(); close();}, options);
@@ -40,32 +51,36 @@ export class InventoryMenu {
     const session=this.sessions.current;
     this.selected = id;
     const item = session.catalog.items.find(candidate => candidate.id === id);
-    for (const [key, button] of this.buttons) button.setAttribute('aria-pressed', String(key === id));
+    for (const [key, row] of this.rows) row.setSelected(key === id);
     this.title.textContent = item ? session.catalog.strings.en[item.nameKey]! : 'Empty inventory';
     this.description.textContent = item ? session.catalog.strings.en[item.descriptionKey]! : 'Find a chest in the Pillar Gallery to collect your first item.';
     this.quantity.textContent = item ? `Quantity: ${session.count(item.id)} / ${item.maxStack}` : '';
   }
+  private clearRows(): void {
+    for (const row of this.rows.values()) row.dispose();
+    this.rows.clear(); this.list.replaceChildren();
+  }
   open(): void {
     const session=this.sessions.current;const state = session.snapshot();
     if (this.revision !== state.revision) {
-      this.buttons.clear(); this.list.replaceChildren();
+      this.clearRows();
       for (const item of session.catalog.items) {
         const count = state.inventory[item.id]; if (!count) continue;
-        const button = document.createElement('button'); button.type = 'button'; button.dataset.itemId = item.id;
-        button.textContent = `${session.catalog.strings.en[item.nameKey]} × ${count}`;
-        button.setAttribute('aria-controls','inventory-detail');
-        this.buttons.set(item.id,button); this.list.append(button);
+        const row = createListRow({ id: item.id, label: session.catalog.strings.en[item.nameKey]!, trailing: `× ${count}` });
+        row.element.dataset.itemId = item.id;
+        row.element.setAttribute('aria-controls','inventory-detail');
+        this.rows.set(item.id,row); this.list.append(row.element);
       }
       this.revision = state.revision;
     }
-    const id = this.selected && this.buttons.has(this.selected) ? this.selected : this.buttons.keys().next().value ?? null;
+    const id = this.selected && this.rows.has(this.selected) ? this.selected : this.rows.keys().next().value ?? null;
     this.select(id);
-    this.element.querySelector<HTMLElement>('#inventory-count')!.textContent = `${this.buttons.size} / ${session.catalog.capacity} stacks`;
-    this.element.querySelector<HTMLElement>('#inventory-prompt')!.textContent = this.prompt();
+    this.element.querySelector<HTMLElement>('#inventory-count')!.textContent = `${this.rows.size} / ${session.catalog.capacity} stacks`;
+    this.legend.set(this.promptEntries());
     if (!this.element.open) this.element.showModal();
     document.getElementById('tools-toggle')?.setAttribute('aria-expanded','true');
     this.navigation.reset();
-    const focused = id ? this.buttons.get(id)! : this.element.querySelector<HTMLElement>('#inventory-close')!;
+    const focused = id ? this.rows.get(id)!.element : this.element.querySelector<HTMLElement>('#inventory-close')!;
     focused.focus({preventScroll:true});
     if (id) focused.scrollIntoView({block:'nearest',inline:'nearest'});
   }
@@ -74,5 +89,11 @@ export class InventoryMenu {
     this.navigation.reset();
     if (this.element.open) { this.element.close(); document.getElementById('tools-toggle')?.setAttribute('aria-expanded','false'); }
   }
-  dispose(): void { this.close(); this.navigation.dispose(); this.lifetime.abort(); this.buttons.clear(); this.list.replaceChildren(); }
+  dispose(): void {
+    this.close();
+    for (const affordance of this.affordances) affordance.dispose();
+    this.affordances.length = 0;
+    this.legend.dispose(); this.clearRows();
+    this.navigation.dispose(); this.lifetime.abort();
+  }
 }

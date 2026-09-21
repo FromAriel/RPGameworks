@@ -18,6 +18,7 @@ import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
 import { GamepadController } from './platform/gamepad';
 import { mountControllerSettings } from './presentation/ui/controller-settings';
+import type { PromptEntry } from './presentation/ui/components';
 import { loadSelectedMap } from './platform/map-loader';
 import type { FoundationHandle } from './runtime-types';
 
@@ -64,10 +65,15 @@ const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel')
   else shell.close();
 });
 const windowSkin = mountWindowskin();
-function inventoryPrompt(): string {
+function inventoryPrompt(): PromptEntry[] {
   const buttons = controller.settings.buttons;
   const label = (index: number): string => index === -1 ? 'unassigned' : `button ${index}`;
-  return `Arrows / stick select · E / Enter / ${label(buttons.interact)} inspect · Escape / ${label(buttons.cancel)} back · I / ${label(buttons.menu)} menu`;
+  return [
+    { action: 'select', input: 'Arrows / stick' },
+    { action: 'inspect', input: `E / Enter / ${label(buttons.interact)}` },
+    { action: 'back', input: `Escape / ${label(buttons.cancel)}` },
+    { action: 'menu', input: `I / ${label(buttons.menu)}` },
+  ];
 }
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;

@@ -15,6 +15,7 @@ import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
 import { MapView, ATLAS, TILE } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
+import type { PromptEntry } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
@@ -29,7 +30,7 @@ export interface FoundationElements {
   saveDialog: HTMLDialogElement;
   saves: SaveService;
   base: URL;
-  inventoryPrompt: () => string;
+  inventoryPrompt: () => PromptEntry[];
   openSettings: () => void;
   closeTools: () => void;
   toolsOwnInput: () => boolean;

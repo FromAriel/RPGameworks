@@ -147,7 +147,9 @@ test.describe('U1.1 real-screen references', () => {
     await openRoom(page, `?map=${gallery}`);
     await collectLens(page);
     await openInventory(page);
-    await expect(page.locator('[data-item-id="demo:item.lens"]')).toHaveText('Polished lens × 1');
+    const lensRow = page.locator('[data-item-id="demo:item.lens"]');
+    await expect(lensRow.locator('.ui-list-row__label')).toHaveText('Polished lens');
+    await expect(lensRow.locator('.ui-list-row__trailing')).toHaveText('× 1');
     await capture(page.locator('#inventory-dialog'), 'u1-inventory-lens-1100x850.png', info);
     await page.locator('#inventory-saves').click();
     await expect(page.locator('#save-dialog')).toBeVisible();

@@ -116,7 +116,7 @@ test('v2 custom bindings survive v3 migration and use an unoccupied menu button'
 
 test('second chest stack failure keeps its closed state and correct inventory',async({page})=>{
   await page.route('**/generated/content/maps/gallery.*.json',async route=>{
-    const response=await route.fetch(), data=await response.json(), first=data.objects.find((o:{chest?:unknown})=>o.chest);
+    const response=await route.fetch(), data=await response.json(), first=data.objects.find((o:{id:string})=>o.id===chest);
     data.objects.push({...first,id:'demo:object.gallery.second',x:7,y:9});await route.fulfill({json:data});
   });
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);
@@ -129,7 +129,7 @@ test('second chest stack failure keeps its closed state and correct inventory',a
 
 test('invalid chest item in destination fails safely and leaves current room and session intact',async({page})=>{
   await page.route('**/generated/content/maps/gallery.*.json',async route=>{
-    const response=await route.fetch(), data=await response.json();data.objects.find((o:{chest?:unknown})=>o.chest).chest.itemId='demo:item.missing';await route.fulfill({json:data});
+    const response=await route.fetch(), data=await response.json();const object=data.objects.find((o:{id:string})=>o.id===chest);object.states.flatMap((s:{interaction?:{actions?:{type:string;itemId?:string}[]}})=>s.interaction?.actions??[]).find((a:{type:string})=>a.type==='changeItem').itemId='demo:item.missing';await route.fulfill({json:data});
   });
   await openRoom(page);await page.keyboard.down('ArrowRight');
   await expect(page.locator('#dialog-title')).toHaveText('The doorway could not open');await page.keyboard.up('ArrowRight');
@@ -155,7 +155,7 @@ test('repeated inventory opens preserve state, scene counts and single atlas loa
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);const before=await snapshot(page);
   for(let i=0;i<12;i++) {await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();}
   const after=await snapshot(page);expect(after.session).toEqual(before.session);expect(after.starts).toBe(before.starts);expect(after.displayObjects).toBe(before.displayObjects);
-  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(4);
+  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(5);
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false})));
   await expect(page.locator('#inventory-list button')).toHaveCount(0);expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
 });
@@ -179,11 +179,11 @@ test('many content-authored items scroll and select directly without consuming t
     await route.fulfill({json:data});
   });
   await page.route('**/generated/content/maps/gallery.*.json',async route=>{
-    const data=JSON.parse(readFileSync('content/games/demo/maps/gallery.json','utf8'));const template=data.objects.find((o:{chest?:unknown})=>o.chest);
+    const data=JSON.parse(readFileSync('content/games/demo/maps/gallery.json','utf8'));const template=data.objects.find((o:{id:string})=>o.id===chest);
     data.layers[0].rows=data.layers[0].rows.map((r:string,y:number)=>y===0||y===13?r:'#'+'a'.repeat(22)+'#');
     data.collision=data.collision.map((r:string,y:number)=>y===0||y===13?r:'#'+'.'.repeat(22)+'#');
     data.objects=[];data.spawns[0]={id:'start',x:2,y:5,facing:'right'};
-    for(let i=0;i<14;i++)data.objects.push({...template,id:`demo:object.test-${i}`,x:i+3,y:4,chest:{...template.chest,itemId:`demo:item.test-${i}`}});
+    for(let i=0;i<14;i++){const copy=structuredClone(template);copy.id=`demo:object.test-${i}`;copy.x=i+3;copy.y=4;copy.states.flatMap((s:{interaction?:{actions?:{type:string;itemId?:string}[]}})=>s.interaction?.actions??[]).find((a:{type:string})=>a.type==='changeItem').itemId=`demo:item.test-${i}`;data.objects.push(copy);}
     await route.fulfill({json:data});
   });
   await openRoom(page,'?map='+gallery);

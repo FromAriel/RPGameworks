@@ -18,7 +18,8 @@ describe('original atlas build', () => {
       expect(readFileSync(join(temporary, 'foundation.json'), 'utf8')).toEqual(json);
       expect(first.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
       const atlas = JSON.parse(json) as { frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>; meta: { size: { w: number; h: number } } };
-      expect(Object.keys(atlas.frames)).toHaveLength(14);
+      expect(Object.keys(atlas.frames)).toHaveLength(15);
+      expect(atlas.frames['plaque-read']?.frame.w).toBe(16);
       expect(atlas.frames['spark']?.frame.w).toBe(2);
       for (const { frame } of Object.values(atlas.frames)) {
         expect(frame.x + frame.w).toBeLessThanOrEqual(atlas.meta.size.w);

@@ -83,3 +83,9 @@ export async function loadMapDestination(
   if (signal.aborted) throw signal.reason;
   return { game, map, spawn, collision: createCollision(map) };
 }
+
+export async function loadMapCheckpoint(base:URL,game:GameManifest,mapId:string,tile:{readonly x:number;readonly y:number},facing:MapDefinition['spawns'][number]['facing'],signal:AbortSignal):Promise<LoadedMap>{
+  const loaded=await loadMapDestination(base,game,mapId,undefined,signal);
+  if(!loaded.collision.canEnter(tile.x,tile.y))throw new Error(`Saved checkpoint ${tile.x},${tile.y} is blocked or outside ${mapId}`);
+  return{...loaded,spawn:Object.freeze({id:'saved-checkpoint',x:tile.x,y:tile.y,facing})};
+}

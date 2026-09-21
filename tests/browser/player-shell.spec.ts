@@ -31,7 +31,7 @@ test('Debug docks beside play, stays live, and stops rebuilding rows when closed
   await page.keyboard.press('F2');
   await expect(page.locator('#debug-panel')).toBeVisible();
   await expect(page.locator('#debug-tab')).toBeFocused();
-  await expect(page.locator('#diagnostics div')).toHaveCount(14);
+  await expect(page.locator('#diagnostics div')).toHaveCount(16);
   await expect.poll(async () => (await page.locator('#stage').boundingBox())?.width).toBe(1080);
   await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(960);
   await page.locator('#stage').click({ position: { x: 50, y: 50 } });

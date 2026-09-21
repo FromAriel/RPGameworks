@@ -1,13 +1,17 @@
 import Phaser from 'phaser';
-import type { SessionState } from '../domain/session';
+import type { SessionController } from '../runtime/session-controller';
 import { InventoryMenu } from './ui/inventory';
+import { SaveMenu } from './ui/save-menu';
+import type { SaveEnvelopeV1 } from '../domain/save';
+import { SessionState } from '../domain/session';
+import type { SaveService } from '../runtime/save-service';
 import { actorPosition, advanceActor, createActor } from '../domain/movement';
 import { viewportScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
 import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
-import { loadMapDestination } from '../platform/map-loader';
+import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
 import { MapView, ATLAS, TILE } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
@@ -20,8 +24,11 @@ const HEIGHT = 192;
 const SCENE = 'rpgameworks:map';
 
 export interface FoundationElements {
-  session: SessionState;
+  session: SessionController;
   inventory: HTMLDialogElement;
+  saveDialog: HTMLDialogElement;
+  saves: SaveService;
+  base: URL;
   inventoryPrompt: () => string;
   openSettings: () => void;
   closeTools: () => void;
@@ -63,6 +70,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private lastExit: MapExit | null = null;
     private readonly dialog = new InteractionDialog(elements.dialog);
     private inventory: InventoryMenu | null = null;
+    private saveMenu: SaveMenu | null = null;
     private menuPending = false;
 
     openInventory(): void {
@@ -95,10 +103,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.transfer = new TransitionTask<LoadedMap>();
         this.mode = 'exploration'; this.message = null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
-        this.room = new MapView(this, content, elements.session);
+        this.room = new MapView(this, content, elements.session.current);
+        this.room.bind(elements.session);
         this.room.show();
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
-          elements.gamepad, elements.canPlay, elements.dialog, elements.inventory);
+          elements.gamepad, elements.canPlay, elements.dialog, elements.inventory,elements.saveDialog);
         starts += 1;
         current = this;
         elements.effects.addEventListener('change', () => {
@@ -112,7 +121,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         }, { signal: this.sceneLifetime.signal });
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
         this.inventory = new InventoryMenu(elements.inventory, elements.session,
-          () => this.resume(), () => { this.resume(); elements.openSettings(); }, elements.inventoryPrompt);
+          () => this.resume(), () => { this.resume(); elements.openSettings(); },()=>this.openSaves(),elements.inventoryPrompt);
+        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory());
         phase = 'ready';
         scheduleResize();
       } catch (cause) { this.fail(cause); }
@@ -148,6 +158,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.inventory?.sample({direction,interact,cancel,menu,burst:false},delta);
         return;
       }
+      if(this.mode==='save'){this.saveMenu?.sample({direction,interact,cancel,menu,burst:false},delta);return;}
       if (this.mode === 'exploration' && menu) { this.openInventory(); return; }
       if (this.mode !== 'exploration') {
         if (cancel) this.cancelModal();
@@ -159,19 +170,17 @@ export function createFoundation(elements: FoundationElements, onError: (message
       }
       const target = interact ? room.target(room.actor) : null;
       if (target) {
-        if (target.chest) {
-          const result = elements.session.claim(target.chest);
-          if (result.kind === 'rejected') {
-            if (result.reason !== 'capacity' && result.reason !== 'stack-limit') throw new Error(`Invalid chest transaction: ${result.reason}`);
-            this.setMode('message');
-            this.dialog.show('Chest unopened', 'There is not enough room for this item. The chest and your inventory are unchanged.', '', 'Close message', 'Close');
-            return;
-          }
-          const id = result.kind === 'already-claimed' ? target.chest.chest!.emptyMessageId : target.chest.chest!.openedMessageId;
-          const message = content.map.messages!.find(candidate => candidate.id === id)!;
-          this.message = new MessageSession({...target,message},content.map.strings!.en);
-          room.sync();
-        } else this.message = new MessageSession(target, content.map.strings?.en ?? {});
+        let state=room.resolve(target.objectId);if(!state?.interaction)return;
+        let messageId=state.interaction.messageId;
+        if(state.interaction.actions.length){
+          const result=elements.session.transact({actions:state.interaction.actions},target.objectId);
+          if(result.kind==='rejected'){
+            if(!state.interaction.rejectionMessageId)throw new Error(`Interaction transaction rejected: ${result.reason}`);
+            messageId=state.interaction.rejectionMessageId;
+          }else if(result.kind!=='committed'){state=room.resolve(target.objectId);messageId=state?.interaction?.messageId??messageId;}
+        }
+        const message=content.map.messages?.find(candidate=>candidate.id===messageId);if(!message)throw new Error(`Missing interaction message: ${messageId}`);
+        this.message=new MessageSession(target.objectId,message,content.map.strings?.en??{});
         this.setMode('message');
         this.showMessage();
         return; // The same input frame cannot both start dialogue and emit a burst.
@@ -191,13 +200,27 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const locked = mode !== 'exploration';
       elements.burst.disabled = locked; elements.restart.disabled = locked; elements.interact.disabled = locked;
     }
+    private openSaves():void{if(this.mode!=='inventory')return;this.inventory?.close();this.setMode('save');void this.saveMenu?.open().catch(cause=>this.fail(cause));}
+    private returnToInventory():void{if(this.mode!=='save')return;this.setMode('inventory');this.inventory?.open();}
+    private checkpoint(){const room=this.room!;return{mapId:room.content.map.id,tile:{...room.actor.tile},facing:room.actor.facing};}
+    private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
+      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.setMode('transition');
+      this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
+      const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog},envelope.session);
+      const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,signal),next=>{
+        const prepared=new MapView(this,next,candidate);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
+        elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
+      });
+      if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close message','Close');return;}
+      if(result.kind==='cancelled')return;this.resume();
+    }
     private showMessage(): void {
       const message = this.message!;
       this.dialog.show(message.speaker, message.text, `${message.page} / ${message.total}`,
         message.page === message.total ? 'Close message' : 'Next page', 'Close');
     }
     private resume(): void {
-      this.dialog.close(); this.inventory?.close(); this.message = null;
+      this.dialog.close(); this.inventory?.close();this.saveMenu?.close(); this.message = null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
     private cancelModal(): void {
@@ -225,7 +248,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         (next) => {
           // Construct/validate the new view while the old view is still usable.
           const old = this.room!;
-          const prepared = new MapView(this, next, elements.session);
+          const prepared = new MapView(this, next, elements.session.current);
+          prepared.bind(elements.session);
           try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
           this.room = prepared; content = next;
           try { old.destroy(); } catch (cause) { this.fail(cause); } // Cleanup failure is fatal, not a false rollback.
@@ -255,7 +279,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.sceneLifetime.abort(); this.sceneLifetime = null;
       this.generation += 1; this.transfer.dispose();
       this.dialog.close(); this.message = null;
-      this.inventory?.dispose(); this.inventory = null;
+      this.inventory?.dispose(); this.inventory = null;this.saveMenu?.dispose();this.saveMenu=null;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;
       stops += 1;
@@ -321,7 +345,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const actor = room?.actor ?? spawnActor();
       const position = actorPosition(actor, TILE);
       return {
-        phase, scene: SCENE, starts, stops, session: elements.session.snapshot(),
+        phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         inputMode: current?.mode ?? 'exploration',
         messageId: current?.message?.id ?? null, messagePage: current?.message?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
@@ -340,6 +364,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
         aliveParticles: room?.emitter?.getAliveParticleCount() ?? 0,
         pooledParticles: room?.emitter?.getParticleCount() ?? 0,
         burstRequests: room?.bursts ?? 0,
+        sessionSubscribers:elements.session.subscriberCount,
+        activeObjectBindings:room?.dependencies.size??0,
+        pendingSaveOperations:elements.saves.pending,
         effectsEnabled: elements.effects.checked,
         renderer: game.renderer?.type === Phaser.WEBGL ? 'WebGL' : game.renderer?.type === Phaser.CANVAS ? 'Canvas' : 'Starting',
         phaser: Phaser.VERSION,

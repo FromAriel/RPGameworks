@@ -1,11 +1,13 @@
 import validateMap from './generated/map-validator.mjs';
 import validateGame from './generated/game-validator.mjs';
 import validateItems from './generated/items-validator.mjs';
+import validateFacts from './generated/facts-validator.mjs';
 import { createCollision } from '../domain/map.mjs';
 
 /** @typedef {import('./generated/map.js').MapDefinition} MapDefinition */
 /** @typedef {import('./generated/game.js').GameManifest} GameManifest */
 /** @typedef {import('./generated/items.js').ItemCatalog} ItemCatalog */
+/** @typedef {import('./generated/facts.js').FactCatalog} FactCatalog */
 /** @typedef {{file: string, id: string, path: string, message: string, value: unknown}} ContentIssue */
 const MAX_ISSUES = 20;
 
@@ -95,17 +97,70 @@ export function readItems(value, file = 'items.json') {
   return freezeCopy(data);
 }
 
+/** @param {unknown} value @param {string} file @returns {FactCatalog} */
+export function readFacts(value, file = 'facts.json') {
+  if (!validateFacts(value)) schemaFailure(value, file, validateFacts.errors);
+  const data = /** @type {FactCatalog} */ (value);
+  const seen = new Set();
+  /** @type {ContentIssue[]} */ const issues=[];
+  data.facts.forEach((fact,index)=>{if(seen.has(fact.id))issues.push({file,id:fact.id,path:`/facts/${index}/id`,message:'Duplicate fact ID',value:fact.id});seen.add(fact.id);});
+  if(issues.length)throw new ContentError(issues.slice(0,MAX_ISSUES));
+  return freezeCopy(data);
+}
+
 /** @param {MapDefinition} map @param {ItemCatalog} catalog @param {string} file */
 export function validateMapItems(map, catalog, file = 'map.json') {
   const items = new Map(catalog.items.map(item => [item.id, item]));
   /** @type {ContentIssue[]} */ const issues = [];
+  /** @param {any} condition @param {string} path */
+  function conditionItems(condition,path){
+    if(condition.type==='all'||condition.type==='any')for(let index=0;index<condition.conditions.length;index+=1)conditionItems(condition.conditions[index],`${path}/conditions/${index}`);
+    else if(condition.type==='not')conditionItems(condition.condition,`${path}/condition`);
+    else if(condition.type==='itemAtLeast'&&!items.has(condition.itemId))issues.push({file,id:map.id,path:`${path}/itemId`,message:'Unknown condition item',value:condition.itemId});
+  }
   map.objects.forEach((object, index) => {
-    if (!object.chest) return;
-    const item = items.get(object.chest.itemId);
-    if (!item) issues.push({file, id:map.id, path:`/objects/${index}/chest/itemId`, message:'Unknown chest item', value:object.chest.itemId});
-    else if (object.chest.quantity > item.maxStack) issues.push({file, id:map.id, path:`/objects/${index}/chest/quantity`, message:'Chest quantity exceeds item stack limit', value:object.chest.quantity});
+    if (object.chest) {
+      const item = items.get(object.chest.itemId);
+      if (!item) issues.push({file, id:map.id, path:`/objects/${index}/chest/itemId`, message:'Unknown chest item', value:object.chest.itemId});
+      else if (object.chest.quantity > item.maxStack) issues.push({file, id:map.id, path:`/objects/${index}/chest/quantity`, message:'Chest quantity exceeds item stack limit', value:object.chest.quantity});
+    }
+    object.states?.forEach((state,stateIndex)=>{
+      if(state.when)conditionItems(state.when,`/objects/${index}/states/${stateIndex}/when`);
+      state.interaction?.actions?.forEach((action,actionIndex)=>{
+        if(action.type==='changeItem'&&!items.has(action.itemId))issues.push({file,id:map.id,path:`/objects/${index}/states/${stateIndex}/interaction/actions/${actionIndex}/itemId`,message:'Unknown action item',value:action.itemId});
+      });
+    });
   });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
+}
+
+/** @param {MapDefinition} map @param {FactCatalog} catalog @param {string} file */
+export function validateMapFacts(map,catalog,file='map.json'){
+  const facts=new Set(catalog.facts.map(fact=>fact.id));
+  /** @type {ContentIssue[]} */const issues=[];
+  /** @param {any} condition @param {string} path @param {number} depth @param {{count:number}} total @param {string} selfId */
+  function condition(condition,path,depth,total,selfId){
+    total.count+=1;if(total.count>64){issues.push({file,id:map.id,path,message:'Condition exceeds 64 nodes',value:total.count});return;}
+    if(depth>8){issues.push({file,id:map.id,path,message:'Condition exceeds depth 8',value:depth});return;}
+    if(condition.type==='all'||condition.type==='any'){for(let index=0;index<condition.conditions.length;index+=1)conditionFn(condition.conditions[index],`${path}/conditions/${index}`,depth+1,total,selfId);}
+    else if(condition.type==='not')conditionFn(condition.condition,`${path}/condition`,depth+1,total,selfId);
+    else if(condition.type==='factEquals'&&!facts.has(condition.factId))issues.push({file,id:map.id,path:`${path}/factId`,message:'Unknown condition fact',value:condition.factId});
+    else if(condition.type==='placementOpened'&&condition.placementId!=='self'&&!/^[a-z][a-z0-9-]{0,31}:object\.[a-z][a-z0-9.-]{0,95}$/.test(condition.placementId))issues.push({file,id:selfId,path:`${path}/placementId`,message:'Invalid condition placement',value:condition.placementId});
+  }
+  const conditionFn=condition;
+  map.objects.forEach((object,index)=>{
+    const states=object.states;if(!states)return;
+    const seen=new Set();let fallbacks=0;
+    states.forEach((state,stateIndex)=>{
+      const path=`/objects/${index}/states/${stateIndex}`;
+      if(seen.has(state.id))issues.push({file,id:object.id,path:`${path}/id`,message:'Duplicate object state ID',value:state.id});seen.add(state.id);
+      if(state.fallback){fallbacks+=1;if(stateIndex!==states.length-1)issues.push({file,id:object.id,path,message:'Fallback state must be last',value:state.id});}
+      if(state.when)conditionFn(state.when,`${path}/when`,1,{count:0},object.id);
+      state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='setFact'&&!facts.has(action.factId))issues.push({file,id:object.id,path:`${path}/interaction/actions/${actionIndex}/factId`,message:'Unknown action fact',value:action.factId});});
+    });
+    if(fallbacks!==1)issues.push({file,id:object.id,path:`/objects/${index}/states`,message:'Exactly one fallback state is required',value:fallbacks});
+  });
+  if(issues.length)throw new ContentError(issues.slice(0,MAX_ISSUES));
 }
 
 /** Structural and local semantic validation; shared by build tools and browser.
@@ -149,6 +204,7 @@ export function readMap(value, file = 'map.json', frames) {
   map.objects.forEach((object, index) => {
     if (object.x >= map.width || object.y >= map.height) issue(`/objects/${index}`, 'Object outside map bounds', {x: object.x, y: object.y});
     if (available && !available.has(object.frame)) issue(`/objects/${index}/frame`, 'Atlas frame does not exist', object.frame);
+    object.states?.forEach((state,stateIndex)=>{if(available&&!available.has(state.frame))issue(`/objects/${index}/states/${stateIndex}/frame`,'Atlas frame does not exist',state.frame);});
     const cell = `${object.x},${object.y}`;
     if (object.solid && solidCells.has(cell)) issue(`/objects/${index}`, 'Overlapping solid objects', cell);
     if (object.solid) solidCells.add(cell);
@@ -185,13 +241,14 @@ export function readMap(value, file = 'map.json', frames) {
   });
   const interactionCells = new Set();
   map.objects.forEach((object, index) => {
-    if (!object.messageId && !object.chest) return;
-    if (object.messageId && object.chest) issue(`/objects/${index}`, 'Choose messageId or chest, not both', object.id);
+    if (!object.messageId && !object.chest && !object.states) return;
+    if ([object.messageId,object.chest,object.states].filter(Boolean).length>1) issue(`/objects/${index}`, 'Choose messageId, chest, or states', object.id);
     if (object.chest) {
       if (!object.solid) issue(`/objects/${index}/solid`, 'A chest must be a solid adjacent interaction', object.solid);
       if (available && !available.has(object.chest.openedFrame)) issue(`/objects/${index}/chest/openedFrame`, 'Atlas frame does not exist', object.chest.openedFrame);
     }
-    for (const id of object.chest ? [object.chest.openedMessageId, object.chest.emptyMessageId] : [object.messageId]) {
+    const stateMessages=object.states?.flatMap(state=>state.interaction?[state.interaction.messageId,...(state.interaction.rejectionMessageId?[state.interaction.rejectionMessageId]:[])]:[])??[];
+    for (const id of object.chest ? [object.chest.openedMessageId, object.chest.emptyMessageId] : object.states?stateMessages:[object.messageId]) {
       if (!messages.some(message => message.id === id)) issue(`/objects/${index}`, 'Message does not exist', id);
     }
     const cell = `${object.x},${object.y}`;
@@ -231,6 +288,13 @@ export function validateWorld(game, maps, catalog) {
       else if (!target.spawns.some((spawn) => spawn.id === exit.targetSpawn)) issue(entry.file, map.id, `/exits/${index}/targetSpawn`, 'Target spawn does not exist', exit.targetSpawn);
     });
   }
+  /** @param {any} condition @param {string} file @param {string} mapId @param {string} path @param {string} selfId */
+  function placementReferences(condition,file,mapId,path,selfId){
+    if(condition.type==='all'||condition.type==='any')for(let index=0;index<condition.conditions.length;index+=1)placementReferences(condition.conditions[index],file,mapId,`${path}/conditions/${index}`,selfId);
+    else if(condition.type==='not')placementReferences(condition.condition,file,mapId,`${path}/condition`,selfId);
+    else if(condition.type==='placementOpened'&&condition.placementId!=='self'&&!objectIds.has(condition.placementId))issue(file,mapId,`${path}/placementId`,'Unknown condition placement',condition.placementId);
+  }
+  for(const entry of game.maps){const map=maps.get(entry.id);map?.objects.forEach((object,objectIndex)=>object.states?.forEach((state,stateIndex)=>{if(state.when)placementReferences(state.when,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/when`,object.id);state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='markPlacementOpened'&&action.placementId!=='self'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/actions/${actionIndex}/placementId`,'Unknown action placement',action.placementId);});}));}
   const start = maps.get(game.start.mapId);
   if (!start?.spawns.some((spawn) => spawn.id === game.start.spawnId)) issue('game.json', game.id, '/start/spawnId', 'Start spawn does not exist', game.start.spawnId);
   if (maps.size !== game.maps.length) issue('game.json', game.id, '/maps', 'Registered and supplied map counts differ', maps.size);

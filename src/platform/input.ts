@@ -5,7 +5,7 @@ const directionKeys: Record<string, Direction> = {
   ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
 };
-export type InputMode = 'exploration' | 'message' | 'transition' | 'transition-error' | 'inventory';
+export type InputMode = 'exploration' | 'message' | 'transition' | 'transition-error' | 'inventory' | 'save';
 type Action = 'burst' | 'interact' | 'cancel' | 'menu';
 
 /** Focus once at readiness, without stealing focus from a control used during loading. */
@@ -43,6 +43,7 @@ export class InputController {
     private readonly canPlay: () => boolean = () => true,
     private readonly modal?: HTMLDialogElement,
     private readonly inventoryModal?: HTMLDialogElement,
+    private readonly saveModal?: HTMLDialogElement,
   ) {
     const options = { signal: this.lifetime.signal };
     const keyboard = (event: KeyboardEvent): void => {
@@ -60,6 +61,7 @@ export class InputController {
     stage.addEventListener('keydown', keyboard, options);
     modal?.addEventListener('keydown', keyboard, options);
     modal?.addEventListener('cancel', (event) => { event.preventDefault(); this.queue('cancel'); }, options);
+    saveModal?.addEventListener('keydown', keyboard, options);
     window.addEventListener('keyup', (event) => this.held.delete(event.code), options);
     stage.addEventListener('focusout', () => this.clearLocal(), options);
     window.addEventListener('blur', () => this.clear(), options);
@@ -110,13 +112,14 @@ export class InputController {
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(this.mode === 'inventory' ? this.inventoryModal : this.mode === 'exploration' ? undefined : this.modal), this.mode === 'inventory' ? 'menu' : 'gameplay');
+    const owned=this.mode==='inventory'?this.inventoryModal:this.mode==='save'?this.saveModal:this.mode==='exploration'?undefined:this.modal;
+    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(owned), this.mode === 'inventory'||this.mode==='save' ? 'menu' : 'gameplay');
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.queue('burst');
     if (pad?.interact) this.queue('interact');
     if (pad?.cancel) this.queue('cancel');
     if (pad?.menu) this.queue('menu');
-    if (this.mode === 'inventory') return pad?.direction ?? null;
+    if (this.mode === 'inventory'||this.mode==='save') return pad?.direction ?? null;
     if (this.mode !== 'exploration') return null;
     let result: Direction | null = null;
     for (const direction of this.held.values()) result = direction;

@@ -5,9 +5,14 @@ import { SessionState } from '../../src/domain/session';
 import { DirectionRepeat } from '../../src/domain/menu-navigation';
 import { parseControllerConfig, defaultControllerConfig, PadLatch } from '../../src/platform/gamepad-model';
 import type { PadState } from '../../src/platform/gamepad-model';
+import type { MapDefinition } from '../../src/content/generated/map';
 const catalog = () => readItems(JSON.parse(readFileSync('content/games/demo/items.json','utf8')));
 const map = () => readMap(JSON.parse(readFileSync('content/games/demo/maps/gallery.json','utf8')));
-const chest = () => map().objects.find(object=>object.chest)!;
+const chest = ():MapDefinition['objects'][number] => {
+  const current=map().objects.find(object=>object.id==='demo:object.gallery.lens-chest')!;
+  const {states:_states,...placement}=current;
+  return {...placement,chest:{itemId:'demo:item.lens',quantity:1,openedFrame:'chest-open',openedMessageId:'lens-found',emptyMessageId:'chest-empty'}};
+};
 const lens = 'demo:item.lens';
 function expanded(capacity = 2) {
   const data = structuredClone(catalog()); data.capacity=capacity; data.items[0]!.maxStack=10;
@@ -86,7 +91,7 @@ describe('item and chest authoring validation',()=>{
     expect(()=>readItems(data)).toThrow();
   });
   it.each(['unknown-item','too-many','missing-open-frame','missing-message','two-actions','not-solid'])( 'rejects %s chest',kind=>{
-    const data=structuredClone(map()), c=data.objects.find(o=>o.chest)!;
+    const data=structuredClone(map()), c=structuredClone(chest());data.objects[data.objects.findIndex(o=>o.id===c.id)]=c;
     if(kind==='unknown-item')c.chest!.itemId='demo:item.missing';
     if(kind==='too-many')c.chest!.quantity=2;
     if(kind==='missing-open-frame')c.chest!.openedFrame='missing';
@@ -95,6 +100,11 @@ describe('item and chest authoring validation',()=>{
     if(kind==='not-solid')c.solid=false;
     const frames=Object.keys(JSON.parse(readFileSync('assets/source/foundation.json','utf8')).frames);
     expect(()=>validateMapItems(readMap(data,'bad-map',frames),catalog())).toThrow();
+  });
+  it('rejects an unknown item referenced only by a conditional state',()=>{
+    const data=structuredClone(map()), plaque=data.objects.find(object=>object.id==='demo:object.gallery.plaque')!;
+    plaque.states![0]!.when={type:'itemAtLeast',itemId:'demo:item.missing',quantity:1};
+    expect(()=>validateMapItems(data,catalog())).toThrow('Unknown condition item');
   });
 });
 

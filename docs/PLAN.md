@@ -14,6 +14,7 @@
 - [PixelFX specification](PIXELFX.md): effect vocabulary, compositing, pixel-art rules, budgets, and experiments.
 - [Implementation roadmap](ROADMAP.md): ordered work packets and acceptance gates.
 - [Current status and handoff](STATUS.md): what actually exists and what to do next.
+- [UI visual language and system plan](UI-DESIGN-SYSTEM.md): player-facing visual direction, tokens, component contracts and full-JRPG screen patterns.
 - [Full JRPG build-out strategy](JRPG-BUILDOUT.md): detailed route from the current state spine through battle, economy, a finishable chapter, and release.
 - [Research and naming notes](RESEARCH.md): checked primary sources, dated dependency information, naming caveats, and search strategy.
 - [Repository working rules](../AGENTS.md): instructions for future human and assistant contributors.
@@ -440,6 +441,8 @@ Use a semantic DOM overlay for text-heavy dialogue, inventory, settings, and men
 Provide keyboard navigation, readable text scaling, remappable controls where practical, touch-friendly targets, and separate music/effects volumes. Make screen shake, flashes, motion density, and damage-number clutter adjustable. Respect reduced-motion preferences while allowing an explicit user choice.
 
 Do not make important information depend only on color, sound, or visual particles. Include text/shape alternatives. Supply a textual scene/interaction summary as an accessibility and debugging aid; do not claim full screen-reader gameplay support without testing it.
+
+[UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) applies these boundaries to the actual windowskin and existing screens. It defines the workshop-fantasy visual direction, semantic tokens, window/control hierarchy, common input grammar, responsive bands and later dialogue/menu/transaction/battle patterns. Keep that companion grounded in real implemented screens; it must not become a parallel UI runtime, theme editor or claim of accessibility certification.
 
 ### 10.3 Audio
 

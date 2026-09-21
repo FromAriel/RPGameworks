@@ -1,0 +1,1 @@
+{"format":"rpgameworks-save","schemaVersion":1,"gameId":"demo:game.foundation","saveCompatibilityVersion":1,"slotId":"slot-1","storageRevision":1,"savedAt":"2026-09-20T12:01:00.000Z","checkpoint":{"mapId":"demo:map.gallery","tile":{"x":4,"y":5},"facing":"up"},"session":{"inventory":{},"facts":{"demo:fact.gallery.plaque-read":true},"placements":{}}}

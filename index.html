@@ -125,12 +125,28 @@
           </section>
         </div>
         <p id="inventory-prompt" class="hint"></p>
-        <p class="hint">Session only — items survive room travel, not a browser reload. Saving is not available yet.</p>
+        <p class="hint">Items survive room travel. Use Save / Load to preserve progress across browser reloads.</p>
       </div>
       <div class="dialog-actions">
+        <button id="inventory-saves" type="button" class="secondary">Save / Load</button>
         <button id="inventory-settings" type="button" class="secondary">Settings</button>
         <button id="inventory-close" type="button">Return to game</button>
       </div>
+    </dialog>
+    <dialog data-window-skin="frame" id="save-dialog" aria-labelledby="save-title">
+      <header class="skin-heading"><h2 id="save-title" data-skin-title>Save / Load</h2></header>
+      <div class="save-body">
+        <p id="save-status" role="status" aria-live="polite">Reading local save slots…</p>
+        <div id="save-slots" aria-label="Manual save slots"></div>
+        <div class="save-actions">
+          <label class="button-label">Import save<input id="save-import" type="file" accept="application/json,.json" /></label>
+          <button id="save-load-import" type="button" hidden>Load validated import for this session</button>
+          <button id="save-export-current" type="button" class="secondary">Export current session</button>
+          <button id="save-refresh" type="button" class="secondary">Refresh slots</button>
+        </div>
+        <p class="hint">Saving is available only at a stationary exploration checkpoint. Import and Load replace the current unsaved session only after confirmation. Save files are plain local JSON.</p>
+      </div>
+      <div class="dialog-actions"><button id="save-close" type="button">Return to Inventory</button></div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>

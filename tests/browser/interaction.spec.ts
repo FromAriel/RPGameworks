@@ -105,7 +105,7 @@ async function fakePad(page: Page): Promise<void> {
   await step(page,'ArrowUp'); // start (4,6) -> (4,5), plaque at (4,4).
   await page.locator('#interact').click();
   await expect(page.locator('#dialog-title')).toHaveText('Brass plaque');
-  await expect(page.locator('#dialog-text')).toContainText('Only the room you occupy');
+  await expect(page.locator('#dialog-text')).toContainText('polished lens once focused');
   expect((await snapshot(page)).actorTile).toEqual({x:4,y:5});
   const box=(await page.locator(dialog).boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(0); expect(box.x+box.width).toBeLessThanOrEqual(390);
@@ -114,6 +114,14 @@ async function fakePad(page: Page): Promise<void> {
   await expect(page.locator(dialog)).not.toBeVisible();
   await expect(page.locator('#stage')).toBeFocused();
 });
+
+ test('plaque fact commits once and reconstructs after travel and room restart',async({page})=>{
+  await openRoom(page,'?map='+GALLERY);await step(page,'ArrowUp');await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await page.keyboard.press('Escape');
+  const committed=(await snapshot(page)).session;expect(committed.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(committed.revision).toBe(1);
+  await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('revealed line still glows');await page.keyboard.press('Escape');expect((await snapshot(page)).session.revision).toBe(1);
+  await step(page,'ArrowDown');await cross(page,'ArrowLeft',WORKSHOP);await cross(page,'ArrowRight',GALLERY);expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
+  await openTools(page,'debug');await page.locator('#restart').click();await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
+ });
 
 for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing-frame'] as const) {
   test(`destination ${fault} failure preserves the old room and retries safely`, async ({page}) => {

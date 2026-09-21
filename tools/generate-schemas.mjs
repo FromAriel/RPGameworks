@@ -7,7 +7,7 @@ import { compile } from 'json-schema-to-typescript';
 
 const output = new URL('../src/content/generated/', import.meta.url);
 await mkdir(output, { recursive: true });
-for (const kind of ['map', 'game', 'items']) {
+for (const kind of ['map', 'game', 'items', 'facts']) {
   const schemaURL = new URL(`../schemas/${kind}.schema.json`, import.meta.url);
   const schema = JSON.parse(await readFile(schemaURL, 'utf8'));
   const ajv = new Ajv({ strict: true, allErrors: false, code: { source: true, esm: true } });
@@ -24,4 +24,4 @@ for (const kind of ['map', 'game', 'items']) {
   });
   await writeFile(new URL(`${kind}.d.ts`, output), types);
 }
-console.log('Generated map/game/items validators and TypeScript declarations from canonical schemas.');
+console.log('Generated map/game/items/facts validators and TypeScript declarations from canonical schemas.');

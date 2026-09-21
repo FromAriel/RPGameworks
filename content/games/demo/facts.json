@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    {
+      "id": "demo:fact.gallery.plaque-read",
+      "type": "boolean",
+      "default": false,
+      "scope": "global",
+      "persistence": "saved"
+    }
+  ]
+}

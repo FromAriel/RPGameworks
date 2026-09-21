@@ -1,8 +1,8 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 0.9 · **Date:** September 20, 2026 · **Status:** M1/W1 complete; the M2 chest/inventory transaction and N1 navigation owner are delivered. Declared facts/conditions, saves and later gameplay remain pending. See STATUS for verification.
+**Version:** 1.0 · **Date:** September 20, 2026 · **Status:** M1/W1, N1.1–N1.2 and M2 are locally complete. U1 player-interface standardization is the next bounded milestone before G1. See STATUS for verification and publication boundaries.
 
-Architecture: [Master Plan](PLAN.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Sequencing decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
+Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
 ## Delivery rules
 
@@ -14,7 +14,7 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 
 ## Approved near-term sequence
 
-**W1 skin → M1.6 baseline → M2 state/inventory/saves (N1 navigation alongside the first inventory menu) → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** W1 and M1.6 are verified. The first M2 chest/inventory transaction and N1 navigation owner are now delivered; generic declared conditions, storage and later gameplay remain pending. Each later stage still requires its own bounded implementation and acceptance. See [STATUS](STATUS.md) for current evidence and [WINDOW-SKIN](WINDOW-SKIN.md) for the retained art audit.
+**W1 skin → M1.6 baseline → M2 state/inventory/saves with N1 navigation → U1 UI foundation → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** M1/W1, N1.1–N1.2 and M2 are implemented and locally verified. U1.1–U1.3 now standardize the existing real screens before party, quest, shop and battle interfaces multiply one-off styles; later U1 extensions travel with the gameplay milestone that needs them. Each stage still requires its own bounded implementation and acceptance. See [STATUS](STATUS.md) for current evidence, [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) for the visual/component contract and [WINDOW-SKIN](WINDOW-SKIN.md) for the retained art audit.
 
 ## Milestone overview
 
@@ -25,7 +25,8 @@ Update task status only when the corresponding behavior and evidence exist. Do n
 | W1 | Base skin on actual windows | Existing M1.5/player shell | Ariel's edited artwork, live titles/dividers, responsive dialogue/Settings |
 | N1 | Direct menu navigation | Existing input/shell; delivered with first M2 menu | Controller/keyboard selection, confirm/cancel, scrolling, binding safety |
 | M2 | Persistent world slice | M1 closeout; N1 with inventory UI | Inventory, one-shot state, safe saves, repeatable transitions |
-| G1 | Conditional access integration | M2 acceptance | Persistent key lock and switch gate using shared state/travel |
+| U1 | Coherent player-interface foundation | W1, N1 and the real M2 screens | Approved visual references, semantic tokens, reusable components and normalized existing screens |
+| G1 | Conditional access integration | M2 acceptance and U1 foundation | Persistent key lock and switch gate using shared state/travel |
 | M3 | Data-authored quest slice | M2 + G1; N1 for choices | Conditional dialogue, micro-quest, second-content proof, validation |
 | M4 | PixelFX v1 and laboratory | M1–M3 | Recipe-driven catalog, lifecycle tests, quality controls |
 | M5 | Playable turn-based battle | M2–M4 | Domain battle rules, presentation independence, reliable rewards |
@@ -88,12 +89,12 @@ The subsequent M1.6 baseline is now recorded in [BASELINE.md](BASELINE.md). Proc
 **Scheduling:** reuse the current input/sampler; deliver the core with or before M2.2's first real inventory menu. Integrate choices during M3.1. This is not new controller detection and does not require a virtual cursor.
 
 - [x] **N1.1 — Navigation owner.** Direct directional selection/focus, confirm/cancel, scroll-to-selection, bounded held repeat and predictable focus restoration for actual lists/tabs/controls. Include controller access to the player menu and existing Settings, preserve bindings, and explicitly validate/migrate any additional Menu action.
-- [ ] **N1.2 — First inventory/menu acceptance.** Test keyboard/controller/pointer handoff, scrolling, disabled items, nested settings, remapping, disconnect/reconnect and held-input leakage. Prompts reflect configured actions; no hidden menu can keep exploration blocked.
+- [x] **N1.2 — First inventory/menu acceptance.** Test keyboard/controller/pointer handoff, scrolling, disabled items, nested settings, remapping, disconnect/reconnect and held-input leakage. Prompts reflect configured actions; no hidden menu can keep exploration blocked. Empty save-slot Load supplies the real disabled control and adjacent reason.
 - [ ] **N1.3 — Dialogue choices.** Reuse the model for M3.1 visible/disabled/hidden choices, preserving stable selection and a cancel/fallback path. No second incompatible navigation system.
 
 Keep Debug separate from player Inventory/Journal/Party/save functions. Add those entries only when their models work. New Game / Continue / Load follows M2.4/M2.5 storage; protect existing progress rather than adding a nonfunctional title screen.
 
-**N1 evidence:** The first Inventory and existing Settings/Debug controls share one semantic navigation owner and the existing sampled controller. Keyboard/controller/pointer handoff, scrolling, remapping, nested Settings, reconnects, held-input isolation and repeated opening are covered. N1.2 remains open because a real disabled item/choice state has not been authored yet; do not manufacture one merely to close the checkbox. N1.3 remains paired with M3 dialogue choices.
+**N1 evidence:** Inventory, Save/Load, and existing Settings/Debug controls share one semantic navigation owner and the existing sampled controller. Keyboard/controller/pointer handoff, scrolling, disabled empty-slot Load, remapping, nested Settings, reconnects, held-input isolation and repeated opening are covered. N1.3 remains paired with M3 dialogue choices.
 
 ## M2 — Persistent state and trustworthy saves
 
@@ -101,12 +102,12 @@ Keep Debug separate from player Inventory/Journal/Party/save functions. Add thos
 
 ### Work packets
 
-- [ ] **M2.1 — State layers.** Implement immutable definitions, persistent deltas, transient map state, and separate presentation objects. Give placed objects stable instance IDs. Declare fact types/defaults/ownership/persistence; chest/switch/lock state belongs to instances, not art/templates. Prepare ordered conditional object states with fallback and state-driven appearance/interaction, without claiming storage durability yet. The session-owned inventory/placement subset and chest reconstruction are delivered; generic ordered conditional states remain with M2.3.
+- [x] **M2.1 — State layers.** Implement immutable definitions, persistent deltas, transient map state, and separate presentation objects. Give placed objects stable instance IDs. Declare fact types/defaults/ownership/persistence; chest/switch/lock state belongs to instances, not art/templates. Prepare ordered conditional object states with fallback and state-driven appearance/interaction.
 - [x] **M2.2 — Inventory transaction.** Add bounded stackable items, item grants/removals, a basic inventory menu, and atomic checks. Deliver it with N1 core navigation. Test invalid/full inventory and repeated grants; failure cannot partly claim a chest or lose its reward.
-- [ ] **M2.3 — Declared facts and one-shot actions.** Add bounded pure all/any/not, typed fact/placement/item checks, one-shot markers and a minimal registered action vocabulary. All rewards use one atomic domain path. Specify Interact/Enter/explicit State changed ownership, re-entry/repeat scope, stationary-player condition changes, hydration and bounded reaction behavior; implement only exercised policies. Update affected active objects on relevant commits, not through global frame scans. Quest checks arrive with M3.
-- [ ] **M2.4 — Safe storage.** Implement an IndexedDB adapter, versioned envelope, safe checkpoints, previous-valid-revision preservation, and clear save status. Add export/import with size/schema validation for facts, inventory and placement deltas. Supply functional player save/load/Continue access only with this capability, distinct from Debug, with explicit progress-replacement confirmation.
-- [ ] **M2.5 — Failure and concurrency fixtures.** Test unavailable storage, quota failure, invalid import, corrupt/future-version saves, stale tab revisions, and interrupted writes. Preserve usable prior data.
-- [ ] **M2.6 — Transition and residency audit.** Add explicit asset leases/cache ownership and outgoing-scene disposal checks. Run both repeated two-room transitions and a small distinct-map tour.
+- [x] **M2.3 — Declared facts and one-shot actions.** Add bounded pure all/any/not, typed fact/placement/item checks, one-shot markers and a minimal registered action vocabulary. All rewards use one atomic domain path. Interact is the only executing event in M2; Enter and State changed remain reserved. Active objects update through dependency-indexed commit subscriptions rather than frame scans.
+- [x] **M2.4 — Safe storage.** Implement a three-slot IndexedDB adapter, versioned envelope, exact safe checkpoints, previous-valid-revision preservation, and clear save status. Add bounded export/import for facts, inventory and placement deltas plus transactional in-place loading. Title-screen Continue remains deferred.
+- [x] **M2.5 — Failure and concurrency fixtures.** Test unavailable storage, quota/abort failures, invalid import, corrupt/future/incompatible saves, prior-revision recovery, stale tab revisions, and failed destination preparation. Preserve usable prior data and the running session.
+- [x] **M2.6 — Transition and residency audit.** Record app/session/repository/UI/room/input/request/subscription ownership, expose bounded diagnostics, retain the existing repeated two-room tour, and add a twelve-distinct-map residency fixture. The one app-owned foundation atlas means a generalized regional asset cache is deliberately deferred.
 
 ### Acceptance
 
@@ -116,11 +117,27 @@ Saving during unsupported modal activity is explicitly deferred or disabled. No 
 
 **Defer:** Cloud sync, arbitrary save repair, unlimited undo history, and a full scripting language.
 
-**First-slice evidence:** Candidate `cf534f912f39e931d7448e9d577f6bee7fe252b7` passed 252 unit tests, 95 functional Chromium scenarios and eight benchmark workloads across Windows/Node 24 and Linux/Node 22/24 in [run 35437641180](https://github.com/FromAriel/RPGameworks/actions/runs/35437641180). One Polished lens chest grants and opens atomically, reconstructs after travel/restart, rejects partial failure, and resets only with the intentionally non-durable browser session. STATUS records controls, migration, local verification and remaining limits.
+**Evidence:** The prior M2.2 candidate `cf534f912f39e931d7448e9d577f6bee7fe252b7` passed 252 unit tests, 95 functional Chromium scenarios and eight benchmark workloads across Windows/Node 24 and Linux/Node 22/24 in [run 35437641180](https://github.com/FromAriel/RPGameworks/actions/runs/35437641180). The complete local M2 candidate adds the plaque proof, save fixtures/service/UI, concurrency/failure paths, in-place loads, and twelve-map audit; STATUS records its current local gates. Publication and exact-commit CI remain separate.
+
+## U1 — Player-interface visual language and core components
+
+**Player-visible outcome:** Dialogue, Inventory, Save/Load and Settings feel like parts of one intentional JRPG interface. Selection, focus, disabled reasons, feedback, actions and responsive layouts look and behave consistently, while Ariel's exact windowskin remains the art foundation.
+
+The detailed direction, tokens, component contracts, full-JRPG screen patterns and acceptance matrix live in [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md). U1 is a focused foundation, not a theme editor or permission to build empty Party/Battle/Journal screens.
+
+- [ ] **U1.1 — Visual references and token baseline.** Capture the real production screens at matched wide, compact, touch-first and failure states; assemble the annotated reference; translate the approved Workshop Astral synthesis into semantic cyan/brass/violet and outcome-state tokens; contrast-test candidate values; centralize color, type, spacing, focus, safe-area and target-size tokens without changing gameplay behavior.
+- [ ] **U1.2 — Core components and UI gallery.** Implement reusable production controls for actions, rows, tabs, status, meters, prompt legends, scrolling, insets and confirmations. Render every applicable state in a test-only gallery using the real compositor and components, with semantic input and bounded-lifecycle coverage.
+- [ ] **U1.3 — Existing-screen normalization.** Move dialogue, Inventory, Save/Load and player-facing Settings onto the approved tokens and components. Preserve Debug separation, exact skin identity, plain/forced-color fallback, long text, storage recovery and all existing keyboard/controller/pointer behavior.
+- [ ] **U1.4 — Gameplay extensions.** Add choice/Journal patterns with M3, battle/party/equipment/shop patterns with M5, and title/Continue/credits patterns only when their domain behavior exists. Update the shared standard when an implemented feature establishes a reusable rule.
+- [ ] **U1.5 — Cohesion and accessibility gate.** Before release, complete the cross-screen input tour, responsive/text-enlargement/reduced-motion/forced-color checks, prompt/copy/focus audit and separate human visual review.
+
+**Foundation acceptance:** U1.1–U1.3 pass before U1 is considered ready for G1/M3 expansion. The same production components appear in the gallery and real screens; every applicable control state is specified; resizing retains meaning and selection; held input cannot repeat through window changes; decorative-art failure leaves a readable and controllable UI. Automation, visual review and Ariel's manual acceptance remain separately recorded.
+
+**Defer:** new windowskin art, recolored themes, a theme editor, a custom font, dead future menu entries, title flow, portrait system, dialogue history and battle UI without battle rules.
 
 ## G1 — Conditional access integration
 
-**Dependency:** complete M2 state/save/lifecycle acceptance. **Outcome:** one key lock and one switch gate respond to the same authoritative facts/inventory/placement state and remain correct across travel and reload. Detailed semantics: [NEXT-SLICES](NEXT-SLICES.md).
+**Dependency:** complete M2 state/save/lifecycle acceptance and the U1.1–U1.3 interface foundation. **Outcome:** one key lock and one switch gate respond to the same authoritative facts/inventory/placement state and remain correct across travel and reload. Detailed semantics: [NEXT-SLICES](NEXT-SLICES.md).
 
 - [ ] **G1.1 — Conditional object/access contract.** Separate activation, eligibility, denial, unlock, visual state, passability and destination; retain unconditional exits and old content. Give conditional states an explicit order/fallback and update dynamic collision at safe boundaries with a tested occupied-cell policy. Keys are retained by default, unlock markers are per lock, and the return route is deliberately authored.
 - [ ] **G1.2 — Existing travel integration.** Denial reports once and makes no destination fetch. Success uses existing prepare/validate/activate, generation/cancel guards, Retry/Stay and cleanup. Recheck relevant state before commitment; distinguish permanent unlocking from crossing. Future passage-only costs cannot be charged for failed/cancelled travel.
@@ -269,8 +286,8 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**M2.3 — Declared facts, bounded conditions and conditional object states.** Build on the delivered session placement/inventory transaction and N1 owner. Add only the typed all/any/not checks, one-shot markers, ordered state/fallback behavior and registered actions exercised by the next content proof. Specify interaction/state-change ownership and bounded active-object refresh; do not add arbitrary JSON execution or claim reload durability.
+**U1.1 — Visual references and token baseline.** Capture the real dialogue, Inventory, Save/Load, Settings, narrow and failure states at named viewports. Translate the approved Workshop Astral combination into the token/state matrix: cyan for interaction, brass for authored importance, violet for magic, and separate success/warning/danger roles. Contrast-test the candidate values, then centralize color, type, spacing, focus, safe-area and target-size values without changing gameplay behavior.
 
-M2.4/M2.5 then add safe saves/export and failure/concurrency acceptance; M2.6 adds the distinct-map resource audit. G1 applies shared facts and transactions to conditional access; M3 proves conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation and repeated-transfer tests throughout. These gameplay capabilities remain unchecked until implemented and verified. Reuse `npm run benchmark` for comparable future measurements; do not reopen the settled skin or treat a headless baseline as phone certification.
+U1.2 adds shared production components and the test-only gallery; U1.3 normalizes the real screens. G1 then applies the completed M2 facts, conditions, actions, session activation and save compatibility contracts to the first passability-changing access rule. M3 follows with conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 
 The detailed continuation through deterministic battle, party/progression, preparation/economy, the first complete chapter, content scale and release is recorded in [JRPG-BUILDOUT](JRPG-BUILDOUT.md). It is a sequencing companion, not evidence that those later systems exist.

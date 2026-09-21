@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FactCatalog",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "facts": {
+      "type": "array", "maxItems": 256,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:fact\\.[a-z][a-z0-9.-]{0,95}$"},
+          "type": {"const": "boolean"},
+          "default": {"type": "boolean"},
+          "scope": {"const": "global"},
+          "persistence": {"const": "saved"}
+        },
+        "required": ["id", "type", "default", "scope", "persistence"]
+      }
+    }
+  },
+  "required": ["schemaVersion", "facts"]
+}

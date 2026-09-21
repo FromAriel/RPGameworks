@@ -1,7 +1,13 @@
 import './style.css';
 import './presentation/ui/inventory.css';
+import './presentation/ui/save-menu.css';
 import { loadItemCatalog } from './platform/item-loader';
+import { loadFactCatalog } from './platform/fact-loader';
 import { SessionState } from './domain/session';
+import { SessionController } from './runtime/session-controller';
+import { SaveService } from './runtime/save-service';
+import { IndexedDbSaveRepository } from './platform/save-repository';
+import { loadStateIndex } from './platform/state-index-loader';
 import { MenuNavigation } from './presentation/ui/menu-navigation';
 import './presentation/skin/windowskin.css';
 import { mountWindowskin } from './presentation/ui/windowskin';
@@ -30,6 +36,7 @@ const media = window.matchMedia('(prefers-reduced-motion: reduce)');
 const appLifetime = new AbortController();
 effects.checked = !media.matches;
 let handle: FoundationHandle | null = null;
+let saveService:SaveService|null=null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let disposed = false;
 let failed = false;
@@ -82,7 +89,7 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or close it to resume exploring.' : snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
+    const message = snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or close it to resume exploring.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
@@ -108,6 +115,8 @@ function drawDiagnostics(): void {
     ['Display objects', String(snapshot.displayObjects)],
     ['Particles', `${snapshot.aliveParticles} / 64`],
     ['Scene starts / stops', `${snapshot.starts} / ${snapshot.stops}`],
+    ['State bindings / subscribers',`${snapshot.activeObjectBindings} / ${snapshot.sessionSubscribers}`],
+    ['Pending save operations',String(snapshot.pendingSaveOperations)],
     ['Observed FPS', Number.isFinite(snapshot.fps) ? String(snapshot.fps) : '—'],
   ];
   // Refreshing at 4 Hz avoids rebuilding UI every animation frame.
@@ -128,6 +137,7 @@ function dispose(): void {
   if (timer) clearInterval(timer);
   appLifetime.abort();
   handle?.destroy();
+  saveService?.close();saveService=null;
   controllerUI.dispose();
   toolsNavigation.dispose();
   shell.dispose();
@@ -176,13 +186,18 @@ async function start(): Promise<void> {
       location.assign(url);
     }, { signal: appLifetime.signal });
     required<HTMLElement>('#map-title').textContent = content.map.name;
-    const catalog = await loadItemCatalog(new URL(import.meta.env.BASE_URL, document.baseURI), content, appLifetime.signal);
-    const session = new SessionState(catalog);
+    const base=new URL(import.meta.env.BASE_URL,document.baseURI);
+    const [catalog,facts,stateIndex]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal)]);
+    const session = new SessionController(new SessionState({items:catalog,facts}));
+    saveService=new SaveService({gameId:content.game.id,saveCompatibilityVersion:content.game.saveCompatibilityVersion??1,index:stateIndex},new IndexedDbSaveRepository());
     const { createFoundation } = await import('./presentation/foundation');
-    if (disposed) return;
+    if (disposed) {saveService.close();saveService=null;return;}
     handle = createFoundation({
       session,
       inventory: required<HTMLDialogElement>('#inventory-dialog'),
+      saveDialog:required<HTMLDialogElement>('#save-dialog'),
+      saves:saveService,
+      base,
       inventoryPrompt,
       openSettings: () => shell.open('options'),
       closeTools: () => shell.close(),

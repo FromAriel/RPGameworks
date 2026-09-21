@@ -3,7 +3,7 @@ import type { SessionSnapshot } from './domain/session';
 export interface RuntimeSnapshot {
   session: SessionSnapshot;
   phase: 'booting' | 'ready' | 'error' | 'stopped';
-  inputMode: 'exploration' | 'message' | 'transition' | 'transition-error' | 'inventory';
+  inputMode: 'exploration' | 'message' | 'transition' | 'transition-error' | 'inventory' | 'save';
   messageId: string | null;
   messagePage: number;
   interactionTarget: string | null;
@@ -35,6 +35,9 @@ export interface RuntimeSnapshot {
   aliveParticles: number;
   pooledParticles: number;
   burstRequests: number;
+  sessionSubscribers: number;
+  activeObjectBindings: number;
+  pendingSaveOperations: number;
   effectsEnabled: boolean;
   renderer: string;
   phaser: string;

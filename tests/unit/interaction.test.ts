@@ -25,14 +25,15 @@ const deferred = <T>() => {
 describe('authored messages', () => {
   it('uses the facing adjacent tile and refuses interaction mid-step', () => {
     const actor = createActor(10, 7), lookup = createInteractionLookup(readMap(workshop()));
-    expect(lookup(actor)?.message.id).toBe('caretaker-intro');
+    expect(lookup(actor)?.objectId).toBe('demo:object.workshop.caretaker');
     actor.facing = 'up'; expect(lookup(actor)).toBeNull();
     actor.facing = 'down'; actor.motion = { from: {x:10,y:6}, to:{x:10,y:7}, elapsedMs:20 };
     expect(lookup(actor)).toBeNull();
   });
   it('advances bounded pages without changing the definition', () => {
     const map = readMap(workshop()), actor = createActor(10, 7);
-    const session = new MessageSession(createInteractionLookup(map)(actor)!, map.strings!.en);
+    const target=createInteractionLookup(map)(actor)!;const message=map.messages!.find(candidate=>candidate.id==='caretaker-intro')!;
+    const session = new MessageSession(target.objectId,message,map.strings!.en);
     expect(session.page).toBe(1); expect(session.speaker).toContain('Mara');
     expect(session.advance()).toBe(true); expect(session.page).toBe(2);
     expect(session.advance()).toBe(false); expect(session.page).toBe(2);

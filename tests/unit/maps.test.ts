@@ -113,6 +113,13 @@ describe('manifest and world references', () => {
     m.maps[2]!.id='demo:map.other';expect(()=>readGame(m)).toThrow('Duplicate map file');
   });
   it('rejects an unregistered start map',()=>{const m=manifest();m.start.mapId='demo:map.missing';expect(()=>readGame(m)).toThrow('Start map is not registered');});
+  it('rejects unknown cross-object condition and action placement IDs',()=>{
+    for(const kind of ['condition','action'] as const){const a=workshop(),b=gallery(),game=manifest(),plaque=b.objects.find(object=>object.id==='demo:object.gallery.plaque')!;
+      if(kind==='condition')plaque.states![0]!.when={type:'placementOpened',placementId:'demo:object.missing',value:true};
+      else plaque.states![1]!.interaction!.actions=[{type:'markPlacementOpened',placementId:'demo:object.missing'}];
+      expect(()=>validateWorld(game,new Map([[a.id,a],[b.id,b]]))).toThrow(`Unknown ${kind} placement`);
+    }
+  });
   it.each(['map','spawn','start','placement','missing'])('rejects broken world %s reference',kind=>{
     const a=workshop(), b=gallery(), game=manifest();
     if(kind==='map') a.exits[0]!.targetMap='demo:map.missing';

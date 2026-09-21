@@ -142,9 +142,10 @@ export function createFoundation(elements: FoundationElements, onError: (message
       // A pending menu request is discarded rather than opening a modal while hidden.
       if (document.hidden) this.menuPending = false;
       if (this.menuPending) {
-        advanceActor(room.actor,null,delta,content.collision.canEnter); room.sync();
+        advanceActor(room.actor,null,delta,room.collision.canEnter); room.sync();
         if (!room.actor.motion) {
           this.menuPending = false;
+          room.releaseDeferred();
           const exit = room.exits.arrive(room.actor.tile);
           if (exit) this.startTransition(exit); else this.openInventory();
         }
@@ -192,7 +193,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.showMessage();
         return; // The same input frame cannot both start dialogue and emit a burst.
       }
-      advanceActor(room.actor, direction, delta, content.collision.canEnter, (tile) => {
+      advanceActor(room.actor, direction, delta, room.collision.canEnter, (tile) => {
+        room.releaseDeferred(); // Safe boundary: an actor leaving a cell releases any deferred gate closing.
         const exit = room.exits.arrive(tile);
         if (!exit) return true;
         this.startTransition(exit);

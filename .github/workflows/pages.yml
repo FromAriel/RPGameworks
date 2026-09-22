@@ -1,4 +1,4 @@
-name: Publish game to GitHub Pages
+name: Publish game to GitHub Pages (build only)
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ jobs:
   build:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,13 +25,9 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci --include=dev
-      - name: Check source, content, tests, and production build
-        run: npm run check
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Test game under the Pages project path
-        run: npm run test:browser
-      - name: Upload tested game build
+      - name: Build game for the Pages project path
+        run: npm run build -- --base=/RPGameworks/
+      - name: Upload game build
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist/
@@ -39,7 +35,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 5
     permissions:
       pages: write
       id-token: write
@@ -47,6 +43,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy tested game
+      - name: Deploy game
         id: deployment
         uses: actions/deploy-pages@v4

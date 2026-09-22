@@ -12,7 +12,7 @@ The input contract is the [player layout and 56-row animation map](asset-analysi
 
 ## Source and artifact gate
 
-Record the chosen source version, hash, selected files, creator and pack terms in the asset provenance record. Keep `.import/` ignored and exclude original PNGs, Aseprite files and ZIPs from the production artifact. Ariel approves the selected derived pack before it is committed or released; the encoder and tests can use synthetic pixels until then.
+Record the chosen source version, hash, selected files, creator and pack terms in the asset provenance record. The license is purchase-backed (itch.io order #39717750, 2026-09-22, $2.99 USD; premium-licensed with commercial use and modification allowed but no redistribution/resale, recorded in the [asset-analysis license decision](asset-analysis/README.md#license-decision-ariel-september-22-2026)) and the provenance record may cite the receipt without transcribing buyer personal data. Keep `.import/` ignored and exclude original PNGs, Aseprite files and ZIPs from the production artifact. Ariel approves the selected derived pack before it is committed or released; the encoder and tests can use synthetic pixels until then.
 
 ## Current integration points
 

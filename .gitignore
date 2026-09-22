@@ -17,3 +17,4 @@ src/content/generated/
 # Reproducible M1.6 measurement outputs (curated baselines live in docs/benchmarks).
 benchmark-results/
 benchmark-report/
+.import/

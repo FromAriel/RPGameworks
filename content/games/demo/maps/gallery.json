@@ -9,13 +9,13 @@
   "legend": {"#": "wall", "a": "floor-a", "b": "floor-b"},
   "layers": [{"id": "ground", "rows": [
     "########################",
-    "#bababababababababababa#",
+    "#bababababab#bababababa#",
     "#abababababa#ababababab#",
     "#bababababab#bababababa#",
     "#abababababa#ababababab#",
     "#bababababab#bababababa#",
     "#ababababababababababab#",
-    "#bababababababababababa#",
+    "#bababababab#ababababab#",
     "#abababababa#ababababab#",
     "#bababababab#bababababa#",
     "#abababababa#ababababab#",
@@ -25,13 +25,13 @@
   ]}],
   "collision": [
     "########################",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
+    "#...........#..........#",
     "#......................#",
     "#...........#..........#",
-    "#...........#..........#",
-    "#...........#..........#",
-    "#...........#..........#",
-    "#......................#",
-    "#......................#",
     "#...........#..........#",
     "#...........#..........#",
     "#...........#..........#",
@@ -52,11 +52,11 @@
       {"id": "unread", "fallback": true, "frame": "plaque", "visible": true, "interaction": {"messageId": "gallery-plaque-discovered", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.plaque-read", "value": true}]}}
     ]},
     {"id": "demo:object.gallery.door", "frame": "door", "x": 1, "y": 6, "solid": false},
-    {"id": "demo:object.gallery.entrance-gate", "frame": "door", "x": 14, "y": 6, "solid": true, "states": [
+    {"id": "demo:object.gallery.entrance-gate", "frame": "door", "x": 12, "y": 6, "solid": true, "states": [
       {"id": "open", "when": {"type": "factEquals", "factId": "demo:fact.gallery.gate-open", "value": true}, "frame": "door", "visible": false, "solid": false},
       {"id": "closed", "fallback": true, "frame": "door", "visible": true, "solid": true}
     ]},
-    {"id": "demo:object.gallery.gate-switch", "frame": "sigil", "x": 13, "y": 6, "solid": true, "states": [
+    {"id": "demo:object.gallery.gate-switch", "frame": "sigil", "x": 12, "y": 5, "solid": true, "states": [
       {"id": "on", "when": {"type": "factEquals", "factId": "demo:fact.gallery.gate-open", "value": true}, "frame": "sigil", "visible": true, "interaction": {"messageId": "gate-switch-off", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.gate-open", "value": false}]}},
       {"id": "off", "fallback": true, "frame": "sigil", "visible": true, "interaction": {"messageId": "gate-switch-on", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.gate-open", "value": true}]}}
     ]},

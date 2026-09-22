@@ -80,7 +80,8 @@ describe('collision compiled once from authored cells and static placements', ()
     const grid = createCollision(gallery());
     expect(grid.cellCount).toBe(24*14);
     for (const [x,y] of [[-1,5],[24,5],[5,14],[0,0],[NaN,1],[Infinity,1],[1.5,2],[6,6],[12,3]]) expect(grid.canEnter(x!,y!)).toBe(false);
-    for (const [x,y] of [[4,6],[12,6],[18,6]]) expect(grid.canEnter(x!,y!)).toBe(true);
+    for (const [x,y] of [[4,6],[11,6],[18,6]]) expect(grid.canEnter(x!,y!)).toBe(true);
+    expect(grid.canEnter(12,1)).toBe(false); expect(grid.canEnter(12,7)).toBe(false);
     expect('cells' in grid).toBe(false);
   });
   it('does not alias mutable source rows or objects after compilation', () => {

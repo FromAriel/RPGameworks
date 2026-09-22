@@ -1,12 +1,18 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 21, 2026. The public Pages playtest remains live from game commit `87e4538`; the manual publisher has been reduced to build/deploy only, and Foundation checks are manual-only. G1.1c remains pending Ariel's gameplay review before G1.2.
+**Updated:** September 21, 2026. The public Pages playtest serves game commit `fb17a1c` through the build-only manual publisher. Foundation checks remain manual-only. G1.1c remains pending Ariel's gameplay review before G1.2.
 
 ## Hosted-run cost correction
 
 The initial manual Pages workflow ran `npm run check` and all Chromium browser scenarios before every publish. Ariel identified this as an unacceptable hosted-run cost. The workflow now installs the locked dependencies and runs only `npm run build -- --base=/RPGameworks/` before uploading `dist/`; it does not install Chromium or run tests, benchmarks, or the UI gallery. Its build and deploy jobs have 8- and 5-minute timeouts. The separate three-platform Foundation checks workflow now has only `workflow_dispatch`; pushes and pull requests cannot start it automatically. Local test gates remain available, but are not coupled to publication.
 
-No Pages release or hosted test campaign was dispatched as part of this correction. The initial run 35676907503 succeeded on attempt 1; a later attempt 2 was cancelled. The previously deployed game remains available, while this revised workflow awaits its first explicitly approved manual release. GitHub Actions runner and artifact charges may still apply to build/deploy; do not infer zero cost from public repository visibility.
+The correction push itself dispatched no Pages release or hosted test campaign. The first explicitly approved build-only release then succeeded as [run 35685752229](https://github.com/FromAriel/RPGameworks/actions/runs/35685752229). GitHub Actions runner and artifact charges may still apply to build/deploy; do not infer zero cost from public repository visibility.
+
+## Ad-hoc delivery packet — updated window texture on Pages
+
+Manual [run 35685752229](https://github.com/FromAriel/RPGameworks/actions/runs/35685752229) built and deployed `fb17a1c0a5b2b479eb748f96137e157b02f612ee`. Its build-only job completed in 18 seconds and deploy job in 9 seconds; neither job installed Chromium or ran unit/browser tests, benchmarks, or the gallery. The local `npm run build -- --base=/RPGameworks/` passed before dispatch, and `dist/` contained only the production game files and generated content. A non-fatal upstream Node deprecation annotation remains.
+
+The fetched [public playtest](https://fromariel.github.io/RPGameworks/) returned HTTP 200 for the entry, application bundle, window texture, game manifest, and Gallery map. Its displayed build ID was `fb17a1c`; the served `Window-Cfwosvvc.png` matched the local production texture by SHA-256. A live Chromium smoke reached Gallery from Workshop at 1100×850, and the 390×844 Workshop loaded with a canvas; neither session recorded a page error or failed request. This verifies publication of the edited texture and a bounded play route, not the full browser suite or Ariel's visual acceptance. The next release remains manual; documentation-only pushes do not redeploy.
 
 ## Ad-hoc delivery packet — manual GitHub Pages playtest
 
@@ -14,7 +20,7 @@ No Pages release or hosted test campaign was dispatched as part of this correcti
 
 Local gate: `npm run check` passed 315 unit/content tests and the optimized build; `npm run test:browser` passed 135/135 Chromium scenarios. Artifact review found only the production entry, controller probe, assets, and generated game content in `dist/`; the separate UI gallery and `.import/` asset holding area were not included. Hosted run 35676907503 passed both build/test and deploy jobs for the same commit. External smoke returned HTTP 200 and loaded the expected build ID `87e4538`; Workshop-to-Gallery travel succeeded, a 390×844 viewport fit the canvas, and neither tested browser session recorded failed requests or page errors. The hosted Actions log emitted a non-fatal Node 20 deprecation annotation for upstream v4 actions, which GitHub ran with Node 24.
 
-This is a public playtest delivery, not finished-game release acceptance or physical-controller/mobile certification. Localhost and Pages have distinct IndexedDB origins; saves require explicit export/import to move between them. The build ID on the live site can lag behind `main` until a manual release. Release cadence is deliberate: builds are never deployed per push or per local build — a public playtest update ships only when Ariel approves it, via a fresh manual dispatch of `pages.yml` from reviewed `main` with live verification of that commit's build ID. The three-platform CI matrix is separately manual-gated. Next delivery task is to verify the lean publisher on a future approved release; the next gameplay packet remains G1.2 after Ariel reviews G1.1.
+This is a public playtest delivery, not finished-game release acceptance or physical-controller/mobile certification. Localhost and Pages have distinct IndexedDB origins; saves require explicit export/import to move between them. The build ID on the live site can lag behind `main` until a manual release. Release cadence is deliberate: builds are never deployed per push or per local build — a public playtest update ships only when Ariel approves it, via a fresh manual dispatch of `pages.yml` from reviewed `main` with live verification of that commit's build ID. The three-platform CI matrix is separately manual-gated. The lean publisher was verified in the later release recorded above; the next gameplay packet remains G1.2 after Ariel reviews G1.1.
 
 ## G1.1c conditional access demo content — delivered
 

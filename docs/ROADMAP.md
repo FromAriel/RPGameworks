@@ -12,7 +12,7 @@ The ordering below is a recommended sequence, not a demand to implement all futu
 
 Update task status only when the corresponding behavior and evidence exist. Do not invent durations, completed benchmarks, CI results, or deploy URLs.
 
-**Ad-hoc public playtest delivery (complete, separate from M7):** A manual-only GitHub Pages workflow built, tested, and deployed the current game at [the public playtest URL](https://fromariel.github.io/RPGameworks/) from commit `87e4538` in [run 35676907503](https://github.com/FromAriel/RPGameworks/actions/runs/35676907503). The fetched site and Workshop-to-Gallery route were smoke-tested. This supplies a convenient browser test route; it does not close M7 release hardening or imply that later `main` commits deploy automatically. See [STATUS](STATUS.md) for exact evidence and remaining acceptance boundaries.
+**Ad-hoc public playtest delivery (complete, separate from M7):** The manual-only, build-only GitHub Pages workflow deployed game commit `fb17a1c` at [the public playtest URL](https://fromariel.github.io/RPGameworks/) in [run 35685752229](https://github.com/FromAriel/RPGameworks/actions/runs/35685752229). The fetched build ID and edited texture were verified, and a bounded live Workshop-to-Gallery and narrow-viewport smoke passed. No hosted tests ran in that release; the full Foundation checks workflow is separately manual-only. This does not close M7 release hardening or imply that later `main` commits deploy automatically. See [STATUS](STATUS.md) for exact evidence and remaining acceptance boundaries.
 
 ## Approved near-term sequence
 

@@ -17,7 +17,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   await openRoom(page,'?map=demo:map.gallery');
   let state=await snapshot(page);
   expect(state.mapWidth).toBe(24);expect(state.mapHeight).toBe(14);expect(state.collisionCells).toBe(336);
-  expect(state.displayObjects).toBe(347);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);
+  expect(state.displayObjects).toBe(348);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);
   await page.keyboard.down('ArrowRight');
   await expect.poll(async()=>(await snapshot(page)).actorTile.x).toBe(5);
   await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');
@@ -38,6 +38,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   ]);
   await expect.poll(()=>page.evaluate(()=>window.__RPGAMEWORKS__?.snapshot().mapId)).toBe('demo:map.gallery');
   await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
+  await expect.poll(async()=>(await snapshot(page)).heroArt).toBe('layered');
   const initial=await snapshot(page);
   for(let i=1;i<=6;i++){
     await openTools(page, 'debug'); await page.locator('#restart').click();
@@ -53,7 +54,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   await page.route('**/generated/content/state-index.aaaaaaaaaaaa.json',route=>route.fulfill({json:{schemaVersion:1,gameId:game.id,saveCompatibilityVersion:1,maps:[{id:'demo:map.fixture',name:'Content-only fixture',width:2,height:2,spawns:['start']}],itemIds:[],factIds:[],placementIds:[]}}));
   await page.route('**/generated/content/maps/fixture.json',route=>route.fulfill({json:map}));
   await openRoom(page,'?map=demo:map.fixture');
-  const state=await snapshot(page);expect(state.mapName).toBe('Content-only fixture');expect(state.displayObjects).toBe(6);expect(state.actorTile).toEqual({x:0,y:0});
+  const state=await snapshot(page);expect(state.mapName).toBe('Content-only fixture');expect(state.displayObjects).toBe(7);expect(state.actorTile).toEqual({x:0,y:0});
 });
 
 for(const mode of ['malformed','blocked-spawn','wrong-id','missing-frame'] as const){

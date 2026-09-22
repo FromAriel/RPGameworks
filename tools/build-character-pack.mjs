@@ -123,6 +123,39 @@ function u32(value) { const b = Buffer.alloc(4); b.writeUInt32BE(value, 0); retu
 export function encodePack(source) {
   const cellsByAnimation = crossValidate(source);
   const cellBytes = source.cell.widthPx * source.cell.heightPx * 4;
+  const frames = [];
+  for (const animation of source.animations) {
+    const layers = cellsByAnimation.get(`${animation.name}|${animation.direction}`);
+    if (!layers) throw new Error(`animation ${animation.name}|${animation.direction}: no frames`);
+    for (let frameIndex = 0; frameIndex < animation.frameCount; frameIndex += 1) {
+      for (const layer of source.layers) {
+        const pixels = layers.get(layer.id)?.get(frameIndex);
+        if (pixels === undefined) continue;
+        frames.push({ animation: animation.name, direction: animation.direction, frameIndex, layer: layer.id,
+          rgba: decodePixels(pixels, source.palette, cellBytes, `${animation.name}|${animation.direction}|${frameIndex}/${layer.id}`) });
+      }
+    }
+  }
+  return { ...encodeRgbaPack({ packId: source.packId, cell: source.cell, layers: source.layers, animations: source.animations, frames }),
+    sourceHash: createHash('sha256').update(JSON.stringify(source)).digest('hex') };
+}
+
+/** Encode validated, raw RGBA cells using the same v1 wire format as synthetic sources.
+ * @param {{packId:string,cell:{widthPx:number,heightPx:number},layers:{id:string,role:string}[],animations:{name:string,direction:string|null,frameCount:number,loop:boolean}[],frames:{animation:string,direction:string|null,frameIndex:number,layer:string,rgba:Uint8Array}[]}} source
+ */
+export function encodeRgbaPack(source) {
+  const cellBytes = source.cell.widthPx * source.cell.heightPx * 4;
+  if (!Number.isInteger(cellBytes) || cellBytes < 4 || cellBytes > MAX_DECODED_CELL_BYTES) throw new Error('RGBA cell size is invalid');
+  const frameMap = new Map();
+  for (const frame of source.frames) {
+    const key = `${frame.animation}|${frame.direction}|${frame.frameIndex}|${frame.layer}`;
+    if (frameMap.has(key)) throw new Error(`duplicate RGBA cell ${key}`);
+    if (frame.rgba.length !== cellBytes) throw new Error(`RGBA cell ${key} has ${frame.rgba.length} bytes, expected ${cellBytes}`);
+    frameMap.set(key, frame.rgba);
+  }
+  if (new Set(source.layers.map(layer => layer.id)).size !== source.layers.length) throw new Error('duplicate layer ID');
+  if (new Set(source.animations.map(animation => `${animation.name}|${animation.direction}`)).size !== source.animations.length) throw new Error('duplicate animation name/direction');
+  const used = new Set();
   // Deterministic payload deduplication by RGBA digest; identical layer pixels
   // across frames share one payload entry. Canonical walk order: source animation
   // order, ascending frame index, source layer order.
@@ -134,13 +167,13 @@ export function encodePack(source) {
   const bindings = [];
   let totalDecoded = 0;
   for (const animation of source.animations) {
-    const layers = /** @type {Map<string, Map<number, string>> | undefined} */ (cellsByAnimation.get(`${animation.name}|${animation.direction}`));
-    if (!layers) throw new Error(`internal: animation ${animation.name}|${animation.direction} vanished after validation`);
     for (let frameIndex = 0; frameIndex < animation.frameCount; frameIndex += 1) {
-      for (const layerId of source.layers.map((/** @type {{id: string}} */ l) => l.id)) {
-        const pixels = layers.get(layerId)?.get(frameIndex);
-        if (pixels === undefined) continue;
-        const rgba = decodePixels(pixels, source.palette, cellBytes, `${animation.name}|${animation.direction}|${frameIndex}/${layerId}`);
+      let present = 0;
+      for (const layerId of source.layers.map(layer => layer.id)) {
+        const key = `${animation.name}|${animation.direction}|${frameIndex}|${layerId}`;
+        const rgba = frameMap.get(key);
+        if (rgba === undefined) continue;
+        used.add(key); present += 1;
         if (rgba.length > MAX_DECODED_CELL_BYTES) throw new Error(`${animation.name}|${animation.direction}|${frameIndex}/${layerId}: decoded cell exceeds ${MAX_DECODED_CELL_BYTES} bytes`);
         totalDecoded += rgba.length;
         if (totalDecoded > MAX_TOTAL_DECODED_BYTES) throw new Error(`pack exceeds ${MAX_TOTAL_DECODED_BYTES} decoded bytes`);
@@ -157,8 +190,10 @@ export function encodePack(source) {
           payload: payloadIndex,
         });
       }
+      if (present === 0) throw new Error(`animation ${animation.name}|${animation.direction}: frame ${frameIndex} has no layers`);
     }
   }
+  if (used.size !== frameMap.size) throw new Error('RGBA source contains an undeclared animation, frame, or layer');
   if (payloads.size > 65535) throw new Error(`pack exceeds 65535 payloads (${payloads.size})`);
   const payloadList = [...payloads.values()];
   let offset = 0;
@@ -194,7 +229,6 @@ export function encodePack(source) {
   return {
     blob,
     manifest,
-    sourceHash: createHash('sha256').update(JSON.stringify(source)).digest('hex'),
     packHash: createHash('sha256').update(blob).digest('hex'),
     payloadBytes: offset,
     decodedBytes: totalDecoded,

@@ -30,6 +30,9 @@ export async function openRoom(page: Page, suffix = ''): Promise<void> {
   await expect.poll(() => page.evaluate(
     () => window.__RPGAMEWORKS__?.snapshot().phase ?? 'booting',
   )).toBe('ready');
+  await expect.poll(() => page.evaluate(
+    () => window.__RPGAMEWORKS__?.snapshot().characterArtStatus ?? 'loading',
+  )).not.toBe('loading');
   await expect(page.locator('#error')).toBeHidden();
   await page.getByTestId('viewport').focus();
 }

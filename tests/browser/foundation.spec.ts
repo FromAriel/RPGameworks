@@ -7,7 +7,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect(state.phaser).toBe('4.2.1');
   expect(state.renderer).toBe('WebGL');
   expect(state.activeScenes).toBe(1);
-  expect(state.displayObjects).toBe(245);
+  expect(state.displayObjects).toBe(246);
   await expect(page.locator('canvas')).toHaveAttribute('width', '320');
   await expect(page.locator('canvas')).toHaveAttribute('height', '192');
   const size = await page.locator('canvas').boundingBox();

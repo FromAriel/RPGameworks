@@ -28,7 +28,7 @@ test('three-slot UI exposes real disabled Load controls and saves/loads a sessio
   await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slot(page,0)).toContainText('The Pillar Gallery');
   await page.locator('#save-close').click();await page.locator('#inventory-close').click();await step(page,'ArrowDown');expect((await snapshot(page)).actorTile).not.toEqual(savedTile);
   await openSaves(page);await confirm(page,0,'Load');await expect(page.locator('#save-dialog')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
-  const after=await snapshot(page);expect(after.actorTile).toEqual(savedTile);expect(after.session.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(after.activeScenes).toBe(1);expect(after.sessionSubscribers).toBe(1);await expect(page.locator('#stage')).toBeFocused();
+  const after=await snapshot(page);expect(after.actorTile).toEqual(savedTile);expect(after.session.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(after.activeScenes).toBe(1);expect(after.sessionSubscribers).toBe(1);expect(after.heroArt).toBe('layered');await expect(page.locator('#stage')).toBeFocused();
 });
 
 test('a deliberate load restores IndexedDB progress after a full browser reload',async({page})=>{

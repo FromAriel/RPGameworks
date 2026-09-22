@@ -1,6 +1,9 @@
 node_modules/
 dist/
 public/generated/
+# Only the approved derived game pack is distributable; keep other character output local.
+public/character/*
+!public/character/starter-hero.rpgpack
 playwright-report/
 test-results/
 coverage/

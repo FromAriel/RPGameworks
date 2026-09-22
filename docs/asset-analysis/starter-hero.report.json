@@ -1,0 +1,51 @@
+{
+  "packId": "starter-hero",
+  "packHash": "85cf2ad9a997e5588ffbd92c6622f44db7de4a5f7092c40f3691ba8e5fe39fd8",
+  "packBytes": 46336,
+  "cellCount": 216,
+  "payloadCount": 118,
+  "decodedBytes": 3538944,
+  "masterSha256": "38f98aca474696f8f37d9080f4faa2ba12f395e1c4416baa8579a49c3cb1382d",
+  "files": {
+    "base": {
+      "path": "Player_Base/Player_Base_animations.png",
+      "sha256": "311608be854ab145e351e793d45a187b59e6d7834a62a1acd72e266de9852acc"
+    },
+    "feet": {
+      "path": "Feet/Shoes_1_Purple.png",
+      "sha256": "d5501c8bf95e3dd44e9a50c23a5713293dc52538494a1a4df7282ec876a40c13"
+    },
+    "legs": {
+      "path": "Legs/Farmer_Pants/Farmer_Pants_1_Blue.png",
+      "sha256": "a50d2948a1bed2efc9b185fb7980b60a86c9e13eb979021886dfa117ad9607c0"
+    },
+    "chest": {
+      "path": "Chest/Farmer_Shirt/Farmer_Shirt_1_White_and_Brown.png",
+      "sha256": "1ce1402f1b6a6860cc0ba04cd95ebae3e7f3a9304d442426448729d21587a7ab"
+    },
+    "hair": {
+      "path": "Head/Hair_4/Hair_4_Black.png",
+      "sha256": "1a304a2dd31fc2deeecb1e8fb7f6fade91e19582e7455cc5ca0a06167993b657"
+    },
+    "hands": {
+      "path": "Hands/Hands_1_Bare.png",
+      "sha256": "b35ed8345956f1241209d0e0a7b90ce79f40830c27f8359078c48197daa0aa4d"
+    },
+    "mount": {
+      "path": "Player_Mounts/Horse/Player_Horse_Gray.png",
+      "sha256": "7d8b6fa2f14e2b70ef2faaed9cefa36a6df65d3cb6b4d75b5614324b2a4b93bc"
+    }
+  },
+  "includedActions": [
+    "idle",
+    "walk"
+  ],
+  "includedLayers": [
+    "base",
+    "feet",
+    "legs",
+    "chest",
+    "hair",
+    "hands"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "packId": "starter-hero",
+  "masterSha256": "38f98aca474696f8f37d9080f4faa2ba12f395e1c4416baa8579a49c3cb1382d",
+  "files": {
+    "base": "311608be854ab145e351e793d45a187b59e6d7834a62a1acd72e266de9852acc",
+    "feet": "d5501c8bf95e3dd44e9a50c23a5713293dc52538494a1a4df7282ec876a40c13",
+    "legs": "a50d2948a1bed2efc9b185fb7980b60a86c9e13eb979021886dfa117ad9607c0",
+    "chest": "1ce1402f1b6a6860cc0ba04cd95ebae3e7f3a9304d442426448729d21587a7ab",
+    "hair": "1a304a2dd31fc2deeecb1e8fb7f6fade91e19582e7455cc5ca0a06167993b657",
+    "hands": "b35ed8345956f1241209d0e0a7b90ce79f40830c27f8359078c48197daa0aa4d",
+    "mount": "7d8b6fa2f14e2b70ef2faaed9cefa36a6df65d3cb6b4d75b5614324b2a4b93bc"
+  }
+}

@@ -45,6 +45,7 @@ let timer: ReturnType<typeof setInterval> | null = null;
 let disposed = false;
 let failed = false;
 let lastStatus = '';
+let artWarning = '';
 let startupFocusPending = true;
 const pageErrors = new PageErrorLog();
 const pageErrorNotice = required<HTMLElement>('#page-error-notice');
@@ -102,11 +103,11 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or close it to resume exploring.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
+    const message = artWarning || (snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or close it to resume exploring.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
-      'Ready. Explore, face an NPC or plaque, and interact. Step into a lit doorway to change rooms.';
+      'Ready. Explore, face an NPC or plaque, and interact. Step into a lit doorway to change rooms.');
     if (message !== lastStatus) { status.textContent = message; lastStatus = message; }
   }
   required<HTMLElement>('#map-title').textContent = snapshot.mapName;
@@ -228,6 +229,7 @@ async function start(): Promise<void> {
       effects,
       dialog: required<HTMLDialogElement>('#interaction-dialog'),
       interact: required<HTMLButtonElement>('#interact'),
+      onArtWarning: message => { artWarning = message ?? ''; drawDiagnostics(); },
       gamepad: controller,
       canPlay: () => !controllerPanel.open && !shell.ownsInput,
       canRestart: () => !controllerPanel.open,

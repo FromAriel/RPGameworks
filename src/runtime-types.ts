@@ -29,6 +29,11 @@ export interface RuntimeSnapshot {
   actorPixel: { x: number; y: number };
   moving: boolean;
   facing: string;
+  heroArt: 'static' | 'layered';
+  heroFrame: string | null;
+  heroMirrored: boolean;
+  heroFeet: { x: number; y: number } | null;
+  characterArtStatus: 'loading' | 'ready' | 'fallback';
   activeScenes: number;
   displayObjects: number;
   textureCount: number;

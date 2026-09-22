@@ -15,6 +15,7 @@ import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
 import { MapView, ATLAS, TILE } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
+import { CharacterArt } from './character-view';
 import type { ConfirmationDialogParts, PromptEntry } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
@@ -46,6 +47,7 @@ export interface FoundationElements {
   canRestart: () => boolean;
   dialog: HTMLDialogElement;
   interact: HTMLButtonElement;
+  onArtWarning: (message: string | null) => void;
 }
 
 export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
@@ -59,6 +61,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
   let resizeFrame: number | null = null;
   let appliedScale = 0;
   const appLifetime = new AbortController();
+  let characterArt: CharacterArt | null = null;
+  let characterArtStatus: RuntimeSnapshot['characterArtStatus'] = 'loading';
 
   class MapScene extends Phaser.Scene {
     room: MapView | null = null;
@@ -105,7 +109,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.transfer = new TransitionTask<LoadedMap>();
         this.mode = 'exploration'; this.message = null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
-        this.room = new MapView(this, content, elements.session.current);
+        characterArt ??= new CharacterArt(this.textures, import.meta.env.BASE_URL);
+        this.room = new MapView(this, content, elements.session.current, characterArt);
         this.room.bind(elements.session);
         this.room.show();
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
@@ -127,6 +132,17 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory(),elements.saveConfirmation,()=>this.inputOwner?.clear(),reason=>this.checkpointReason(reason));
         phase = 'ready';
         scheduleResize();
+        const lifetime = this.sceneLifetime.signal;
+        void characterArt.load(lifetime).then(() => {
+          if (disposed || lifetime.aborted || this.sceneLifetime?.signal !== lifetime) return;
+          this.room?.attachCharacterArt(characterArt!);
+          characterArtStatus = 'ready';
+          elements.onArtWarning(null);
+        }).catch((cause: unknown) => {
+          if (lifetime.aborted || disposed) return;
+          characterArtStatus = 'fallback';
+          elements.onArtWarning(`Character art could not load; the original hero remains playable. ${cause instanceof Error ? cause.message : String(cause)}`);
+        });
       } catch (cause) { this.fail(cause); }
     }
 
@@ -142,7 +158,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       // A pending menu request is discarded rather than opening a modal while hidden.
       if (document.hidden) this.menuPending = false;
       if (this.menuPending) {
-        advanceActor(room.actor,null,delta,room.collision.canEnter); room.sync();
+        advanceActor(room.actor,null,delta,room.collision.canEnter); room.sync(delta);
         if (!room.actor.motion) {
           this.menuPending = false;
           room.releaseDeferred();
@@ -200,7 +216,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.startTransition(exit);
         return false; // Commit a safe tile checkpoint; no extra movement debt across a door.
       });
-      room.sync();
+      room.sync(delta);
       if (this.mode === 'exploration' && burst) room.burst(elements.effects.checked);
     }
 
@@ -219,7 +235,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
-        const prepared=new MapView(this,next,candidate);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
+        const prepared=new MapView(this,next,candidate,characterArt??undefined);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
       });
       if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close message','Close');return;}
@@ -259,7 +275,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         (next) => {
           // Construct/validate the new view while the old view is still usable.
           const old = this.room!;
-          const prepared = new MapView(this, next, elements.session.current);
+          const prepared = new MapView(this, next, elements.session.current, characterArt??undefined);
           prepared.bind(elements.session);
           try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
           this.room = prepared; content = next;
@@ -369,6 +385,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
         actorTile: { ...actor.tile },
         actorPixel: { x: Math.round(position.x), y: Math.round(position.y) },
         moving: actor.motion !== null, facing: actor.facing,
+        heroArt: room?.heroArt ?? 'static', heroFrame: room?.heroFrame ?? null,
+        heroMirrored: room?.heroMirrored ?? false, heroFeet: room?.heroFeet ?? null,
+        characterArtStatus,
         activeScenes: game.scene.getScenes(true).length,
         displayObjects: current?.children.length ?? 0,
         textureCount: game.textures.getTextureKeys().length,
@@ -396,6 +415,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       elements.restart.disabled = true;
       elements.interact.disabled = true;
       game.destroy(true);
+      characterArt?.dispose();
     },
   };
 }

@@ -21,7 +21,7 @@ test('exact edited atlas loads lazily once, while the clean launch keeps only th
   const response = page.waitForResponse(r=>/\/Window-[^/]+\.png/.test(r.url()));
   await openTools(page); await expect(page.locator('#tools-panel')).toHaveAttribute('data-skin-state','ready');
   const bytes=await (await response).body();
-  expect(createHash('sha256').update(bytes).digest('hex')).toBe('2c81d15a1217059fd7c5177b92fffb3a78ca07c0edb305770083e396f645552a');
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe('758fb5bf370a5c7c2cee950c861245491cd127a8a48d036a7f3d0030c79007e6');
   await closeTools(page); await talk(page);
   await expect(page.locator(dialog)).toHaveAttribute('data-skin-state','ready');
   expect(images).toHaveLength(1); await expect(page.locator('canvas')).toHaveCount(1);

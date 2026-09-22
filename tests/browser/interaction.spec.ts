@@ -89,9 +89,11 @@ async function fakePad(page: Page): Promise<void> {
   await openRoom(page);
   const marker=await page.evaluate(()=>{(window as any).__DOCUMENT_MARKER__=Math.random();return (window as any).__DOCUMENT_MARKER__;});
   await cross(page,'ArrowRight',GALLERY);
+  expect((await snapshot(page)).heroArt).toBe('layered');
   expect((await snapshot(page)).actorTile).toEqual({x:2,y:6}); expect((await snapshot(page)).facing).toBe('right');
   expect((await snapshot(page)).spawnId).toBe('from-workshop'); expect(maps).toHaveLength(2);
   await cross(page,'ArrowLeft',WORKSHOP);
+  expect((await snapshot(page)).heroArt).toBe('layered');
   expect((await snapshot(page)).actorTile).toEqual({x:17,y:6}); expect((await snapshot(page)).facing).toBe('left');
   expect((await snapshot(page)).transitions).toBe(2); expect(maps).toHaveLength(3);
   expect(await page.evaluate(()=>(window as any).__DOCUMENT_MARKER__)).toBe(marker);

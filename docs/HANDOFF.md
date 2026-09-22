@@ -1,6 +1,6 @@
-# HANDOFF — working notes through G1 acceptance
+# HANDOFF — working notes through local starter-hero preview
 
-**Written:** September 22, 2026, after G1.1 acceptance and the character-art documentation packets. [STATUS](STATUS.md) remains the handoff of record with exact evidence per packet; this file is the narrative companion: what we did, what remains, and what we learned. Read it top to bottom before starting the next packet.
+**Written:** September 22, 2026, after G1.1 acceptance and Ariel's local animated starter-hero approval. [STATUS](STATUS.md) remains the evidence ledger. The approved derived pack is being prepared for a normal Git push and manual Pages release; confirm the exact published commit before calling it live.
 
 ## 1. Where the project stands
 
@@ -8,7 +8,8 @@
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
-| CA1 synthetic foundations (pending review) | Character pack v1 format (decision 0003), deterministic offline encoder, strict runtime reader with decompression-bomb + digest gates, 18 pack unit tests; no licensed pixels, no runtime wiring | [STATUS §CA1](STATUS.md); decision `0003-character-pack-v1.md` |
+| CA1/CA2 game-art release (approved; publication in progress) | Hash-pinned real-pixel `starter-hero` pack and six-layer idle/walk view in Workshop and Gallery; commit only the derived game-use pack and provenance | [STATUS §animated hero](STATUS.md); tracked `starter-hero.report.json` and local captures |
+| CA1 synthetic foundations | Character pack v1 format (decision 0003), deterministic offline encoder, strict runtime reader, committed golden fixture | [STATUS §CA1](STATUS.md); decision `0003-character-pack-v1.md` |
 | G1.1 accepted | Conditional access contract: per-state `solid`, `interaction.prerequisites`, dynamic collision view + occupied-cell deferral, checkpoint save/load validation against resolved views, and the first chat-authored demo content (brass key, lever, choke-point gate, key crate, storeroom door) with end-to-end browser proof | ROADMAP checkbox marked; [STATUS §G1.1c](STATUS.md); commits `75b9bd6`…`846ca06` |
 | Ad-hoc playtest delivery | Manual, **build-only** GitHub Pages workflow; live playtest serves `fb17a1c` (includes the second accepted windowskin) | run 35685752229; [STATUS §delivery](STATUS.md) |
 | Art: second windowskin | Ariel's second `Window.png` (3,112 bytes, 32 partial-alpha pixels) is canonical; provenance, audit and pinned tests updated; two `mid.right:N/S` adapter seams recorded, retained | `df7dfc2`; `Window.audit.json` |
@@ -16,14 +17,14 @@
 | M2 spine | Facts/transactions/placements, three-slot IndexedDB saves, inventory menu | [status §M2](STATUS.md) |
 | Research docs | Cute Fantasy sprite layout (schema + 56-row Ariel map) + license decision; CA1–CA4 plan | [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md), [asset-analysis/](asset-analysis/README.md) |
 
-**Test floor at handoff:** 342 unit/content tests (315 + 18 character-pack + 9 selection tests; the reader is unwired and no presentation path changed, so the 135 Chromium scenarios were not rerun for this slice), clean `npm run check`, `npm audit` clean. The exact windowskin audit is unchanged.
+**Current local verification:** `npm run check` passes with 344 unit/content tests, typecheck, and production build. The focused 33-scenario Chromium run and full 139-scenario browser suite pass. The original synthetic format, windowskin asset, and public Pages release are unchanged.
 
 **Deployment posture:** Pages deploys **only** by manual dispatch of the build-only workflow for an approved commit; ordinary pushes never publish. Public-repo builds are free of the runner-quota problem that exhausted the old matrix; the three-platform CI stays separately manual.
 
 ## 2. What is left (ordered)
 
-1. **CA1 — pack-v1 proof with synthetic pixels** — synthetic foundations DELIVERED, starter appearance RECORDED, and Ariel's four review findings reconciled, with the digest-abort and existing-pack preservation review gaps fixed (see STATUS §CA1): format/decision note `0003`, deterministic encoder with recoverable pair replacement, strict reader with reader-owned decode cancellation, policy-complete selection validator, committed anti-drift golden fixture, 27 unit tests; Ariel pinned `starter-hero` (base, white-and-brown farmer shirt, blue farmer pants, purple shoes, black Hair_4, bare hands included, gray horse; no tools/helmet/accessory). Remaining before the gate: Ariel's re-review of the reconciled format, then the separately gated real-pixel encoding pass (PNG decode, per-file hashes, dimensions, row-offset/run verification) with the recorded selection as its sole allowlist input.
-2. **CA2 — one animated hero**, gated on Ariel's remaining selections: side-mirroring policy (lean: mirror one authored side row in code), foot anchor (measured from art), animation timings/loop rules (Aseprite's 100 ms outer frames are placeholders, not timing). Browser gates: blocking/alignment equality with the old hero, failure fallback, lifecycle.
+1. **CA1/CA2 — approved animated hero** — synthetic foundations and the recorded appearance feed an explicit real-pixel encoder. The selected pack is mounted in Workshop/Gallery with full side-view mirroring, (32,41) foot anchor, 180 ms idle / 120 ms walk, fallback, and shared texture ownership. Ariel approved the local preview and requested web publication. Commit the derived pack and provenance with an explicit file list, push normally, dispatch Pages manually, and verify the exact served build and pack hash.
+2. **CA2 follow-up** — adjust art anchor or timing only if Ariel requests it, regenerate and repeat the relevant visual checks.
 3. **CA3 — variants + the 56-entry action catalog** with explicit availability policy (an action exists only if content enables it); held-tool/mount composites; test-only preview route.
 4. **CA4 — production review**: `dist/` allowlist (no `.aseprite`/source PNGs/ZIP/`.import/`), texture-residency checks, cold/warm load comparison, `dist/` only ships the approved pack, and a separately authorized manual Pages release.
 5. **G1.2 — travel integration** (denial-once with no destination fetch, existing prepare/validate/activate path, two locks in one proof), then the M3 quest per NEXT-SLICES §8. Sequenced after CA1 per Ariel's ordering — the character plan does not replace it.
@@ -56,6 +57,6 @@
 ## 5. First steps for the very next agent
 
 1. Read [STATUS](STATUS.md) top-to-bottom, then [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md) (CA1). CA1's synthetic foundation is done, reconciled against Ariel's four review findings, and her starter appearance is recorded (`docs/asset-analysis/starter-appearance.json`): pack format `0003`, `tools/build-character-pack.mjs`, `src/platform/character-pack.ts`, `src/platform/character-selection.mjs`, committed golden fixture under `tests/fixtures/character-pack/`, 27 unit tests.
-2. Collect Ariel's remaining picks before CA2 visuals: side-mirroring policy, foot anchor, timing/loop rules, and the idle/walk/any-action set for the first pack.
-3. After Ariel's re-review of the reconciled format, run the separately gated real-pixel encoding pass: PNG decode, per-file hashes/dimensions against the recorded selection, `layerRowRuns` verification for any future tool/mount rows, generation report, then present the pack for her approval before any commit beyond this reviewed slice.
+2. Review `.tmp/character/starter-hero.report.json` and the Workshop/Gallery captures with Ariel; changes to mirror, anchor, or timing require a new candidate and visual check.
+3. Ariel has approved the derived pack and web publication. Stage its exact bytes plus provenance with an explicit file list, then verify the pushed commit and manual Pages release. Do not stage the local `.import/` source drop.
 4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.

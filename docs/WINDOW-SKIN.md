@@ -8,13 +8,13 @@ Mara's actual conversation window, the Settings/Debug drawer, and the Display & 
 
 | File | Role |
 | --- | --- |
-| [Window.png](../assets/source/ui/base/Window.png) | Exact user-edited 192 × 192 RGBA source, 3,862 bytes. |
+| [Window.png](../assets/source/ui/base/Window.png) | Exact user-edited 192 × 192 RGBA source, 3,112 bytes. |
 | [Window.manifest.json](../assets/source/ui/base/Window.manifest.json) | Version 1 rectangles, roles, anchors, fit rules, and alpha/provenance metadata. |
 | [Window.audit.json](../assets/source/ui/base/Window.audit.json) | Reproducible measurements of this edit, including known mismatches. |
 | [Source notes](../assets/source/ui/base/README.md) | Ownership, original companion identities, import policy, and generation warning. |
 | [audit-windowskin.mjs](../tools/audit-windowskin.mjs) | Dependency-free offline geometry/PNG/alpha/connector audit. |
 
-The source PNG SHA-256 is `2c81d15a1217059fd7c5177b92fffb3a78ca07c0edb305770083e396f645552a`. It matches Ariel's attachment byte-for-byte. Its partial transparency is retained, not thresholded. The original kit generator produces the earlier, stronger artwork and MUST NOT overwrite this PNG.
+The source PNG SHA-256 is `758fb5bf370a5c7c2cee950c861245491cd127a8a48d036a7f3d0030c79007e6` (3,112 bytes, 32 partial-alpha pixels). It matches Ariel's second accepted edit byte-for-byte; her superseded first edit (3,862 bytes, SHA-256 `2c81d15a1217059fd7c5177b92fffb3a78ca07c0edb305770083e396f645552a`) remains recoverable from history. Both edits keep partial transparency unthresholded. The original kit generator produces the earlier, stronger artwork and MUST NOT overwrite this PNG.
 
 The imported manifest preserves all 64 tile definitions, their coordinates, and all fitting metadata from the companion. Only theme, status, alpha description, and the original-manifest hash metadata were updated. Its SHA-256 is `c2968d1ed7b7c93c60eaf55b045e0d93217debd141de151940609396ccc29056`. This is an artwork/metadata revision within packing version 1, not an RPG Maker-compatible Window.png.
 
@@ -68,7 +68,7 @@ Thus **53 = 16 + 16 + 5 plain + 16 mirrored**. Horizontal finishing tiles mirror
 
 The original kit's exact-seam guarantee required each repeat's first and last four pixels to equal its plain rail. Ariel changed some of those pixels. W1 preserves her art and the finishing geometry, but does not falsely claim universal color/alpha continuity or constant ornamental rhythm.
 
-**Explicit right-side adapter:** right-edge plain gaps sample the north port row of their own B4/B6 repeat and extend that one-row profile longitudinally. This preserves the revised bevel instead of inserting the incompatible F7 profile. It changes no source bytes and performs no alpha thresholding. All eight right border/corner port comparisons match that derived profile. It is not a general repair for the other shoulder differences or for the unused D6 attachment.
+**Explicit right-side adapter:** right-edge plain gaps sample the north port row of their own B4/B6 repeat and extend that one-row profile longitudinally. This preserves the revised bevel instead of inserting the incompatible F7 profile. It changes no source bytes and performs no alpha thresholding. Under the first accepted edit all eight right border/corner port comparisons matched that derived profile; the second edit moves the mid.right edge profile, so its north/south derived checks record as two retained, seen seams. It is not a general repair for the other shoulder differences or for the unused D6 attachment.
 
 ## 7. Audit results and limits
 
@@ -76,15 +76,15 @@ Run `node tools/audit-windowskin.mjs` to print the recomputed report. `--write` 
 
 | Measurement | Observed result |
 | --- | --- |
-| Dimensions / bytes | 192 × 192 RGBA8 / 3,862 bytes |
+| Dimensions / bytes | 192 × 192 RGBA8 / 3,112 bytes (second accepted edit) |
 | Gutters / reserved H8 | 20,480 gutter pixels transparent; H8 transparent |
-| Partial-alpha pixels | 141, preserved |
-| Declared connector edges | 96; 88 match the original canonical profiles |
-| Original-profile mismatches | Eight: A5:S, B4:N/S, B5:N/S, B6:N/S, C5:N |
-| Right-side derived-profile checks | All eight match |
-| Repeats with original-shoulder differences | Eight of ten: A2, A4, B1, B3, B4, B6, C2, C4 |
+| Partial-alpha pixels | 32, preserved |
+| Declared connector edges | 96; 82 match the original canonical profiles |
+| Original-profile mismatches | Fourteen: A3:W/E, A5:S, B2:N/S, B4:upper/lower N/S, B5 N/S, B6:upper/lower N/S, C3:W/E, C5:N |
+| Right-side derived-profile checks | Per recorded history match for the prior edit; the second edit's right/bottom profiles shift with the artwork (see Window.audit.json per-tile counts) |
+| Repeats with original-shoulder differences | Recorded per the recomputed report |
 
-See Window.audit.json for the per-tile counts. These known differences are intentionally retained, not suppressed, repainted or described as new art approval. The two actual windows are usable with this source and declared connector policy; full junction and arbitrary-theme perfection are not claimed.
+See Window.audit.json for the per-tile counts. These differences in the second edit are intentionally retained, not suppressed, repainted or hidden: the accepted connector policy (right edge plain gaps derive from their own B4/B6 north-port rows) is unchanged runtime behavior, and exact per-tile matches are measured fresh on each audit. The two actual windows are usable with this source and declared connector policy; full junction and arbitrary-theme perfection are not claimed.
 
 ## 8. Complete slot map
 

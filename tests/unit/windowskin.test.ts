@@ -5,20 +5,23 @@ import { describe, expect, it } from 'vitest';
 import { frameGeometry, spanParts } from '../../src/presentation/skin/layout';
 
 const asset = 'assets/source/ui/base/';
+/** Pinned to Ariel's second accepted edit (September 21, 2026). A future art edit must re-pin these with her acceptance. */
 describe('selected windowskin source', () => {
-  it('preserves Ariel’s original PNG and the documented companion manifest', () => {
+  it('preserves Ariel’s accepted PNG and the documented companion manifest', () => {
     const hash = (file: string) => createHash('sha256').update(readFileSync(asset+file)).digest('hex');
-    expect(hash('Window.png')).toBe('2c81d15a1217059fd7c5177b92fffb3a78ca07c0edb305770083e396f645552a');
+    expect(hash('Window.png')).toBe('758fb5bf370a5c7c2cee950c861245491cd127a8a48d036a7f3d0030c79007e6');
     expect(hash('Window.manifest.json')).toBe('c2968d1ed7b7c93c60eaf55b045e0d93217debd141de151940609396ccc29056');
   });
   it('recomputes the real alpha/port audit without repainting the asset', () => {
     const result = JSON.parse(execFileSync(process.execPath,['tools/audit-windowskin.mjs'],{encoding:'utf8'})) as {
-      portCount:number;portMatches:number;partialAlphaPixels:number;shoulderMismatches:unknown[];rightAdapterChecks:{matches:boolean}[];
+      portCount:number;portMatches:number;partialAlphaPixels:number;shoulderMismatches:unknown[];rightAdapterChecks:{id:string;port:string;matches:boolean}[];
     };
     expect(result).toEqual(JSON.parse(readFileSync(asset+'Window.audit.json','utf8')));
-    expect(result.portCount).toBe(96); expect(result.portMatches).toBe(88);
-    expect(result.partialAlphaPixels).toBe(141); expect(result.shoulderMismatches).toHaveLength(8);
-    expect(result.rightAdapterChecks.every(c=>c.matches)).toBe(true);
+    expect(result.portCount).toBe(96); expect(result.portMatches).toBe(82);
+    expect(result.partialAlphaPixels).toBe(32); expect(result.shoulderMismatches).toHaveLength(2);
+    // The prior edit had all eight derived checks matching; the second edit moves the mid.right
+    // edge profile, so its north/south derived checks record as retained, seen seams.
+    expect(result.rightAdapterChecks.filter(c=>!c.matches).map(c=>`${c.id}:${c.port}`)).toEqual(['mid.right:N','mid.right:S']);
   });
 });
 describe('bounded border geometry', () => {

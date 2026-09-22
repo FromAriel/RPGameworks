@@ -1,19 +1,31 @@
 {
   "format": "rpgameworks.windowskin.audit",
   "version": 1,
-  "sourceSha256": "2c81d15a1217059fd7c5177b92fffb3a78ca07c0edb305770083e396f645552a",
+  "sourceSha256": "758fb5bf370a5c7c2cee950c861245491cd127a8a48d036a7f3d0030c79007e6",
   "manifestSha256": "c2968d1ed7b7c93c60eaf55b045e0d93217debd141de151940609396ccc29056",
-  "bytes": 3862,
+  "bytes": 3112,
   "width": 192,
   "height": 192,
   "packingPassed": true,
   "reservedTransparent": true,
   "gutterPixels": 20480,
   "gutterNontransparent": 0,
-  "partialAlphaPixels": 141,
+  "partialAlphaPixels": 32,
   "portCount": 96,
-  "portMatches": 88,
+  "portMatches": 82,
   "portMismatches": [
+    {
+      "slot": "A3",
+      "id": "mid.top",
+      "port": "W",
+      "matches": false
+    },
+    {
+      "slot": "A3",
+      "id": "mid.top",
+      "port": "E",
+      "matches": false
+    },
     {
       "slot": "A5",
       "id": "corner.tr",
@@ -21,6 +33,18 @@
       "matches": false
     },
     {
+      "slot": "B2",
+      "id": "mid.left",
+      "port": "N",
+      "matches": false
+    },
+    {
+      "slot": "B2",
+      "id": "mid.left",
+      "port": "S",
+      "matches": false
+    },
+    {
       "slot": "B4",
       "id": "edge.right.upper",
       "port": "N",
@@ -54,6 +78,18 @@
       "slot": "B6",
       "id": "edge.right.lower",
       "port": "S",
+      "matches": false
+    },
+    {
+      "slot": "C3",
+      "id": "mid.bottom",
+      "port": "W",
+      "matches": false
+    },
+    {
+      "slot": "C3",
+      "id": "mid.bottom",
+      "port": "E",
       "matches": false
     },
     {
@@ -66,26 +102,6 @@
   "repeatCount": 10,
   "shoulderMismatches": [
     {
-      "slot": "A2",
-      "id": "edge.top.left",
-      "differingPixels": 4
-    },
-    {
-      "slot": "A4",
-      "id": "edge.top.right",
-      "differingPixels": 4
-    },
-    {
-      "slot": "B1",
-      "id": "edge.left.upper",
-      "differingPixels": 4
-    },
-    {
-      "slot": "B3",
-      "id": "edge.left.lower",
-      "differingPixels": 3
-    },
-    {
       "slot": "B4",
       "id": "edge.right.upper",
       "differingPixels": 32
@@ -94,16 +110,6 @@
       "slot": "B6",
       "id": "edge.right.lower",
       "differingPixels": 32
-    },
-    {
-      "slot": "C2",
-      "id": "edge.bottom.left",
-      "differingPixels": 4
-    },
-    {
-      "slot": "C4",
-      "id": "edge.bottom.right",
-      "differingPixels": 4
     }
   ],
   "rightAdapterChecks": [
@@ -125,12 +131,12 @@
     {
       "id": "mid.right",
       "port": "N",
-      "matches": true
+      "matches": false
     },
     {
       "id": "mid.right",
       "port": "S",
-      "matches": true
+      "matches": false
     },
     {
       "id": "edge.right.lower",

@@ -1,6 +1,6 @@
 # HANDOFF — working notes through local starter-hero preview
 
-**Written:** September 22, 2026, after G1.1 acceptance and Ariel's local animated starter-hero approval. [STATUS](STATUS.md) remains the evidence ledger. The approved derived pack is being prepared for a normal Git push and manual Pages release; confirm the exact published commit before calling it live.
+**Written:** September 22, 2026, after G1.1 acceptance and Ariel's approved animated starter-hero release. [STATUS](STATUS.md) remains the evidence ledger. The derived game-use pack shipped in `05705b9` and its manual Pages release was verified in run 35789345759; Ariel's hosted playtest remains separate.
 
 ## 1. Where the project stands
 
@@ -8,7 +8,7 @@
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
-| CA1/CA2 game-art release (approved; publication in progress) | Hash-pinned real-pixel `starter-hero` pack and six-layer idle/walk view in Workshop and Gallery; commit only the derived game-use pack and provenance | [STATUS §animated hero](STATUS.md); tracked `starter-hero.report.json` and local captures |
+| CA1/CA2 game-art release (published) | Hash-pinned real-pixel `starter-hero` pack and six-layer idle/walk view in Workshop and Gallery; derived game-use pack and provenance only | [STATUS §animated hero](STATUS.md); build `05705b9`, Pages run 35789345759 |
 | CA1 synthetic foundations | Character pack v1 format (decision 0003), deterministic offline encoder, strict runtime reader, committed golden fixture | [STATUS §CA1](STATUS.md); decision `0003-character-pack-v1.md` |
 | G1.1 accepted | Conditional access contract: per-state `solid`, `interaction.prerequisites`, dynamic collision view + occupied-cell deferral, checkpoint save/load validation against resolved views, and the first chat-authored demo content (brass key, lever, choke-point gate, key crate, storeroom door) with end-to-end browser proof | ROADMAP checkbox marked; [STATUS §G1.1c](STATUS.md); commits `75b9bd6`…`846ca06` |
 | Ad-hoc playtest delivery | Manual, **build-only** GitHub Pages workflow; live playtest serves `fb17a1c` (includes the second accepted windowskin) | run 35685752229; [STATUS §delivery](STATUS.md) |
@@ -23,7 +23,7 @@
 
 ## 2. What is left (ordered)
 
-1. **CA1/CA2 — approved animated hero** — synthetic foundations and the recorded appearance feed an explicit real-pixel encoder. The selected pack is mounted in Workshop/Gallery with full side-view mirroring, (32,41) foot anchor, 180 ms idle / 120 ms walk, fallback, and shared texture ownership. Ariel approved the local preview and requested web publication. Commit the derived pack and provenance with an explicit file list, push normally, dispatch Pages manually, and verify the exact served build and pack hash.
+1. **CA1/CA2 — published animated hero** — synthetic foundations and the recorded appearance feed an explicit real-pixel encoder. The selected pack is mounted in Workshop/Gallery with full side-view mirroring, (32,41) foot anchor, 180 ms idle / 120 ms walk, fallback, and shared texture ownership. Ariel approved the local preview; the derived pack and provenance shipped in `05705b9`. The manual Pages run succeeded, and exact served build and pack bytes plus both rooms were verified. Leave Ariel's own hosted playtest open.
 2. **CA2 follow-up** — adjust art anchor or timing only if Ariel requests it, regenerate and repeat the relevant visual checks.
 3. **CA3 — variants + the 56-entry action catalog** with explicit availability policy (an action exists only if content enables it); held-tool/mount composites; test-only preview route.
 4. **CA4 — production review**: `dist/` allowlist (no `.aseprite`/source PNGs/ZIP/`.import/`), texture-residency checks, cold/warm load comparison, `dist/` only ships the approved pack, and a separately authorized manual Pages release.
@@ -57,6 +57,6 @@
 ## 5. First steps for the very next agent
 
 1. Read [STATUS](STATUS.md) top-to-bottom, then [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md) (CA1). CA1's synthetic foundation is done, reconciled against Ariel's four review findings, and her starter appearance is recorded (`docs/asset-analysis/starter-appearance.json`): pack format `0003`, `tools/build-character-pack.mjs`, `src/platform/character-pack.ts`, `src/platform/character-selection.mjs`, committed golden fixture under `tests/fixtures/character-pack/`, 27 unit tests.
-2. Review `.tmp/character/starter-hero.report.json` and the Workshop/Gallery captures with Ariel; changes to mirror, anchor, or timing require a new candidate and visual check.
-3. Ariel has approved the derived pack and web publication. Stage its exact bytes plus provenance with an explicit file list, then verify the pushed commit and manual Pages release. Do not stage the local `.import/` source drop.
+2. Ariel approved the local hero candidate and Pages serves it. Record any hosted playtest feedback separately; changes to mirror, anchor, or timing require a new candidate and visual check.
+3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 travel is next; hosted playtest feedback is a separate input.
 4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.

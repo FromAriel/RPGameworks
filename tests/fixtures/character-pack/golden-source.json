@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "packId": "synthetic-hero",
+  "cell": { "widthPx": 4, "heightPx": 4 },
+  "palette": { "r": "ff0000ff", "g": "00ff00ff", "b": "0000ffff", "k": "00000000" },
+  "layers": [
+    { "id": "base", "role": "body" },
+    { "id": "shirt", "role": "chest" },
+    { "id": "tool", "role": "tool pixels" }
+  ],
+  "animations": [
+    { "name": "idle", "direction": "down", "frameCount": 2, "loop": true },
+    { "name": "idle", "direction": "side", "frameCount": 1, "loop": true },
+    { "name": "walk", "direction": "down", "frameCount": 2, "loop": true },
+    { "name": "use", "direction": null, "frameCount": 1, "loop": false }
+  ],
+  "frames": [
+    { "animation": "idle", "direction": "down", "frameIndex": 0, "layer": "base", "pixels": "rrrrr..rr..rrrrr" },
+    { "animation": "idle", "direction": "down", "frameIndex": 0, "layer": "shirt", "pixels": ".....gg..gg....." },
+    { "animation": "idle", "direction": "down", "frameIndex": 1, "layer": "base", "pixels": "rrrrr..rr..rrrrr" },
+    { "animation": "idle", "direction": "down", "frameIndex": 1, "layer": "shirt", "pixels": ".....gg..gg....." },
+    { "animation": "idle", "direction": "side", "frameIndex": 0, "layer": "base", "pixels": "rrrrrrrrrr..rrrr" },
+    { "animation": "idle", "direction": "side", "frameIndex": 0, "layer": "shirt", "pixels": ".....gg..gg....." },
+    { "animation": "walk", "direction": "down", "frameIndex": 0, "layer": "base", "pixels": "rrrrr.rrr.rrrrrr" },
+    { "animation": "walk", "direction": "down", "frameIndex": 0, "layer": "shirt", "pixels": ".....gg..gg....." },
+    { "animation": "walk", "direction": "down", "frameIndex": 1, "layer": "base", "pixels": "rrrrrrr....rrrrr" },
+    { "animation": "walk", "direction": "down", "frameIndex": 1, "layer": "shirt", "pixels": "....gg....gg...." },
+    { "animation": "walk", "direction": "down", "frameIndex": 1, "layer": "tool", "pixels": "..bb............" },
+    { "animation": "use", "direction": null, "frameIndex": 0, "layer": "base", "pixels": "kkkkkkkkkkkkkkkk" }
+  ]
+}

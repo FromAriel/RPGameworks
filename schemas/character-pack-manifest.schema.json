@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CharacterPackManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "packId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,31}$"
+    },
+    "formatVersion": { "const": 1 },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "widthPx": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "heightPx": { "type": "integer", "minimum": 1, "maximum": 128 }
+      },
+      "required": ["widthPx", "heightPx"]
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+          "role": { "type": "string", "pattern": "^.{1,64}$" }
+        },
+        "required": ["id", "role"]
+      }
+    },
+    "animations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+          "direction": { "enum": ["down", "side", "up", null] },
+          "frameCount": { "type": "integer", "minimum": 1, "maximum": 16 },
+          "loop": { "type": "boolean" }
+        },
+        "required": ["name", "direction", "frameCount", "loop"]
+      }
+    },
+    "payloads": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 65535,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "offset": { "type": "integer", "minimum": 0 },
+          "length": { "type": "integer", "minimum": 1, "maximum": 8388608 },
+          "decodedLength": { "type": "integer", "minimum": 4, "maximum": 65536 },
+          "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "required": ["offset", "length", "decodedLength", "digest"]
+      }
+    },
+    "cells": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 65536,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cell": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "animation": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+              "direction": { "enum": ["down", "side", "up", null] },
+              "frameIndex": { "type": "integer", "minimum": 0, "maximum": 15 }
+            },
+            "required": ["animation", "direction", "frameIndex"]
+          },
+          "layer": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+          "payload": { "type": "integer", "minimum": 0, "maximum": 65534 }
+        },
+        "required": ["cell", "layer", "payload"]
+      }
+    }
+  },
+  "required": ["packId", "formatVersion", "cell", "layers", "animations", "payloads", "cells"]
+}

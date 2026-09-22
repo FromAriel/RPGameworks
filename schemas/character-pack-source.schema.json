@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CharacterPackSource",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "packId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,31}$"
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "widthPx": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "heightPx": { "type": "integer", "minimum": 1, "maximum": 128 }
+      },
+      "required": ["widthPx", "heightPx"]
+    },
+    "palette": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 255,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-fA-F]{8}$"
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+          "role": { "type": "string", "minLength": 1, "maxLength": 64 }
+        },
+        "required": ["id", "role"]
+      }
+    },
+    "animations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+          "direction": { "enum": ["down", "side", "up", null] },
+          "frameCount": { "type": "integer", "minimum": 1, "maximum": 16 },
+          "loop": { "type": "boolean" }
+        },
+        "required": ["name", "direction", "frameCount", "loop"]
+      }
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "animation": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+          "direction": { "enum": ["down", "side", "up", null] },
+          "frameIndex": { "type": "integer", "minimum": 0, "maximum": 15 },
+          "layer": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+          "pixels": {
+            "type": "string",
+            "description": "One palette symbol per pixel, row-major; '.' is transparent.",
+            "pattern": "^[.A-Za-z0-9]{1,16384}$"
+          }
+        },
+        "required": ["animation", "direction", "frameIndex", "layer", "pixels"]
+      }
+    }
+  },
+  "required": ["schemaVersion", "packId", "cell", "palette", "layers", "animations", "frames"]
+}

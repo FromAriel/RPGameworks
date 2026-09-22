@@ -1,0 +1,30 @@
+{
+  "format": "rpgameworks.character-appearance-selection",
+  "formatVersion": 1,
+  "packId": "starter-hero",
+  "recordedDate": "2026-09-22",
+  "recordedBy": "Ariel",
+  "source": {
+    "exportRoot": ".import/Cute_Fantasy/Player",
+    "masterSha256": "38f98aca474696f8f37d9080f4faa2ba12f395e1c4416baa8579a49c3cb1382d",
+    "note": "Paths are relative to exportRoot, forward slashes only. The drop is ignored; files are cited by path, never committed."
+  },
+  "policy": {
+    "head": "hair",
+    "accessory": null,
+    "hands": "include-bare",
+    "tools": "none",
+    "mount": "Player_Horse_Gray"
+  },
+  "variants": {
+    "base": "Player_Base/Player_Base_animations.png",
+    "feet": "Feet/Shoes_1_Purple.png",
+    "legs": "Legs/Farmer_Pants/Farmer_Pants_1_Blue.png",
+    "chest": "Chest/Farmer_Shirt/Farmer_Shirt_1_White_and_Brown.png",
+    "hair": "Head/Hair_4/Hair_4_Black.png",
+    "helmet": null,
+    "accessory": null,
+    "hands": "Hands/Hands_1_Bare.png",
+    "mount": "Player_Mounts/Horse/Player_Horse_Gray.png"
+  }
+}

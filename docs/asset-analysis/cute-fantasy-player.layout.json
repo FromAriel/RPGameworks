@@ -1,0 +1,272 @@
+{
+  "format": "rpgameworks.sprite-sheet-layout",
+  "formatVersion": 1,
+  "source": {
+    "master": ".import/Player_Aseprite_Files/Player_Main_All.aseprite",
+    "sha256": "38f98aca474696f8f37d9080f4faa2ba12f395e1c4416baa8579a49c3cb1382d",
+    "exportRoot": ".import/Cute_Fantasy/Player",
+    "coordinateSystem": "zero-based, top-left origin, +x right, +y down"
+  },
+  "canvas": {
+    "widthPx": 576,
+    "heightPx": 3584,
+    "colorDepthBits": 32,
+    "asepriteFrameCount": 8,
+    "frameDurationMs": 100,
+    "animationTagCount": 0,
+    "sliceCount": 0
+  },
+  "grid": {
+    "cellWidthPx": 64,
+    "cellHeightPx": 64,
+    "columns": 9,
+    "rows": 56,
+    "cellRectFormula": "x=column*cellWidthPx,y=row*cellHeightPx,w=cellWidthPx,h=cellHeightPx",
+    "sourceRowFormula": "masterRow=exportRow+masterRowOffset"
+  },
+  "layers": [
+    { "index": 0, "sourceName": "horse", "role": "mount behind rider", "visibleInMaster": true, "assetFamilyIds": ["horse"] },
+    { "index": 1, "sourceName": "tool_under", "role": "tool pixels behind body", "visibleInMaster": true, "assetFamilyIds": ["iron-sword", "wooden-bow", "iron-tools", "fishing-rod"] },
+    { "index": 2, "sourceName": "base", "role": "bare body and skin", "visibleInMaster": true, "assetFamilyIds": ["body"] },
+    { "index": 3, "sourceName": "shoes", "role": "footwear", "visibleInMaster": true, "assetFamilyIds": ["feet"] },
+    { "index": 4, "sourceName": "pants", "role": "trousers or leg armor", "visibleInMaster": true, "assetFamilyIds": ["legs"] },
+    { "index": 5, "sourceName": "shirt", "role": "shirt or chest armor", "visibleInMaster": true, "assetFamilyIds": ["chest"] },
+    { "index": 6, "sourceName": "hair", "role": "hair OR helmet", "visibleInMaster": true, "assetFamilyIds": ["hair", "helmet"] },
+    { "index": 7, "sourceName": "accesory", "role": "optional head accessory; spelling preserved from source", "visibleInMaster": true, "assetFamilyIds": ["accessory"] },
+    { "index": 8, "sourceName": "hands", "role": "separate bare-hand foreground overlay", "visibleInMaster": false, "assetFamilyIds": ["hands"] },
+    { "index": 9, "sourceName": "tool_top", "role": "tool pixels in front of body", "visibleInMaster": true, "assetFamilyIds": ["iron-sword", "wooden-bow", "iron-tools", "fishing-rod"] }
+  ],
+  "rowBands": [
+    { "firstMasterRow": 0, "rowCount": 3, "occupiedColumns": 6, "label": "unnamed character pose block A", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 3, "rowCount": 3, "occupiedColumns": 6, "label": "unnamed character pose block B", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 6, "rowCount": 9, "occupiedColumns": 4, "label": "iron sword", "labelStatus": "verified-by-export" },
+    { "firstMasterRow": 15, "rowCount": 1, "occupiedColumns": 4, "label": "unnamed character pose row", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 16, "rowCount": 1, "occupiedColumns": 6, "label": "unnamed character pose row", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 17, "rowCount": 3, "occupiedColumns": 8, "label": "unnamed character pose block", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 20, "rowCount": 3, "occupiedColumns": 1, "label": "unnamed character pose block", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 23, "rowCount": 3, "occupiedColumns": 5, "label": "unnamed character pose block", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 26, "rowCount": 3, "occupiedColumns": 6, "label": "unnamed character pose block", "labelStatus": "unlabeled-in-source" },
+    { "firstMasterRow": 29, "rowCount": 3, "occupiedColumns": 6, "label": "wooden bow", "labelStatus": "verified-by-export" },
+    { "firstMasterRow": 32, "rowCount": 12, "occupiedColumns": 6, "label": "iron tools", "labelStatus": "verified-by-export" },
+    { "firstMasterRow": 44, "rowCount": 3, "occupiedColumns": 9, "label": "wooden fishing rod block A", "labelStatus": "verified-by-export" },
+    { "firstMasterRow": 47, "rowCount": 3, "occupiedColumns": 8, "label": "wooden fishing rod block B", "labelStatus": "verified-by-export" },
+    { "firstMasterRow": 50, "rowCount": 3, "occupiedColumns": 2, "label": "horse block A", "labelStatus": "verified-by-export" },
+    { "firstMasterRow": 53, "rowCount": 3, "occupiedColumns": 6, "label": "horse block B", "labelStatus": "verified-by-export" }
+  ],
+  "animationMapSource": "Ariel-supplied row and frame map; not embedded Aseprite tags",
+  "animations": [
+    { "name": "idle", "direction": "down", "row": 0, "frameCount": 6 },
+    { "name": "idle", "direction": "side", "row": 1, "frameCount": 6 },
+    { "name": "idle", "direction": "up", "row": 2, "frameCount": 6 },
+    { "name": "walk", "direction": "down", "row": 3, "frameCount": 6 },
+    { "name": "walk", "direction": "side", "row": 4, "frameCount": 6 },
+    { "name": "walk", "direction": "up", "row": 5, "frameCount": 6 },
+    { "name": "attack_1", "direction": "down", "row": 6, "frameCount": 4 },
+    { "name": "attack_2", "direction": "down", "row": 7, "frameCount": 4 },
+    { "name": "attack_3", "direction": "down", "row": 8, "frameCount": 4 },
+    { "name": "attack_1", "direction": "side", "row": 9, "frameCount": 4 },
+    { "name": "attack_2", "direction": "side", "row": 10, "frameCount": 4 },
+    { "name": "attack_3", "direction": "side", "row": 11, "frameCount": 4 },
+    { "name": "attack_1", "direction": "up", "row": 12, "frameCount": 4 },
+    { "name": "attack_2", "direction": "up", "row": 13, "frameCount": 4 },
+    { "name": "attack_3", "direction": "up", "row": 14, "frameCount": 4 },
+    { "name": "collapse", "direction": null, "row": 15, "frameCount": 4 },
+    { "name": "climb_ladder", "direction": null, "row": 16, "frameCount": 6 },
+    { "name": "dodge", "direction": "down", "row": 17, "frameCount": 8 },
+    { "name": "dodge", "direction": "side", "row": 18, "frameCount": 8 },
+    { "name": "dodge", "direction": "up", "row": 19, "frameCount": 8 },
+    { "name": "hold_idle", "direction": "down", "row": 20, "frameCount": 1 },
+    { "name": "hold_idle", "direction": "side", "row": 21, "frameCount": 1 },
+    { "name": "hold_idle", "direction": "up", "row": 22, "frameCount": 1 },
+    { "name": "hold_walk", "direction": "down", "row": 23, "frameCount": 5 },
+    { "name": "hold_walk", "direction": "side", "row": 24, "frameCount": 5 },
+    { "name": "hold_walk", "direction": "up", "row": 25, "frameCount": 5 },
+    { "name": "jump", "direction": "down", "row": 26, "frameCount": 6 },
+    { "name": "jump", "direction": "side", "row": 27, "frameCount": 6 },
+    { "name": "jump", "direction": "up", "row": 28, "frameCount": 6 },
+    { "name": "ranged_weapon", "direction": "down", "row": 29, "frameCount": 6 },
+    { "name": "ranged_weapon", "direction": "side", "row": 30, "frameCount": 6 },
+    { "name": "ranged_weapon", "direction": "up", "row": 31, "frameCount": 6 },
+    { "name": "tool_axe", "direction": "down", "row": 32, "frameCount": 6 },
+    { "name": "tool_axe", "direction": "side", "row": 33, "frameCount": 6 },
+    { "name": "tool_axe", "direction": "up", "row": 34, "frameCount": 6 },
+    { "name": "tool_pickaxe", "direction": "down", "row": 35, "frameCount": 6 },
+    { "name": "tool_pickaxe", "direction": "side", "row": 36, "frameCount": 6 },
+    { "name": "tool_pickaxe", "direction": "up", "row": 37, "frameCount": 6 },
+    { "name": "tool_hoe", "direction": "down", "row": 38, "frameCount": 6 },
+    { "name": "tool_hoe", "direction": "side", "row": 39, "frameCount": 6 },
+    { "name": "tool_hoe", "direction": "up", "row": 40, "frameCount": 6 },
+    { "name": "tool_watercan", "direction": "down", "row": 41, "frameCount": 6 },
+    { "name": "tool_watercan", "direction": "side", "row": 42, "frameCount": 6 },
+    { "name": "tool_watercan", "direction": "up", "row": 43, "frameCount": 6 },
+    { "name": "fish_cast", "direction": "down", "row": 44, "frameCount": 9 },
+    { "name": "fish_cast", "direction": "side", "row": 45, "frameCount": 9 },
+    { "name": "fish_cast", "direction": "up", "row": 46, "frameCount": 9 },
+    { "name": "fish_reel", "direction": "side", "row": 47, "frameCount": 8 },
+    { "name": "fish_reel", "direction": "down", "row": 48, "frameCount": 8 },
+    { "name": "fish_reel", "direction": "up", "row": 49, "frameCount": 8 },
+    { "name": "mount_idle", "direction": "down", "row": 50, "frameCount": 2 },
+    { "name": "mount_idle", "direction": "side", "row": 51, "frameCount": 2 },
+    { "name": "mount_idle", "direction": "up", "row": 52, "frameCount": 2 },
+    { "name": "mount_walk", "direction": "down", "row": 53, "frameCount": 6 },
+    { "name": "mount_walk", "direction": "side", "row": 54, "frameCount": 6 },
+    { "name": "mount_walk", "direction": "up", "row": 55, "frameCount": 6 }
+  ],
+  "assetFamilies": [
+    { "id": "body", "relativeGlob": "Player_Base/Player_Base_animations.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [2], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "verified-exemplar" },
+    { "id": "feet", "relativeGlob": "Feet/*.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [3], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "folder-and-dimensions" },
+    { "id": "legs", "relativeGlob": "Legs/*/*.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [4], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "folder-and-dimensions" },
+    { "id": "chest", "relativeGlob": "Chest/*/*.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [5], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "folder-and-dimensions" },
+    { "id": "hair", "relativeGlob": "Head/Hair_*/*.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [6], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "folder-and-dimensions" },
+    { "id": "helmet", "relativeGlob": "Head/Plate_Helmet_*/*.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [6], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "folder-and-dimensions" },
+    { "id": "accessory", "relativeGlob": "Accessories/*.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [7], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "verified-exemplar" },
+    { "id": "hands", "relativeGlob": "Hands/Hands_1_Bare.png", "widthPx": 576, "heightPx": 3584, "layerIndices": [8], "alignment": "master-grid", "masterRowOffset": 0, "evidence": "verified-exemplar" },
+    {
+      "id": "iron-sword", "relativeGlob": "Tools/Iron/Iron_Sword.png", "widthPx": 256, "heightPx": 576,
+      "layerIndices": [1, 9], "alignment": "row-offset", "masterRowOffset": 6, "evidence": "verified-exemplar",
+      "layerRowRuns": [
+        { "firstExportRow": 0, "rowCount": 6, "layerIndex": 9 },
+        { "firstExportRow": 6, "rowCount": 3, "layerIndex": 1 }
+      ]
+    },
+    {
+      "id": "wooden-bow", "relativeGlob": "Tools/Bow/Wooden_Bow.png", "widthPx": 384, "heightPx": 192,
+      "layerIndices": [1, 9], "alignment": "row-offset", "masterRowOffset": 29, "evidence": "verified-exemplar",
+      "layerRowRuns": [
+        { "firstExportRow": 0, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 2, "rowCount": 1, "layerIndex": 1 }
+      ]
+    },
+    {
+      "id": "iron-tools", "relativeGlob": "Tools/Iron/Iron_Tools.png", "widthPx": 384, "heightPx": 768,
+      "layerIndices": [1, 9], "alignment": "row-offset", "masterRowOffset": 32, "evidence": "verified-exemplar",
+      "layerRowRuns": [
+        { "firstExportRow": 0, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 2, "rowCount": 1, "layerIndex": 1 },
+        { "firstExportRow": 3, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 5, "rowCount": 1, "layerIndex": 1 },
+        { "firstExportRow": 6, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 8, "rowCount": 1, "layerIndex": 1 },
+        { "firstExportRow": 9, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 11, "rowCount": 1, "layerIndex": 1 }
+      ]
+    },
+    {
+      "id": "fishing-rod", "relativeGlob": "Tools/Fishing_Rod/Wooden_Fishing_Rod.png", "widthPx": 576, "heightPx": 384,
+      "layerIndices": [1, 9], "alignment": "row-offset", "masterRowOffset": 44, "evidence": "verified-exemplar",
+      "layerRowRuns": [
+        { "firstExportRow": 0, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 2, "rowCount": 1, "layerIndex": 1 },
+        { "firstExportRow": 3, "rowCount": 2, "layerIndex": 9 },
+        { "firstExportRow": 5, "rowCount": 1, "layerIndex": 1 }
+      ]
+    },
+    { "id": "horse", "relativeGlob": "Player_Mounts/Horse/*.png", "widthPx": 384, "heightPx": 384, "layerIndices": [0], "alignment": "row-offset", "masterRowOffset": 50, "evidence": "verified-exemplar" }
+  ],
+  "unmappedAssets": [
+    { "relativeGlob": "Hands/Hands_Bare_Lantern_Torch_Idle_Running.png", "widthPx": 384, "heightPx": 768, "reason": "Special hand sheet; no exact master row/layer alignment verified." },
+    { "relativeGlob": "Tools/Other/*.png", "widthPx": 384, "heightPx": 192, "reason": "Four lantern/torch sheets; no exact master row/layer alignment verified." }
+  ],
+  "examplePresets": [
+    {
+      "asepriteFrame": 0,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 4, "relativePng": "Legs/Farmer_Pants/Farmer_Pants_1_Blue.png" },
+        { "layerIndex": 5, "relativePng": "Chest/Farmer_Shirt/Farmer_Shirt_1_Blue.png" },
+        { "layerIndex": 6, "relativePng": "Head/Hair_1/Hair_1_Brown.png" },
+        { "layerIndex": 7, "relativePng": "Accessories/Farmer_Hat_1.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 9]
+    },
+    {
+      "asepriteFrame": 1,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 4, "relativePng": "Legs/OG_Pants/Pants_1_Blue.png" },
+        { "layerIndex": 5, "relativePng": "Chest/Lumberjack_Shirt/Lumberjack_Shirt_1_Red.png" },
+        { "layerIndex": 6, "relativePng": "Head/Hair_2/Hair_2_Blonde.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 9]
+    },
+    {
+      "asepriteFrame": 2,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 5, "relativePng": "Chest/Royal_Shirt/Royal_Shirt_1_Red.png" },
+        { "layerIndex": 6, "relativePng": "Head/Hair_3/Hair_3_Blonde.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 4, 7, 9]
+    },
+    {
+      "asepriteFrame": 3,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 4, "relativePng": "Legs/OG_Pants/Pants_1_Blue.png" },
+        { "layerIndex": 5, "relativePng": "Chest/OG_Shirt/Shirt_1_Green.png" },
+        { "layerIndex": 6, "relativePng": "Head/Hair_4/Hair_4_Blonde.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 9]
+    },
+    {
+      "asepriteFrame": 4,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 4, "relativePng": "Legs/OG_Pants/Pants_1_Blue.png" },
+        { "layerIndex": 5, "relativePng": "Chest/OG_Shirt/Shirt_1_Green.png" },
+        { "layerIndex": 6, "relativePng": "Head/Hair_5/Hair_5_Blonde.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 9]
+    },
+    {
+      "asepriteFrame": 5,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 4, "relativePng": "Legs/OG_Pants/Pants_1_Blue.png" },
+        { "layerIndex": 5, "relativePng": "Chest/OG_Shirt/Shirt_1_Green.png" },
+        { "layerIndex": 6, "relativePng": "Head/Hair_6/Hair_6_Blonde.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 9]
+    },
+    {
+      "asepriteFrame": 6,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 3, "relativePng": "Feet/Shoes_1_Brown.png" },
+        { "layerIndex": 6, "relativePng": "Head/Plate_Helmet_2/Heavy_Plate_Helmet_1_Gold.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 4, 5, 9]
+    },
+    {
+      "asepriteFrame": 7,
+      "exactMatches": [
+        { "layerIndex": 2, "relativePng": "Player_Base/Player_Base_animations.png" },
+        { "layerIndex": 4, "relativePng": "Legs/Plate_Legs/Plate_Legs_Gold.png" },
+        { "layerIndex": 5, "relativePng": "Chest/Plate_Chest/Plate_Chest_Gold.png" },
+        { "layerIndex": 6, "relativePng": "Head/Plate_Helmet_1/Plate_Helmet_1_Gold.png" },
+        { "layerIndex": 8, "relativePng": "Hands/Hands_1_Bare.png" }
+      ],
+      "unmatchedLayerIndices": [0, 1, 3, 9]
+    }
+  ],
+  "openQuestions": [
+    "Ariel supplied animation names, directions, rows, and frame counts; these are not embedded Aseprite tags or slices. Confirm playback timing and whether side-facing cells should be mirrored for the opposite direction.",
+    "Fish-cast rows 44-46 have identical base-layer cells in columns 7 and 8. The wooden fishing-rod overlay differs by four pixels per row at those columns, so the complete composite is not an exact duplicate. Ariel chose to include column 8 in all three cast animations; each now has nine playback frames.",
+    "Confirm the hand overlay visibility policy for each equipped tool and pose.",
+    "Torch, lantern, and special hand sheets are separate smaller exports; their alignment to the master was not verified.",
+    "Confirm asset provenance and redistribution constraints before tracking or publishing any third-party PNG or Aseprite file."
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RPGameworks research sprite-sheet layout",
+  "description": "Read-only source-analysis contract. It does not authorize bundling third-party art or define a runtime asset API.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "formatVersion", "source", "canvas", "grid", "layers", "rowBands", "animationMapSource", "animations", "assetFamilies", "unmappedAssets", "examplePresets", "openQuestions"],
+  "properties": {
+    "format": { "const": "rpgameworks.sprite-sheet-layout" },
+    "formatVersion": { "const": 1 },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["master", "sha256", "exportRoot", "coordinateSystem"],
+      "properties": {
+        "master": { "$ref": "#/definitions/path" },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "exportRoot": { "$ref": "#/definitions/path" },
+        "coordinateSystem": { "const": "zero-based, top-left origin, +x right, +y down" }
+      }
+    },
+    "canvas": {
+      "type": "object", "additionalProperties": false,
+      "required": ["widthPx", "heightPx", "colorDepthBits", "asepriteFrameCount", "frameDurationMs", "animationTagCount", "sliceCount"],
+      "properties": {
+        "widthPx": { "$ref": "#/definitions/positiveInteger" },
+        "heightPx": { "$ref": "#/definitions/positiveInteger" },
+        "colorDepthBits": { "enum": [8, 16, 32] },
+        "asepriteFrameCount": { "$ref": "#/definitions/positiveInteger" },
+        "frameDurationMs": { "$ref": "#/definitions/positiveInteger" },
+        "animationTagCount": { "$ref": "#/definitions/nonnegativeInteger" },
+        "sliceCount": { "$ref": "#/definitions/nonnegativeInteger" }
+      }
+    },
+    "grid": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cellWidthPx", "cellHeightPx", "columns", "rows", "cellRectFormula", "sourceRowFormula"],
+      "properties": {
+        "cellWidthPx": { "$ref": "#/definitions/positiveInteger" },
+        "cellHeightPx": { "$ref": "#/definitions/positiveInteger" },
+        "columns": { "$ref": "#/definitions/positiveInteger" },
+        "rows": { "$ref": "#/definitions/positiveInteger" },
+        "cellRectFormula": { "const": "x=column*cellWidthPx,y=row*cellHeightPx,w=cellWidthPx,h=cellHeightPx" },
+        "sourceRowFormula": { "const": "masterRow=exportRow+masterRowOffset" }
+      }
+    },
+    "layers": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["index", "sourceName", "role", "visibleInMaster", "assetFamilyIds"],
+        "properties": {
+          "index": { "$ref": "#/definitions/nonnegativeInteger" },
+          "sourceName": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "visibleInMaster": { "type": "boolean" },
+          "assetFamilyIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+        }
+      }
+    },
+    "rowBands": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["firstMasterRow", "rowCount", "occupiedColumns", "label", "labelStatus"],
+        "properties": {
+          "firstMasterRow": { "$ref": "#/definitions/nonnegativeInteger" },
+          "rowCount": { "$ref": "#/definitions/positiveInteger" },
+          "occupiedColumns": { "$ref": "#/definitions/positiveInteger" },
+          "label": { "type": "string", "minLength": 1 },
+          "labelStatus": { "enum": ["verified-by-export", "unlabeled-in-source"] }
+        }
+      }
+    },
+    "animationMapSource": { "const": "Ariel-supplied row and frame map; not embedded Aseprite tags" },
+    "animations": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "direction", "row", "frameCount"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "direction": { "enum": ["down", "side", "up", null] },
+          "row": { "$ref": "#/definitions/nonnegativeInteger" },
+          "frameCount": { "$ref": "#/definitions/positiveInteger" }
+        }
+      }
+    },
+    "assetFamilies": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "relativeGlob", "widthPx", "heightPx", "layerIndices", "alignment", "evidence"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "relativeGlob": { "$ref": "#/definitions/path" },
+          "widthPx": { "$ref": "#/definitions/positiveInteger" },
+          "heightPx": { "$ref": "#/definitions/positiveInteger" },
+          "layerIndices": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/nonnegativeInteger" } },
+          "alignment": { "enum": ["master-grid", "row-offset", "unverified"] },
+          "masterRowOffset": { "$ref": "#/definitions/nonnegativeInteger" },
+          "layerRowRuns": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["firstExportRow", "rowCount", "layerIndex"],
+              "properties": {
+                "firstExportRow": { "$ref": "#/definitions/nonnegativeInteger" },
+                "rowCount": { "$ref": "#/definitions/positiveInteger" },
+                "layerIndex": { "$ref": "#/definitions/nonnegativeInteger" }
+              }
+            }
+          },
+          "evidence": { "enum": ["verified-exemplar", "folder-and-dimensions", "not-in-master"] }
+        },
+        "allOf": [
+          { "if": { "properties": { "alignment": { "const": "row-offset" } } }, "then": { "properties": { "masterRowOffset": { "$ref": "#/definitions/nonnegativeInteger" } }, "required": ["masterRowOffset"] } },
+          { "if": { "properties": { "layerIndices": { "type": "array", "minItems": 2 } } }, "then": { "properties": { "layerRowRuns": { "type": "array" } }, "required": ["layerRowRuns"] } }
+        ]
+      }
+    },
+    "unmappedAssets": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["relativeGlob", "widthPx", "heightPx", "reason"],
+        "properties": {
+          "relativeGlob": { "$ref": "#/definitions/path" },
+          "widthPx": { "$ref": "#/definitions/positiveInteger" },
+          "heightPx": { "$ref": "#/definitions/positiveInteger" },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "examplePresets": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["asepriteFrame", "exactMatches", "unmatchedLayerIndices"],
+        "properties": {
+          "asepriteFrame": { "$ref": "#/definitions/nonnegativeInteger" },
+          "exactMatches": {
+            "type": "array",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["layerIndex", "relativePng"],
+              "properties": {
+                "layerIndex": { "$ref": "#/definitions/nonnegativeInteger" },
+                "relativePng": { "$ref": "#/definitions/path" }
+              }
+            }
+          },
+          "unmatchedLayerIndices": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/definitions/nonnegativeInteger" } }
+        }
+      }
+    },
+    "openQuestions": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "definitions": {
+    "path": { "type": "string", "minLength": 1, "pattern": "^[^\\\\]*$" },
+    "nonnegativeInteger": { "type": "integer", "minimum": 0 },
+    "positiveInteger": { "type": "integer", "minimum": 1 }
+  }
+}

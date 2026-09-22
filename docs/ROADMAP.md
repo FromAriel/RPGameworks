@@ -12,6 +12,8 @@ The ordering below is a recommended sequence, not a demand to implement all futu
 
 Update task status only when the corresponding behavior and evidence exist. Do not invent durations, completed benchmarks, CI results, or deploy URLs.
 
+**Ad-hoc public playtest delivery (complete, separate from M7):** A manual-only GitHub Pages workflow built, tested, and deployed the current game at [the public playtest URL](https://fromariel.github.io/RPGameworks/) from commit `87e4538` in [run 35676907503](https://github.com/FromAriel/RPGameworks/actions/runs/35676907503). The fetched site and Workshop-to-Gallery route were smoke-tested. This supplies a convenient browser test route; it does not close M7 release hardening or imply that later `main` commits deploy automatically. See [STATUS](STATUS.md) for exact evidence and remaining acceptance boundaries.
+
 ## Approved near-term sequence
 
 **W1 skin → M1.6 baseline → M2 state/inventory/saves with N1 navigation → U1 UI foundation → G1 conditional access → M3 conversations/quest → M4/M5/M6 as before.** M1/W1, N1.1–N1.2, M2, and U1 (U1.1–U1.3) are implemented, locally verified and accepted. G1 now applies the shared state spine to a visible key lock and switch gate. See [STATUS](STATUS.md) for current evidence, [U1-COMPONENTS](U1-COMPONENTS.md) for ownership/migration, [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) for the visual contract and [WINDOW-SKIN](WINDOW-SKIN.md) for the retained art audit.

@@ -1,6 +1,14 @@
 # RPGameworks — Current Status and Handoff
 
-**Updated:** September 21, 2026, G1.1c (the first chat authored demo lock, switch gate and key content with browser proof) is implemented and locally verified; G1.1 is complete pending review, then G1.2 (travel integration) is next.
+**Updated:** September 21, 2026. A manually released public GitHub Pages playtest is live from commit `87e4538`; G1.1c remains implemented and locally verified, pending Ariel's gameplay review before G1.2 (travel integration).
+
+## Ad-hoc delivery packet — manual GitHub Pages playtest
+
+[The public playtest](https://fromariel.github.io/RPGameworks/) is served by GitHub Pages from the manually dispatched [run 35676907503](https://github.com/FromAriel/RPGameworks/actions/runs/35676907503), commit `87e45383d9f45b5e3f7a7ec48b2ef3df9e2adf66`. The repository Pages source is `workflow`, not branch auto-publishing. The new `.github/workflows/pages.yml` is `workflow_dispatch`-only, rejects non-`main` refs, serializes releases, checks/builds on one read-only Ubuntu job, runs all Chromium browser scenarios under `/RPGameworks/`, and uploads only the tested `dist/` directory. A dependent deploy job has `pages: write` and `id-token: write`; the existing three-platform CI was not changed or run by the `[skip ci]` setup commit. Future ordinary pushes to `main` do not update the site; a reviewed commit requires a fresh manual dispatch and live verification.
+
+Local gate: `npm run check` passed 315 unit/content tests and the optimized build; `npm run test:browser` passed 135/135 Chromium scenarios. Artifact review found only the production entry, controller probe, assets, and generated game content in `dist/`; the separate UI gallery and `.import/` asset holding area were not included. Hosted run 35676907503 passed both build/test and deploy jobs for the same commit. External smoke returned HTTP 200 and loaded the expected build ID `87e4538`; Workshop-to-Gallery travel succeeded, a 390×844 viewport fit the canvas, and neither tested browser session recorded failed requests or page errors. The hosted Actions log emitted a non-fatal Node 20 deprecation annotation for upstream v4 actions, which GitHub ran with Node 24.
+
+This is a public playtest delivery, not finished-game release acceptance or physical-controller/mobile certification. Localhost and Pages have distinct IndexedDB origins; saves require explicit export/import to move between them. The build ID on the live site can lag behind `main` until a manual release. Next delivery task is to keep this exact-commit manual release gate for future approved playtest updates; the next gameplay packet remains G1.2 after Ariel reviews G1.1.
 
 ## G1.1c conditional access demo content — delivered
 

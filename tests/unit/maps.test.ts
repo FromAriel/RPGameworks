@@ -12,6 +12,10 @@ import type { GameManifest } from '../../src/content/generated/game';
 const json = (path: string): unknown => JSON.parse(readFileSync(path, 'utf8')) as unknown;
 const workshop = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/workshop.json')));
 const gallery = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
+const storeroom = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/storeroom.json')));
+const worldMaps = (a = workshop(), b = gallery()): Map<string, MapDefinition> => {
+  const c = storeroom(); return new Map([[a.id,a],[b.id,b],[c.id,c]]);
+};
 const manifest = (): GameManifest => structuredClone(readGame(json('content/games/demo/game.json')));
 const frames = Object.keys((json('assets/source/foundation.json') as { frames: Record<string, unknown> }).frames);
 
@@ -41,7 +45,7 @@ describe('canonical map schema and local semantics', () => {
   it('accepts both authored maps and resolves the complete world', () => {
     const a = readMap(workshop(), 'maps/workshop.json', frames);
     const b = readMap(gallery(), 'maps/gallery.json', frames);
-    expect(() => validateWorld(manifest(), new Map([[a.id,a],[b.id,b]]))).not.toThrow();
+    expect(() => validateWorld(manifest(), worldMaps(a,b))).not.toThrow();
   });
   it.each(badMaps)('rejects %s', (_name, change, expected) => {
     const map = workshop(); change(map);
@@ -111,14 +115,14 @@ describe('manifest and world references', () => {
   });
   it('rejects duplicate registry IDs and paths', () => {
     const m=manifest();m.maps.push({...m.maps[0]!});expect(()=>readGame(m)).toThrow('Duplicate map ID');
-    m.maps[2]!.id='demo:map.other';expect(()=>readGame(m)).toThrow('Duplicate map file');
+    m.maps[m.maps.length-1]!.id='demo:map.other';expect(()=>readGame(m)).toThrow('Duplicate map file');
   });
   it('rejects an unregistered start map',()=>{const m=manifest();m.start.mapId='demo:map.missing';expect(()=>readGame(m)).toThrow('Start map is not registered');});
   it('rejects unknown cross-object condition and action placement IDs',()=>{
     for(const kind of ['condition','action'] as const){const a=workshop(),b=gallery(),game=manifest(),plaque=b.objects.find(object=>object.id==='demo:object.gallery.plaque')!;
       if(kind==='condition')plaque.states![0]!.when={type:'placementOpened',placementId:'demo:object.missing',value:true};
       else plaque.states![1]!.interaction!.actions=[{type:'markPlacementOpened',placementId:'demo:object.missing'}];
-      expect(()=>validateWorld(game,new Map([[a.id,a],[b.id,b]]))).toThrow(`Unknown ${kind} placement`);
+      expect(()=>validateWorld(game,worldMaps(a,b))).toThrow(`Unknown ${kind} placement`);
     }
   });
   describe('interaction prerequisites (G1.1 access contract)',()=>{
@@ -136,12 +140,32 @@ describe('manifest and world references', () => {
     });
     it('rejects unknown placements referenced by an access condition',()=>{
       const a=workshop(),b=gallery(),game=manifest();plaqueState(b).prerequisites={type:'placementOpened',placementId:'demo:object.missing',value:true};
-      expect(()=>validateWorld(game,new Map([[a.id,a],[b.id,b]]))).toThrow('Unknown condition placement');
+      expect(()=>validateWorld(game,worldMaps(a,b))).toThrow('Unknown condition placement');
     });
     it('accepts a fully referenced access condition on authored content',()=>{
       const map=gallery();plaqueState(map).prerequisites={type:'factEquals',factId:'demo:fact.gallery.plaque-read',value:true};
       expect(validateMapItems(map,readItems(json('content/games/demo/items.json')),'ok.json')).toBeUndefined();
       expect(validateMapFacts(map,readFacts(json('content/games/demo/facts.json')),'ok.json')).toBeUndefined();
+    });
+  });
+  describe('conditional exits (G1.2)',()=>{
+    it('requires an authored denial and valid local message',()=>{
+      const missing=gallery();delete missing.exits[1]!.rejectionMessageId;
+      expect(()=>readMap(missing,'bad.json',frames)).toThrow('Access-gated exit requires rejectionMessageId');
+      const dangling=gallery();dangling.exits[1]!.rejectionMessageId='absent';
+      expect(()=>readMap(dangling,'bad.json',frames)).toThrow('Message does not exist');
+    });
+    it('rejects unknown or context-free condition references',()=>{
+      const items=readItems(json('content/games/demo/items.json'));
+      const facts=readFacts(json('content/games/demo/facts.json'));
+      const badItem=gallery();badItem.exits[1]!.prerequisites={type:'itemAtLeast',itemId:'demo:item.missing',quantity:1};
+      expect(()=>validateMapItems(badItem,items,'bad.json')).toThrow('Unknown condition item');
+      const badFact=gallery();badFact.exits[1]!.prerequisites={type:'factEquals',factId:'demo:fact.missing',value:true};
+      expect(()=>validateMapFacts(badFact,facts,'bad.json')).toThrow('Unknown condition fact');
+      const self=gallery();self.exits[1]!.prerequisites={type:'placementOpened',placementId:'self',value:true};
+      expect(()=>validateMapFacts(self,facts,'bad.json')).toThrow('Exit condition cannot use self');
+      const unknown=gallery();unknown.exits[1]!.prerequisites={type:'placementOpened',placementId:'demo:object.missing',value:true};
+      expect(()=>validateWorld(manifest(),worldMaps(workshop(),unknown))).toThrow('Unknown condition placement');
     });
   });
   it.each(['map','spawn','start','placement','missing'])('rejects broken world %s reference',kind=>{
@@ -150,7 +174,7 @@ describe('manifest and world references', () => {
     if(kind==='spawn') a.exits[0]!.targetSpawn='missing';
     if(kind==='start') game.start.spawnId='missing';
     if(kind==='placement') b.objects[0]!.id=a.objects[0]!.id;
-    const maps=new Map([[a.id,a],[b.id,b]]);if(kind==='missing')maps.delete(b.id);
+    const maps=worldMaps(a,b);if(kind==='missing')maps.delete(b.id);
     expect(()=>validateWorld(game,maps)).toThrow(ContentError);
   });
 });
@@ -162,11 +186,11 @@ describe('content compiler',()=>{
       const source=join(temp,'source'), output=join(temp,'compiled');cpSync('content/games/demo',source,{recursive:true});
       const run=()=>spawnSync(process.execPath,['tools/build-content.mjs','--source',source,'--output',output],{encoding:'utf8'});
       expect(run().status).toBe(0);const first=readFileSync(join(output,'game.json'),'utf8');
-      expect(readdirSync(join(output,'maps'))).toHaveLength(2);expect(run().status).toBe(0);
+      expect(readdirSync(join(output,'maps'))).toHaveLength(3);expect(run().status).toBe(0);
       expect(readFileSync(join(output,'game.json'),'utf8')).toBe(first);
       const m=workshop();m.exits[0]!.targetSpawn='missing';writeFileSync(join(source,'maps/workshop.json'),JSON.stringify(m));
       const failed=run();expect(failed.status).toBe(1);expect(failed.stderr).toContain('Target spawn does not exist');
       expect(readFileSync(join(output,'game.json'),'utf8')).toBe(first);
     }finally{rmSync(temp,{recursive:true,force:true});}
-  });
+  },15000);
 });

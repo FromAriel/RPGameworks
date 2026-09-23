@@ -42,6 +42,14 @@ describe('bounded conditions and ordered object states',()=>{
     expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'unread',frame:'plaque'});expect([...objectDependencies(plaque)]).toEqual(['fact:demo:fact.gallery.plaque-read']);
     state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'read',frame:'plaque-read'});
   });
+  it('keeps the storeroom doorway visible while changing its lock art and collision',()=>{
+    const map=readMap(json('content/games/demo/maps/gallery.json'));
+    const door=map.objects.find(object=>object.id==='demo:object.gallery.storeroom-door')!;
+    const state=session();
+    expect(resolveObjectState(door,state)).toMatchObject({stateId:'locked',frame:'door-locked',visible:true,solid:true});
+    state.transact({actions:[{type:'markPlacementOpened',placementId:door.id}]});
+    expect(resolveObjectState(door,state)).toMatchObject({stateId:'unlocked',frame:'door',visible:true,solid:false});
+  });
   const gate=(actionless=false):Placement=>{
     const map=structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
     const gate:Placement={id:'demo:object.gallery.test-gate',frame:'door',x:2,y:7,solid:true,states:[

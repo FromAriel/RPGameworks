@@ -1,6 +1,6 @@
 # Character-sheet integration branch plan
 
-**Status:** proposed implementation branch, not started · **Owner:** Ariel · **Entry point:** current `main` after the G1.1c content slice, while G1.1 acceptance and G1.2 travel remain separately tracked in [ROADMAP](ROADMAP.md). This branch does not mark G1 complete or reorder M3–M7.
+**Status:** CA1/CA2 delivered and published; CA3/CA4 remain optional separate art packets · **Owner:** Ariel · **Current order:** G1.2 local review, G1.3, then M3 gameplay. See [ROADMAP](ROADMAP.md) and [STATUS](STATUS.md); this character plan does not mark G1 complete or require CA3/CA4 before M3.
 
 ## Outcome and boundaries
 
@@ -80,11 +80,11 @@ The initial compiled pack should contain one chosen full appearance plus `idle` 
 - **Pixel and time contract:** nearest-neighbor pixels; no interpolated frame blending; no full-sheet GPU reupload on each tick; animation elapsed time is presentation-only and bounded on tab resume. Respect reduced-motion presentation while keeping facing/state legible.
 - **Artifact contract:** package only the approved game-use selections and record creator attribution/terms and source-version hashes. Never commit receipts or the ignored premium source directory.
 
-## Immediate handoff checklist
+## Delivery and remaining-art checklist
 
-- [ ] Confirm G1.1 acceptance/current branch and preserve all existing uncommitted `docs/STATUS.md`, `docs/ROADMAP.md`, and `docs/asset-analysis/` work before implementation.
-- [ ] Record provenance and obtain Ariel's approval for the selected derived pack.
-- [ ] Start CA1 with synthetic pixels and the existing layout schema; write the binary specification and deterministic round-trip tests.
-- [ ] Select the starter appearance and side-mirroring/anchor/timing decisions with Ariel before CA2 visual acceptance.
-- [ ] Implement CA2, then CA3, each leaving the game playable with its own tests and STATUS entry.
-- [ ] Run CA4 locally and present the built character for Ariel's review; do not dispatch Pages or full hosted CI without a separate request.
+- [x] Preserve the G1.1 work and record provenance for the selected appearance.
+- [x] Obtain Ariel's approval for the selected derived pack after a local visual preview.
+- [x] Complete CA1 with synthetic pixels, the binary specification, and deterministic golden-fixture tests.
+- [x] Complete CA2 with the selected starter appearance, side mirroring, foot anchor, timing, fallback, and lifecycle checks.
+- [ ] Implement CA3 variants, held tools, mounts, and wider actions only as a separate art packet with its own acceptance.
+- [ ] Run CA4's broader catalog/residency review before any separately approved expansion release. The published CA2 pack already passed its own local build, browser, source-boundary, and hosted release checks.

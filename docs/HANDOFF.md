@@ -1,13 +1,14 @@
-# HANDOFF — working notes through local starter-hero preview
+# HANDOFF — working notes through G1.2 local preview
 
-**Written:** September 22, 2026, after G1.1 acceptance and Ariel's approved animated starter-hero release. [STATUS](STATUS.md) remains the evidence ledger. The derived game-use pack shipped in `05705b9` and its manual Pages release was verified in run 35789345759; Ariel's hosted playtest remains separate.
+**Written:** September 23, 2026, after Ariel accepted the corrected G1.2 gameplay packet and authorized its source push. [STATUS](STATUS.md) remains the evidence ledger. Hero release evidence is on `main` as docs-only `56f86b9`; the derived game-use pack shipped in `05705b9` and its manual Pages release was verified in run 35789345759. A G1.2 Pages release and hosted playtest feedback remain separate.
 
 ## 1. Where the project stands
 
-**Implemented, locally verified, and accepted (latest first):**
+**Implemented and locally verified (latest first; acceptance and release are marked per row):**
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
+| G1.2 source candidate | Conditional exits, Ariel-approved locked/unlocked door images, set-back arrival spawns, sparse Storeroom and Gallery return; local gameplay accepted, Pages release open | [STATUS §G1.2](STATUS.md); 348 unit/content and 141 browser tests |
 | CA1/CA2 game-art release (published) | Hash-pinned real-pixel `starter-hero` pack and six-layer idle/walk view in Workshop and Gallery; derived game-use pack and provenance only | [STATUS §animated hero](STATUS.md); build `05705b9`, Pages run 35789345759 |
 | CA1 synthetic foundations | Character pack v1 format (decision 0003), deterministic offline encoder, strict runtime reader, committed golden fixture | [STATUS §CA1](STATUS.md); decision `0003-character-pack-v1.md` |
 | G1.1 accepted | Conditional access contract: per-state `solid`, `interaction.prerequisites`, dynamic collision view + occupied-cell deferral, checkpoint save/load validation against resolved views, and the first chat-authored demo content (brass key, lever, choke-point gate, key crate, storeroom door) with end-to-end browser proof | ROADMAP checkbox marked; [STATUS §G1.1c](STATUS.md); commits `75b9bd6`…`846ca06` |
@@ -17,18 +18,17 @@
 | M2 spine | Facts/transactions/placements, three-slot IndexedDB saves, inventory menu | [status §M2](STATUS.md) |
 | Research docs | Cute Fantasy sprite layout (schema + 56-row Ariel map) + license decision; CA1–CA4 plan | [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md), [asset-analysis/](asset-analysis/README.md) |
 
-**Current local verification:** `npm run check` passes with 344 unit/content tests, typecheck, and production build. The focused 33-scenario Chromium run and full 139-scenario browser suite pass. The original synthetic format, windowskin asset, and public Pages release are unchanged.
+**Current local verification:** `npm run check` passes with 348 unit/content tests, typecheck, and production build. The full 141-scenario Chromium suite passes, including the corrected visible door and one-step return separation, failure/retry, save/reload, and existing 40-transfer regressions. The public Pages release remains at the approved hero build `05705b9`.
 
 **Deployment posture:** Pages deploys **only** by manual dispatch of the build-only workflow for an approved commit; ordinary pushes never publish. Public-repo builds are free of the runner-quota problem that exhausted the old matrix; the three-platform CI stays separately manual.
 
 ## 2. What is left (ordered)
 
-1. **CA1/CA2 — published animated hero** — synthetic foundations and the recorded appearance feed an explicit real-pixel encoder. The selected pack is mounted in Workshop/Gallery with full side-view mirroring, (32,41) foot anchor, 180 ms idle / 120 ms walk, fallback, and shared texture ownership. Ariel approved the local preview; the derived pack and provenance shipped in `05705b9`. The manual Pages run succeeded, and exact served build and pack bytes plus both rooms were verified. Leave Ariel's own hosted playtest open.
-2. **CA2 follow-up** — adjust art anchor or timing only if Ariel requests it, regenerate and repeat the relevant visual checks.
-3. **CA3 — variants + the 56-entry action catalog** with explicit availability policy (an action exists only if content enables it); held-tool/mount composites; test-only preview route.
-4. **CA4 — production review**: `dist/` allowlist (no `.aseprite`/source PNGs/ZIP/`.import/`), texture-residency checks, cold/warm load comparison, `dist/` only ships the approved pack, and a separately authorized manual Pages release.
-5. **G1.2 — travel integration** (denial-once with no destination fetch, existing prepare/validate/activate path, two locks in one proof), then the M3 quest per NEXT-SLICES §8. Sequenced after CA1 per Ariel's ordering — the character plan does not replace it.
-6. Longer route: M3 conversations/quests → M4 PixelFX → M5 battle → M6 world → M7 release hardening ([JRPG-BUILDOUT](JRPG-BUILDOUT.md)).
+1. **G1.2 — deliver the accepted source packet.** Ariel accepted the corrected Gallery/Storeroom gameplay and authorized a push to `main`. Recheck the exact candidate and push it. A Pages deployment and hosted playtest remain separate.
+2. **G1.3 — second independent lock.** Author another keyed placement with its own marker, prove neither lock opens the other, and inspect the existing Workshop/Gallery return exits and switch gate for visual/re-entry confusion. Retain G1.2 failure and 40-transfer tests as regressions.
+3. **M3 — missing-lens story.** Build dialogue and quest state around the existing Gallery key crate and reachable Storeroom. Choose a distinct lens hand-in consequence rather than granting the already available brass key; decide strict-v1 save compatibility before changing the schema.
+4. **Chapter path.** Deliver minimum owned/fallback PixelFX with one battle cue, then M5 battle and preparation, M6.1's finishable chapter, and M7 hardening for its exact release artifact. Fuller FX laboratory, region scale, world clock, and large-map proofs may follow.
+5. **Separate character-art path.** CA1/CA2 are published in `05705b9`. CA3's variants/tools/mounts and CA4's broader review can be scheduled when content needs them; art anchor/timing changes require a new visual check if Ariel requests them.
 
 ## 3. What we learned (alpha of the handbook)
 
@@ -56,7 +56,7 @@
 
 ## 5. First steps for the very next agent
 
-1. Read [STATUS](STATUS.md) top-to-bottom, then [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md) (CA1). CA1's synthetic foundation is done, reconciled against Ariel's four review findings, and her starter appearance is recorded (`docs/asset-analysis/starter-appearance.json`): pack format `0003`, `tools/build-character-pack.mjs`, `src/platform/character-pack.ts`, `src/platform/character-selection.mjs`, committed golden fixture under `tests/fixtures/character-pack/`, 27 unit tests.
+1. Read [STATUS](STATUS.md) and the G1.2/G1.3 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. Ariel's first local G1.2 playtest found the disappearing door and immediate backward re-entry; both were corrected and checked locally. She accepted the corrected local packet for source delivery. Do not treat the checkbox or source push as a Pages deployment.
 2. Ariel approved the local hero candidate and Pages serves it. Record any hosted playtest feedback separately; changes to mirror, anchor, or timing require a new candidate and visual check.
-3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 travel is next; hosted playtest feedback is a separate input.
+3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 code and content are local only; a gameplay push and Pages deployment each need a separate decision. Record hosted playtest feedback separately.
 4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.

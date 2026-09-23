@@ -1,7 +1,9 @@
 import type { Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { test, expect, openRoom, snapshot } from './helpers';
 
 const GALLERY = 'demo:map.gallery';
+const STOREROOM = 'demo:map.storeroom';
 const dialog = '#interaction-dialog';
 
 async function step(page: Page, key: string, times = 1): Promise<void> {
@@ -37,14 +39,6 @@ async function interact(page: Page): Promise<string> {
   await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
   return text ?? '';
 }
-async function deadInteract(page: Page): Promise<void> {
-  // An unlocked state has no interaction: a press must not open the message window.
-  await expect(page.locator(dialog)).not.toBeVisible();
-  await page.keyboard.down('KeyE');
-  await page.waitForTimeout(150);
-  await page.keyboard.up('KeyE');
-  await expect(page.locator(dialog)).not.toBeVisible();
-}
 async function openSaves(page: Page): Promise<void> {
   await page.keyboard.press('KeyI');
   await expect(page.locator('#inventory-dialog')).toBeVisible();
@@ -62,7 +56,25 @@ async function confirmLoad(page: Page, index: number): Promise<void> {
   await expect(confirmation).toBeHidden();
 }
 
- test('a locked storeroom denies twice without the key and unlocks with it, keeping the key', async ({ page }) => {
+test('a locked storeroom denies entry without requesting a destination', async ({ page }) => {
+  let destinationRequests = 0;
+  await page.route('**/generated/content/maps/storeroom.*.json', route => {
+    destinationRequests += 1;
+    return route.continue();
+  });
+  await openRoom(page, `?map=${GALLERY}&spawn=from-storeroom`);
+  await step(page, 'ArrowLeft'); // Backing up once after arrival stays in the Gallery.
+  expect((await snapshot(page)).actorTile).toEqual({ x: 21, y: 3 });
+  expect((await snapshot(page)).mapId).toBe(GALLERY);
+  await face(page, 'ArrowLeft');
+  expect((await snapshot(page)).interactionTarget).toBe('demo:object.gallery.storeroom-door');
+  expect(await interact(page)).toContain('need a key');
+  expect(await interact(page)).toContain('need a key');
+  expect(destinationRequests).toBe(0);
+  expect((await snapshot(page)).mapId).toBe(GALLERY);
+});
+
+test('the brass key unlocks storeroom travel, survives return and save reload', async ({ page }, info) => {
   await openRoom(page, `?map=${GALLERY}`);
   await step(page, 'ArrowDown'); // (4,7)
   await step(page, 'ArrowRight', 7); // (11,7)
@@ -83,12 +95,82 @@ async function confirmLoad(page: Page, index: number): Promise<void> {
   await face(page, 'ArrowLeft'); await step(page, 'ArrowLeft', 1); // (20,2) — facing walks to (21,2), the step lands on (20,2)
   await face(page, 'ArrowDown'); // Pure turn: the locked storeroom door below is solid.
   expect((await snapshot(page)).interactionTarget).toBe('demo:object.gallery.storeroom-door');
-  // The interact path below denied without the key in the parallel scenario; it must succeed now.
+  await page.screenshot({ path: info.outputPath('g1-locked-door.png'), fullPage: true });
   expect((await interact(page))).toContain('brass key turns'); // The success message, not the denial.
   expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
   expect((await snapshot(page)).session.inventory['demo:item.brass-key']).toBe(1); // Keys are retained by default.
-  await face(page, 'ArrowDown'); await deadInteract(page); // Unlocked state has no interaction; nothing opens.
+  await page.screenshot({ path: info.outputPath('g1-unlocked-door.png'), fullPage: true });
+  let destinationRequests = 0;
+  await page.route('**/generated/content/maps/storeroom.*.json', route => {
+    destinationRequests += 1;
+    return destinationRequests === 1 ? route.fulfill({ status: 503, body: 'Unavailable' }) : route.continue();
+  });
+  await page.keyboard.down('ArrowDown');
+  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('transition-error');
+  await page.keyboard.up('ArrowDown');
+  expect((await snapshot(page)).mapId).toBe(GALLERY);
   expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
+  expect((await snapshot(page)).session.inventory['demo:item.brass-key']).toBe(1);
+  await page.locator('#dialog-advance').click(); // Retry the already committed doorway.
+  await expect.poll(async () => (await snapshot(page)).mapId).toBe(STOREROOM);
+  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
+  expect(destinationRequests).toBe(2);
+  await page.screenshot({ path: info.outputPath('g1-storeroom.png'), fullPage: true });
+  expect((await snapshot(page)).session.inventory['demo:item.brass-key']).toBe(1);
+  expect((await snapshot(page)).actorTile).toEqual({ x: 3, y: 3 });
+  await step(page, 'ArrowLeft'); // One backward step remains in the Storeroom.
+  expect((await snapshot(page)).actorTile).toEqual({ x: 2, y: 3 });
+  expect((await snapshot(page)).mapId).toBe(STOREROOM);
+  await page.keyboard.down('ArrowLeft');
+  await expect.poll(async () => (await snapshot(page)).mapId).toBe(GALLERY);
+  await page.keyboard.up('ArrowLeft');
+  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
+  expect((await snapshot(page)).actorTile).toEqual({ x: 22, y: 3 });
+  await step(page, 'ArrowLeft'); // One backward step remains in the Gallery too.
+  expect((await snapshot(page)).actorTile).toEqual({ x: 21, y: 3 });
+  expect((await snapshot(page)).mapId).toBe(GALLERY);
+  expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
+  await openSaves(page);
+  await slot(page, 0).getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('#save-status')).toContainText('Progress saved');
+  await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => window.__RPGAMEWORKS__?.snapshot().phase ?? 'booting')).toBe('ready');
+  await page.getByTestId('viewport').focus();
+  await openSaves(page); await confirmLoad(page, 0);
+  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
+  expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
+  expect((await snapshot(page)).session.inventory['demo:item.brass-key']).toBe(1);
+  await page.keyboard.down('ArrowLeft');
+  await expect.poll(async () => (await snapshot(page)).mapId).toBe(STOREROOM);
+  await page.keyboard.up('ArrowLeft');
+});
+
+test('a walkable denied exit shows one reason and makes zero destination requests', async ({ page }) => {
+  const map = JSON.parse(readFileSync('content/games/demo/maps/workshop.json', 'utf8'));
+  map.exits[0].prerequisites = { type: 'factEquals', factId: 'demo:fact.gallery.gate-open', value: true };
+  map.exits[0].rejectionMessageId = 'travel-locked';
+  map.strings.en['travel.locked'] = 'The Gallery doorway is closed for now.';
+  map.messages.push({ id: 'travel-locked', speakerKey: 'caretaker.name', pages: ['travel.locked'] });
+  await page.route('**/generated/content/maps/workshop.*.json', route => route.fulfill({ json: map }));
+  let destinationRequests = 0;
+  await page.route('**/generated/content/maps/gallery.*.json', route => {
+    destinationRequests += 1; return route.continue();
+  });
+  await openRoom(page, '?map=demo:map.workshop&spawn=from-gallery');
+  await page.keyboard.down('ArrowRight');
+  await expect(page.locator('#dialog-text')).toContainText('doorway is closed');
+  await page.keyboard.up('ArrowRight');
+  expect(destinationRequests).toBe(0);
+  await page.keyboard.press('Escape');
+  await page.keyboard.down('ArrowRight'); await page.waitForTimeout(200); await page.keyboard.up('ArrowRight');
+  await expect(page.locator(dialog)).not.toBeVisible();
+  expect(destinationRequests).toBe(0);
+  await step(page, 'ArrowLeft');
+  await page.keyboard.down('ArrowRight');
+  await expect(page.locator('#dialog-text')).toContainText('doorway is closed');
+  await page.keyboard.up('ArrowRight');
+  expect(destinationRequests).toBe(0);
 });
 
  test('the gate blocks the crossing while closed, opens with the lever, defers its close when occupied, and refuses saving there', async ({ page }) => {

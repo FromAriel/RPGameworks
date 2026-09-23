@@ -15,6 +15,10 @@
     {
       "id": "demo:map.gallery",
       "file": "maps/gallery.json"
+    },
+    {
+      "id": "demo:map.storeroom",
+      "file": "maps/storeroom.json"
     }
   ],
   "itemsFile": "items.json",

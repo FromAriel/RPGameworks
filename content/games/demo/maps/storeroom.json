@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:map.storeroom",
+  "name": "Gallery Storeroom",
+  "orientation": "orthogonal",
+  "tileSize": 16,
+  "width": 8,
+  "height": 6,
+  "legend": {"#": "wall", "a": "floor-a", "b": "floor-b"},
+  "layers": [{"id": "ground", "rows": [
+    "########",
+    "#bababa#",
+    "#ababab#",
+    "#bababa#",
+    "#ababab#",
+    "########"
+  ]}],
+  "collision": [
+    "########",
+    "#......#",
+    "#......#",
+    "#......#",
+    "#......#",
+    "########"
+  ],
+  "defaultSpawn": "from-gallery",
+  "spawns": [{"id": "from-gallery", "x": 3, "y": 3, "facing": "right"}],
+  "objects": [{"id": "demo:object.storeroom.door", "frame": "door", "x": 1, "y": 3, "solid": false}],
+  "exits": [{"id": "to-gallery", "x": 1, "y": 3, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-storeroom"}]
+}

@@ -1,6 +1,6 @@
 # RPGameworks — Full JRPG Build-Out Strategy
 
-**Version:** 0.1 · **Date:** September 20, 2026 · **Status:** Planning companion; implementation truth remains in [STATUS](STATUS.md).
+**Version:** 0.2 · **Date:** September 22, 2026 · **Status:** Long-range planning companion; earlier M2 queue below is historical. Current order is in [ROADMAP](ROADMAP.md) and implementation truth in [STATUS](STATUS.md).
 
 ## Purpose and authority
 
@@ -158,6 +158,7 @@ The first quest should remain small but support meaningful ordering:
 - The Gallery chest remains the sole lens grant and cannot duplicate it.
 - Mara recognizes possession and offers a clear turn-in choice.
 - Turn-in removes the lens and grants the reward/facts atomically.
+- The Gallery key crate already grants the retained brass key and the local G1.2 door can open before this quest. Choose a different story consequence or reward in the M3 content brief; support early lens, key, and Storeroom discovery without changing existing key/door IDs or saves.
 - Declining, lacking the item, repeating the conversation, reloading at each phase, and completing before formal acceptance all have authored outcomes.
 
 This slice should prove conditional dialogue nodes, direct keyboard/controller choices, disabled-choice behavior, quest-log or status communication if needed, idempotent rewards, and reachability validation. It should not introduce a universal dialogue scripting language.
@@ -276,7 +277,9 @@ Defer a proposed abstraction when it has no current content consumer, no indepen
 
 The desired architecture is extensible because each boundary is explicit and tested, not because every future feature has a placeholder class.
 
-## Immediate planning queue
+## Historical September 20 planning queue
+
+M2 and the first G1 door/switch proof have since been implemented. This list records the original sequence, not current marching orders; see [ROADMAP](ROADMAP.md) for the active G1.2 review → G1.3 → M3 route and the M4 minimum → M5 → M6.1 → M7 chapter gate.
 
 1. Have Ariel manually test the current chest/Inventory slice and record any real input, focus, visual, or comprehension issues.
 2. Implement M2.3 with one authored conditional object that exercises the minimum registered vocabulary.
@@ -288,4 +291,4 @@ The desired architecture is extensible because each boundary is explicit and tes
 8. Complete the deterministic battle and preparation/economy loop.
 9. Author and finish the small complete chapter before expanding toward a large region or broad editor suite.
 
-The next implementation packet remains M2.3. This document widens the destination without widening that packet.
+The M2.3 instruction above was the next packet when this companion was written; it is complete. Region-scale, world-clock, and large-map proofs may follow a tested complete-chapter release.

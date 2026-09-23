@@ -42,7 +42,8 @@
   "defaultSpawn": "start",
   "spawns": [
     {"id": "start", "x": 4, "y": 6, "facing": "down"},
-    {"id": "from-workshop", "x": 2, "y": 6, "facing": "right"}
+    {"id": "from-workshop", "x": 2, "y": 6, "facing": "right"},
+    {"id": "from-storeroom", "x": 22, "y": 3, "facing": "right"}
   ],
   "objects": [
     {"id": "demo:object.gallery.pillar", "frame": "wall", "x": 6, "y": 6, "solid": true},
@@ -60,9 +61,9 @@
       {"id": "on", "when": {"type": "factEquals", "factId": "demo:fact.gallery.gate-open", "value": true}, "frame": "sigil", "visible": true, "interaction": {"messageId": "gate-switch-off", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.gate-open", "value": false}]}},
       {"id": "off", "fallback": true, "frame": "sigil", "visible": true, "interaction": {"messageId": "gate-switch-on", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.gate-open", "value": true}]}}
     ]},
-    {"id": "demo:object.gallery.storeroom-door", "frame": "door", "x": 20, "y": 3, "solid": true, "states": [
-      {"id": "unlocked", "when": {"type": "placementOpened", "placementId": "self", "value": true}, "frame": "door", "visible": false, "solid": false},
-      {"id": "locked", "fallback": true, "frame": "door", "visible": true, "solid": true, "interaction": {"messageId": "storeroom-unlock", "rejectionMessageId": "storeroom-locked", "prerequisites": {"type": "itemAtLeast", "itemId": "demo:item.brass-key", "quantity": 1}, "actions": [{"type": "markPlacementOpened", "placementId": "self"}]}}
+    {"id": "demo:object.gallery.storeroom-door", "frame": "door-locked", "x": 20, "y": 3, "solid": true, "states": [
+      {"id": "unlocked", "when": {"type": "placementOpened", "placementId": "self", "value": true}, "frame": "door", "visible": true, "solid": false},
+      {"id": "locked", "fallback": true, "frame": "door-locked", "visible": true, "solid": true, "interaction": {"messageId": "storeroom-unlock", "rejectionMessageId": "storeroom-locked", "prerequisites": {"type": "itemAtLeast", "itemId": "demo:item.brass-key", "quantity": 1}, "actions": [{"type": "markPlacementOpened", "placementId": "self"}]}}
     ]},
     {"id": "demo:object.gallery.key-chest", "frame": "chest-closed", "x": 22, "y": 1, "solid": true, "chest": {"itemId": "demo:item.brass-key", "quantity": 1, "openedFrame": "chest-open", "openedMessageId": "key-found", "emptyMessageId": "key-empty"}},
     {"id": "demo:object.gallery.lens-chest", "frame": "chest-closed", "x": 8, "y": 8, "solid": true, "states": [
@@ -70,7 +71,10 @@
       {"id": "closed", "fallback": true, "frame": "chest-closed", "visible": true, "interaction": {"messageId": "lens-found", "rejectionMessageId": "chest-full", "actions": [{"type": "changeItem", "itemId": "demo:item.lens", "delta": 1}, {"type": "markPlacementOpened", "placementId": "self"}]}}
     ]}
   ],
-  "exits": [{"id": "to-workshop", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-gallery"}],
+  "exits": [
+    {"id": "to-workshop", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-gallery"},
+    {"id": "to-storeroom", "x": 20, "y": 3, "width": 1, "height": 1, "targetMap": "demo:map.storeroom", "targetSpawn": "from-gallery", "prerequisites": {"type": "placementOpened", "placementId": "demo:object.gallery.storeroom-door", "value": true}, "rejectionMessageId": "storeroom-locked"}
+  ],
   "strings": {"en": {
     "chest.name": "Gallery chest",
     "chest.found": "You found a polished lens.\n\nIt is now in your inventory. Open the game menu to inspect it.",
@@ -84,7 +88,7 @@
     "switch.off": "You push the lever back up. The gate grinds shut again.",
     "storeroom.name": "Brass storeroom door",
     "storeroom.locked": "The storeroom door is locked tight.\n\nYou need a key. Maybe the gallery caretaker keeps one somewhere.",
-    "storeroom.unlock": "The brass key turns,\n\nThe storeroom is unlocked. Passing through is not part of this proof yet; wait for the next packet.",
+    "storeroom.unlock": "The brass key turns.\n\nThe storeroom is unlocked. Step through the doorway to enter.",
     "plaque.name": "Brass plaque",
     "plaque.discovered": "THE PILLAR GALLERY\n\nYou trace the old lettering. A hidden line glows beneath your hand:\n\nA polished lens once focused the gallery's light.",
     "plaque.read": "The revealed line still glows:\n\nA polished lens once focused the gallery's light.\n\nThe western doorway returns to the Workshop."

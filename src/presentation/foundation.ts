@@ -261,9 +261,22 @@ export function createFoundation(elements: FoundationElements, onError: (message
       void this.enter(exit).catch((cause) => this.fail(cause));
     }
 
+    private canUseExit(exit: MapExit): boolean {
+      return !exit.prerequisites || elements.session.evaluate(exit.prerequisites);
+    }
+
+    private denyExit(exit: MapExit): void {
+      const message = content.map.messages?.find(candidate => candidate.id === exit.rejectionMessageId);
+      if (!message) throw new Error(`Missing exit rejection message: ${exit.id}`);
+      this.message = new MessageSession(exit.id, message, content.map.strings?.en ?? {});
+      this.setMode('message');
+      this.showMessage();
+    }
+
     private async enter(exit: MapExit): Promise<void> {
       if (!this.sceneLifetime || this.sceneLifetime.signal.aborted || this.transfer.pending ||
           (this.mode !== 'exploration' && this.mode !== 'transition-error')) return;
+      if (!this.canUseExit(exit)) { this.denyExit(exit); return; }
       const generation = ++this.generation;
       const lifetime = this.sceneLifetime;
       this.lastExit = exit; this.transitionError = null;
@@ -282,6 +295,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
           try { old.destroy(); } catch (cause) { this.fail(cause); } // Cleanup failure is fatal, not a false rollback.
           transitions += 1;
         },
+        () => this.canUseExit(exit),
       );
       if (lifetime.signal.aborted || generation !== this.generation || phase !== 'ready') return;
       if (result.kind === 'failed') {
@@ -289,7 +303,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.transitionError = result.error.message.slice(0, 2000);
         this.setMode('transition-error');
         this.dialog.show('The doorway could not open', this.transitionError, 'Your current room is unchanged.', 'Retry', 'Stay here');
-      } else this.resume();
+      } else if (result.kind === 'denied') this.denyExit(exit);
+      else this.resume();
     }
 
     private fail(cause: unknown): void {

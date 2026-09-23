@@ -1,4 +1,4 @@
-export type TransitionResult = { kind: 'committed' | 'cancelled' | 'busy' } | { kind: 'failed'; error: Error };
+export type TransitionResult = { kind: 'committed' | 'cancelled' | 'busy' | 'denied' } | { kind: 'failed'; error: Error };
 
 /** A bounded async owner. Cancellation invalidates old results even if a loader ignores abort. */
 export class TransitionTask<T> {
@@ -6,14 +6,17 @@ export class TransitionTask<T> {
   private disposed = false;
   get pending(): boolean { return this.current !== null; }
 
-  async run(load: (signal: AbortSignal) => Promise<T>, commit: (value: T) => void): Promise<TransitionResult> {
+  async run(load: (signal: AbortSignal) => Promise<T>, commit: (value: T) => void,
+    canCommit?: () => boolean): Promise<TransitionResult> {
     if (this.disposed) return { kind: 'cancelled' };
     if (this.current) return { kind: 'busy' };
+    if (canCommit && !canCommit()) return { kind: 'denied' };
     const request = new AbortController();
     this.current = request;
     try {
       const value = await load(request.signal);
       if (this.disposed || request.signal.aborted || this.current !== request) return { kind: 'cancelled' };
+      if (canCommit && !canCommit()) return { kind: 'denied' };
       commit(value);
       return { kind: 'committed' };
     } catch (cause) {

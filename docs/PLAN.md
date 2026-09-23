@@ -31,6 +31,8 @@ The aspiration is a framework that can support a substantial game with many regi
 
 The immediate integration target is a small chapter with a beginning, persistent exploration, a quest, preparation, battles, a boss, saves, failure recovery, and a clear ending. Completing that vertical slice is the proof that the framework can make a whole JRPG; [JRPG-BUILDOUT](JRPG-BUILDOUT.md) expands the staged route without enlarging the current implementation packet.
 
+Delivery has three distinct tiers: the existing public exploration **playtest**, a future **complete-chapter release** after the battle/boss/ending and M7 checks, and later **framework-scale proof** for broader regions, schedules, and large maps. Publishing the playtest does not satisfy the chapter gate; the wider scale proof need not delay a tested chapter release. [ROADMAP](ROADMAP.md) owns the current order and [STATUS](STATUS.md) records which tier has actual evidence.
+
 The repository acts as the initial editor. Content is ordinary files with stable IDs, schemas, and readable diffs. Browser tools can be added over the same formats once a repeated authoring problem justifies them.
 
 ### 1.1 Three independent kinds of scale
@@ -590,10 +592,10 @@ Browser authoring tools should start with the FX laboratory and diagnostics beca
 
 Technical feasibility is strong enough to justify the first implementation slice. A numerical success percentage would be a subjective guess until prototypes establish the target-device and workflow evidence. The plan replaces the earlier conversational confidence estimates with measurable gates rather than presenting them as calibrated probabilities.
 
-## 17. Definition of a credible first release
+## 17. Definition of a credible complete-chapter release
 
-A new visitor can open a verified static build, start the demo, move, interact, change maps, complete a small quest, see several coherent pixel effects, save/export progress, reload, and continue without duplicate rewards or broken state. Keyboard and tested touch flows work. Reduced effects preserve essential information. Repeated travel does not accumulate unbounded live resources.
+A new visitor can open a verified static build, start and finish a small chapter, move, interact, change maps, complete the lens quest, prepare for and resolve battles including a boss, reach a clear ending, save/export progress, reload, and continue without duplicate rewards or broken state. Keyboard and tested touch flows work. Reduced effects preserve essential information. Repeated travel and battle do not accumulate unbounded live resources. The current public exploration playtest is an earlier tier with separately recorded evidence.
 
 A contributor can add another small map, NPC, dialogue, item, and effect through documented data definitions and receive useful validation failures for mistakes. A future assistant can identify the current build state and next task without reconstructing the project from an old chat.
 
-That is the first platform. Large worlds, elaborate battle systems, sophisticated pixel transformations, and visual editors build on that evidence rather than delaying it.
+That is the first complete-chapter platform release. Large worlds, elaborate battle systems, sophisticated pixel transformations, and visual editors build on that evidence rather than delaying it.

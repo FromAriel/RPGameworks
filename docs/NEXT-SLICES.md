@@ -1,12 +1,14 @@
 # Next slices — base skin and stateful exploration
 
-**Decision date:** September 18, 2026. **Status:** approved planning, not implementation.
+**Decision date:** September 18, 2026. **Status:** historical feature contract; W1, M2, N1 core, U1, G1.1 and a local G1.2 candidate now exist. [ROADMAP](ROADMAP.md) owns current order and [STATUS](STATUS.md) owns implementation evidence.
 
-Ariel approved her quieter edited windowskin as the base skin and requested these next-step refinements be recorded. The runtime inspected for this update is `dd2add47eb52b84d626ff40d057b78016781243e`: two rooms, finite messages, unconditional door travel, controller exploration, and the player-first shell. The skin compositor, persistent world state, conditional access, branching dialogue, and controller-only menus below are not implemented by this documentation change.
+Ariel approved her quieter edited windowskin as the base skin and requested these next-step refinements be recorded. The runtime inspected for the original September 18 decision was `dd2add47eb52b84d626ff40d057b78016781243e`: two rooms, finite messages, unconditional door travel, controller exploration, and the player-first shell. This original documentation change implemented none of the proposed systems; later packets delivered several of them, as recorded in STATUS.
 
 [ROADMAP](ROADMAP.md) owns packet order; [PLAN](PLAN.md) owns architectural boundaries; [STATUS](STATUS.md) owns implementation truth. This document is the approved supplement to the stable master plan and supplies the agreed feature contracts. It refines its conditional-state/UI/first-content provisions; ROADMAP and STATUS link here so the new sequence is not inferred from the older provisional examples. [Decision 0001](decisions/0001-base-skin-and-stateful-exploration.md) records the changes from the earlier sequence. Field names here describe semantics; exact JSON schemas must be designed and validated in their implementation packets, not assumed to exist already.
 
 ## 1. Delivery order and dependencies
+
+This table records the original approved sequence. The remaining order was revised in ROADMAP after the G1.2 local candidate and animated-hero release.
 
 | Order | Packet | Observable result |
 | --- | --- | --- |
@@ -18,7 +20,7 @@ Ariel approved her quieter edited windowskin as the base skin and requested thes
 | 6 | **M3**, reusing **N1** for choices | Complete the missing-lens micro-quest, then add a second content-driven example. |
 | Later | **M4 → M5 → M6** | Recipe-driven PixelFX/laboratory, turn-based battle, then expanded-region/clock proof in their existing order. |
 
-These are stages, not a request for one enormous commit. W1 is a bounded insertion before the outstanding M1.6 task, not an excuse to create a theme editor or skip the baseline. N1's core must be complete before the inventory UI is called controller-usable; dialogue choice integration is accepted with M3.1. Audio polish is optional after the quest slice. No new runtime feature is marked complete by approving this plan.
+These were stages, not a request for one enormous commit. W1 and M1.6 are complete; N1 choice integration remains paired with M3.1. Audio polish remains optional after the quest slice. Approval of this historical plan alone was never implementation evidence.
 
 ## 2. W1 — Use Ariel's revised skin, not another redesign
 
@@ -139,14 +141,14 @@ Keep the player game menu separate from Debug. Add Inventory when item operation
 
 Reuse the existing Workshop, Gallery, Mara and plaque; add one storeroom after the systems can serve it. This smaller fixture precedes the previously proposed town/inn/cellar/path expansion. These are test-content choices, not final story commitments.
 
-The first connected route is:
+The first connected route is now planned around the implemented Gallery key crate and local G1.2 Storeroom door:
 
 1. Mara asks for a missing lens; agreement records the quest's searching state.
 2. Reading the gallery plaque records a meaningful clue and exposes an extra conversation topic.
 3. A reachable switch controls a gate to a chest. The switch and lens chest are not inside the key-locked storeroom.
 4. The chest grants the lens exactly once and remains open on return/reload.
-5. Returning the lens atomically removes it, completes the quest, and grants a brass key once. Mara uses completion acknowledgement on later visits.
-6. The brass key permanently unlocks the storeroom; it is not required to obtain the lens in the first place.
+5. Returning the lens atomically removes it, completes the quest, and grants a distinct story consequence or reward chosen in the M3 content brief once. Mara uses completion acknowledgement on later visits.
+6. The Gallery key crate already grants the retained brass key, which permanently unlocks the storeroom through its own per-placement marker. The key and Storeroom may be discovered before accepting or completing the lens quest.
 7. Save/reload preserves facts, switch/chest/lock state, inventory, quest progress and a valid checkpoint.
 
 Test discovery out of order, including finding the lens before accepting the quest; the conversation must reconcile existing progress rather than erase it or demand an impossible second chest reward. Declining and returning is a supported path. Keep the return route usable. The first access puzzle uses keys, switches, and quest facts, not a not-yet-built stat model.
@@ -163,4 +165,4 @@ M4 still owns recipe-driven PixelFX and its laboratory; M5 owns battle/stats exp
 
 Every implementation packet includes schemas/compatibility decisions, positive and failure fixtures, source/build/browser evidence, resource ownership, and a STATUS handoff. Preserve old map/message/controller fixtures and, after M2, old saves. Documentation approval does not migrate settings, import art, grant inventory, or implement a gate.
 
-The immediate next implementation is W1. Read the actual repository and source-asset handoff first, validate the revised sheet, apply it to the two existing surfaces, and stop at that tested outcome. M1.6 follows; do not collapse all of this document into a single engine rewrite.
+The original immediate packet was W1 and is complete. For current work, follow [ROADMAP](ROADMAP.md): Ariel's local G1.2 review, G1.3's second independent lock, then M3. Decide strict-v1 save compatibility before M3 quest-schema changes and test old-save fixtures. This supplement preserves the earlier behavior contracts without superseding current source or STATUS evidence.

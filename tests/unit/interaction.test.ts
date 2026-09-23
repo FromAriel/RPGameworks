@@ -115,6 +115,22 @@ describe('owned asynchronous transfers', () => {
     const result=await new TransitionTask<number>().run(async()=>1,()=>{throw new Error('missing frame');});
     expect(result).toMatchObject({kind:'failed', error:expect.objectContaining({message:'missing frame'})});
   });
+  it('denies before loading and rechecks access before activation', async () => {
+    const task = new TransitionTask<number>(), source = deferred<number>();
+    let allowed = false, loads = 0, commits = 0;
+    const load = () => { loads += 1; return source.promise; };
+    const commit = () => { commits += 1; };
+    expect(await task.run(load, commit, () => allowed)).toEqual({kind:'denied'});
+    expect(loads).toBe(0);
+    allowed = true;
+    const pending = task.run(load, commit, () => allowed);
+    expect(loads).toBe(1);
+    allowed = false;
+    source.resolve(1);
+    expect(await pending).toEqual({kind:'denied'});
+    expect(commits).toBe(0);
+    expect(task.pending).toBe(false);
+  });
   it('disposal prevents delayed activation and future loads', async () => {
     const task = new TransitionTask<number>(), source=deferred<number>(); let commits=0;
     const pending=task.run(()=>source.promise,()=>{commits+=1;}); task.dispose(); task.dispose(); source.resolve(1);

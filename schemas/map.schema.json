@@ -110,7 +110,9 @@
           "width": {"type": "integer", "minimum": 1, "maximum": 128},
           "height": {"type": "integer", "minimum": 1, "maximum": 128},
           "targetMap": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:map\\.[a-z][a-z0-9.-]{0,95}$"},
-          "targetSpawn": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}
+          "targetSpawn": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+          "prerequisites": {"$ref": "#/definitions/condition"},
+          "rejectionMessageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}
         }, "required": ["id", "x", "y", "width", "height", "targetMap", "targetSpawn"]
       }
     },

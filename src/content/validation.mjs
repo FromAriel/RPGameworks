@@ -132,6 +132,9 @@ export function validateMapItems(map, catalog, file = 'map.json') {
       });
     });
   });
+  map.exits.forEach((exit,index)=>{
+    if(exit.prerequisites)conditionItems(exit.prerequisites,`/exits/${index}/prerequisites`);
+  });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
 }
 
@@ -146,6 +149,7 @@ export function validateMapFacts(map,catalog,file='map.json'){
     if(condition.type==='all'||condition.type==='any'){for(let index=0;index<condition.conditions.length;index+=1)conditionFn(condition.conditions[index],`${path}/conditions/${index}`,depth+1,total,selfId);}
     else if(condition.type==='not')conditionFn(condition.condition,`${path}/condition`,depth+1,total,selfId);
     else if(condition.type==='factEquals'&&!facts.has(condition.factId))issues.push({file,id:map.id,path:`${path}/factId`,message:'Unknown condition fact',value:condition.factId});
+    else if(condition.type==='placementOpened'&&condition.placementId==='self'&&!selfId)issues.push({file,id:map.id,path:`${path}/placementId`,message:'Exit condition cannot use self',value:condition.placementId});
     else if(condition.type==='placementOpened'&&condition.placementId!=='self'&&!/^[a-z][a-z0-9-]{0,31}:object\.[a-z][a-z0-9.-]{0,95}$/.test(condition.placementId))issues.push({file,id:selfId,path:`${path}/placementId`,message:'Invalid condition placement',value:condition.placementId});
   }
   const conditionFn=condition;
@@ -161,6 +165,9 @@ export function validateMapFacts(map,catalog,file='map.json'){
       state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='setFact'&&!facts.has(action.factId))issues.push({file,id:object.id,path:`${path}/interaction/actions/${actionIndex}/factId`,message:'Unknown action fact',value:action.factId});});
     });
     if(fallbacks!==1)issues.push({file,id:object.id,path:`/objects/${index}/states`,message:'Exactly one fallback state is required',value:fallbacks});
+  });
+  map.exits.forEach((exit,index)=>{
+    if(exit.prerequisites)conditionFn(exit.prerequisites,`/exits/${index}/prerequisites`,1,{count:0},'');
   });
   if(issues.length)throw new ContentError(issues.slice(0,MAX_ISSUES));
 }
@@ -221,12 +228,14 @@ export function readMap(value, file = 'map.json', frames) {
   if (!map.spawns.some((spawn) => spawn.id === map.defaultSpawn)) issue('/defaultSpawn', 'Default spawn does not exist', map.defaultSpawn);
   const exitCells = new Set();
   map.exits.forEach((exit, index) => {
+    if(exit.prerequisites&&!exit.rejectionMessageId)issue(`/exits/${index}`,'Access-gated exit requires rejectionMessageId',exit.id);
     if (exit.x + exit.width > map.width || exit.y + exit.height > map.height) {
       issue(`/exits/${index}`, 'Exit rectangle outside map bounds', exit); return;
     }
     for (let y = exit.y; y < exit.y + exit.height; y += 1) {
       for (let x = exit.x; x < exit.x + exit.width; x += 1) {
-        if (!grid.canEnter(x, y)) issue(`/exits/${index}`, 'Exit contains a blocked cell', {x, y});
+        const opening=map.objects.find(object=>object.x===x&&object.y===y&&object.states?.some(state=>state.solid===false));
+        if (!grid.canEnter(x, y) && !(map.collision[y]?.[x]==='.'&&exit.prerequisites&&opening)) issue(`/exits/${index}`, 'Exit contains a blocked cell', {x, y});
         const cell = `${x},${y}`;
         if (exitCells.has(cell)) issue(`/exits/${index}`, 'Overlapping exit rectangles', cell);
         exitCells.add(cell);
@@ -243,6 +252,9 @@ export function readMap(value, file = 'map.json', frames) {
     for (const key of [message.speakerKey, ...message.pages]) {
       if (!Object.hasOwn(strings, key)) issue(`/messages/${index}`, 'Missing English string', key);
     }
+  });
+  map.exits.forEach((exit,index)=>{
+    if(exit.rejectionMessageId&&!messages.some(message=>message.id===exit.rejectionMessageId))issue(`/exits/${index}/rejectionMessageId`,'Message does not exist',exit.rejectionMessageId);
   });
   const interactionCells = new Set();
   map.objects.forEach((object, index) => {
@@ -297,9 +309,10 @@ export function validateWorld(game, maps, catalog) {
   function placementReferences(condition,file,mapId,path,selfId){
     if(condition.type==='all'||condition.type==='any')for(let index=0;index<condition.conditions.length;index+=1)placementReferences(condition.conditions[index],file,mapId,`${path}/conditions/${index}`,selfId);
     else if(condition.type==='not')placementReferences(condition.condition,file,mapId,`${path}/condition`,selfId);
+    else if(condition.type==='placementOpened'&&condition.placementId==='self'&&!selfId)issue(file,mapId,`${path}/placementId`,'Exit condition cannot use self',condition.placementId);
     else if(condition.type==='placementOpened'&&condition.placementId!=='self'&&!objectIds.has(condition.placementId))issue(file,mapId,`${path}/placementId`,'Unknown condition placement',condition.placementId);
   }
-  for(const entry of game.maps){const map=maps.get(entry.id);map?.objects.forEach((object,objectIndex)=>object.states?.forEach((state,stateIndex)=>{if(state.when)placementReferences(state.when,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/when`,object.id);if(state.interaction?.prerequisites)placementReferences(state.interaction.prerequisites,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/prerequisites`,object.id);state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='markPlacementOpened'&&action.placementId!=='self'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/actions/${actionIndex}/placementId`,'Unknown action placement',action.placementId);});}));}
+  for(const entry of game.maps){const map=maps.get(entry.id);map?.objects.forEach((object,objectIndex)=>object.states?.forEach((state,stateIndex)=>{if(state.when)placementReferences(state.when,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/when`,object.id);if(state.interaction?.prerequisites)placementReferences(state.interaction.prerequisites,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/prerequisites`,object.id);state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='markPlacementOpened'&&action.placementId!=='self'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/actions/${actionIndex}/placementId`,'Unknown action placement',action.placementId);});}));map?.exits.forEach((exit,exitIndex)=>{if(exit.prerequisites)placementReferences(exit.prerequisites,entry.file,map.id,`/exits/${exitIndex}/prerequisites`,'');});}
   const start = maps.get(game.start.mapId);
   if (!start?.spawns.some((spawn) => spawn.id === game.start.spawnId)) issue('game.json', game.id, '/start/spawnId', 'Start spawn does not exist', game.start.spawnId);
   if (maps.size !== game.maps.length) issue('game.json', game.id, '/maps', 'Registered and supplied map counts differ', maps.size);

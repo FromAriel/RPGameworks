@@ -12,7 +12,8 @@ const definitions=()=>({items:readItems(json('content/games/demo/items.json')),f
 /** Derived from the authored demo pack so content additions cannot strand these tests on a stale index. */
 const stateIndex=():StateIndex=>{
   const items=readItems(json('content/games/demo/items.json')),facts=readFacts(json('content/games/demo/facts.json'));
-  const maps=(['maps/workshop.json','maps/gallery.json'] as const).map(path=>json(`content/games/demo/${path}`)) as unknown as {id:string;name:string;width:number;height:number;spawns:{id:string}[];objects:{id:string}[]}[];
+  const game=json('content/games/demo/game.json') as {maps:{file:string}[]};
+  const maps=game.maps.map(entry=>json(`content/games/demo/${entry.file}`)) as {id:string;name:string;width:number;height:number;spawns:{id:string}[];objects:{id:string}[]}[];
   return validateStateIndex({schemaVersion:1,gameId:'demo:game.foundation',saveCompatibilityVersion:1,
     maps:maps.map((map)=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map((spawn)=>spawn.id)})),
     itemIds:items.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),

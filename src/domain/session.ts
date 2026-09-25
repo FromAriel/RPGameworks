@@ -3,19 +3,23 @@ import type { ItemCatalog } from '../content/generated/items';
 import type { MapDefinition } from '../content/generated/map';
 
 export type Placement = MapDefinition['objects'][number];
-export type DependencyKey = `fact:${string}` | `item:${string}` | `placement:${string}`;
+export type QuestState = 'active' | 'completed';
+export interface QuestDefinition { readonly id:string; readonly title:string; readonly objective:string; readonly completedText:string }
+export type DependencyKey = `fact:${string}` | `item:${string}` | `placement:${string}` | `quest:${string}`;
 export interface SessionSnapshot {
   readonly revision: number;
   readonly inventory: Readonly<Record<string, number>>;
   readonly facts: Readonly<Record<string, boolean>>;
   readonly placements: Readonly<Record<string, { readonly opened: true }>>;
+  readonly quests: Readonly<Record<string, QuestState>>;
 }
 export interface SessionData {
   readonly inventory: Readonly<Record<string, number>>;
   readonly facts: Readonly<Record<string, boolean>>;
   readonly placements: Readonly<Record<string, { readonly opened: true }>>;
+  readonly quests?: Readonly<Record<string, QuestState>>;
 }
-export interface SessionDefinitions { readonly items: ItemCatalog; readonly facts: FactCatalog }
+export interface SessionDefinitions { readonly items: ItemCatalog; readonly facts: FactCatalog; readonly quests?: readonly QuestDefinition[] }
 export interface ItemChange { readonly itemId:string; readonly delta:number }
 export type Condition =
   | { readonly type: 'all'; readonly conditions: readonly Condition[] }
@@ -23,11 +27,13 @@ export type Condition =
   | { readonly type: 'not'; readonly condition: Condition }
   | { readonly type: 'factEquals'; readonly factId: string; readonly value: boolean }
   | { readonly type: 'itemAtLeast'; readonly itemId: string; readonly quantity: number }
-  | { readonly type: 'placementOpened'; readonly placementId: string; readonly value: boolean };
+  | { readonly type: 'placementOpened'; readonly placementId: string; readonly value: boolean }
+  | { readonly type: 'questStateEquals'; readonly questId: string; readonly value: 'inactive' | QuestState };
 export type SessionAction =
   | { readonly type: 'setFact'; readonly factId: string; readonly value: boolean }
   | { readonly type: 'changeItem'; readonly itemId: string; readonly delta: number }
-  | { readonly type: 'markPlacementOpened'; readonly placementId: string };
+  | { readonly type: 'markPlacementOpened'; readonly placementId: string }
+  | { readonly type: 'setQuestState'; readonly questId: string; readonly value: QuestState };
 export interface TransactionRequest {
   readonly prerequisites?: Condition;
   /** Compatibility alias for the original transaction draft. New callers use prerequisites. */
@@ -37,7 +43,7 @@ export interface TransactionRequest {
   /** Stable placement marker committed with the actions; `self` resolves through the interaction context. */
   readonly idempotencyMarker?: string;
 }
-export type RejectReason = 'invalid' | 'unknown-item' | 'unknown-fact' | 'condition' | 'stack-limit' | 'capacity' | 'insufficient' | 'stale';
+export type RejectReason = 'invalid' | 'unknown-item' | 'unknown-fact' | 'unknown-quest' | 'condition' | 'stack-limit' | 'capacity' | 'insufficient' | 'stale';
 export type TransactionResult =
   | { readonly kind: 'committed'; readonly revision: number; readonly changed: ReadonlySet<DependencyKey> }
   | { readonly kind: 'unchanged' | 'already-claimed'; readonly revision: number; readonly changed: ReadonlySet<DependencyKey> }
@@ -49,9 +55,9 @@ export const MAX_CONDITION_OPERANDS = 16;
 const placementIdPattern = /^[a-z][a-z0-9-]{0,31}:object\.[a-z][a-z0-9.-]{0,95}$/;
 const noChanges = Object.freeze(new Set<DependencyKey>()) as ReadonlySet<DependencyKey>;
 
-function freezeSnapshot(revision: number, inventory: Record<string, number>, facts: Record<string, boolean>, placements: Record<string, {readonly opened:true}>): SessionSnapshot {
+function freezeSnapshot(revision: number, inventory: Record<string, number>, facts: Record<string, boolean>, placements: Record<string, {readonly opened:true}>, quests: Record<string,QuestState>): SessionSnapshot {
   for (const value of Object.values(placements)) Object.freeze(value);
-  return Object.freeze({revision, inventory:Object.freeze(inventory), facts:Object.freeze(facts), placements:Object.freeze(placements)});
+  return Object.freeze({revision, inventory:Object.freeze(inventory), facts:Object.freeze(facts), placements:Object.freeze(placements), quests:Object.freeze(quests)});
 }
 
 export function conditionDependencies(condition: Condition, selfId?: string): ReadonlySet<DependencyKey> {
@@ -61,13 +67,14 @@ export function conditionDependencies(condition: Condition, selfId?: string): Re
     else if (node.type === 'not') visit(node.condition);
     else if (node.type === 'factEquals') keys.add(`fact:${node.factId}`);
     else if (node.type === 'itemAtLeast') keys.add(`item:${node.itemId}`);
+    else if(node.type==='questStateEquals')keys.add(`quest:${node.questId}`);
     else keys.add(`placement:${node.placementId === 'self' ? selfId ?? 'self' : node.placementId}`);
   };
   visit(condition);
   return keys;
 }
 
-export function validateCondition(condition: Condition, knownFacts: ReadonlySet<string>, knownItems: ReadonlySet<string>, selfId?: string): string | null {
+export function validateCondition(condition: Condition, knownFacts: ReadonlySet<string>, knownItems: ReadonlySet<string>, selfId?: string, knownQuests:ReadonlySet<string>=new Set()): string | null {
   let nodes = 0;
   const visit = (node: Condition, depth: number): string | null => {
     nodes += 1;
@@ -81,7 +88,8 @@ export function validateCondition(condition: Condition, knownFacts: ReadonlySet<
     else if (node.type === 'itemAtLeast') {
       if (!knownItems.has(node.itemId)) return `unknown item ${node.itemId}`;
       if (!Number.isSafeInteger(node.quantity) || node.quantity < 0 || node.quantity > 9999) return 'invalid item quantity';
-    } else {
+    } else if(node.type==='questStateEquals') {if(!knownQuests.has(node.questId))return `unknown quest ${node.questId}`;}
+    else {
       const id = node.placementId === 'self' ? selfId : node.placementId;
       if (!id || !placementIdPattern.test(id)) return `invalid placement ${String(id)}`;
     }
@@ -95,37 +103,44 @@ export class SessionState {
   private state: SessionSnapshot;
   private readonly items: Map<string, ItemCatalog['items'][number]>;
   private readonly factDefaults: Readonly<Record<string, boolean>>;
+  private readonly questIds: ReadonlySet<string>;
   readonly catalog: ItemCatalog;
   readonly factCatalog: FactCatalog;
+  readonly questCatalog: readonly QuestDefinition[];
 
   constructor(definitions: SessionDefinitions|ItemCatalog, data?: SessionData) {
     const normalized:SessionDefinitions=Array.isArray(definitions.items)?{items:definitions as ItemCatalog,facts:{schemaVersion:1,facts:[]}}:definitions as SessionDefinitions;
     this.catalog = structuredClone(normalized.items);
     this.factCatalog = structuredClone(normalized.facts);
+    this.questCatalog=structuredClone(normalized.quests??[]);
+    this.questIds=new Set(this.questCatalog.map(quest=>quest.id));
     this.items = new Map(this.catalog.items.map(item => [item.id,item]));
     const factIds = new Set(this.factCatalog.facts.map(fact => fact.id));
     if (!Number.isSafeInteger(this.catalog.capacity) || this.catalog.capacity < 1 || this.catalog.capacity > 64 ||
         this.items.size !== this.catalog.items.length || this.catalog.items.length > 256 || factIds.size !== this.factCatalog.facts.length ||
-        this.catalog.items.some(item => !Number.isSafeInteger(item.maxStack) || item.maxStack < 1 || item.maxStack > 9999)) throw new Error('Invalid definitions for session state');
+        this.catalog.items.some(item => !Number.isSafeInteger(item.maxStack) || item.maxStack < 1 || item.maxStack > 9999)||this.questIds.size!==this.questCatalog.length) throw new Error('Invalid definitions for session state');
     this.factDefaults = Object.freeze(Object.fromEntries(this.factCatalog.facts.map(fact => [fact.id,fact.default])));
     const checked = this.validateData(data ?? {inventory:{},facts:this.factDefaults,placements:{}});
-    this.state = freezeSnapshot(0,checked.inventory,checked.facts,checked.placements);
+    this.state = freezeSnapshot(0,checked.inventory,checked.facts,checked.placements,checked.quests);
     for (const item of this.catalog.items) Object.freeze(item);
     Object.freeze(this.catalog.items); Object.freeze(this.catalog.strings.en); Object.freeze(this.catalog.strings); Object.freeze(this.catalog);
     for (const fact of this.factCatalog.facts) Object.freeze(fact);
     Object.freeze(this.factCatalog.facts); Object.freeze(this.factCatalog);
+    for(const quest of this.questCatalog)Object.freeze(quest);Object.freeze(this.questCatalog);
   }
   snapshot(): SessionSnapshot { return this.state; }
-  data(): SessionData { return Object.freeze({inventory:this.state.inventory,facts:this.state.facts,placements:this.state.placements}); }
+  data(): SessionData { return Object.freeze({inventory:this.state.inventory,facts:this.state.facts,placements:this.state.placements,quests:this.state.quests}); }
   opened(id: string): boolean { return this.state.placements[id]?.opened === true; }
   count(id: string): number { return this.state.inventory[id] ?? 0; }
   fact(id: string): boolean { return this.state.facts[id] ?? false; }
+  quest(id:string):'inactive'|QuestState{return this.state.quests[id]??'inactive';}
   evaluate(condition: Condition, selfId?: string): boolean {
     if (condition.type === 'all') return condition.conditions.every(child => this.evaluate(child,selfId));
     if (condition.type === 'any') return condition.conditions.some(child => this.evaluate(child,selfId));
     if (condition.type === 'not') return !this.evaluate(condition.condition,selfId);
     if (condition.type === 'factEquals') return this.fact(condition.factId) === condition.value;
     if (condition.type === 'itemAtLeast') return this.count(condition.itemId) >= condition.quantity;
+    if(condition.type==='questStateEquals')return this.quest(condition.questId)===condition.value;
     const id = condition.placementId === 'self' ? selfId : condition.placementId;
     return !!id && this.opened(id) === condition.value;
   }
@@ -138,7 +153,7 @@ export class SessionState {
     if(transaction.prerequisites&&transaction.require)return reject('invalid');
     const prerequisites=transaction.prerequisites??transaction.require;
     if (prerequisites) {
-      const conditionError=validateCondition(prerequisites,new Set(Object.keys(this.factDefaults)),new Set(this.items.keys()),selfId);
+      const conditionError=validateCondition(prerequisites,new Set(Object.keys(this.factDefaults)),new Set(this.items.keys()),selfId,this.questIds);
       if(conditionError)return reject('invalid');
     }
     if (prerequisites && !this.evaluate(prerequisites,selfId)) return reject('condition');
@@ -153,6 +168,7 @@ export class SessionState {
     const inventory: Record<string,number> = {...this.state.inventory};
     const facts: Record<string,boolean> = {...this.state.facts};
     const placements: Record<string,{readonly opened:true}> = {...this.state.placements};
+    const quests:Record<string,QuestState>={...this.state.quests};
     if(marker)placements[marker]=Object.freeze({opened:true});
     const changed = new Set<DependencyKey>();
     for (const action of transaction.actions) {
@@ -168,6 +184,13 @@ export class SessionState {
         const id = action.placementId === 'self' ? selfId : action.placementId;
         if (!id || !placementIdPattern.test(id)) return reject('invalid');
         placements[id] = Object.freeze({opened:true});
+      } else if(action.type==='setQuestState'){
+        if(!this.questIds.has(action.questId))return reject('unknown-quest');
+        if(action.value!=='active'&&action.value!=='completed')return reject('invalid');
+        const currentQuestState=quests[action.questId]??'inactive';
+        if(action.value==='active'&&currentQuestState!=='inactive')return reject('condition');
+        if(action.value==='completed'&&currentQuestState!=='active')return reject('condition');
+        quests[action.questId]=action.value;
       } else return reject('invalid');
     }
     for (const [id,count] of Object.entries(inventory)) {
@@ -179,8 +202,9 @@ export class SessionState {
     for(const id of new Set([...Object.keys(this.state.inventory),...Object.keys(inventory)]))if(this.state.inventory[id]!==inventory[id])changed.add(`item:${id}`);
     for(const id of Object.keys(facts))if(this.state.facts[id]!==facts[id])changed.add(`fact:${id}`);
     for(const id of Object.keys(placements))if(!this.state.placements[id])changed.add(`placement:${id}`);
+    for(const id of Object.keys(quests))if(this.state.quests[id]!==quests[id])changed.add(`quest:${id}`);
     if (changed.size === 0) return {kind:'unchanged',revision:this.state.revision,changed:noChanges};
-    this.state = freezeSnapshot(this.state.revision+1,inventory,facts,placements);
+    this.state = freezeSnapshot(this.state.revision+1,inventory,facts,placements,quests);
     return {kind:'committed',revision:this.state.revision,changed:Object.freeze(changed) as ReadonlySet<DependencyKey>};
   }
   claim(placement: Placement): TransactionResult {
@@ -188,7 +212,7 @@ export class SessionState {
     if (!chest) return {kind:'rejected',reason:'invalid',revision:this.state.revision,changed:noChanges};
     return this.transact({actions:[{type:'changeItem',itemId:chest.itemId,delta:chest.quantity}],idempotencyMarker:'self'},placement.id);
   }
-  private validateData(data: SessionData): {inventory:Record<string,number>;facts:Record<string,boolean>;placements:Record<string,{readonly opened:true}>} {
+  private validateData(data: SessionData): {inventory:Record<string,number>;facts:Record<string,boolean>;placements:Record<string,{readonly opened:true}>;quests:Record<string,QuestState>} {
     const inventory: Record<string,number> = {};
     for (const [id,count] of Object.entries(data.inventory)) { const item=this.items.get(id); if(!item||!Number.isSafeInteger(count)||count<1||count>item.maxStack)throw new Error(`Invalid saved inventory entry: ${id}`);inventory[id]=count; }
     if (Object.keys(inventory).length > this.catalog.capacity) throw new Error('Saved inventory exceeds capacity');
@@ -196,6 +220,8 @@ export class SessionState {
     for (const [id,value] of Object.entries(data.facts)) { if(!Object.hasOwn(this.factDefaults,id)||typeof value!=='boolean')throw new Error(`Invalid saved fact: ${id}`);facts[id]=value; }
     const placements: Record<string,{readonly opened:true}> = {};
     for (const [id,value] of Object.entries(data.placements)) { if(!placementIdPattern.test(id)||value?.opened!==true||Object.keys(value).length!==1)throw new Error(`Invalid saved placement: ${id}`);placements[id]=Object.freeze({opened:true}); }
-    return {inventory,facts,placements};
+    const quests:Record<string,QuestState>={};
+    for(const[id,value]of Object.entries(data.quests??{})){if(!this.questIds.has(id)||(value!=='active'&&value!=='completed'))throw new Error(`Invalid saved quest: ${id}`);quests[id]=value;}
+    return {inventory,facts,placements,quests};
   }
 }

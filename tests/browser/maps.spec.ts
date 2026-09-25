@@ -17,7 +17,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   await openRoom(page,'?map=demo:map.gallery');
   let state=await snapshot(page);
   expect(state.mapWidth).toBe(24);expect(state.mapHeight).toBe(14);expect(state.collisionCells).toBe(336);
-  expect(state.displayObjects).toBe(348);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);
+  expect(state.displayObjects).toBe(349);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);
   await page.keyboard.down('ArrowRight');
   await expect.poll(async()=>(await snapshot(page)).actorTile.x).toBe(5);
   await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');
@@ -48,7 +48,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
 });
 
  test('an added content-only map needs no scene subclass',async({page})=>{
-  const game=registry();delete game.itemsFile;delete game.factsFile;game.stateIndexFile='state-index.aaaaaaaaaaaa.json';game.maps.push({id:'demo:map.fixture',file:'maps/fixture.json'});
+  const game=registry();delete game.itemsFile;delete game.factsFile;delete game.questsFile;game.saveCompatibilityVersion=1;game.stateIndexFile='state-index.aaaaaaaaaaaa.json';game.maps.push({id:'demo:map.fixture',file:'maps/fixture.json'});
   const map=original();Object.assign(map,{id:'demo:map.fixture',name:'Content-only fixture',width:2,height:2,layers:[{id:'floor',rows:['aa','aa']}],collision:['..','..'],spawns:[{id:'start',x:0,y:0,facing:'up'}],objects:[],exits:[]});
   await page.route('**/generated/content/game.json',route=>route.fulfill({json:game}));
   await page.route('**/generated/content/state-index.aaaaaaaaaaaa.json',route=>route.fulfill({json:{schemaVersion:1,gameId:game.id,saveCompatibilityVersion:1,maps:[{id:'demo:map.fixture',name:'Content-only fixture',width:2,height:2,spawns:['start']}],itemIds:[],factIds:[],placementIds:[]}}));

@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 1.1 · **Date:** September 23, 2026 · **Status:** M1/W1, N1.1–N1.2, M2, U1, and G1.1 are delivered. G1.2 is locally verified and Ariel accepted the corrected gameplay packet for a source push. Pages release remains separate; G1.3 follows. See STATUS for verification and publication boundaries.
+**Version:** 1.1 · **Date:** September 24, 2026 · **Status:** M1/W1, N1.1–N1.2, M2, U1, G1.1 and G1.2 are delivered to `main`. G1.2's Pages release remains separate. N1.3 and the bounded M3 quest slice are locally verified and accepted by Ariel; source delivery is pending. G1.3 follows M3 source delivery, then M3.5 authoring reports before M4. See STATUS for verification and publication boundaries.
 
 Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -11,12 +11,18 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 | Gate | Current state | Next decision |
 | --- | --- | --- |
 | Public playtest | Approved animated hero is hosted from game commit `05705b9`; hosted play feedback remains open | Record Ariel's hosted playtest separately from build and browser checks |
-| G1.2 conditional travel | Corrected visible locked/unlocked door and set-back arrivals pass local checks; Ariel accepted the local packet and authorized its source push | Deliver the reviewed source to `main`; decide on a Pages release separately |
-| G1.3 independent locks | Planned | Author a second keyed lock with its own marker and check the surrounding gate/door UX |
-| M3 through chapter release | Planned | Build the lens story around the existing key route, add the minimum FX contract and battle, finish M6.1, then perform M7 release hardening |
+| G1.2 conditional travel | Corrected visible locked/unlocked door and set-back arrivals were accepted and pushed as `070234a` | Decide on a Pages release separately |
+| M3 missing-lens and archive-ledger quests | Locally accepted: generic dialogue/quest/item hand-in, Journal, lit Gallery and v1 migration; both playtest corrections pass 356 unit/content tests and 146 browser scenarios | Deliver reviewed source to `main`; decide Pages release separately |
+| G1.3 independent locks | Next after M3 source delivery | Author a Workshop supply room with its own keyed lock and marker; check surrounding gate/door UX |
+| M3.5 authoring reports | After G1.3 | Add orphan/reference reports and deliberately broken validation fixtures before M4 |
+| Later chapter release | Planned | Add the minimum FX contract and battle, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
 "Implemented", "locally verified", "Ariel accepted", "pushed", and "hosted" are separate states. A checked packet records implementation evidence; STATUS records the exact remaining acceptance and release boundary.
+
+**Ad-hoc dialogue follow-up:** Mara's earlier conditional plaque response was incorporated into the M3 dialogue graph. The current local candidate adds explicit acceptance, item hand-in, completion and save migration; see [STATUS](STATUS.md) for the checks and review boundary.
+
+**Local M3 playtest corrections:** Ariel found that accepting the archive-ledger quest immediately exposed a hand-in choice before the item was found. Both authored quests now use an acceptance wrap-up and reserve ordinary hand-in for a later visit. Ariel then found the already-held lens offer clunky: that path now asks directly for the item and, if the player chooses to give it, silently stages acceptance and completion with item removal in one transaction. Declining or closing leaves the item and quest untouched; the clerk uses the same authored pattern. The clerk's door directions no longer assume the door is still locked. See [STATUS](STATUS.md) for post-correction evidence.
 
 A milestone is a working result, not a pile of scaffolding. Each work packet should be small enough to review in an ordinary chat/GitHub session. Finish the narrow implementation, its fixtures, and its status update before starting another architectural layer.
 
@@ -108,11 +114,11 @@ The subsequent M1.6 baseline is now recorded in [BASELINE.md](BASELINE.md). Proc
 
 - [x] **N1.1 — Navigation owner.** Direct directional selection/focus, confirm/cancel, scroll-to-selection, bounded held repeat and predictable focus restoration for actual lists/tabs/controls. Include controller access to the player menu and existing Settings, preserve bindings, and explicitly validate/migrate any additional Menu action.
 - [x] **N1.2 — First inventory/menu acceptance.** Test keyboard/controller/pointer handoff, scrolling, disabled items, nested settings, remapping, disconnect/reconnect and held-input leakage. Prompts reflect configured actions; no hidden menu can keep exploration blocked. Empty save-slot Load supplies the real disabled control and adjacent reason.
-- [ ] **N1.3 — Dialogue choices.** Reuse the model for M3.1 visible/disabled/hidden choices, preserving stable selection and a cancel/fallback path. No second incompatible navigation system.
+- [x] **N1.3 — Dialogue choices.** Reuse the model for M3.1 visible/disabled/hidden choices, preserving stable selection and a cancel/fallback path. No second incompatible navigation system.
 
 Keep Debug separate from player Inventory/Journal/Party/save functions. Add those entries only when their models work. New Game / Continue / Load follows M2.4/M2.5 storage; protect existing progress rather than adding a nonfunctional title screen.
 
-**N1 evidence:** Inventory, Save/Load, and existing Settings/Debug controls share one semantic navigation owner and the existing sampled controller. Keyboard/controller/pointer handoff, scrolling, disabled empty-slot Load, remapping, nested Settings, reconnects, held-input isolation and repeated opening are covered. N1.3 remains paired with M3 dialogue choices.
+**N1 evidence:** Inventory, Save/Load, Settings/Debug and M3 dialogue choices share one semantic navigation owner and the existing sampled controller. Keyboard/controller/pointer handoff, scrolling, disabled empty-slot Load, remapping, nested Settings, reconnects, held-input isolation and repeated opening are covered. The M3 browser suite covers choice navigation and cancellation, including a focused narrow controller check.
 
 ## M2 — Persistent state and trustworthy saves
 
@@ -165,22 +171,24 @@ The detailed direction, tokens, component contracts, full-JRPG screen patterns a
 
 ## M3 — Content-driven quest and authoring proof
 
-**Player-visible outcome:** Complete the missing-lens micro-quest using the existing Workshop, Gallery, Mara and plaque plus the reachable storeroom. The Gallery key crate already grants the retained brass key; its per-placement unlock marker already opens the storeroom door. The reachable switch/gate and one-shot lens chest remain outside that lock. Handing in the lens completes the quest and grants a distinct story consequence or reward chosen in the M3 content brief, once. Early key, lens, and storeroom discovery must remain valid, and save/reload and returning NPCs recognize progress. Preserve existing IDs and saved key/door state.
+**Player-visible outcome:** Complete the missing-lens quest using the existing Workshop, Gallery, Mara and plaque. Handing in the lens lights the Gallery sigil once. The Gallery key crate grants the retained brass key; its per-placement unlock marker opens the Storeroom door. A second quest asks the player to carry a ledger from that room to the Gallery archive clerk. Early key, lens, and storeroom discovery remain valid, and save/reload and returning NPCs recognize progress. Preserve existing IDs and saved key/door state.
+
+**Engine acceptance rule:** Implement item hand-in, dialogue selection, quest transitions, one-shot rewards, and validation as reusable registered semantics. An authored NPC/quest record names the requested item, quantity, dialogue nodes, conditions, accepted choice, actions, and completion marker; no Mara-specific TypeScript/JavaScript branch decides whether the player has the item or whether the hand-in completed. Prove reuse with a second NPC requesting a different item through content changes alone. If that example exposes a missing mechanic, add one small reusable engine primitive with generic tests before authoring it; never evaluate arbitrary code from content.
 
 This smaller proving ground precedes the old town-square/inn/cellar/path expansion. First access conditions use keys, switches and quest facts; stat gates require a separately approved exploration-stat model instead of depending on later battle systems. See [NEXT-SLICES](NEXT-SLICES.md) for the route and out-of-order discovery tests.
 
 ### Work packets
 
-- [ ] **M3.1 — Dialogue graphs.** Preserve existing finite messages; add stable node IDs, ordered entry rules with fallback, choices with separate visibility/eligibility and disabled reasons, safely substituted text and explicit ends. Revalidate on confirm and handle changing/no selectable choices. Reuse N1 with proper modal ownership. Use M2 facts before M3.2 adds quest-state checks; portraits/typewriter/history are deferred.
-- [ ] **M3.2 — Quest state machine.** Implement named states, legal transitions, derived journal text, completion markers and quest-state conditions. Entry rules select before/during/ready/completed conversations from that shared state. Preserve discovered progress when the quest is accepted late. Decide and document compatibility for existing strict v1 saves before changing the schema, then test old-save fixtures and the chosen migration or rejection/export path.
-- [ ] **M3.3 — Useful actions.** Add the minimum sequence/branch/yield behavior required by the demo, with cancellation and execution budgets. Accepted choices use shared transactions: hand-in, reward and completion together, once. Remember meaningful authored decisions/topics, not every sentence. Keep state transactions separate from presentation waits; cancel does not undo already committed story changes.
-- [ ] **M3.4 — Dialogue/quest index and validation.** Extend the existing compact manifest and hashed per-map build with dialogue/quest reference checks and only the index needed for the new content. Prove distant content is not eagerly bundled or downloaded at startup; do not rebuild the manifest pipeline that already exists.
+- [x] **M3.1 — Dialogue graphs.** Preserve finite messages; add stable node IDs, ordered entry rules with fallback, literal authored text, explicit ends, and choices with separate visibility/eligibility and disabled reasons. Revalidate on confirm, handle changing/no selectable choices, and reuse N1 with modal ownership. Variable text substitution remains a future content need.
+- [x] **M3.2 — Quest state machine.** Implement inactive/active/completed states, legal transitions, Journal text, completion markers and quest-state conditions. Entry rules select before/during/ready/completed conversations from shared state. Preserve discovered progress on late acceptance. Validate and migrate v1 saves/imports without accepting a quest automatically or rewriting stored data before an explicit save.
+- [x] **M3.3 — Useful actions.** The current encounters use one choice-triggered registered transaction for item removal and completion, with a visible lit-state consequence. Re-entry cannot repeat hand-in. Presentation cancellation does not undo a committed transaction. Asynchronous action sequences and yields remain deferred until content requires them.
+- [x] **M3.4 — Dialogue/quest index and validation.** Extend the compact manifest and hashed map build with a hashed quest catalog, versioned state index, dialogue/quest reference checks and graph reachability; retain the existing lazy map loader.
 - [ ] **M3.5 — Reports and authoring fixtures.** Add orphan/reference reports, missing-exit tests, blocked-spawn checks, missing-string diagnostics, and deliberately broken fixtures that prove validation catches errors.
-- [ ] **M3.6 — Small second-content proof.** Reuse the dialogue/quest vocabulary with a second NPC and a short independent route or quest, mainly through content definitions. Add a room or entrance only if the proof needs it. Keep this bounded so it does not delay the first battle; document any genuinely required engine primitive rather than hardcoding per-NPC/per-door branches.
+- [x] **M3.6 — Small second-content proof.** The Gallery archive clerk asks for a ledger from a Storeroom container through the same dialogue, quest, item-removal and completion path. The different NPC and item are authored content, without per-NPC code.
 
 ### Acceptance
 
-The main quest is completable from a fresh game through documented routes, including declining then returning and finding the lens before accepting. Hidden/disabled choices, priority/fallback, full inventory, cancellation, stale prerequisites and repeated acknowledgement are tested. Reward collection cannot be repeated through dialogue re-entry. The clue, switch, chest, lock, inventory and quest agree after travel/reload, with no circular access dependency. A save from M2 either migrates correctly or is explicitly rejected with preserved export access according to the declared compatibility policy.
+The main quest is completable from a fresh game through documented routes, including declining then returning and finding the lens before accepting. Hidden/disabled choices, priority/fallback, full inventory, cancellation, stale prerequisites and repeated acknowledgement are tested. Reward collection cannot be repeated through dialogue re-entry. The clue, switch, chest, lock, inventory and quest agree after travel/reload, with no circular access dependency. A save from M2 either migrates correctly or is explicitly rejected with preserved export access according to the declared compatibility policy. The second item-request encounter runs through the same interpreter, validator, and transaction path with only authored content differences.
 
 Invalid references fail before deployment. A structurally unreachable node is flagged, while reports acknowledge that graph connectivity does not establish logical solvability.
 
@@ -310,8 +318,8 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**G1.3 second lock after G1.2 source delivery.** Ariel accepted the corrected local Storeroom door and arrival routes. Author a second independent keyed lock and check the remaining door/gate visual and return-route risks. Begin M3 branching dialogue and the missing-lens quest using the already reachable storeroom; the lens reward must not be the brass key already available from the Gallery crate.
+**Deliver the locally accepted M3 source, then implement G1.3.** Ariel accepted the corrected plaque → Mara → lens → Gallery light → Journal and Storeroom ledger → archive clerk routes. Deliver the reviewed source to `main` without dispatching Pages. Next, author the Workshop supply room and its independent key, check the remaining door/gate visual and return-route risks, and present that local route for Ariel's play review. Complete M3.5 authoring reports before M4.
 
-G1.2 uses the completed M2 facts, conditions, actions, session activation and save compatibility contracts for the first conditional doorway. M3 follows the broader G1.3 proof with conditional conversations and the connected missing-lens quest. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
+G1.2 uses the completed M2 state and travel contracts for the first conditional doorway. The M3 local candidate now uses those contracts before G1.3's broader second-lock proof. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 
 The detailed continuation through deterministic battle, party/progression, preparation/economy, the first complete chapter, content scale and release is recorded in [JRPG-BUILDOUT](JRPG-BUILDOUT.md). It is a sequencing companion, not evidence that those later systems exist.

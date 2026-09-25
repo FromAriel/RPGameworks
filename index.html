@@ -137,7 +137,13 @@
         <p class="hint">Items survive room travel. Use Save / Load to preserve progress across browser reloads.</p>
       </div>
       <div id="inventory-body-below" hidden></div>
+      <section id="journal-body" class="inventory-body" hidden aria-label="Quest journal">
+        <p id="journal-empty" class="hint">No quests accepted yet. Read the Gallery plaque, then talk to Mara in the Workshop.</p>
+        <div id="journal-list" class="inventory-list-frame" aria-label="Accepted and completed quests"></div>
+        <section id="journal-detail" class="ui-inset" aria-live="polite"><h3 id="journal-name" class="ui-inset__title"></h3><p id="journal-description" class="ui-inset__body"></p></section>
+      </section>
       <div class="dialog-actions">
+        <button id="inventory-journal" type="button" class="ui-action-button" data-intent="secondary">Journal</button>
         <button id="inventory-saves" type="button" class="ui-action-button" data-intent="secondary">Save / Load</button>
         <button id="inventory-settings" type="button" class="ui-action-button" data-intent="secondary">Settings</button>
         <button id="inventory-close" type="button" class="ui-action-button" data-intent="primary">Return to game</button>

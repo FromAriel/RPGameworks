@@ -6,6 +6,9 @@
 .inventory-list-frame { min-width:0; }
 #inventory-list { display:flex; flex-direction:column; gap:6px; max-height:44vh; overflow:auto; padding:3px; }
 #inventory-list:empty { display:none; }
+#journal-body:not([hidden]) { display:grid; gap:12px; }
+#journal-list { display:flex; flex-direction:column; gap:6px; max-height:35vh; overflow:auto; padding:3px; }
+#journal-detail { min-height:72px; }
 .inventory-columns:has(#inventory-list:empty) #inventory-detail { grid-column:1/-1; }
 #item-description { white-space:pre-wrap; line-height:1.6; }
 #inventory-dialog .dialog-actions { flex-shrink:0; }

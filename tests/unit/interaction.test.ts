@@ -40,16 +40,16 @@ describe('authored messages', () => {
     expect(map.messages![0]!.pages).toHaveLength(2); expect(Object.isFrozen(map.strings!.en)).toBe(true);
   });
   it('continues to read old v1 maps without message fields', () => {
-    const map = workshop(); delete map.messages; delete map.strings;
-    map.objects = map.objects.filter((object) => !object.messageId);
+    const map = workshop(); delete map.messages; delete map.strings; delete map.dialogues;
+    map.objects = map.objects.filter((object) => !object.messageId && !object.states);
     expect(readMap(map).id).toBe(map.id);
     expect(createInteractionLookup(map)(createActor(10, 7))).toBeNull();
   });
   it.each(['missing-message', 'missing-string', 'duplicate-message', 'duplicate-interaction', 'whitespace', 'too-long', 'too-many-pages', 'unknown-field', 'blocked-adjacency'])(
     'rejects invalid %s before gameplay', (kind) => {
       const map = workshop();
-      const object = map.objects.find((item) => item.messageId)!;
-      if (kind === 'missing-message') object.messageId = 'absent';
+      const object = map.objects.find((item) => item.id === 'demo:object.workshop.caretaker')!;
+      if (kind === 'missing-message') object.states![0]!.interaction!.dialogueId = 'absent';
       if (kind === 'missing-string') delete map.strings!.en['caretaker.name'];
       if (kind === 'duplicate-message') map.messages!.push({...map.messages![0]!});
       if (kind === 'duplicate-interaction') map.objects.push({...object, id:'demo:object.duplicate', solid:false});

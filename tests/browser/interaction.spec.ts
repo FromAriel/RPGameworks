@@ -125,6 +125,25 @@ async function fakePad(page: Page): Promise<void> {
   await openTools(page,'debug');await page.locator('#restart').click();await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
  });
 
+ test('Mara offers an explicit quest after returning from the Gallery',async({page})=>{
+  await openRoom(page,'?map='+GALLERY);
+  await step(page,'ArrowUp');await page.keyboard.press('KeyE');
+  await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await page.keyboard.press('Escape');
+  await step(page,'ArrowDown');await cross(page,'ArrowLeft',WORKSHOP);
+  for(let index=0;index<7;index+=1)await step(page,'ArrowLeft');
+  await step(page,'ArrowDown');
+  expect((await snapshot(page)).interactionTarget).toBe('demo:object.workshop.caretaker');
+  await page.keyboard.press('KeyE');
+  await expect(page.locator('#dialog-title')).toContainText('Mara');
+  await expect(page.locator('#dialog-text')).toContainText('Will you help me restore it');
+  await expect(page.locator('#dialog-choices')).toContainText('Accept the lens quest');
+  await page.locator('[data-dialogue-choice="accept"]').click();
+  expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('active');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();
+  await expect(page.locator('#journal-body')).toContainText('Restore the Gallery light');
+ });
+
 for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing-frame'] as const) {
   test(`destination ${fault} failure preserves the old room and retries safely`, async ({page}) => {
     let broken=true, calls=0;

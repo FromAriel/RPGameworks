@@ -5,6 +5,7 @@ import './presentation/ui/inventory.css';
 import './presentation/ui/save-menu.css';
 import { loadItemCatalog } from './platform/item-loader';
 import { loadFactCatalog } from './platform/fact-loader';
+import { loadQuestCatalog } from './platform/quest-loader';
 import { SessionState } from './domain/session';
 import { SessionController } from './runtime/session-controller';
 import { SaveService } from './runtime/save-service';
@@ -103,7 +104,7 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = artWarning || (snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or close it to resume exploring.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message' ? 'Conversation open. Advance or close it to resume exploring.' :
+    const message = artWarning || (snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or open the Journal.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
@@ -201,8 +202,9 @@ async function start(): Promise<void> {
     }, { signal: appLifetime.signal });
     required<HTMLElement>('#map-title').textContent = content.map.name;
     const base=new URL(import.meta.env.BASE_URL,document.baseURI);
-    const [catalog,facts,stateIndex]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal)]);
-    const session = new SessionController(new SessionState({items:catalog,facts}));
+    const [catalog,facts,quests,stateIndex]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal)]);
+    if(JSON.stringify(quests.map(quest=>quest.id))!==JSON.stringify(stateIndex.questIds??[]))throw new Error('Quest catalog does not match the save state index');
+    const session = new SessionController(new SessionState({items:catalog,facts,quests}));
     saveService=new SaveService({gameId:content.game.id,saveCompatibilityVersion:content.game.saveCompatibilityVersion??1,index:stateIndex},new IndexedDbSaveRepository());
     const { createFoundation } = await import('./presentation/foundation');
     if (disposed) {saveService.close();saveService=null;return;}

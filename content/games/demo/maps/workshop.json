@@ -42,16 +42,63 @@
   ],
   "objects": [
     {"id": "demo:object.workshop.sigil", "frame": "sigil", "x": 10, "y": 5, "solid": false},
-    {"id": "demo:object.workshop.caretaker", "frame": "caretaker", "x": 10, "y": 8, "solid": true, "messageId": "caretaker-intro"},
+    {"id": "demo:object.workshop.caretaker", "frame": "caretaker", "x": 10, "y": 8, "solid": true, "states": [
+      {"id":"completed","when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"frame":"caretaker","visible":true,"interaction":{"dialogueId":"mara-lens"}},
+      {"id":"available","fallback":true,"frame":"caretaker","visible":true,"interaction":{"dialogueId":"mara-lens"}}
+    ]},
     {"id": "demo:object.workshop.door", "frame": "door", "x": 18, "y": 6, "solid": false}
   ],
   "exits": [{"id": "to-gallery", "x": 18, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-workshop"}],
   "strings": {"en": {
     "caretaker.name": "Mara — Workshop caretaker",
     "caretaker.welcome": "Welcome to the Workshop. These little rooms are the beginning of a much larger world.",
-    "caretaker.gallery": "The lit doorway to the east leads into the Pillar Gallery. Read the brass plaque there, then come back. The sparks are just for show."
+    "caretaker.gallery": "The lit doorway to the east leads into the Pillar Gallery. Read the brass plaque there, then come back. The sparks are just for show.",
+    "caretaker.plaque-read": "You found the hidden line. A polished lens once focused the Gallery's light. Search the Gallery carefully; it may still be there.",
+    "caretaker.lens-found": "You found the polished lens. That fits the plaque's inscription. Keep it safe while we work out where it belongs.",
+    "mara.offer":"The plaque says a polished lens once focused the Gallery light. Will you help me restore it?",
+    "mara.offer-ready":"That's the lens from the plaque. I can use it to restore the Gallery light. May I take it?",
+    "mara.accept":"Thank you. The lens may be in a chest in the Gallery. Bring it to me when you find it.",
+    "mara.active":"The Gallery light still needs its lens. Search the Gallery and bring it to me when you find it.",
+    "mara.ready":"You have the polished lens. Shall I fit it to the Gallery light now?",
+    "mara.done":"The lens is back in place. Go and see the Gallery light!",
+    "mara.repeat":"The Gallery light is shining again. Thank you for helping me.",
+    "mara.accept-choice":"Accept the lens quest",
+    "mara.later-choice":"Maybe later",
+    "mara.keep-choice":"Keep it for now",
+    "mara.hand-in":"Give Mara the polished lens",
+    "mara.keep-looking":"I'll keep looking",
+    "mara.wrap-up":"I'll be back",
+    "mara.no-lens":"You need the polished lens in your inventory."
   }},
   "messages": [
-    {"id": "caretaker-intro", "speakerKey": "caretaker.name", "pages": ["caretaker.welcome", "caretaker.gallery"]}
-  ]
+    {"id": "caretaker-intro", "speakerKey": "caretaker.name", "pages": ["caretaker.welcome", "caretaker.gallery"]},
+    {"id": "caretaker-plaque-read", "speakerKey": "caretaker.name", "pages": ["caretaker.plaque-read"]},
+    {"id": "caretaker-lens-found", "speakerKey": "caretaker.name", "pages": ["caretaker.lens-found"]}
+  ],
+  "dialogues":[{"id":"mara-lens","entries":[
+    {"when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"nodeId":"completed"},
+    {"when":{"type":"all","conditions":[{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"active"},{"type":"itemAtLeast","itemId":"demo:item.lens","quantity":1}]},"nodeId":"ready"},
+    {"when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"active"},"nodeId":"active"},
+    {"when":{"type":"all","conditions":[{"type":"factEquals","factId":"demo:fact.gallery.plaque-read","value":true},{"type":"itemAtLeast","itemId":"demo:item.lens","quantity":1}]},"nodeId":"offer-ready"},
+    {"when":{"type":"factEquals","factId":"demo:fact.gallery.plaque-read","value":true},"nodeId":"offer"},
+    {"nodeId":"intro"}
+  ],"nodes":[
+    {"id":"intro","speakerKey":"caretaker.name","pages":["caretaker.welcome","caretaker.gallery"]},
+    {"id":"offer","speakerKey":"caretaker.name","pages":["mara.offer"],"choices":[
+      {"id":"accept","labelKey":"mara.accept-choice","actions":[{"type":"setQuestState","questId":"demo:quest.gallery-light","value":"active"}],"nextNodeId":"accepted"},
+      {"id":"later","labelKey":"mara.later-choice"}
+    ]},
+    {"id":"offer-ready","speakerKey":"caretaker.name","pages":["mara.offer-ready"],"choices":[
+      {"id":"hand-in","labelKey":"mara.hand-in","enabledWhen":{"type":"itemAtLeast","itemId":"demo:item.lens","quantity":1},"disabledReasonKey":"mara.no-lens","actions":[{"type":"setQuestState","questId":"demo:quest.gallery-light","value":"active"},{"type":"changeItem","itemId":"demo:item.lens","delta":-1},{"type":"setQuestState","questId":"demo:quest.gallery-light","value":"completed"}],"nextNodeId":"finished"},
+      {"id":"later","labelKey":"mara.keep-choice"}
+    ]},
+    {"id":"accepted","speakerKey":"caretaker.name","pages":["mara.accept"],"choices":[{"id":"wrap-up","labelKey":"mara.wrap-up"}]},
+    {"id":"active","speakerKey":"caretaker.name","pages":["mara.active"]},
+    {"id":"ready","speakerKey":"caretaker.name","pages":["mara.ready"],"choices":[
+      {"id":"hand-in","labelKey":"mara.hand-in","enabledWhen":{"type":"itemAtLeast","itemId":"demo:item.lens","quantity":1},"disabledReasonKey":"mara.no-lens","actions":[{"type":"changeItem","itemId":"demo:item.lens","delta":-1},{"type":"setQuestState","questId":"demo:quest.gallery-light","value":"completed"}],"nextNodeId":"finished"},
+      {"id":"look","labelKey":"mara.keep-looking"}
+    ]},
+    {"id":"finished","speakerKey":"caretaker.name","pages":["mara.done"]},
+    {"id":"completed","speakerKey":"caretaker.name","pages":["mara.repeat"]}
+  ]}]
 }

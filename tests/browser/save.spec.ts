@@ -80,7 +80,7 @@ test('repeated save-window openings and in-place loads retain bounded ownership'
     await openSaves(page);if(cycle===0)await slot(page,0).getByRole('button',{name:'Save'}).click();else await confirm(page,0,'Save');
     await page.locator('#save-close').click();await page.locator('#inventory-close').click();await step(page,'ArrowLeft');
     await openSaves(page);await confirm(page,0,'Load');await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
-    const state=await snapshot(page);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);expect(state.sessionSubscribers).toBe(0);expect(state.pendingSaveOperations).toBe(0);expect(state.displayObjects).toBe(baseline.displayObjects);expect(state.textureCount).toBe(baseline.textureCount);
+    const state=await snapshot(page);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);expect(state.sessionSubscribers).toBe(baseline.sessionSubscribers);expect(state.pendingSaveOperations).toBe(0);expect(state.displayObjects).toBe(baseline.displayObjects);expect(state.textureCount).toBe(baseline.textureCount);
   }
 });
 

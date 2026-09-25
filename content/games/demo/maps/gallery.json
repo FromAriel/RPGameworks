@@ -47,7 +47,14 @@
   ],
   "objects": [
     {"id": "demo:object.gallery.pillar", "frame": "wall", "x": 6, "y": 6, "solid": true},
-    {"id": "demo:object.gallery.sigil", "frame": "sigil", "x": 18, "y": 6, "solid": false},
+    {"id": "demo:object.gallery.sigil", "frame": "sigil", "x": 18, "y": 6, "solid": false, "states":[
+      {"id":"lit","when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"frame":"sigil-lit","visible":true},
+      {"id":"dim","fallback":true,"frame":"sigil","visible":true}
+    ]},
+    {"id":"demo:object.gallery.archive-clerk","frame":"caretaker","x":17,"y":3,"solid":true,"states":[
+      {"id":"completed","when":{"type":"questStateEquals","questId":"demo:quest.archive-ledger","value":"completed"},"frame":"caretaker","visible":true,"interaction":{"dialogueId":"archive-ledger"}},
+      {"id":"available","fallback":true,"frame":"caretaker","visible":true,"interaction":{"dialogueId":"archive-ledger"}}
+    ]},
     {"id": "demo:object.gallery.plaque", "frame": "plaque", "x": 4, "y": 4, "solid": true, "states": [
       {"id": "read", "when": {"type": "factEquals", "factId": "demo:fact.gallery.plaque-read", "value": true}, "frame": "plaque-read", "visible": true, "interaction": {"messageId": "gallery-plaque-read"}},
       {"id": "unread", "fallback": true, "frame": "plaque", "visible": true, "interaction": {"messageId": "gallery-plaque-discovered", "actions": [{"type": "setFact", "factId": "demo:fact.gallery.plaque-read", "value": true}]}}
@@ -91,7 +98,22 @@
     "storeroom.unlock": "The brass key turns.\n\nThe storeroom is unlocked. Step through the doorway to enter.",
     "plaque.name": "Brass plaque",
     "plaque.discovered": "THE PILLAR GALLERY\n\nYou trace the old lettering. A hidden line glows beneath your hand:\n\nA polished lens once focused the gallery's light.",
-    "plaque.read": "The revealed line still glows:\n\nA polished lens once focused the gallery's light.\n\nThe western doorway returns to the Workshop."
+    "plaque.read": "The revealed line still glows:\n\nA polished lens once focused the gallery's light.\n\nThe western doorway returns to the Workshop.",
+    "clerk.name":"Gallery archive clerk",
+    "clerk.offer":"The archive ledger is missing. I left it in the Storeroom. Will you fetch it?",
+    "clerk.offer-ready":"That's the missing archive ledger. May I put it back where it belongs?",
+    "clerk.accept":"Thank you. The ledger is in the Storeroom. The Gallery crate holds the brass key for its door.",
+    "clerk.active":"The archive ledger is still in the Storeroom. Bring it back when you find it.",
+    "clerk.ready":"You found the archive ledger. Will you hand it back to me?",
+    "clerk.done":"The ledger is safe again. Thank you.",
+    "clerk.repeat":"The ledger is back in the archive where it belongs.",
+    "clerk.accept-choice":"Help find the ledger",
+    "clerk.later-choice":"Not now",
+    "clerk.keep-choice":"Keep it for now",
+    "clerk.hand-in":"Give the archive ledger",
+    "clerk.keep-looking":"I'll keep looking",
+    "clerk.wrap-up":"I'll be back",
+    "clerk.no-ledger":"You need the archive ledger in your inventory."
   }},
   "messages": [
     {"id": "lens-found", "speakerKey": "chest.name", "pages": ["chest.found"]},
@@ -105,5 +127,29 @@
     {"id": "storeroom-locked", "speakerKey": "storeroom.name", "pages": ["storeroom.locked"]},
     {"id": "gallery-plaque-discovered", "speakerKey": "plaque.name", "pages": ["plaque.discovered"]},
     {"id": "gallery-plaque-read", "speakerKey": "plaque.name", "pages": ["plaque.read"]}
-  ]
+  ],
+  "dialogues":[{"id":"archive-ledger","entries":[
+    {"when":{"type":"questStateEquals","questId":"demo:quest.archive-ledger","value":"completed"},"nodeId":"completed"},
+    {"when":{"type":"all","conditions":[{"type":"questStateEquals","questId":"demo:quest.archive-ledger","value":"active"},{"type":"itemAtLeast","itemId":"demo:item.archive-ledger","quantity":1}]},"nodeId":"ready"},
+    {"when":{"type":"questStateEquals","questId":"demo:quest.archive-ledger","value":"active"},"nodeId":"active"},
+    {"when":{"type":"itemAtLeast","itemId":"demo:item.archive-ledger","quantity":1},"nodeId":"offer-ready"},
+    {"nodeId":"offer"}
+  ],"nodes":[
+    {"id":"offer","speakerKey":"clerk.name","pages":["clerk.offer"],"choices":[
+      {"id":"accept","labelKey":"clerk.accept-choice","actions":[{"type":"setQuestState","questId":"demo:quest.archive-ledger","value":"active"}],"nextNodeId":"accepted"},
+      {"id":"later","labelKey":"clerk.later-choice"}
+    ]},
+    {"id":"offer-ready","speakerKey":"clerk.name","pages":["clerk.offer-ready"],"choices":[
+      {"id":"hand-in","labelKey":"clerk.hand-in","enabledWhen":{"type":"itemAtLeast","itemId":"demo:item.archive-ledger","quantity":1},"disabledReasonKey":"clerk.no-ledger","actions":[{"type":"setQuestState","questId":"demo:quest.archive-ledger","value":"active"},{"type":"changeItem","itemId":"demo:item.archive-ledger","delta":-1},{"type":"setQuestState","questId":"demo:quest.archive-ledger","value":"completed"}],"nextNodeId":"finished"},
+      {"id":"later","labelKey":"clerk.keep-choice"}
+    ]},
+    {"id":"accepted","speakerKey":"clerk.name","pages":["clerk.accept"],"choices":[{"id":"wrap-up","labelKey":"clerk.wrap-up"}]},
+    {"id":"active","speakerKey":"clerk.name","pages":["clerk.active"]},
+    {"id":"ready","speakerKey":"clerk.name","pages":["clerk.ready"],"choices":[
+      {"id":"hand-in","labelKey":"clerk.hand-in","enabledWhen":{"type":"itemAtLeast","itemId":"demo:item.archive-ledger","quantity":1},"disabledReasonKey":"clerk.no-ledger","actions":[{"type":"changeItem","itemId":"demo:item.archive-ledger","delta":-1},{"type":"setQuestState","questId":"demo:quest.archive-ledger","value":"completed"}],"nextNodeId":"finished"},
+      {"id":"look","labelKey":"clerk.keep-looking"}
+    ]},
+    {"id":"finished","speakerKey":"clerk.name","pages":["clerk.done"]},
+    {"id":"completed","speakerKey":"clerk.name","pages":["clerk.repeat"]}
+  ]}]
 }

@@ -16,6 +16,9 @@ export class InventoryMenu {
   private readonly quantity: HTMLElement;
   private readonly legend: PromptLegendPresenter;
   private readonly affordances: ScrollAffordanceController[] = [];
+  private readonly journalBody:HTMLElement|null;
+  private readonly journalButton:HTMLButtonElement|null;
+  private journalOpen=false;
   constructor(readonly element: HTMLDialogElement, private readonly sessions: SessionController,
     close: () => void, settings: () => void, saves:()=>void, private readonly promptEntries: () => PromptEntry[]) {
     const get = <T extends HTMLElement>(id: string): T => {
@@ -24,6 +27,9 @@ export class InventoryMenu {
     const body = element.querySelector<HTMLElement>('.inventory-body');
     if (!body) throw new Error('Missing inventory element: .inventory-body');
     this.list = get('inventory-list'); this.title = get('item-name');
+    this.journalBody=element.querySelector<HTMLElement>('#journal-body');
+    this.journalButton=element.querySelector<HTMLButtonElement>('#inventory-journal');
+    if(this.journalBody){this.journalBody.hidden=true;body.hidden=false;this.journalButton!.textContent='Journal';element.querySelector<HTMLElement>('#inventory-title')!.textContent='Inventory';}
     this.description = get('item-description'); this.quantity = get('item-quantity');
     this.legend = mountPromptLegend(get('inventory-prompt'));
     // Closed dialogs have no layout; availability resolves when the ResizeObserver sees real sizes.
@@ -37,6 +43,7 @@ export class InventoryMenu {
     get('inventory-close').addEventListener('click',close,options);
     get('inventory-settings').addEventListener('click',settings,options);
     get('inventory-saves').addEventListener('click',saves,options);
+    this.journalButton?.addEventListener('click',()=>this.toggleJournal(),options);
     // Delegation avoids retained per-row closures when contents change.
     this.list.addEventListener('focusin', event => {
       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-item-id]');
@@ -60,7 +67,29 @@ export class InventoryMenu {
     for (const row of this.rows.values()) row.dispose();
     this.rows.clear(); this.list.replaceChildren();
   }
+  private toggleJournal():void{
+    if(!this.journalBody||!this.journalButton)return;
+    this.journalOpen=!this.journalOpen;
+    this.element.querySelector<HTMLElement>('.inventory-body')!.hidden=this.journalOpen;
+    this.journalBody.hidden=!this.journalOpen;
+    this.element.querySelector<HTMLElement>('#inventory-title')!.textContent=this.journalOpen?'Journal':'Inventory';
+    this.journalButton.textContent=this.journalOpen?'Inventory':'Journal';
+    this.renderJournal();
+    (this.journalOpen?this.journalBody.querySelector<HTMLElement>('button')??this.journalButton:this.list.querySelector<HTMLElement>('button')??this.journalButton).focus({preventScroll:true});
+  }
+  private renderJournal():void{
+    if(!this.journalBody)return;
+    const list=this.journalBody.querySelector<HTMLElement>('#journal-list')!;
+    const empty=this.journalBody.querySelector<HTMLElement>('#journal-empty')!;
+    const quests=this.sessions.current.questCatalog.filter(quest=>this.sessions.current.quest(quest.id)!=='inactive');
+    list.replaceChildren();empty.hidden=quests.length>0;
+    const title=this.journalBody.querySelector<HTMLElement>('#journal-name')!,description=this.journalBody.querySelector<HTMLElement>('#journal-description')!;
+    const select=(id:string):void=>{const quest=quests.find(value=>value.id===id)!;title.textContent=quest.title;description.textContent=this.sessions.current.quest(id)==='completed'?quest.completedText:quest.objective;};
+    for(const quest of quests){const button=document.createElement('button');button.type='button';button.className='ui-list-row';button.textContent=`${this.sessions.current.quest(quest.id)==='completed'?'✓':'•'} ${quest.title}`;button.onclick=()=>select(quest.id);button.onfocus=()=>select(quest.id);list.append(button);}
+    if(quests[0])select(quests[0].id);else{title.textContent='';description.textContent='';}
+  }
   open(): void {
+    this.renderJournal();
     const session=this.sessions.current;const state = session.snapshot();
     if (this.revision !== state.revision) {
       this.clearRows();
@@ -80,7 +109,7 @@ export class InventoryMenu {
     if (!this.element.open) this.element.showModal();
     document.getElementById('tools-toggle')?.setAttribute('aria-expanded','true');
     this.navigation.reset();
-    const focused = id ? this.rows.get(id)!.element : this.element.querySelector<HTMLElement>('#inventory-close')!;
+    const focused = this.journalOpen?(this.journalBody?.querySelector<HTMLElement>('button')??this.journalButton!):id ? this.rows.get(id)!.element : this.element.querySelector<HTMLElement>('#inventory-close')!;
     focused.focus({preventScroll:true});
     if (id) focused.scrollIntoView({block:'nearest',inline:'nearest'});
   }

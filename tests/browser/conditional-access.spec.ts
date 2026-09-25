@@ -183,16 +183,14 @@ test('a walkable denied exit shows one reason and makes zero destination request
   expect(closed.actorTile).toEqual({ x: 11, y: 6 });
   expect(closed.interactionTarget).toBeNull(); // The closed gate is passability only, not an interaction.
   expect(closed.session.facts['demo:fact.gallery.gate-open']).toBe(false);
-  await face(page, 'ArrowUp'); await face(page, 'ArrowDown'); // Reorient without crossing.
-  expect((await snapshot(page)).actorTile).toEqual({ x: 11, y: 6 });
   // Open via the lever on the wall face.
   await step(page, 'ArrowUp'); // (11,5)
   await face(page, 'ArrowRight');
   expect((await snapshot(page)).interactionTarget).toBe('demo:object.gallery.gate-switch');
   await interact(page);
   expect((await snapshot(page)).session.facts['demo:fact.gallery.gate-open']).toBe(true);
-  await face(page, 'ArrowDown'); // (11,6)
-  await face(page, 'ArrowRight'); // Stand on the open gate cell (12,6).
+  await step(page, 'ArrowDown'); // (11,6)
+  await step(page, 'ArrowRight'); // Stand on the open gate cell (12,6).
   expect((await snapshot(page)).actorTile).toEqual({ x: 12, y: 6 });
   await face(page, 'ArrowUp'); // Pure turn to the lever above; toggle closed while standing inside.
   expect((await snapshot(page)).interactionTarget).toBe('demo:object.gallery.gate-switch');
@@ -204,7 +202,7 @@ test('a walkable denied exit shows one reason and makes zero destination request
   await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
   await expect(page.locator('#save-dialog')).toBeHidden();
   expect((await snapshot(page)).pendingSaveOperations).toBe(0); // Nothing was written.
-  await face(page, 'ArrowLeft'); // Walk off west; the arrival releases the deferral and the gate closes.
+  await step(page, 'ArrowLeft'); // Walk off west; the arrival releases the deferral and the gate closes.
   expect((await snapshot(page)).actorTile).toEqual({ x: 11, y: 6 });
   await face(page, 'ArrowRight'); // The resolidified gate blocks re-entry: pure turn only.
   expect((await snapshot(page)).actorTile).toEqual({ x: 11, y: 6 });

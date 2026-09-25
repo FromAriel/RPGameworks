@@ -9,6 +9,7 @@
     "tileSize": {"const": 16},
     "itemsFile": {"type": "string", "pattern": "^items(\\.[a-f0-9]{12})?\\.json$"},
     "factsFile": {"type": "string", "pattern": "^facts(\\.[a-f0-9]{12})?\\.json$"},
+    "questsFile": {"type": "string", "pattern": "^quests(\\.[a-f0-9]{12})?\\.json$"},
     "stateIndexFile": {"type": "string", "pattern": "^state-index(\\.[a-f0-9]{12})?\\.json$"},
     "saveCompatibilityVersion": {"type": "integer", "minimum": 1, "maximum": 65535},
     "start": {

@@ -3,7 +3,7 @@ import { readFileSync, statSync, realpathSync, mkdirSync, mkdtempSync, writeFile
 import { dirname, resolve, relative, sep, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { readGame, readMap, readItems, readFacts, validateMapFacts, validateWorld } from '../src/content/validation.mjs';
+import { readGame, readMap, readItems, readFacts, readQuests, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -41,7 +41,11 @@ try {
     factsData=readJSON(file);
   }
   const facts=readFacts(factsData);
+  let questsData={schemaVersion:1,quests:[]};
+  if(game.questsFile){const file=realpathSync(join(source,game.questsFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.questsFile}: file escapes the content root`);questsData=readJSON(file);}
+  const quests=readQuests(questsData);
   for(const [id,map] of maps){validateMapFacts(map,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
+  for(const [id,map] of maps){validateMapDialogues(map,quests.quests,catalog,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   validateWorld(game, maps, catalog);
   let tileCount = 0;
   for (const map of maps.values()) tileCount += map.width * map.height;
@@ -69,11 +73,13 @@ try {
       }
       let factsFile;
       if(game.factsFile){const text=JSON.stringify(facts)+'\n';factsFile=`facts.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,factsFile),text);}
-      const stateIndex={schemaVersion:1,gameId:game.id,saveCompatibilityVersion:game.saveCompatibilityVersion??1,
+      let questsFile;
+      if(game.questsFile){const text=JSON.stringify(quests)+'\n';questsFile=`quests.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,questsFile),text);}
+      const stateIndex={schemaVersion:game.questsFile?2:1,gameId:game.id,saveCompatibilityVersion:game.saveCompatibilityVersion??1,
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
-        itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id))};
+        itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile?{questIds:quests.quests.map(quest=>quest.id)}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),stateIndexFile,maps:entries}) + '\n');
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

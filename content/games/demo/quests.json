@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "quests": [
+    {"id":"demo:quest.gallery-light","title":"Restore the Gallery light","objective":"Bring Mara the polished lens from the Gallery chest.","completedText":"Mara fitted the lens; the Gallery light shines again."},
+    {"id":"demo:quest.archive-ledger","title":"The archive ledger","objective":"Find the archive ledger in the Storeroom and return it to the clerk in the Gallery east wing.","completedText":"The archive clerk has the ledger back."}
+  ]
+}

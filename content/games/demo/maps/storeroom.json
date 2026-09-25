@@ -25,6 +25,11 @@
   ],
   "defaultSpawn": "from-gallery",
   "spawns": [{"id": "from-gallery", "x": 3, "y": 3, "facing": "right"}],
-  "objects": [{"id": "demo:object.storeroom.door", "frame": "door", "x": 1, "y": 3, "solid": false}],
-  "exits": [{"id": "to-gallery", "x": 1, "y": 3, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-storeroom"}]
+  "objects": [
+    {"id": "demo:object.storeroom.door", "frame": "door", "x": 1, "y": 3, "solid": false},
+    {"id":"demo:object.storeroom.ledger-chest","frame":"chest-closed","x":5,"y":2,"solid":true,"chest":{"itemId":"demo:item.archive-ledger","quantity":1,"openedFrame":"chest-open","openedMessageId":"ledger-found","emptyMessageId":"ledger-empty"}}
+  ],
+  "exits": [{"id": "to-gallery", "x": 1, "y": 3, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-storeroom"}],
+  "strings":{"en":{"ledger.name":"Storeroom record chest","ledger.found":"You found the archive ledger. Return it to the clerk in the Gallery east wing.","ledger.empty":"The chest is empty. You already took the ledger."}},
+  "messages":[{"id":"ledger-found","speakerKey":"ledger.name","pages":["ledger.found"]},{"id":"ledger-empty","speakerKey":"ledger.name","pages":["ledger.empty"]}]
 }

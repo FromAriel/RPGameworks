@@ -9,6 +9,7 @@ import { actorPosition, advanceActor, createActor } from '../domain/movement';
 import { viewportScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
+import { DialogueSession } from '../domain/dialogue';
 import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
 import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
@@ -69,12 +70,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
     inputOwner: InputController | null = null;
     mode: InputMode = 'exploration';
     message: MessageSession | null = null;
+    dialogue:DialogueSession|null=null;
     transitionError: string | null = null;
     private sceneLifetime: AbortController | null = null;
     private transfer = new TransitionTask<LoadedMap>();
     private generation = 0;
     private lastExit: MapExit | null = null;
-    private readonly dialog = new InteractionDialog(elements.dialog);
+    private readonly dialog = new InteractionDialog(elements.dialog,()=>this.cancelModal());
     private inventory: InventoryMenu | null = null;
     private saveMenu: SaveMenu | null = null;
     private menuPending = false;
@@ -107,7 +109,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
         this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
         this.transfer = new TransitionTask<LoadedMap>();
-        this.mode = 'exploration'; this.message = null; this.transitionError = null; this.menuPending = false;
+        this.mode = 'exploration'; this.message = null;this.dialogue=null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
         characterArt ??= new CharacterArt(this.textures, import.meta.env.BASE_URL);
         this.room = new MapView(this, content, elements.session.current, characterArt);
@@ -178,11 +180,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
         return;
       }
       if(this.mode==='save'){this.saveMenu?.sample({direction,interact,cancel,menu,burst:false},delta);return;}
+      if(this.mode==='dialogue'){this.dialog.sampleChoices({direction,interact,cancel,menu,burst:false},delta);return;}
       if (this.mode === 'exploration' && menu) { this.openInventory(); return; }
       if (this.mode !== 'exploration') {
         if (cancel) this.cancelModal();
         else if (interact && this.mode === 'message') {
-          if (this.message?.advance()) this.showMessage();
+          if(this.dialogue){if(this.dialogue.advance())this.showDialogue();else this.resume();}
+          else if (this.message?.advance()) this.showMessage();
           else this.resume();
         } else if (interact && this.mode === 'transition-error' && this.lastExit) this.startTransition(this.lastExit);
         return;
@@ -190,6 +194,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const target = interact ? room.target(room.actor) : null;
       if (target) {
         let state=room.resolve(target.objectId);if(!state?.interaction)return;
+        if(state.interaction.dialogueId){
+          const dialogueId=state.interaction.dialogueId;
+          const graph=content.map.dialogues?.find(candidate=>candidate.id===dialogueId);
+          if(!graph)throw new Error(`Missing dialogue ${state.interaction.dialogueId}`);
+          this.dialogue=new DialogueSession(graph,target.objectId,content.map.strings?.en??{},elements.session.current);
+          this.showDialogue();return;
+        }
         let messageId=state.interaction.messageId;
         const prerequisites=state.interaction.prerequisites;
         if(prerequisites&&!elements.session.evaluate(prerequisites,target.objectId)){
@@ -233,7 +244,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
       if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
-      const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog},envelope.session);
+      const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog,quests:elements.session.current.questCatalog},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
         const prepared=new MapView(this,next,candidate,characterArt??undefined);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
@@ -246,8 +257,27 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.dialog.show(message.speaker, message.text, `${message.page} / ${message.total}`,
         message.page === message.total ? 'Close message' : 'Next page', 'Close');
     }
+    private showDialogue():void{
+      const dialogue=this.dialogue!;
+      this.setMode(dialogue.atChoices?'dialogue':'message');
+      this.dialog.show(dialogue.speaker,dialogue.text,`${dialogue.page} / ${dialogue.total}`,dialogue.atChoices?null:dialogue.page===dialogue.total?'Close message':'Next page','Close');
+      if(dialogue.atChoices)this.dialog.showChoices(dialogue.choices(),id=>this.chooseDialogue(id));
+    }
+    private chooseDialogue(id:string):void{
+      const dialogue=this.dialogue;if(!dialogue)return;
+      let choice:ReturnType<DialogueSession['select']>;
+      try{choice=dialogue.select(id);}catch{return;}
+      if(choice.actions.length){
+        const result=elements.session.transact({actions:choice.actions,...(choice.prerequisites?{prerequisites:choice.prerequisites}:{})},dialogue.owner);
+        if(result.kind==='rejected'){
+          this.dialogue=null;this.message=null;this.setMode('message');
+          this.dialog.show('Choice unavailable',`The required item or quest state changed (${result.reason}). Speak again to retry.`,'',null,'Close');return;
+        }
+      }
+      if(choice.nextNodeId){dialogue.move(choice.nextNodeId);this.showDialogue();}else this.resume();
+    }
     private resume(): void {
-      this.dialog.close(); this.inventory?.close();this.saveMenu?.close(); this.message = null;
+      this.dialog.close(); this.inventory?.close();this.saveMenu?.close(); this.message = null;this.dialogue=null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
     private cancelModal(): void {
@@ -320,7 +350,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if (!this.sceneLifetime) return;
       this.sceneLifetime.abort(); this.sceneLifetime = null;
       this.generation += 1; this.transfer.dispose();
-      this.dialog.dispose(); this.message = null;
+      this.dialog.dispose(); this.message = null;this.dialogue=null;
       this.inventory?.dispose(); this.inventory = null;this.saveMenu?.dispose();this.saveMenu=null;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;
@@ -389,7 +419,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       return {
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         inputMode: current?.mode ?? 'exploration',
-        messageId: current?.message?.id ?? null, messagePage: current?.message?.page ?? 0,
+        messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,
         transitionError: current?.transitionError ?? null,

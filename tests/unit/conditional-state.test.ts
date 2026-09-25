@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { readFacts, readItems, readMap } from '../../src/content/validation.mjs';
+import { readFacts, readItems, readMap, readQuests } from '../../src/content/validation.mjs';
 import { objectDependencies, resolveObjectState } from '../../src/domain/object-state';
 import { MAX_CONDITION_DEPTH, MAX_CONDITION_NODES, SessionState, validateCondition } from '../../src/domain/session';
 import type { Condition } from '../../src/domain/session';
 import type { Placement } from '../../src/domain/session';
 
 const json=(path:string):unknown=>JSON.parse(readFileSync(path,'utf8')) as unknown;
-const definitions=()=>({items:readItems(json('content/games/demo/items.json')),facts:readFacts(json('content/games/demo/facts.json'))});
+const definitions=()=>({items:readItems(json('content/games/demo/items.json')),facts:readFacts(json('content/games/demo/facts.json')),quests:readQuests(json('content/games/demo/quests.json')).quests});
 const session=()=>new SessionState(definitions());
 const facts=new Set(['demo:fact.gallery.plaque-read']),items=new Set(['demo:item.lens']);
 
@@ -41,6 +41,15 @@ describe('bounded conditions and ordered object states',()=>{
     const map=readMap(json('content/games/demo/maps/gallery.json')),plaque=map.objects.find(object=>object.id==='demo:object.gallery.plaque')!,state=session();
     expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'unread',frame:'plaque'});expect([...objectDependencies(plaque)]).toEqual(['fact:demo:fact.gallery.plaque-read']);
     state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});expect(resolveObjectState(plaque,state)).toMatchObject({stateId:'read',frame:'plaque-read'});
+  });
+  it('routes Mara through one authored dialogue while retaining the found lens',()=>{
+    const map=readMap(json('content/games/demo/maps/workshop.json')),mara=map.objects.find(object=>object.id==='demo:object.workshop.caretaker')!,state=session();
+    expect(resolveObjectState(mara,state).interaction?.dialogueId).toBe('mara-lens');
+    state.transact({actions:[{type:'changeItem',itemId:'demo:item.lens',delta:1}]});
+    expect(resolveObjectState(mara,state).interaction?.dialogueId).toBe('mara-lens');
+    state.transact({actions:[{type:'setFact',factId:'demo:fact.gallery.plaque-read',value:true}]});
+    expect(state.quest('demo:quest.gallery-light')).toBe('inactive');
+    expect(state.count('demo:item.lens')).toBe(1);
   });
   it('keeps the storeroom doorway visible while changing its lock art and collision',()=>{
     const map=readMap(json('content/games/demo/maps/gallery.json'));

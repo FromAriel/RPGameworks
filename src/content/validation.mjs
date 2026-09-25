@@ -108,6 +108,21 @@ export function readFacts(value, file = 'facts.json') {
   return freezeCopy(data);
 }
 
+/** @param {any} value @param {string=} file */
+export function readQuests(value,file='quests.json'){
+  /** @param {string} path @param {string} message @param {unknown} actual */
+  const bad=(path,message,actual)=>{throw new ContentError([{file,id:'quest-catalog',path,message,value:actual}]);};
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='quests,schemaVersion'||value.schemaVersion!==1||!Array.isArray(value.quests)||value.quests.length>64)bad('/','Invalid quest catalog',value);
+  const seen=new Set();
+  for(const[index,quest]of value.quests.entries()){
+    if(!quest||typeof quest!=='object'||Array.isArray(quest)||Object.keys(quest).sort().join(',')!=='completedText,id,objective,title'||
+      !/^[a-z][a-z0-9-]{0,31}:quest\.[a-z][a-z0-9.-]{0,95}$/.test(quest.id)||seen.has(quest.id)||
+      [quest.title,quest.objective,quest.completedText].some(text=>typeof text!=='string'||!text.trim()||text.length>500))bad(`/quests/${index}`,'Invalid or duplicate quest',quest);
+    seen.add(quest.id);
+  }
+  return freezeCopy(value);
+}
+
 /** @param {MapDefinition} map @param {ItemCatalog} catalog @param {string} file */
 export function validateMapItems(map, catalog, file = 'map.json') {
   const items = new Map(catalog.items.map(item => [item.id, item]));
@@ -169,6 +184,34 @@ export function validateMapFacts(map,catalog,file='map.json'){
   map.exits.forEach((exit,index)=>{
     if(exit.prerequisites)conditionFn(exit.prerequisites,`/exits/${index}/prerequisites`,1,{count:0},'');
   });
+  if(issues.length)throw new ContentError(issues.slice(0,MAX_ISSUES));
+}
+
+/** @param {MapDefinition} map @param {readonly {id:string}[]} quests @param {ItemCatalog} items @param {FactCatalog} facts @param {string=} file */
+export function validateMapDialogues(map,quests,items,facts,file='map.json'){
+  const questIds=new Set(quests.map(quest=>quest.id)),itemIds=new Set(items.items.map(item=>item.id)),factIds=new Set(facts.facts.map(fact=>fact.id));
+  /** @type {ContentIssue[]} */const issues=[];
+  /** @param {any} node @param {string} path */
+  function condition(node,path,depth=1,total={count:0}){total.count+=1;if(depth>8||total.count>64){issues.push({file,id:map.id,path,message:'Condition exceeds depth or node limit',value:depth});return;}
+    if(node.type==='all'||node.type==='any')node.conditions.forEach(/** @param {any} child @param {number} index */(child,index)=>condition(child,`${path}/conditions/${index}`,depth+1,total));
+    else if(node.type==='not')condition(node.condition,`${path}/condition`,depth+1,total);
+    else if(node.type==='questStateEquals'&&!questIds.has(node.questId))issues.push({file,id:map.id,path,message:'Unknown quest',value:node.questId});
+    else if(node.type==='itemAtLeast'&&!itemIds.has(node.itemId))issues.push({file,id:map.id,path,message:'Unknown item',value:node.itemId});
+    else if(node.type==='factEquals'&&!factIds.has(node.factId))issues.push({file,id:map.id,path,message:'Unknown fact',value:node.factId});
+  }
+  /** @param {any} actions @param {string} path */
+  function checkActions(actions,path){actions?.forEach(/** @param {any} action @param {number} index */(action,index)=>{const p=`${path}/${index}`;
+    if(action.type==='setQuestState'&&!questIds.has(action.questId))issues.push({file,id:map.id,path:p,message:'Unknown quest action',value:action.questId});
+    if(action.type==='changeItem'&&!itemIds.has(action.itemId))issues.push({file,id:map.id,path:p,message:'Unknown item action',value:action.itemId});
+    if(action.type==='setFact'&&!factIds.has(action.factId))issues.push({file,id:map.id,path:p,message:'Unknown fact action',value:action.factId});
+  });}
+  map.dialogues?.forEach((dialogue,d)=>{dialogue.entries.forEach((entry,e)=>{if(entry.when)condition(entry.when,`/dialogues/${d}/entries/${e}/when`);});
+    dialogue.nodes.forEach((node,n)=>node.choices?.forEach((choice,c)=>{const path=`/dialogues/${d}/nodes/${n}/choices/${c}`;
+      if(choice.when)condition(choice.when,`${path}/when`);if(choice.enabledWhen)condition(choice.enabledWhen,`${path}/enabledWhen`);checkActions(choice.actions,`${path}/actions`);
+    }));
+  });
+  map.objects.forEach((object,o)=>object.states?.forEach((state,s)=>{if(state.when)condition(state.when,`/objects/${o}/states/${s}/when`);if(state.interaction?.prerequisites)condition(state.interaction.prerequisites,`/objects/${o}/states/${s}/interaction/prerequisites`);checkActions(state.interaction?.actions,`/objects/${o}/states/${s}/interaction/actions`);}));
+  map.exits.forEach((exit,e)=>{if(exit.prerequisites)condition(exit.prerequisites,`/exits/${e}/prerequisites`);});
   if(issues.length)throw new ContentError(issues.slice(0,MAX_ISSUES));
 }
 
@@ -244,6 +287,8 @@ export function readMap(value, file = 'map.json', frames) {
   });
   const messages = map.messages ?? [];
   unique(messages, '/messages');
+  const dialogues=map.dialogues??[];
+  unique(dialogues,'/dialogues');
   const strings = map.strings?.en ?? {};
   for (const [key, text] of Object.entries(strings)) {
     if (!text.trim()) issue(`/strings/en/${key}`, 'String must contain visible text', text);
@@ -252,6 +297,27 @@ export function readMap(value, file = 'map.json', frames) {
     for (const key of [message.speakerKey, ...message.pages]) {
       if (!Object.hasOwn(strings, key)) issue(`/messages/${index}`, 'Missing English string', key);
     }
+  });
+  dialogues.forEach((dialogue,index)=>{
+    const path=`/dialogues/${index}`,nodes=new Set(dialogue.nodes.map(node=>node.id));
+    if(nodes.size!==dialogue.nodes.length)issue(`${path}/nodes`,'Duplicate dialogue node ID',dialogue.id);
+    if(dialogue.entries.at(-1)?.when||dialogue.entries.slice(0,-1).some(entry=>!entry.when))issue(`${path}/entries`,'Exactly one unconditional entry must be last',dialogue.id);
+    dialogue.entries.forEach((entry,entryIndex)=>{if(!nodes.has(entry.nodeId))issue(`${path}/entries/${entryIndex}/nodeId`,'Missing dialogue node',entry.nodeId);});
+    dialogue.nodes.forEach((node,nodeIndex)=>{
+      for(const key of [node.speakerKey,...node.pages])if(!Object.hasOwn(strings,key))issue(`${path}/nodes/${nodeIndex}`,'Missing dialogue string',key);
+      const choiceIds=new Set();
+      node.choices?.forEach((choice,choiceIndex)=>{
+        const choicePath=`${path}/nodes/${nodeIndex}/choices/${choiceIndex}`;
+        if(choiceIds.has(choice.id))issue(`${choicePath}/id`,'Duplicate dialogue choice ID',choice.id);choiceIds.add(choice.id);
+        if(!Object.hasOwn(strings,choice.labelKey))issue(`${choicePath}/labelKey`,'Missing dialogue string',choice.labelKey);
+        if(choice.enabledWhen&&!choice.disabledReasonKey)issue(choicePath,'Disabled choice requires a reason',choice.id);
+        if(choice.disabledReasonKey&&!Object.hasOwn(strings,choice.disabledReasonKey))issue(`${choicePath}/disabledReasonKey`,'Missing dialogue string',choice.disabledReasonKey);
+        if(choice.nextNodeId&&!nodes.has(choice.nextNodeId))issue(`${choicePath}/nextNodeId`,'Missing dialogue node',choice.nextNodeId);
+      });
+    });
+    const reached=new Set(dialogue.entries.map(entry=>entry.nodeId));let prior=-1;
+    while(prior!==reached.size){prior=reached.size;for(const node of dialogue.nodes)if(reached.has(node.id))for(const choice of node.choices??[])if(choice.nextNodeId)reached.add(choice.nextNodeId);}
+    for(const node of dialogue.nodes)if(!reached.has(node.id))issue(`${path}/nodes`,'Unreachable dialogue node',node.id);
   });
   map.exits.forEach((exit,index)=>{
     if(exit.rejectionMessageId&&!messages.some(message=>message.id===exit.rejectionMessageId))issue(`/exits/${index}/rejectionMessageId`,'Message does not exist',exit.rejectionMessageId);
@@ -264,10 +330,15 @@ export function readMap(value, file = 'map.json', frames) {
       if (!object.solid) issue(`/objects/${index}/solid`, 'A chest must be a solid adjacent interaction', object.solid);
       if (available && !available.has(object.chest.openedFrame)) issue(`/objects/${index}/chest/openedFrame`, 'Atlas frame does not exist', object.chest.openedFrame);
     }
-    const stateMessages=object.states?.flatMap(state=>state.interaction?[state.interaction.messageId,...(state.interaction.rejectionMessageId?[state.interaction.rejectionMessageId]:[])]:[])??[];
+    const stateMessages=object.states?.flatMap(state=>state.interaction?[...(state.interaction.messageId?[state.interaction.messageId]:[]),...(state.interaction.rejectionMessageId?[state.interaction.rejectionMessageId]:[])]:[])??[];
     for (const id of object.chest ? [object.chest.openedMessageId, object.chest.emptyMessageId] : object.states?stateMessages:[object.messageId]) {
       if (!messages.some(message => message.id === id)) issue(`/objects/${index}`, 'Message does not exist', id);
     }
+    object.states?.forEach((state,stateIndex)=>{const interaction=state.interaction;if(!interaction)return;
+      if(!!interaction.messageId===!!interaction.dialogueId)issue(`/objects/${index}/states/${stateIndex}/interaction`,'Choose exactly one message or dialogue',object.id);
+      if(interaction.dialogueId&&(interaction.actions||interaction.prerequisites||interaction.rejectionMessageId))issue(`/objects/${index}/states/${stateIndex}/interaction`,'Dialogue interaction cannot also run message actions or denial',object.id);
+      if(interaction.dialogueId&&!dialogues.some(dialogue=>dialogue.id===interaction.dialogueId))issue(`/objects/${index}/states/${stateIndex}/interaction/dialogueId`,'Dialogue does not exist',interaction.dialogueId);
+    });
     const cell = `${object.x},${object.y}`;
     if (interactionCells.has(cell)) issue(`/objects/${index}`, 'Ambiguous interaction cell', cell);
     interactionCells.add(cell);
@@ -313,6 +384,14 @@ export function validateWorld(game, maps, catalog) {
     else if(condition.type==='placementOpened'&&condition.placementId!=='self'&&!objectIds.has(condition.placementId))issue(file,mapId,`${path}/placementId`,'Unknown condition placement',condition.placementId);
   }
   for(const entry of game.maps){const map=maps.get(entry.id);map?.objects.forEach((object,objectIndex)=>object.states?.forEach((state,stateIndex)=>{if(state.when)placementReferences(state.when,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/when`,object.id);if(state.interaction?.prerequisites)placementReferences(state.interaction.prerequisites,entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/prerequisites`,object.id);state.interaction?.actions?.forEach((action,actionIndex)=>{if(action.type==='markPlacementOpened'&&action.placementId!=='self'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`/objects/${objectIndex}/states/${stateIndex}/interaction/actions/${actionIndex}/placementId`,'Unknown action placement',action.placementId);});}));map?.exits.forEach((exit,exitIndex)=>{if(exit.prerequisites)placementReferences(exit.prerequisites,entry.file,map.id,`/exits/${exitIndex}/prerequisites`,'');});}
+  for(const entry of game.maps){const map=maps.get(entry.id);map?.dialogues?.forEach((dialogue,d)=>{
+    dialogue.entries.forEach((candidate,e)=>{if(candidate.when)placementReferences(candidate.when,entry.file,map.id,`/dialogues/${d}/entries/${e}/when`,'');});
+    dialogue.nodes.forEach((node,n)=>node.choices?.forEach((choice,c)=>{const path=`/dialogues/${d}/nodes/${n}/choices/${c}`;
+      if(choice.when)placementReferences(choice.when,entry.file,map.id,`${path}/when`,'');
+      if(choice.enabledWhen)placementReferences(choice.enabledWhen,entry.file,map.id,`${path}/enabledWhen`,'');
+      choice.actions?.forEach((action,a)=>{if(action.type==='markPlacementOpened'&&!objectIds.has(action.placementId))issue(entry.file,map.id,`${path}/actions/${a}/placementId`,'Unknown action placement',action.placementId);});
+    }));
+  });}
   const start = maps.get(game.start.mapId);
   if (!start?.spawns.some((spawn) => spawn.id === game.start.spawnId)) issue('game.json', game.id, '/start/spawnId', 'Start spawn does not exist', game.start.spawnId);
   if (maps.size !== game.maps.length) issue('game.json', game.id, '/maps', 'Registered and supplied map counts differ', maps.size);

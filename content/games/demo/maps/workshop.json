@@ -38,7 +38,8 @@
   "defaultSpawn": "start",
   "spawns": [
     {"id": "start", "x": 10, "y": 6, "facing": "down"},
-    {"id": "from-gallery", "x": 17, "y": 6, "facing": "left"}
+    {"id": "from-gallery", "x": 16, "y": 6, "facing": "left"},
+    {"id": "from-supply-room", "x": 3, "y": 6, "facing": "right"}
   ],
   "objects": [
     {"id": "demo:object.workshop.sigil", "frame": "sigil", "x": 10, "y": 5, "solid": false},
@@ -46,9 +47,17 @@
       {"id":"completed","when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"frame":"caretaker","visible":true,"interaction":{"dialogueId":"mara-lens"}},
       {"id":"available","fallback":true,"frame":"caretaker","visible":true,"interaction":{"dialogueId":"mara-lens"}}
     ]},
-    {"id": "demo:object.workshop.door", "frame": "door", "x": 18, "y": 6, "solid": false}
+    {"id": "demo:object.workshop.door", "frame": "door", "x": 18, "y": 6, "solid": false},
+    {"id": "demo:object.workshop.supply-key-chest", "frame": "chest-closed", "x": 5, "y": 3, "solid": true, "chest": {"itemId": "demo:item.workshop-key", "quantity": 1, "openedFrame": "chest-open", "openedMessageId": "supply-key-found", "emptyMessageId": "supply-key-empty"}},
+    {"id": "demo:object.workshop.supply-door", "frame": "door-locked", "x": 1, "y": 6, "solid": true, "states": [
+      {"id": "unlocked", "when": {"type": "placementOpened", "placementId": "self", "value": true}, "frame": "door", "visible": true, "solid": false},
+      {"id": "locked", "fallback": true, "frame": "door-locked", "visible": true, "solid": true, "interaction": {"messageId": "supply-door-unlock", "rejectionMessageId": "supply-door-locked", "prerequisites": {"type": "itemAtLeast", "itemId": "demo:item.workshop-key", "quantity": 1}, "actions": [{"type": "markPlacementOpened", "placementId": "self"}]}}
+    ]}
   ],
-  "exits": [{"id": "to-gallery", "x": 18, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-workshop"}],
+  "exits": [
+    {"id": "to-gallery", "x": 18, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.gallery", "targetSpawn": "from-workshop"},
+    {"id": "to-supply-room", "x": 1, "y": 6, "width": 1, "height": 1, "targetMap": "demo:map.supply-room", "targetSpawn": "from-workshop", "prerequisites": {"type": "placementOpened", "placementId": "demo:object.workshop.supply-door", "value": true}, "rejectionMessageId": "supply-door-locked"}
+  ],
   "strings": {"en": {
     "caretaker.name": "Mara — Workshop caretaker",
     "caretaker.welcome": "Welcome to the Workshop. These little rooms are the beginning of a much larger world.",
@@ -68,12 +77,22 @@
     "mara.hand-in":"Give Mara the polished lens",
     "mara.keep-looking":"I'll keep looking",
     "mara.wrap-up":"I'll be back",
-    "mara.no-lens":"You need the polished lens in your inventory."
+    "mara.no-lens":"You need the polished lens in your inventory.",
+    "supply-key.name":"Workshop supply crate",
+    "supply-key.found":"You found the Workshop key. It opens the west supply-room door and stays on your keyring.",
+    "supply-key.empty":"The crate is empty. You already took the Workshop key.",
+    "supply-door.name":"Workshop supply-room door",
+    "supply-door.locked":"The west supply-room door is locked. Look for its key in the Workshop.",
+    "supply-door.unlock":"The Workshop key turns. The supply-room door is unlocked. Step through to enter."
   }},
   "messages": [
     {"id": "caretaker-intro", "speakerKey": "caretaker.name", "pages": ["caretaker.welcome", "caretaker.gallery"]},
     {"id": "caretaker-plaque-read", "speakerKey": "caretaker.name", "pages": ["caretaker.plaque-read"]},
-    {"id": "caretaker-lens-found", "speakerKey": "caretaker.name", "pages": ["caretaker.lens-found"]}
+    {"id": "caretaker-lens-found", "speakerKey": "caretaker.name", "pages": ["caretaker.lens-found"]},
+    {"id": "supply-key-found", "speakerKey": "supply-key.name", "pages": ["supply-key.found"]},
+    {"id": "supply-key-empty", "speakerKey": "supply-key.name", "pages": ["supply-key.empty"]},
+    {"id": "supply-door-locked", "speakerKey": "supply-door.name", "pages": ["supply-door.locked"]},
+    {"id": "supply-door-unlock", "speakerKey": "supply-door.name", "pages": ["supply-door.unlock"]}
   ],
   "dialogues":[{"id":"mara-lens","entries":[
     {"when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"nodeId":"completed"},

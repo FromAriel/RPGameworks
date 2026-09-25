@@ -19,6 +19,10 @@
     {
       "id": "demo:map.storeroom",
       "file": "maps/storeroom.json"
+    },
+    {
+      "id": "demo:map.supply-room",
+      "file": "maps/supply-room.json"
     }
   ],
   "itemsFile": "items.json",

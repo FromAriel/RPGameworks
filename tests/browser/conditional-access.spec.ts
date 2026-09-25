@@ -158,6 +158,7 @@ test('a walkable denied exit shows one reason and makes zero destination request
     destinationRequests += 1; return route.continue();
   });
   await openRoom(page, '?map=demo:map.workshop&spawn=from-gallery');
+  await step(page, 'ArrowRight'); // Arrival is two tiles inside; the first step stays in Workshop.
   await page.keyboard.down('ArrowRight');
   await expect(page.locator('#dialog-text')).toContainText('doorway is closed');
   await page.keyboard.up('ArrowRight');

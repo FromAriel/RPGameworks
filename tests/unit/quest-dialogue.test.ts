@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { readFacts,readItems,readMap,readQuests,validateMapDialogues } from '../../src/content/validation.mjs';
 import { SessionState } from '../../src/domain/session';
 import { DialogueSession } from '../../src/domain/dialogue';
-import { validateSaveEnvelope,validateStateIndex } from '../../src/domain/save';
+import { createEnvelope,validateSaveEnvelope,validateStateIndex } from '../../src/domain/save';
 import { SaveService } from '../../src/runtime/save-service';
 import type { SaveRecord,SaveRepository,WriteResult,RemoveResult } from '../../src/platform/save-repository';
 import type { SaveEnvelopeV1 } from '../../src/domain/save';
@@ -105,5 +105,24 @@ describe('data-authored quest dialogue',()=>{
     const state=new SessionState({items,facts,quests},loaded.session);
     const written=await service.save('slot-2',loaded.checkpoint,state);
     expect(written.kind).toBe('written');expect(writes).toBe(1);expect(stored.current.schemaVersion).toBe(2);expect(stored.previous?.schemaVersion).toBe(1);
+  });
+  it('loads a pre-supply-room v2 save after additive map, item and placement IDs',()=>{
+    const oldIndex=validateStateIndex({schemaVersion:2,gameId:'demo:game.foundation',saveCompatibilityVersion:2,
+      maps:[{id:'demo:map.workshop',name:'The Workshop',width:20,height:12,spawns:['start','from-gallery']},{id:'demo:map.gallery',name:'The Pillar Gallery',width:24,height:14,spawns:['start','from-workshop','from-storeroom']},{id:'demo:map.storeroom',name:'Gallery Storeroom',width:8,height:6,spawns:['from-gallery']}],
+      itemIds:items.items.filter(item=>item.id!=='demo:item.workshop-key').map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),
+      placementIds:[...workshop().objects,...gallery().objects,...readMap(json('content/games/demo/maps/storeroom.json')).objects].map(object=>object.id).filter(id=>!id.startsWith('demo:object.workshop.supply-')),
+      questIds:quests.map((quest:{id:string})=>quest.id)});
+    const oldContext={gameId:'demo:game.foundation',saveCompatibilityVersion:2,index:oldIndex};
+    const state=session();state.transact({actions:[{type:'changeItem',itemId:'demo:item.brass-key',delta:1},{type:'markPlacementOpened',placementId:'demo:object.gallery.storeroom-door'},{type:'setQuestState',questId:'demo:quest.archive-ledger',value:'active'}]});
+    const saved=createEnvelope('slot-1',7,oldContext,{mapId:'demo:map.gallery',tile:{x:22,y:3},facing:'right'},state);
+    const newIndex=validateStateIndex({schemaVersion:2,gameId:'demo:game.foundation',saveCompatibilityVersion:2,
+      maps:[...oldIndex.maps,{id:'demo:map.supply-room',name:'Workshop Supply Room',width:8,height:6,spawns:['from-workshop']}],
+      itemIds:items.items.map(item=>item.id),factIds:oldIndex.factIds,
+      placementIds:[...oldIndex.placementIds,'demo:object.workshop.supply-key-chest','demo:object.workshop.supply-door','demo:object.supply-room.return-door'],questIds:oldIndex.questIds});
+    expect(validateSaveEnvelope(saved,{gameId:'demo:game.foundation',saveCompatibilityVersion:2,index:newIndex})).toEqual(saved);
+    expect(saved.session.inventory['demo:item.brass-key']).toBe(1);
+    expect(saved.session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
+    expect(saved.session.quests?.['demo:quest.archive-ledger']).toBe('active');
+    expect(saved.storageRevision).toBe(7);
   });
 });

@@ -42,6 +42,8 @@ describe('authored messages', () => {
   it('continues to read old v1 maps without message fields', () => {
     const map = workshop(); delete map.messages; delete map.strings; delete map.dialogues;
     map.objects = map.objects.filter((object) => !object.messageId && !object.states);
+    map.objects = map.objects.filter((object) => !object.chest);
+    map.exits = map.exits.filter((exit) => !exit.rejectionMessageId);
     expect(readMap(map).id).toBe(map.id);
     expect(createInteractionLookup(map)(createActor(10, 7))).toBeNull();
   });

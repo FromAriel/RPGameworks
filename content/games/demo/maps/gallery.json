@@ -42,7 +42,7 @@
   "defaultSpawn": "start",
   "spawns": [
     {"id": "start", "x": 4, "y": 6, "facing": "down"},
-    {"id": "from-workshop", "x": 2, "y": 6, "facing": "right"},
+    {"id": "from-workshop", "x": 3, "y": 6, "facing": "right"},
     {"id": "from-storeroom", "x": 22, "y": 3, "facing": "right"}
   ],
   "objects": [

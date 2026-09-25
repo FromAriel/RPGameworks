@@ -7,7 +7,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect(state.phaser).toBe('4.2.1');
   expect(state.renderer).toBe('WebGL');
   expect(state.activeScenes).toBe(1);
-  expect(state.displayObjects).toBe(246);
+  expect(state.displayObjects).toBe(248); // Workshop adds a visible west door and key crate.
   await expect(page.locator('canvas')).toHaveAttribute('width', '320');
   await expect(page.locator('canvas')).toHaveAttribute('height', '192');
   const size = await page.locator('canvas').boundingBox();
@@ -23,7 +23,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await page.keyboard.up('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
   await page.keyboard.down('ArrowLeft');
-  await expect.poll(async () => (await snapshot(page)).actorTile.x).toBe(1);
+  await expect.poll(async () => (await snapshot(page)).actorTile.x).toBe(2); // Locked west door blocks tile 1.
   await page.keyboard.up('ArrowLeft');
   await page.keyboard.down('ArrowDown');
   await expect.poll(async () => (await snapshot(page)).moving).toBe(true);

@@ -41,6 +41,7 @@ export class InteractionDialog {
 
   show(title: string, text: string, page: string, advanceLabel: string | null, cancelLabel: string): void {
     this.ensureAffordance();
+    const focusWasChoice = this.choices.contains(document.activeElement);
     this.navigation?.dispose();this.navigation=null;
     this.choices.hidden=true;this.choices.replaceChildren();
     // Authored content is text, never HTML. Newlines and wrapping are handled by CSS.
@@ -52,8 +53,10 @@ export class InteractionDialog {
     if (!this.element.open) {
       this.element.showModal();
       (advanceLabel ? this.advance : this.cancel).focus({ preventScroll: true });
-    } else if (advanceLabel === null && document.activeElement === this.advance) {
-      this.cancel.focus({ preventScroll: true });
+    } else if (focusWasChoice || !this.element.contains(document.activeElement)
+      || (advanceLabel === null && document.activeElement === this.advance)) {
+      // Replacing the selected choice detaches its button; keep keyboard focus in the dialogue.
+      (advanceLabel ? this.advance : this.cancel).focus({ preventScroll: true });
     }
   }
   showChoices(options:readonly AvailableChoice[],choose:(id:string)=>void):void{

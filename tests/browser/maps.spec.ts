@@ -8,7 +8,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   const requested:string[]=[];page.on('request',r=>requested.push(r.url()));
   await openRoom(page);
   const state=await snapshot(page);expect(state.mapId).toBe('demo:map.workshop');expect(state.loadedMaps).toBe(1);
-  expect(state.collisionCells).toBe(240);expect(state.exits).toBe(1);
+  expect(state.collisionCells).toBe(240);expect(state.exits).toBe(2);
   expect(requested.filter(url=>url.includes('/content/maps/'))).toHaveLength(1);
   expect(requested.some(url=>url.includes('/gallery.'))).toBe(false);
 });
@@ -25,7 +25,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   expect(Number.isInteger(state.camera.x)).toBe(true);expect(Number.isInteger(state.camera.y)).toBe(true);
   await page.screenshot({path:info.outputPath('gallery-desktop.png'),fullPage:true});
   await openRoom(page,'?map=demo:map.gallery&spawn=from-workshop');
-  expect((await snapshot(page)).actorTile).toEqual({x:2,y:6});expect((await snapshot(page)).facing).toBe('right');
+  expect((await snapshot(page)).actorTile).toEqual({x:3,y:6});expect((await snapshot(page)).facing).toBe('right');
 });
 
  test('preview selector reloads into a selected map and restart retains it',async({page})=>{

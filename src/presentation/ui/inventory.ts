@@ -67,13 +67,17 @@ export class InventoryMenu {
     for (const row of this.rows.values()) row.dispose();
     this.rows.clear(); this.list.replaceChildren();
   }
-  private toggleJournal():void{
+  private setJournalOpen(open:boolean):void{
     if(!this.journalBody||!this.journalButton)return;
-    this.journalOpen=!this.journalOpen;
+    this.journalOpen=open;
     this.element.querySelector<HTMLElement>('.inventory-body')!.hidden=this.journalOpen;
     this.journalBody.hidden=!this.journalOpen;
     this.element.querySelector<HTMLElement>('#inventory-title')!.textContent=this.journalOpen?'Journal':'Inventory';
     this.journalButton.textContent=this.journalOpen?'Inventory':'Journal';
+  }
+  private toggleJournal():void{
+    if(!this.journalBody||!this.journalButton)return;
+    this.setJournalOpen(!this.journalOpen);
     this.renderJournal();
     (this.journalOpen?this.journalBody.querySelector<HTMLElement>('button')??this.journalButton:this.list.querySelector<HTMLElement>('button')??this.journalButton).focus({preventScroll:true});
   }
@@ -117,6 +121,7 @@ export class InventoryMenu {
   close(): void {
     this.navigation.reset();
     if (this.element.open) { this.element.close(); document.getElementById('tools-toggle')?.setAttribute('aria-expanded','false'); }
+    this.setJournalOpen(false);
   }
   dispose(): void {
     this.close();

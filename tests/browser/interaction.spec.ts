@@ -90,11 +90,17 @@ async function fakePad(page: Page): Promise<void> {
   const marker=await page.evaluate(()=>{(window as any).__DOCUMENT_MARKER__=Math.random();return (window as any).__DOCUMENT_MARKER__;});
   await cross(page,'ArrowRight',GALLERY);
   expect((await snapshot(page)).heroArt).toBe('layered');
-  expect((await snapshot(page)).actorTile).toEqual({x:2,y:6}); expect((await snapshot(page)).facing).toBe('right');
+  expect((await snapshot(page)).actorTile).toEqual({x:3,y:6}); expect((await snapshot(page)).facing).toBe('right');
+  await step(page,'ArrowLeft'); // One backward tile remains in the Gallery.
+  expect((await snapshot(page)).actorTile).toEqual({x:2,y:6});
+  expect((await snapshot(page)).mapId).toBe(GALLERY);
   expect((await snapshot(page)).spawnId).toBe('from-workshop'); expect(maps).toHaveLength(2);
   await cross(page,'ArrowLeft',WORKSHOP);
   expect((await snapshot(page)).heroArt).toBe('layered');
-  expect((await snapshot(page)).actorTile).toEqual({x:17,y:6}); expect((await snapshot(page)).facing).toBe('left');
+  expect((await snapshot(page)).actorTile).toEqual({x:16,y:6}); expect((await snapshot(page)).facing).toBe('left');
+  await step(page,'ArrowRight'); // One backward tile remains in the Workshop.
+  expect((await snapshot(page)).actorTile).toEqual({x:17,y:6});
+  expect((await snapshot(page)).mapId).toBe(WORKSHOP);
   expect((await snapshot(page)).transitions).toBe(2); expect(maps).toHaveLength(3);
   expect(await page.evaluate(()=>(window as any).__DOCUMENT_MARKER__)).toBe(marker);
   expect((await snapshot(page)).loadedMaps).toBe(1);
@@ -130,7 +136,7 @@ async function fakePad(page: Page): Promise<void> {
   await step(page,'ArrowUp');await page.keyboard.press('KeyE');
   await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await page.keyboard.press('Escape');
   await step(page,'ArrowDown');await cross(page,'ArrowLeft',WORKSHOP);
-  for(let index=0;index<7;index+=1)await step(page,'ArrowLeft');
+  for(let index=0;index<6;index+=1)await step(page,'ArrowLeft');
   await step(page,'ArrowDown');
   expect((await snapshot(page)).interactionTarget).toBe('demo:object.workshop.caretaker');
   await page.keyboard.press('KeyE');

@@ -19,6 +19,12 @@
       "nameKey": "ledger.name",
       "descriptionKey": "ledger.description",
       "maxStack": 1
+    },
+    {
+      "id": "demo:item.workshop-key",
+      "nameKey": "workshop-key.name",
+      "descriptionKey": "workshop-key.description",
+      "maxStack": 1
     }
   ],
   "strings": {
@@ -28,7 +34,9 @@
       "key.name": "Brass key",
       "key.description": "A small brass key stamped with a gate bolt. It opens the Gallery Storeroom door and stays on your keyring.",
       "ledger.name": "Archive ledger",
-      "ledger.description": "A bound record from the Gallery Storeroom. The archive clerk asked for it."
+      "ledger.description": "A bound record from the Gallery Storeroom. The archive clerk asked for it.",
+      "workshop-key.name": "Workshop key",
+      "workshop-key.description": "A small iron key for the Workshop's west supply-room door. It stays on your keyring."
     }
   }
 }

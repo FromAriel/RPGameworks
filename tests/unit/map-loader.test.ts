@@ -15,7 +15,7 @@ describe('bounded map loading',()=>{
     const mock=vi.fn(async(url:URL)=>new Response(read(url.pathname.endsWith('game.json')?'game.json':'maps/gallery.json')));
     vi.stubGlobal('fetch',mock);
     const loaded=await loadSelectedMap(base,new URLSearchParams('map=demo:map.gallery&spawn=from-workshop'),new AbortController().signal);
-    expect(loaded.spawn.x).toBe(2);expect(loaded.map.id).toBe('demo:map.gallery');
+    expect(loaded.spawn.x).toBe(3);expect(loaded.map.id).toBe('demo:map.gallery');
     expect(mock.mock.calls.map(([url])=>url.pathname)).toEqual(['/RPGameworks/generated/content/game.json','/RPGameworks/generated/content/maps/gallery.json']);
   });
   it('rejects an unknown map before fetching its path',async()=>{

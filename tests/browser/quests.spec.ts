@@ -18,7 +18,7 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
   await openRoom(page,'?map=demo:map.gallery');
   await step(page,'ArrowUp');await interact(page);await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await close(page);
   await step(page,'ArrowDown');await walk(page,'ArrowLeft',2);await exit(page,'ArrowLeft','demo:map.workshop');
-  await walk(page,'ArrowLeft',7);await step(page,'ArrowDown');await interact(page);
+  await walk(page,'ArrowLeft',6);await step(page,'ArrowDown');await interact(page);
   await expect(page.locator('#dialog-choices')).toContainText('Accept the lens quest');
   await page.locator('[data-dialogue-choice="accept"]').click();
   expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('active');
@@ -27,14 +27,24 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
   await interact(page);await expect(page.locator('[data-dialogue-choice="hand-in"]')).toHaveCount(0);await close(page);
   await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toContainText('Bring Mara the polished lens');await page.locator('#inventory-close').click();
   await step(page,'ArrowUp');await exit(page,'ArrowRight','demo:map.gallery');
-  await walk(page,'ArrowDown',2);await walk(page,'ArrowRight',5);await interact(page);await expect(page.locator('#dialog-text')).toContainText('polished lens');await close(page);
+  await walk(page,'ArrowDown',2);await walk(page,'ArrowRight',4);await interact(page);await expect(page.locator('#dialog-text')).toContainText('polished lens');await close(page);
   expect((await snapshot(page)).session.inventory['demo:item.lens']).toBe(1);
   await walk(page,'ArrowLeft',5);await walk(page,'ArrowUp',2);await exit(page,'ArrowLeft','demo:map.workshop');
-  await walk(page,'ArrowLeft',7);await step(page,'ArrowDown');await interact(page);
-  await page.locator('[data-dialogue-choice="hand-in"]').click();await expect(page.locator('#dialog-text')).toContainText('light');await close(page);
+  await walk(page,'ArrowLeft',6);await step(page,'ArrowDown');await interact(page);
+  await page.locator('[data-dialogue-choice="hand-in"]').click();await expect(page.locator('#dialog-text')).toContainText('light');
+  await expect(page.locator('#dialog-advance')).toBeFocused();
+  await page.keyboard.press('KeyE');await expect(page.locator('#interaction-dialog')).toBeHidden();
+  await expect(page.locator('#stage')).toBeFocused();
+  await step(page,'ArrowUp'); // Keyboard movement resumes after the completion message.
   const state=(await snapshot(page)).session;expect(state.quests['demo:quest.gallery-light']).toBe('completed');expect(state.inventory['demo:item.lens']).toBeUndefined();
-  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toContainText('shines again');await page.locator('#inventory-close').click();
-  await step(page,'ArrowUp');await exit(page,'ArrowRight','demo:map.gallery');
+  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();
+  await expect(page.locator('#journal-body')).toBeVisible();await expect(page.locator('#journal-body')).toContainText('shines again');
+  await page.locator('#inventory-close').click();await expect(page.locator('#inventory-dialog')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
+  await page.keyboard.press('KeyI');await expect(page.locator('#inventory-title')).toHaveText('Inventory');
+  await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toBeVisible();
+  await expect(page.locator('#journal-body')).toContainText('shines again');
+  await page.keyboard.press('Escape');await expect(page.locator('#inventory-dialog')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
+  await exit(page,'ArrowRight','demo:map.gallery');
   await page.screenshot({path:info.outputPath('gallery-light-restored.png')});
   expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('completed');
 });
@@ -47,7 +57,7 @@ test('a lens found before acceptance can be kept or handed to Mara immediately',
   await face(page,'ArrowDown');await interact(page);await close(page);
   expect((await snapshot(page)).session.inventory['demo:item.lens']).toBe(1);
   await walk(page,'ArrowLeft',4);await step(page,'ArrowUp');await walk(page,'ArrowLeft',2);await exit(page,'ArrowLeft','demo:map.workshop');
-  await walk(page,'ArrowLeft',7);await step(page,'ArrowDown');await interact(page);
+  await walk(page,'ArrowLeft',6);await step(page,'ArrowDown');await interact(page);
   await expect(page.locator('#dialog-text')).toContainText('May I take it?');
   await expect(page.locator('#dialog-choices')).toContainText('Keep it for now');
   await page.locator('[data-dialogue-choice="later"]').click();

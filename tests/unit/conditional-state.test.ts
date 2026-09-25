@@ -59,6 +59,33 @@ describe('bounded conditions and ordered object states',()=>{
     state.transact({actions:[{type:'markPlacementOpened',placementId:door.id}]});
     expect(resolveObjectState(door,state)).toMatchObject({stateId:'unlocked',frame:'door',visible:true,solid:false});
   });
+  it('keeps the Workshop and Gallery keys and door markers independent',()=>{
+    const workshop=readMap(json('content/games/demo/maps/workshop.json'));
+    const gallery=readMap(json('content/games/demo/maps/gallery.json'));
+    const supplyDoor=workshop.objects.find(object=>object.id==='demo:object.workshop.supply-door')!;
+    const brassDoor=gallery.objects.find(object=>object.id==='demo:object.gallery.storeroom-door')!;
+    const supplyExit=workshop.exits.find(exit=>exit.id==='to-supply-room')!;
+    const brassExit=gallery.exits.find(exit=>exit.id==='to-storeroom')!;
+    const state=session();
+    const attempt=(door:typeof supplyDoor)=>{
+      const interaction=resolveObjectState(door,state).interaction!;
+      return state.transact({actions:interaction.actions,prerequisites:interaction.prerequisites!},door.id);
+    };
+    expect(attempt(supplyDoor)).toMatchObject({kind:'rejected',reason:'condition'});
+    expect(attempt(brassDoor)).toMatchObject({kind:'rejected',reason:'condition'});
+    state.transact({actions:[{type:'changeItem',itemId:'demo:item.brass-key',delta:1}]});
+    expect(attempt(supplyDoor)).toMatchObject({kind:'rejected',reason:'condition'});
+    expect(attempt(brassDoor)).toMatchObject({kind:'committed'});
+    expect(state.evaluate(brassExit.prerequisites!)).toBe(true);
+    expect(state.evaluate(supplyExit.prerequisites!)).toBe(false);
+    state.transact({actions:[{type:'changeItem',itemId:'demo:item.workshop-key',delta:1}]});
+    expect(attempt(supplyDoor)).toMatchObject({kind:'committed'});
+    expect(state.evaluate(supplyExit.prerequisites!)).toBe(true);
+    expect(resolveObjectState(supplyDoor,state)).toMatchObject({stateId:'unlocked',frame:'door',visible:true,solid:false});
+    expect(resolveObjectState(brassDoor,state)).toMatchObject({stateId:'unlocked',frame:'door',visible:true,solid:false});
+    expect(state.count('demo:item.brass-key')).toBe(1);
+    expect(state.count('demo:item.workshop-key')).toBe(1);
+  });
   const gate=(actionless=false):Placement=>{
     const map=structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
     const gate:Placement={id:'demo:object.gallery.test-gate',frame:'door',x:2,y:7,solid:true,states:[

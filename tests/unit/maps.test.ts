@@ -13,8 +13,9 @@ const json = (path: string): unknown => JSON.parse(readFileSync(path, 'utf8')) a
 const workshop = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/workshop.json')));
 const gallery = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/gallery.json')));
 const storeroom = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/storeroom.json')));
+const supplyRoom = (): MapDefinition => structuredClone(readMap(json('content/games/demo/maps/supply-room.json')));
 const worldMaps = (a = workshop(), b = gallery()): Map<string, MapDefinition> => {
-  const c = storeroom(); return new Map([[a.id,a],[b.id,b],[c.id,c]]);
+  const c = storeroom(), d = supplyRoom(); return new Map([[a.id,a],[b.id,b],[c.id,c],[d.id,d]]);
 };
 const manifest = (): GameManifest => structuredClone(readGame(json('content/games/demo/game.json')));
 const frames = Object.keys((json('assets/source/foundation.json') as { frames: Record<string, unknown> }).frames);
@@ -42,7 +43,7 @@ const badMaps: [string, (map: MapDefinition) => void, string][] = [
 ];
 
 describe('canonical map schema and local semantics', () => {
-  it('accepts both authored maps and resolves the complete world', () => {
+  it('accepts the authored maps and resolves the complete world', () => {
     const a = readMap(workshop(), 'maps/workshop.json', frames);
     const b = readMap(gallery(), 'maps/gallery.json', frames);
     expect(() => validateWorld(manifest(), worldMaps(a,b))).not.toThrow();
@@ -186,7 +187,7 @@ describe('content compiler',()=>{
       const source=join(temp,'source'), output=join(temp,'compiled');cpSync('content/games/demo',source,{recursive:true});
       const run=()=>spawnSync(process.execPath,['tools/build-content.mjs','--source',source,'--output',output],{encoding:'utf8'});
       expect(run().status).toBe(0);const first=readFileSync(join(output,'game.json'),'utf8');
-      expect(readdirSync(join(output,'maps'))).toHaveLength(3);expect(run().status).toBe(0);
+      expect(readdirSync(join(output,'maps'))).toHaveLength(4);expect(run().status).toBe(0);
       expect(readFileSync(join(output,'game.json'),'utf8')).toBe(first);
       const m=workshop();m.exits[0]!.targetSpawn='missing';writeFileSync(join(source,'maps/workshop.json'),JSON.stringify(m));
       const failed=run();expect(failed.status).toBe(1);expect(failed.stderr).toContain('Target spawn does not exist');

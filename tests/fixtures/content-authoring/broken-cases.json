@@ -1,0 +1,10 @@
+[
+  {"name":"missing exit target","file":"maps/start.json","pointer":"/exits/0/targetMap","value":"demo:map.absent","error":"Target map does not exist","recordId":"to-side"},
+  {"name":"missing target spawn","file":"maps/start.json","pointer":"/exits/0/targetSpawn","value":"absent","error":"Target spawn does not exist","recordId":"to-side"},
+  {"name":"blocked spawn","file":"maps/start.json","pointer":"/spawns/0/x","value":0,"error":"Spawn outside map or on a blocked cell","recordId":"start"},
+  {"name":"missing message string","file":"maps/start.json","pointer":"/messages/0/pages/0","value":"absent","error":"Missing English string","recordId":"unused-message"},
+  {"name":"dangling dialogue node","file":"maps/start.json","pointer":"/dialogues/0/entries/0/nodeId","value":"absent","error":"Missing dialogue node","recordId":"unused-dialogue"},
+  {"name":"missing exit","file":"maps/start.json","pointer":"/exits","value":[],"warning":"unreachable-map"},
+  {"name":"one-way route","file":"maps/side.json","pointer":"/exits","value":[],"warning":"no-return-path"},
+  {"name":"extra orphan string","file":"maps/start.json","pointer":"/strings/en/extra","value":"Unused extra prose.","warning":"orphan-definition"}
+]

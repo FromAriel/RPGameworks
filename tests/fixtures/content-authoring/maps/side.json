@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:map.fixture-side",
+  "name": "Fixture Side",
+  "orientation": "orthogonal",
+  "tileSize": 16,
+  "width": 4,
+  "height": 4,
+  "legend": {"#": "wall", "a": "floor-a"},
+  "layers": [{"id": "ground", "rows": ["####", "#aa#", "#aa#", "####"]}],
+  "collision": ["####", "#..#", "#..#", "####"],
+  "defaultSpawn": "from-start",
+  "spawns": [{"id": "from-start", "x": 1, "y": 1, "facing": "left"}],
+  "objects": [],
+  "exits": [{"id": "to-start", "x": 2, "y": 1, "width": 1, "height": 1, "targetMap": "demo:map.fixture-start", "targetSpawn": "start"}]
+}

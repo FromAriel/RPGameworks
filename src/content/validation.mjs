@@ -223,9 +223,9 @@ export function readMap(value, file = 'map.json', frames) {
   if (!validateMap(value)) schemaFailure(value, file, validateMap.errors);
   const map = /** @type {MapDefinition} */ (value);
   /** @type {ContentIssue[]} */ const issues = [];
-  /** @param {string} path @param {string} message @param {unknown} value */
-  const issue = (path, message, value) => {
-    if (issues.length < MAX_ISSUES) issues.push({file, id: map.id, path, message, value});
+  /** @param {string} path @param {string} message @param {unknown} value @param {string=} id */
+  const issue = (path, message, value, id = map.id) => {
+    if (issues.length < MAX_ISSUES) issues.push({file, id, path, message, value});
   };
   /** @param {{id: string}[]} items @param {string} path */
   function unique(items, path) {
@@ -266,7 +266,7 @@ export function readMap(value, file = 'map.json', frames) {
   });
   const grid = createCollision(map);
   map.spawns.forEach((spawn, index) => {
-    if (!grid.canEnter(spawn.x, spawn.y)) issue(`/spawns/${index}`, 'Spawn outside map or on a blocked cell', {x: spawn.x, y: spawn.y});
+    if (!grid.canEnter(spawn.x, spawn.y)) issue(`/spawns/${index}`, 'Spawn outside map or on a blocked cell', {x: spawn.x, y: spawn.y}, spawn.id);
   });
   if (!map.spawns.some((spawn) => spawn.id === map.defaultSpawn)) issue('/defaultSpawn', 'Default spawn does not exist', map.defaultSpawn);
   const exitCells = new Set();
@@ -294,25 +294,27 @@ export function readMap(value, file = 'map.json', frames) {
     if (!text.trim()) issue(`/strings/en/${key}`, 'String must contain visible text', text);
   }
   messages.forEach((message, index) => {
-    for (const key of [message.speakerKey, ...message.pages]) {
-      if (!Object.hasOwn(strings, key)) issue(`/messages/${index}`, 'Missing English string', key);
-    }
+    if (!Object.hasOwn(strings, message.speakerKey)) issue(`/messages/${index}/speakerKey`, 'Missing English string', message.speakerKey, message.id);
+    message.pages.forEach((key, page) => {
+      if (!Object.hasOwn(strings, key)) issue(`/messages/${index}/pages/${page}`, 'Missing English string', key, message.id);
+    });
   });
   dialogues.forEach((dialogue,index)=>{
     const path=`/dialogues/${index}`,nodes=new Set(dialogue.nodes.map(node=>node.id));
     if(nodes.size!==dialogue.nodes.length)issue(`${path}/nodes`,'Duplicate dialogue node ID',dialogue.id);
     if(dialogue.entries.at(-1)?.when||dialogue.entries.slice(0,-1).some(entry=>!entry.when))issue(`${path}/entries`,'Exactly one unconditional entry must be last',dialogue.id);
-    dialogue.entries.forEach((entry,entryIndex)=>{if(!nodes.has(entry.nodeId))issue(`${path}/entries/${entryIndex}/nodeId`,'Missing dialogue node',entry.nodeId);});
+    dialogue.entries.forEach((entry,entryIndex)=>{if(!nodes.has(entry.nodeId))issue(`${path}/entries/${entryIndex}/nodeId`,'Missing dialogue node',entry.nodeId,dialogue.id);});
     dialogue.nodes.forEach((node,nodeIndex)=>{
-      for(const key of [node.speakerKey,...node.pages])if(!Object.hasOwn(strings,key))issue(`${path}/nodes/${nodeIndex}`,'Missing dialogue string',key);
+      if(!Object.hasOwn(strings,node.speakerKey))issue(`${path}/nodes/${nodeIndex}/speakerKey`,'Missing dialogue string',node.speakerKey,dialogue.id);
+      node.pages.forEach((key,page)=>{if(!Object.hasOwn(strings,key))issue(`${path}/nodes/${nodeIndex}/pages/${page}`,'Missing dialogue string',key,dialogue.id);});
       const choiceIds=new Set();
       node.choices?.forEach((choice,choiceIndex)=>{
         const choicePath=`${path}/nodes/${nodeIndex}/choices/${choiceIndex}`;
         if(choiceIds.has(choice.id))issue(`${choicePath}/id`,'Duplicate dialogue choice ID',choice.id);choiceIds.add(choice.id);
-        if(!Object.hasOwn(strings,choice.labelKey))issue(`${choicePath}/labelKey`,'Missing dialogue string',choice.labelKey);
+        if(!Object.hasOwn(strings,choice.labelKey))issue(`${choicePath}/labelKey`,'Missing dialogue string',choice.labelKey,dialogue.id);
         if(choice.enabledWhen&&!choice.disabledReasonKey)issue(choicePath,'Disabled choice requires a reason',choice.id);
-        if(choice.disabledReasonKey&&!Object.hasOwn(strings,choice.disabledReasonKey))issue(`${choicePath}/disabledReasonKey`,'Missing dialogue string',choice.disabledReasonKey);
-        if(choice.nextNodeId&&!nodes.has(choice.nextNodeId))issue(`${choicePath}/nextNodeId`,'Missing dialogue node',choice.nextNodeId);
+        if(choice.disabledReasonKey&&!Object.hasOwn(strings,choice.disabledReasonKey))issue(`${choicePath}/disabledReasonKey`,'Missing dialogue string',choice.disabledReasonKey,dialogue.id);
+        if(choice.nextNodeId&&!nodes.has(choice.nextNodeId))issue(`${choicePath}/nextNodeId`,'Missing dialogue node',choice.nextNodeId,dialogue.id);
       });
     });
     const reached=new Set(dialogue.entries.map(entry=>entry.nodeId));let prior=-1;
@@ -372,8 +374,8 @@ export function validateWorld(game, maps, catalog) {
     }
     map.exits.forEach((exit, index) => {
       const target = registered.has(exit.targetMap) ? maps.get(exit.targetMap) : undefined;
-      if (!target) issue(entry.file, map.id, `/exits/${index}/targetMap`, 'Target map does not exist', exit.targetMap);
-      else if (!target.spawns.some((spawn) => spawn.id === exit.targetSpawn)) issue(entry.file, map.id, `/exits/${index}/targetSpawn`, 'Target spawn does not exist', exit.targetSpawn);
+      if (!target) issue(entry.file, exit.id, `/exits/${index}/targetMap`, 'Target map does not exist', exit.targetMap);
+      else if (!target.spawns.some((spawn) => spawn.id === exit.targetSpawn)) issue(entry.file, exit.id, `/exits/${index}/targetSpawn`, 'Target spawn does not exist', exit.targetSpawn);
     });
   }
   /** @param {any} condition @param {string} file @param {string} mapId @param {string} path @param {string} selfId */

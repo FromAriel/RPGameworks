@@ -1,13 +1,15 @@
 /** Validate everything first, then emit independently loadable, content-addressed maps. */
 import { readFileSync, statSync, realpathSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, renameSync } from 'node:fs';
-import { dirname, resolve, relative, sep, join, basename } from 'node:path';
+import { dirname, resolve, relative, sep, join, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { readGame, readMap, readItems, readFacts, readQuests, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
+import { createAuthoringReport } from './authoring-report.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
 function option(name, fallback) { const index = args.indexOf(name); if (index < 0) return fallback; if (!args[index + 1] || args[index + 1].startsWith('--')) throw new Error(`${name} requires a path`); return resolve(args[index + 1]); }
+function within(parent, child) { const rel = relative(parent, child); return rel === '' || (rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel)); }
 function readJSON(file) {
   if (statSync(file).size > 262144) throw new Error(`${file}: exceeds the 256 KiB content limit`);
   try { return JSON.parse(readFileSync(file, 'utf8')); } catch (error) { throw new Error(`${file}: invalid JSON: ${error.message}`); }
@@ -15,6 +17,9 @@ function readJSON(file) {
 try {
   const source = realpathSync(option('--source', join(repo, 'content/games/demo')));
   const output = option('--output', join(repo, 'public/generated/content'));
+  const reportPath = option('--report-json', undefined);
+  if (reportPath && !args.includes('--check')) throw new Error('--report-json requires --check');
+  if (reportPath && [source, output, join(repo, 'public'), join(repo, 'dist')].some(root => within(root, reportPath))) throw new Error('--report-json must be outside source, generated content, public, and dist');
   const game = readGame(readJSON(join(source, 'game.json')), 'game.json');
   const frames = Object.keys(readJSON(join(repo, 'assets/source/foundation.json')).frames);
   const maps = new Map();
@@ -50,6 +55,17 @@ try {
   let tileCount = 0;
   for (const map of maps.values()) tileCount += map.width * map.height;
   console.log(`Validated ${maps.size} maps, ${tileCount} cells, ${[...maps.values()].reduce((n, m) => n + m.exits.length, 0)} exits. All spawn, frame and cross-map references resolve.`);
+  if (args.includes('--check')) {
+    const report = createAuthoringReport(game, maps, catalog, facts, quests);
+    console.log(`Authoring report: ${report.summary.definitions} definitions, ${report.summary.references} references, ${report.summary.warnings} advisory findings. Structural paths do not prove gameplay solvability.`);
+    for (const warning of report.warnings.slice(0, 20)) console.log(`  warning ${warning.file} [${warning.id}] ${warning.path}: ${warning.message}`);
+    if (report.warnings.length > 20) console.log(`  ... ${report.warnings.length - 20} more advisory findings in the JSON report`);
+    if (reportPath) {
+      mkdirSync(dirname(reportPath), {recursive: true});
+      writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n');
+      console.log(`Wrote authoring report to ${reportPath}`);
+    }
+  }
   if (!args.includes('--check')) {
     if (source === output || source.startsWith(output + sep) || repo === output || repo.startsWith(output + sep)) throw new Error('Output may not replace the source directory or its ancestors');
     // A validation failure above leaves the previously generated pack untouched.

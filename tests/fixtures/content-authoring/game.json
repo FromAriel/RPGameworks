@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:game.authoring-fixture",
+  "tileSize": 16,
+  "start": {"mapId": "demo:map.fixture-start", "spawnId": "start"},
+  "maps": [
+    {"id": "demo:map.fixture-start", "file": "maps/start.json"},
+    {"id": "demo:map.fixture-side", "file": "maps/side.json"}
+  ],
+  "itemsFile": "items.json",
+  "factsFile": "facts.json",
+  "questsFile": "quests.json"
+}

@@ -1,6 +1,6 @@
-# HANDOFF — working notes through G1.3 and quest UI Pages release
+# HANDOFF — working notes through M3.5 local authoring report
 
-**Written:** September 25, 2026, after the authorized G1.3 and quest UI release. [STATUS](STATUS.md) remains the evidence ledger. Ariel accepted M3 locally; its source reached `main` as `6c17550`. The new game commit `00a568b` passed 358 unit/content and 148/148 local Chromium tests, was pushed to `main`, and was built/deployed by manual Pages [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Live checks confirmed the served build ID, Workshop/Gallery/Supply Room loads, layered hero, Journal close focus and approved pack hash. Specific hosted gameplay feedback remains open.
+**Written:** September 25, 2026, after the local M3.5 authoring-report packet. [STATUS](STATUS.md) remains the evidence ledger. M3.5 is locally verified but uncommitted; no new Pages run occurred. The public game remains G1.3 plus the quest UI correction from `00a568b`, deployed in manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Specific hosted gameplay feedback remains open.
 
 ## 1. Where the project stands
 
@@ -8,6 +8,7 @@
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
+| M3.5 local candidate | Deterministic authored-definition/referrer inventory, advisory orphan and structural route findings, precise fatal diagnostics and broken fixtures | [STATUS §M3.5](STATUS.md); 369 unit/content and 26 focused browser tests; source/Pages decisions open |
 | Quest UI released | Completion dialogue returns keyboard focus to a live button; Journal Close returns to exploration and the next Inventory opening starts at Inventory | `00a568b`; [STATUS §ad-hoc quest completion](STATUS.md); Ariel approved local correction; hosted Journal close smoke passed |
 | G1.3 released | Separate Workshop key and persistent west lock, sparse supply room with return door, additive v2 content IDs, corrected Workshop/Gallery arrival spacing | `00a568b`; [STATUS §G1.3](STATUS.md); 148/148 local Chromium checks, live room smoke; specific hosted route feedback separate |
 | M3 locally accepted; source delivered and hosted | Reusable authored dialogue and item hand-ins for Mara's lens and the archive clerk's ledger; Journal, lit Gallery, v1 save migration, corrected normal acceptance and already-held item routes | Source `6c17550`, hosted in `00a568b`; [STATUS §M3](STATUS.md); 356 unit/content and 146 browser tests; Ariel said “looks good” |
@@ -27,9 +28,9 @@
 
 ## 2. What is left (ordered)
 
-1. **Hosted play feedback.** Record Ariel's experience with the supply-room route and completed quests separately from the passing deployment and smoke. The live site serves game commit `00a568b`; the later documentation-only handoff commit does not need another Pages dispatch.
-2. **M3.5 — authoring reports.** Finish orphan/reference reports and deliberately broken fixtures after this release, before M4.
-3. **Chapter path.** Deliver minimum owned/fallback PixelFX with one battle cue, then M5 battle and preparation, M6.1's finishable chapter, and M7 hardening for its exact release artifact. Fuller FX laboratory, region scale, world clock, and large-map proofs may follow.
+1. **Review M3.5.** Inspect `.tmp/m3.5-demo-report.json` and its four advisory findings, then decide source delivery separately. The report is development-only and the runtime content remains unchanged.
+2. **Hosted play feedback.** Record Ariel's experience with the supply-room route and completed quests separately from the passing deployment and smoke. The live site serves game commit `00a568b`.
+3. **Next gameplay packet.** Plan and then deliver minimum owned/fallback PixelFX with one battle cue, followed by M5 battle and preparation, M6.1's finishable chapter, and M7 hardening. Fuller FX laboratory, region scale, world clock, and large-map proofs may follow.
 4. **Separate character-art path.** CA1/CA2 are published in `05705b9`. CA3's variants/tools/mounts and CA4's broader review can be scheduled when content needs them; art anchor/timing changes require a new visual check if Ariel requests them.
 
 ## 3. What we learned (alpha of the handbook)
@@ -58,7 +59,7 @@
 
 ## 5. First steps for the very next agent
 
-1. Read [STATUS](STATUS.md) and the G1.3/M3.5 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. The game release is `00a568b` and its Pages run is 36108392434; a later documentation-only commit records evidence without changing the hosted game.
+1. Read [STATUS](STATUS.md) and the M3.5/M4 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M3.5 is a local authoring-tool candidate; the public game is still `00a568b` from Pages run 36108392434.
 2. Ariel approved the local hero candidate and Pages serves it. Record any hosted playtest feedback separately; changes to mirror, anchor, or timing require a new candidate and visual check.
 3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 and M3 content are included in game commit `00a568b`; record hosted playtest feedback separately.
 4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.

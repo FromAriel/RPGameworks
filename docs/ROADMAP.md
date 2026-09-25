@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 1.1 · **Date:** September 25, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3 and G1.3 are delivered to `main`. G1.3 and the ad-hoc quest UI correction are hosted from game commit `00a568b` by manual Pages run 36108392434. M3.5 authoring reports follow before M4. See STATUS for verification and publication boundaries.
+**Version:** 1.1 · **Date:** September 25, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3 and G1.3 are delivered to `main`; the public game is `00a568b` from manual Pages run 36108392434. M3.5 authoring reports and fixtures are locally verified, with source delivery separate. The minimum M4 PixelFX contract follows. See STATUS for verification and publication boundaries.
 
 Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -14,7 +14,7 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 | G1.2 conditional travel | Corrected visible locked/unlocked door and set-back arrivals were accepted and pushed as `070234a`; included in hosted game commit `00a568b` | Collect hosted gameplay feedback separately |
 | M3 missing-lens and archive-ledger quests | Locally accepted and source pushed as `6c17550`; generic dialogue/quest/item hand-in, Journal, lit Gallery and v1 migration passed 356 unit/content tests and 146 browser scenarios; included in hosted game commit `00a568b` | Collect hosted quest feedback separately |
 | G1.3 independent locks | Workshop supply room, retained Workshop key, independent persistent west door, and safer Workshop/Gallery arrivals are pushed and hosted from `00a568b`; 148/148 local browser checks passed | Collect specific hosted supply-room feedback separately |
-| M3.5 authoring reports | After G1.3 | Add orphan/reference reports and deliberately broken validation fixtures before M4 |
+| M3.5 authoring reports | Locally verified: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change | Review the report; decide source delivery separately before M4 |
 | Later chapter release | Planned | Add the minimum FX contract and battle, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
@@ -185,7 +185,7 @@ This smaller proving ground precedes the old town-square/inn/cellar/path expansi
 - [x] **M3.2 — Quest state machine.** Implement inactive/active/completed states, legal transitions, Journal text, completion markers and quest-state conditions. Entry rules select before/during/ready/completed conversations from shared state. Preserve discovered progress on late acceptance. Validate and migrate v1 saves/imports without accepting a quest automatically or rewriting stored data before an explicit save.
 - [x] **M3.3 — Useful actions.** The current encounters use one choice-triggered registered transaction for item removal and completion, with a visible lit-state consequence. Re-entry cannot repeat hand-in. Presentation cancellation does not undo a committed transaction. Asynchronous action sequences and yields remain deferred until content requires them.
 - [x] **M3.4 — Dialogue/quest index and validation.** Extend the compact manifest and hashed map build with a hashed quest catalog, versioned state index, dialogue/quest reference checks and graph reachability; retain the existing lazy map loader.
-- [ ] **M3.5 — Reports and authoring fixtures.** Add orphan/reference reports, missing-exit tests, blocked-spawn checks, missing-string diagnostics, and deliberately broken fixtures that prove validation catches errors.
+- [x] **M3.5 — Reports and authoring fixtures.** `npm run validate` prints a concise reference/orphan/route report; an explicit JSON option emits sorted, source-relative definitions, referrers and advisory warnings. A test-only two-map pack with broken exit, spawn, string and dialogue variants proves fatal diagnostics and preservation of previously generated output. The real demo reports four advisory orphans, with no runtime payload or save change. Local verification: 369 unit/content tests and 26 focused browser scenarios; source push and Pages remain separate.
 - [x] **M3.6 — Small second-content proof.** The Gallery archive clerk asks for a ledger from a Storeroom container through the same dialogue, quest, item-removal and completion path. The different NPC and item are authored content, without per-NPC code.
 
 ### Acceptance
@@ -320,7 +320,7 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**Complete M3.5 authoring reports.** The G1.3 supply room and quest UI correction reached `main` as `00a568b` and Pages in manual run 36108392434. The current candidate passed 148/148 local Chromium scenarios; a bounded hosted smoke verified the build ID, three rooms, layered art and Journal close. Collect specific hosted gameplay feedback separately. Add orphan/reference reports and deliberately broken validation fixtures before M4.
+**Review M3.5 and plan the minimum M4 contract.** M3.5 is locally complete with the reference/orphan report, broken validation fixtures and focused regressions. Review its four advisory findings before deciding whether any are deliberate content to retain, then decide source delivery separately. Next, specify M4.1–M4.3's owned effect requests, missing-effect fallback, caps and one readable battle cue before implementing the wider PixelFX catalog. Continue collecting hosted G1.3/quest feedback separately.
 
 G1.2 uses the completed M2 state and travel contracts for the first conditional doorway. The M3 local candidate now uses those contracts before G1.3's broader second-lock proof. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 

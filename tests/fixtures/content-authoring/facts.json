@@ -1,0 +1,4 @@
+{
+  "schemaVersion": 1,
+  "facts": [{"id": "demo:fact.fixture-flag", "type": "boolean", "default": false, "scope": "global", "persistence": "saved"}]
+}

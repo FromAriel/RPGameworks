@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "capacity": 4,
+  "items": [{"id": "demo:item.fixture-token", "nameKey": "token.name", "descriptionKey": "token.description", "maxStack": 1}],
+  "strings": {"en": {"token.name": "Fixture token", "token.description": "An unused test item."}}
+}

@@ -66,7 +66,7 @@ describe('canonical map schema and local semantics', () => {
     try { readMap(map, 'maps/broken.json'); throw new Error('Expected rejection'); }
     catch (error) {
       expect(error).toBeInstanceOf(ContentError);
-      expect((error as Error).message).toContain('maps/broken.json [demo:map.workshop] /spawns/0');
+      expect((error as Error).message).toContain('maps/broken.json [start] /spawns/0');
       expect((error as Error).message).toContain('"x":25');
     }
   });

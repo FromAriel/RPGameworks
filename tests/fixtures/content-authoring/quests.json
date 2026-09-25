@@ -1,0 +1,4 @@
+{
+  "schemaVersion": 1,
+  "quests": [{"id": "demo:quest.fixture-task", "title": "Fixture task", "objective": "Only used by authoring tests.", "completedText": "Done."}]
+}

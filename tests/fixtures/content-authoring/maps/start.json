@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:map.fixture-start",
+  "name": "Fixture Start",
+  "orientation": "orthogonal",
+  "tileSize": 16,
+  "width": 4,
+  "height": 4,
+  "legend": {"#": "wall", "a": "floor-a"},
+  "layers": [{"id": "ground", "rows": ["####", "#aa#", "#aa#", "####"]}],
+  "collision": ["####", "#..#", "#..#", "####"],
+  "defaultSpawn": "start",
+  "spawns": [{"id": "start", "x": 1, "y": 1, "facing": "down"}],
+  "objects": [],
+  "exits": [{"id": "to-side", "x": 2, "y": 1, "width": 1, "height": 1, "targetMap": "demo:map.fixture-side", "targetSpawn": "from-start"}],
+  "strings": {"en": {"speaker": "Fixture narrator", "line": "A test line.", "unused": "Unused prose."}},
+  "messages": [{"id": "unused-message", "speakerKey": "speaker", "pages": ["line"]}],
+  "dialogues": [{"id": "unused-dialogue", "entries": [{"nodeId": "hello"}], "nodes": [{"id": "hello", "speakerKey": "speaker", "pages": ["line"]}]}]
+}

@@ -1,6 +1,6 @@
-# HANDOFF — working notes through M3.5 local authoring report
+# HANDOFF — working notes through M3.5 source delivery
 
-**Written:** September 25, 2026, after the local M3.5 authoring-report packet. [STATUS](STATUS.md) remains the evidence ledger. M3.5 is locally verified but uncommitted; no new Pages run occurred. The public game remains G1.3 plus the quest UI correction from `00a568b`, deployed in manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Specific hosted gameplay feedback remains open.
+**Written:** September 25, 2026, after M3.5 source delivery. [STATUS](STATUS.md) remains the evidence ledger. M3.5 is locally verified and pushed to `main` as `8fc7b05`; no new Pages run occurred. The public game remains G1.3 plus the quest UI correction from `00a568b`, deployed in manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Specific hosted gameplay feedback remains open.
 
 ## 1. Where the project stands
 
@@ -8,7 +8,7 @@
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
-| M3.5 local candidate | Deterministic authored-definition/referrer inventory, advisory orphan and structural route findings, precise fatal diagnostics and broken fixtures | [STATUS §M3.5](STATUS.md); 369 unit/content and 26 focused browser tests; source/Pages decisions open |
+| M3.5 source delivered | Deterministic authored-definition/referrer inventory, advisory orphan and structural route findings, precise fatal diagnostics and broken fixtures | `8fc7b05`; [STATUS §M3.5](STATUS.md); 369 unit/content and 26 focused browser tests; Pages decision open |
 | Quest UI released | Completion dialogue returns keyboard focus to a live button; Journal Close returns to exploration and the next Inventory opening starts at Inventory | `00a568b`; [STATUS §ad-hoc quest completion](STATUS.md); Ariel approved local correction; hosted Journal close smoke passed |
 | G1.3 released | Separate Workshop key and persistent west lock, sparse supply room with return door, additive v2 content IDs, corrected Workshop/Gallery arrival spacing | `00a568b`; [STATUS §G1.3](STATUS.md); 148/148 local Chromium checks, live room smoke; specific hosted route feedback separate |
 | M3 locally accepted; source delivered and hosted | Reusable authored dialogue and item hand-ins for Mara's lens and the archive clerk's ledger; Journal, lit Gallery, v1 save migration, corrected normal acceptance and already-held item routes | Source `6c17550`, hosted in `00a568b`; [STATUS §M3](STATUS.md); 356 unit/content and 146 browser tests; Ariel said “looks good” |
@@ -22,13 +22,13 @@
 | M2 spine | Facts/transactions/placements, three-slot IndexedDB saves, inventory menu | [status §M2](STATUS.md) |
 | Research docs | Cute Fantasy sprite layout (schema + 56-row Ariel map) + license decision; CA1–CA4 plan | [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md), [asset-analysis/](asset-analysis/README.md) |
 
-**Current verification:** G1.3 and the quest UI correction passed `npm run validate` and `npm run check` with 4 maps, 672 cells, 6 exits, 358 unit/content tests, typecheck and production build. The Workshop key denies and unlocks only its own door; its failed destination load preserves the committed unlock, and Retry succeeds. The 40-transfer ownership regression, v1 migration and additive v2 save compatibility pass. The final full local Chromium suite passed 148/148. Pages run 36108392434 deployed game commit `00a568b`; a bounded live smoke verified the served content and Journal focus.
+**Current verification:** M3.5 passed `npm run validate`, `npm run check` with 369 unit/content tests, typecheck and production build, a project-path build, and 26 focused browser checks. G1.3 and the quest UI correction previously passed a full 148/148 local Chromium suite. Pages run 36108392434 deployed game commit `00a568b`; a bounded live smoke verified the served content and Journal focus. No M3.5 Pages run has occurred.
 
 **Deployment posture:** Pages deploys **only** by manual dispatch of the build-only workflow for an approved commit; ordinary pushes never publish. Public-repo builds are free of the runner-quota problem that exhausted the old matrix; the three-platform CI stays separately manual.
 
 ## 2. What is left (ordered)
 
-1. **Review M3.5.** Inspect `.tmp/m3.5-demo-report.json` and its four advisory findings, then decide source delivery separately. The report is development-only and the runtime content remains unchanged.
+1. **Review M3.5 findings.** Inspect `.tmp/m3.5-demo-report.json` and its four advisory findings; decide whether the unused records are intentional. Source is delivered, the report is development-only, and runtime content remains unchanged.
 2. **Hosted play feedback.** Record Ariel's experience with the supply-room route and completed quests separately from the passing deployment and smoke. The live site serves game commit `00a568b`.
 3. **Next gameplay packet.** Plan and then deliver minimum owned/fallback PixelFX with one battle cue, followed by M5 battle and preparation, M6.1's finishable chapter, and M7 hardening. Fuller FX laboratory, region scale, world clock, and large-map proofs may follow.
 4. **Separate character-art path.** CA1/CA2 are published in `05705b9`. CA3's variants/tools/mounts and CA4's broader review can be scheduled when content needs them; art anchor/timing changes require a new visual check if Ariel requests them.
@@ -59,7 +59,7 @@
 
 ## 5. First steps for the very next agent
 
-1. Read [STATUS](STATUS.md) and the M3.5/M4 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M3.5 is a local authoring-tool candidate; the public game is still `00a568b` from Pages run 36108392434.
+1. Read [STATUS](STATUS.md) and the M3.5/M4 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M3.5 source is on `main` as `8fc7b05`; the public game is still `00a568b` from Pages run 36108392434.
 2. Ariel approved the local hero candidate and Pages serves it. Record any hosted playtest feedback separately; changes to mirror, anchor, or timing require a new candidate and visual check.
 3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 and M3 content are included in game commit `00a568b`; record hosted playtest feedback separately.
 4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.

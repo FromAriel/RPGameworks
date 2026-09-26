@@ -1,6 +1,6 @@
 # HANDOFF — working notes through the M4 minimum local candidate
 
-**Written:** September 26, 2026, after the M4.1–M4.3 local PixelFX packet. [STATUS](STATUS.md) remains the evidence ledger. M4's minimum contract and one impact cue are locally verified but uncommitted, pending Ariel's visual review. M3.5 was pushed to `main` as `8fc7b05`; no new Pages run occurred. The public game remains G1.3 plus the quest UI correction from `00a568b`, deployed in manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Specific hosted gameplay feedback remains open.
+**Written:** September 26, 2026, after M4.1–M4.3 source delivery. [STATUS](STATUS.md) remains the evidence ledger. M4's minimum contract and one impact cue are locally verified and pushed to `main` as `c396b77`; Ariel's visual review remains open. No new Pages run occurred. The public game remains G1.3 plus the quest UI correction from `00a568b`, deployed in manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Specific hosted gameplay feedback remains open.
 
 ## 1. Where the project stands
 
@@ -8,7 +8,7 @@
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
-| M4.1–M4.3 local candidate | Validated cosmetic requests and authored finite recipe runner, scene-owned cancellation, reduced fallback, caps and neutral impact cue | [STATUS §M4](STATUS.md); 375 unit/content and 149 local browser tests; visual review/source/Pages open |
+| M4.1–M4.3 source delivered | Validated cosmetic requests and authored finite recipe runner, scene-owned cancellation, reduced fallback, caps and neutral impact cue | `c396b77`; [STATUS §M4](STATUS.md); 375 unit/content and 149 local browser tests; visual review and Pages open |
 | M3.5 source delivered | Deterministic authored-definition/referrer inventory, advisory orphan and structural route findings, precise fatal diagnostics and broken fixtures | `8fc7b05`; [STATUS §M3.5](STATUS.md); 369 unit/content and 26 focused browser tests; Pages decision open |
 | Quest UI released | Completion dialogue returns keyboard focus to a live button; Journal Close returns to exploration and the next Inventory opening starts at Inventory | `00a568b`; [STATUS §ad-hoc quest completion](STATUS.md); Ariel approved local correction; hosted Journal close smoke passed |
 | G1.3 released | Separate Workshop key and persistent west lock, sparse supply room with return door, additive v2 content IDs, corrected Workshop/Gallery arrival spacing | `00a568b`; [STATUS §G1.3](STATUS.md); 148/148 local Chromium checks, live room smoke; specific hosted route feedback separate |
@@ -29,7 +29,7 @@
 
 ## 2. What is left (ordered)
 
-1. **Review the local M4 cue.** Try Burst in Workshop and Gallery, including the narrow Gallery view and the Cosmetic particles setting. The cue is subtle at 1×; Ariel's visual review is still open. Source push and Pages deployment remain separate decisions.
+1. **Review the local M4 cue.** Try Spark in Workshop and Gallery, including the narrow Gallery view and the Cosmetic particles setting. The cue is subtle at 1×; Ariel's visual review is still open. Source is delivered; Pages deployment remains a separate decision.
 2. **Hosted play feedback.** Record Ariel's experience with the supply-room route and completed quests separately from the passing deployment and smoke. The live site serves game commit `00a568b`.
 3. **Next gameplay packet.** Use M4's request contract after a pure M5 battle action resolves; then build battle and preparation, M6.1's finishable chapter, and M7 hardening. The broader FX catalog/laboratory, region scale, world clock, and large-map proofs may follow tested needs.
 4. **Separate character-art path.** CA1/CA2 are published in `05705b9`. CA3's variants/tools/mounts and CA4's broader review can be scheduled when content needs them; art anchor/timing changes require a new visual check if Ariel requests them.
@@ -60,7 +60,7 @@
 
 ## 5. First steps for the very next agent
 
-1. Read [STATUS](STATUS.md) and the M4/M5 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M4.1–M4.3 are a local visual-review candidate; M3.5 source is on `main` as `8fc7b05`, and the public game is still `00a568b` from Pages run 36108392434.
+1. Read [STATUS](STATUS.md) and the M4/M5 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M4.1–M4.3 source is on `main` as `c396b77`, with visual review open; the public game is still `00a568b` from Pages run 36108392434.
 2. Ariel approved the local hero candidate and Pages serves it. Record any hosted playtest feedback separately; changes to mirror, anchor, or timing require a new candidate and visual check.
 3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 and M3 content are included in game commit `00a568b`; record hosted playtest feedback separately.
 4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.

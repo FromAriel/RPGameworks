@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 1.1 · **Date:** September 26, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3, G1.3 and M3.5 are delivered to `main`; the public game is still `00a568b` from manual Pages run 36108392434. M4.1–M4.3's minimum PixelFX contract is a locally verified, uncommitted visual-review candidate. See STATUS for verification and publication boundaries.
+**Version:** 1.1 · **Date:** September 26, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3, G1.3, M3.5 and M4.1–M4.3 are delivered to `main`; the public game is still `00a568b` from manual Pages run 36108392434. The minimum PixelFX contract is locally verified and pushed as `c396b77`, with visual review and deployment separate. See STATUS for verification and publication boundaries.
 
 Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -15,7 +15,7 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 | M3 missing-lens and archive-ledger quests | Locally accepted and source pushed as `6c17550`; generic dialogue/quest/item hand-in, Journal, lit Gallery and v1 migration passed 356 unit/content tests and 146 browser scenarios; included in hosted game commit `00a568b` | Collect hosted quest feedback separately |
 | G1.3 independent locks | Workshop supply room, retained Workshop key, independent persistent west door, and safer Workshop/Gallery arrivals are pushed and hosted from `00a568b`; 148/148 local browser checks passed | Collect specific hosted supply-room feedback separately |
 | M3.5 authoring reports | Source pushed as `8fc7b05`: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change; not deployed | Four unused records reviewed and retained for now; any Pages deployment is separate |
-| M4.1–M4.3 minimum PixelFX | Local visual-review candidate: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed | Ariel reviews the local cue; source and Pages delivery are separate |
+| M4.1–M4.3 minimum PixelFX | Source pushed as `c396b77`: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed | Ariel reviews the local cue; Pages deployment is separate |
 | Later chapter release | Planned | Build battle using the minimum FX contract, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
@@ -209,7 +209,7 @@ Invalid references fail before deployment. A structurally unreachable node is fl
 
 ### Work packets
 
-- [x] **M4.1 — Presentation contract.** Add validated effect requests, scene/actor anchors, independent cosmetic seeds, cancellation handles, and missing-effect fallback. Local evidence in STATUS; visual review and source delivery remain open.
+- [x] **M4.1 — Presentation contract.** Add validated effect requests, scene/actor anchors, independent cosmetic seeds, cancellation handles, and missing-effect fallback. Source delivery is recorded in STATUS; visual review remains open.
 - [x] **M4.2 — Recipe runner.** Implement finite timelines, parallel visual tracks, parameter bounds, and recursion/expansion limits. Begin with sprites, stock emitters, tint, and simple transforms. Nested recipes are rejected in this first vocabulary, bounding expansion.
 - [x] **M4.3 — Resource policy and first cue.** Add global/per-recipe caps, bounded emitter ownership, dropped-effect counters, and quality presets. Prove one battle cue remains readable with reduced effects and is fully disposable. The first cue allocates on request rather than keeping an unmeasured reserve; Ariel's visual review is open.
 - [ ] **M4.4 — Reference catalog.** Author roughly six visually distinct effects. Test on bright and dark maps, under camera motion, and with reduced effects.
@@ -321,7 +321,7 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**Review the local impact cue, then begin M5.** M3.5's four advisory findings were reviewed and retained for now. M4.1–M4.3 are locally verified with one neutral impact preview; Ariel's visual review, source push and Pages deployment are separate decisions. M5 should first resolve one hero/enemy attack in the pure battle kernel, then request this cue only after the result commits. Expand M4.4–M4.6 against tested battle needs. Continue collecting hosted G1.3/quest feedback separately.
+**Review the local impact cue, then begin M5.** M3.5's four advisory findings were reviewed and retained for now. M4.1–M4.3 are locally verified and source delivered with one neutral impact preview; Ariel's visual review and Pages deployment are separate decisions. M5 should first resolve one hero/enemy attack in the pure battle kernel, then request this cue only after the result commits. Expand M4.4–M4.6 against tested battle needs. Continue collecting hosted G1.3/quest feedback separately.
 
 G1.2 uses the completed M2 state and travel contracts for the first conditional doorway. The M3 local candidate now uses those contracts before G1.3's broader second-lock proof. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 

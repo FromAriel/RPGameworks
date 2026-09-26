@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 1.1 · **Date:** September 25, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3, G1.3 and M3.5 are delivered to `main`; the public game is still `00a568b` from manual Pages run 36108392434. M3.5 authoring reports and fixtures are locally verified and pushed as `8fc7b05`, without a Pages dispatch. The minimum M4 PixelFX contract follows. See STATUS for verification and publication boundaries.
+**Version:** 1.1 · **Date:** September 26, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3, G1.3 and M3.5 are delivered to `main`; the public game is still `00a568b` from manual Pages run 36108392434. M4.1–M4.3's minimum PixelFX contract is a locally verified, uncommitted visual-review candidate. See STATUS for verification and publication boundaries.
 
 Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -14,8 +14,9 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 | G1.2 conditional travel | Corrected visible locked/unlocked door and set-back arrivals were accepted and pushed as `070234a`; included in hosted game commit `00a568b` | Collect hosted gameplay feedback separately |
 | M3 missing-lens and archive-ledger quests | Locally accepted and source pushed as `6c17550`; generic dialogue/quest/item hand-in, Journal, lit Gallery and v1 migration passed 356 unit/content tests and 146 browser scenarios; included in hosted game commit `00a568b` | Collect hosted quest feedback separately |
 | G1.3 independent locks | Workshop supply room, retained Workshop key, independent persistent west door, and safer Workshop/Gallery arrivals are pushed and hosted from `00a568b`; 148/148 local browser checks passed | Collect specific hosted supply-room feedback separately |
-| M3.5 authoring reports | Source pushed as `8fc7b05`: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change; not deployed | Review four advisory findings before M4; any Pages deployment is separate |
-| Later chapter release | Planned | Add the minimum FX contract and battle, finish M6.1, then perform M7 release hardening |
+| M3.5 authoring reports | Source pushed as `8fc7b05`: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change; not deployed | Four unused records reviewed and retained for now; any Pages deployment is separate |
+| M4.1–M4.3 minimum PixelFX | Local visual-review candidate: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed | Ariel reviews the local cue; source and Pages delivery are separate |
+| Later chapter release | Planned | Build battle using the minimum FX contract, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
 "Implemented", "locally verified", "Ariel accepted", "pushed", and "hosted" are separate states. A checked packet records implementation evidence; STATUS records the exact remaining acceptance and release boundary.
@@ -208,9 +209,9 @@ Invalid references fail before deployment. A structurally unreachable node is fl
 
 ### Work packets
 
-- [ ] **M4.1 — Presentation contract.** Add validated effect requests, scene/actor anchors, independent cosmetic seeds, cancellation handles, and missing-effect fallback.
-- [ ] **M4.2 — Recipe runner.** Implement finite timelines, parallel visual tracks, parameter bounds, and recursion/expansion limits. Begin with sprites, stock emitters, tint, and simple transforms.
-- [ ] **M4.3 — Resource policy and first cue.** Add global/per-recipe caps, bounded emitter ownership, small reserves, dropped-effect counters, and quality presets. Prove one battle cue remains readable with reduced effects and is fully disposable. Do not preallocate the high preset on every device.
+- [x] **M4.1 — Presentation contract.** Add validated effect requests, scene/actor anchors, independent cosmetic seeds, cancellation handles, and missing-effect fallback. Local evidence in STATUS; visual review and source delivery remain open.
+- [x] **M4.2 — Recipe runner.** Implement finite timelines, parallel visual tracks, parameter bounds, and recursion/expansion limits. Begin with sprites, stock emitters, tint, and simple transforms. Nested recipes are rejected in this first vocabulary, bounding expansion.
+- [x] **M4.3 — Resource policy and first cue.** Add global/per-recipe caps, bounded emitter ownership, dropped-effect counters, and quality presets. Prove one battle cue remains readable with reduced effects and is fully disposable. The first cue allocates on request rather than keeping an unmeasured reserve; Ariel's visual review is open.
 - [ ] **M4.4 — Reference catalog.** Author roughly six visually distinct effects. Test on bright and dark maps, under camera motion, and with reduced effects.
 - [ ] **M4.5 — FX laboratory.** Add recipe/seed selection, replay/step, background choice, parameter editing, diagnostics, and complete-file export/import. It must run the production effect code.
 - [ ] **M4.6 — Saturation and cleanup proof.** Test burst, steady-flow, large-alpha-overdraw, scene-exit, target-despawn, and cancellation cases. Compare domain state hashes with effects enabled, disabled, and saturated.
@@ -320,7 +321,7 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**Review the M3.5 findings and plan the minimum M4 contract.** M3.5 source is delivered with the reference/orphan report, broken validation fixtures and focused regressions. Review its four advisory findings and decide whether the unused content is deliberate. Next, specify M4.1–M4.3's owned effect requests, missing-effect fallback, caps and one readable battle cue before implementing the wider PixelFX catalog. Continue collecting hosted G1.3/quest feedback separately; any M3.5 Pages deployment is a separate release decision.
+**Review the local impact cue, then begin M5.** M3.5's four advisory findings were reviewed and retained for now. M4.1–M4.3 are locally verified with one neutral impact preview; Ariel's visual review, source push and Pages deployment are separate decisions. M5 should first resolve one hero/enemy attack in the pure battle kernel, then request this cue only after the result commits. Expand M4.4–M4.6 against tested battle needs. Continue collecting hosted G1.3/quest feedback separately.
 
 G1.2 uses the completed M2 state and travel contracts for the first conditional doorway. The M3 local candidate now uses those contracts before G1.3's broader second-lock proof. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 

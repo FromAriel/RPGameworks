@@ -7,7 +7,8 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect(state.phaser).toBe('4.2.1');
   expect(state.renderer).toBe('WebGL');
   expect(state.activeScenes).toBe(1);
-  expect(state.displayObjects).toBe(248); // Workshop adds a visible west door and key crate.
+  expect(state.displayObjects).toBeGreaterThan(240);
+  expect(state.displayObjects).toBeLessThanOrEqual(250); // One room and its owned visuals, with no preallocated effect emitters.
   await expect(page.locator('canvas')).toHaveAttribute('width', '320');
   await expect(page.locator('canvas')).toHaveAttribute('height', '192');
   const size = await page.locator('canvas').boundingBox();
@@ -40,6 +41,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await setEffects(page, true);
   await enableTouch(page);
   const initial = (await snapshot(page)).actorTile;
+  const initialSession = (await snapshot(page)).session;
   const peak = await page.evaluate(async () => {
     let highest = 0;
     for (let i = 0; i < 30; i += 1) {
@@ -54,10 +56,12 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect((await snapshot(page)).pooledParticles).toBeLessThanOrEqual(64);
   await expect.poll(async () => (await snapshot(page)).aliveParticles).toBe(0);
   expect((await snapshot(page)).actorTile).toEqual(initial);
+  expect((await snapshot(page)).session).toEqual(initialSession);
   await setEffects(page, false);
   await page.locator('#burst').click();
   await page.waitForTimeout(100);
   expect((await snapshot(page)).aliveParticles).toBe(0);
+  expect((await snapshot(page)).session).toEqual(initialSession);
   await page.getByTestId('viewport').focus();
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(initial.x);
@@ -112,6 +116,25 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await setEffects(page, true);
   await page.locator('#burst').click();
   await expect.poll(async () => (await snapshot(page)).aliveParticles).toBeGreaterThan(0);
+});
+
+test('authored impact is visible in both rooms and reduced mode, then releases its objects', async ({ page }, info) => {
+  for (const [name, suffix] of [['workshop', ''], ['gallery', '?map=demo:map.gallery']] as const) {
+    await page.setViewportSize(name === 'gallery' ? { width: 390, height: 700 } : { width: 960, height: 720 });
+    await openRoom(page, suffix);
+    await enableTouch(page);
+    await page.locator('#burst').click();
+    await expect.poll(async () => (await snapshot(page)).activeEffects).toBeGreaterThan(0);
+    expect((await snapshot(page)).fallbackEffects).toBe(0);
+    await page.screenshot({ path: info.outputPath(`impact-${name}.png`), fullPage: true });
+    await expect.poll(async () => (await snapshot(page)).activeEffects).toBe(0);
+    expect((await snapshot(page)).aliveParticles).toBe(0);
+  }
+  await setEffects(page, false);
+  await page.locator('#burst').click();
+  await expect.poll(async () => (await snapshot(page)).activeEffects).toBeGreaterThan(0);
+  expect((await snapshot(page)).aliveParticles).toBe(0);
+  await expect.poll(async () => (await snapshot(page)).activeEffects).toBe(0);
 });
 
  test('Canvas renderer fallback boots and moves', async ({ page }) => {

@@ -119,9 +119,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
           elements.gamepad, elements.canPlay, elements.dialog, elements.inventory,elements.saveDialog);
         starts += 1;
         current = this;
-        elements.effects.addEventListener('change', () => {
-          if (!elements.effects.checked) this.room?.emitter.killAll();
-        }, { signal: this.sceneLifetime.signal });
+        this.room.setEffectsEnabled(elements.effects.checked);
+        elements.effects.addEventListener('change', () => this.room?.setEffectsEnabled(elements.effects.checked), { signal: this.sceneLifetime.signal });
         elements.restart.addEventListener('click', () => {
           // Restart is deliberately unavailable while a message or transfer owns input.
           if (this.mode !== 'exploration' || !elements.canRestart()) return;
@@ -246,7 +245,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog,quests:elements.session.current.questCatalog},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
-        const prepared=new MapView(this,next,candidate,characterArt??undefined);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
+        const prepared=new MapView(this,next,candidate,characterArt??undefined);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
       });
       if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close message','Close');return;}
@@ -319,6 +318,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
           // Construct/validate the new view while the old view is still usable.
           const old = this.room!;
           const prepared = new MapView(this, next, elements.session.current, characterArt??undefined);
+          prepared.setEffectsEnabled(elements.effects.checked);
           prepared.bind(elements.session);
           try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
           this.room = prepared; content = next;
@@ -436,8 +436,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
         activeScenes: game.scene.getScenes(true).length,
         displayObjects: current?.children.length ?? 0,
         textureCount: game.textures.getTextureKeys().length,
-        aliveParticles: room?.emitter?.getAliveParticleCount() ?? 0,
-        pooledParticles: room?.emitter?.getParticleCount() ?? 0,
+        aliveParticles: room?.effects.diagnostics.aliveParticles ?? 0,
+        pooledParticles: room?.effects.diagnostics.pooledParticles ?? 0,
+        activeEffects: room?.effects.diagnostics.active ?? 0,
+        droppedEffects: room?.effects.diagnostics.dropped ?? 0,
+        fallbackEffects: room?.effects.diagnostics.fallbacks ?? 0,
         burstRequests: room?.bursts ?? 0,
         sessionSubscribers:elements.session.subscriberCount,
         activeObjectBindings:room?.dependencies.size??0,

@@ -129,6 +129,7 @@ function drawDiagnostics(): void {
     ['Travel failures / cancels', `${snapshot.failedTransitions} / ${snapshot.cancelledTransitions}`],
     ['Display objects', String(snapshot.displayObjects)],
     ['Particles', `${snapshot.aliveParticles} / 64`],
+    ['Effects active / dropped / fallback', `${snapshot.activeEffects} / ${snapshot.droppedEffects} / ${snapshot.fallbackEffects}`],
     ['Scene starts / stops', `${snapshot.starts} / ${snapshot.stops}`],
     ['State bindings / subscribers',`${snapshot.activeObjectBindings} / ${snapshot.sessionSubscribers}`],
     ['Pending save operations',String(snapshot.pendingSaveOperations)],

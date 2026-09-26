@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "demo:fx.impact",
+  "durationMs": 360,
+  "parameters": { "intensity": { "min": 0.5, "max": 2, "default": 1 } },
+  "tracks": [
+    { "kind": "sprite", "startMs": 0, "durationMs": 190, "frame": "spark", "offset": { "x": 0, "y": 0 }, "alpha": [1, 0], "scale": [3, 1], "tint": [16777215, 9677798] },
+    { "kind": "sprite", "startMs": 35, "durationMs": 270, "frame": "spark", "offset": { "x": -5, "y": 0 }, "alpha": [0.9, 0], "scale": [2, 1], "tint": [9677798, 16777215] },
+    { "kind": "sprite", "startMs": 35, "durationMs": 270, "frame": "spark", "offset": { "x": 5, "y": 0 }, "alpha": [0.9, 0], "scale": [2, 1], "tint": [9677798, 16777215] },
+    { "kind": "sprite", "startMs": 35, "durationMs": 270, "frame": "spark", "offset": { "x": 0, "y": -5 }, "alpha": [0.9, 0], "scale": [2, 1], "tint": [9677798, 16777215] },
+    { "kind": "sprite", "startMs": 35, "durationMs": 270, "frame": "spark", "offset": { "x": 0, "y": 5 }, "alpha": [0.9, 0], "scale": [2, 1], "tint": [9677798, 16777215] },
+    { "kind": "particles", "startMs": 40, "count": 16, "lifespanMs": 260, "speed": 42, "frame": "spark" }
+  ]
+}

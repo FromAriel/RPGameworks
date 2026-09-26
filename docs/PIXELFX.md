@@ -1,6 +1,6 @@
 # RPGameworks — PixelFX Design
 
-**Version:** 0.1 · **Date:** September 17, 2026 · **Status:** Proposed subsystem, not implemented.
+**Version:** 0.1 · **Date:** September 26, 2026 · **Status:** M4.1–M4.3 minimum contract implemented locally; wider catalog and laboratory remain proposed. See [STATUS](STATUS.md) and [Decision 0005](decisions/0005-minimum-pixelfx-contract.md).
 
 Parent document: [Master Plan](PLAN.md). Delivery order: [Roadmap](ROADMAP.md).
 

@@ -11,12 +11,13 @@ import type { SessionController } from '../runtime/session-controller';
 import type { LoadedMap } from '../platform/map-loader';
 import { validateMapFacts,validateMapItems } from '../content/validation.mjs';
 import { CharacterArt, CharacterView } from './character-view';
+import { EffectRunner } from './effects/runner';
 
-export const TILE=16;export const ATLAS='foundation';export const PARTICLE_CAP=64;const BURST_SIZE=24;
-type Visual=Phaser.GameObjects.Image|Phaser.GameObjects.Sprite|Phaser.GameObjects.Container|Phaser.GameObjects.Particles.ParticleEmitter;
+export const TILE=16;export const ATLAS='foundation';
+type Visual=Phaser.GameObjects.Image|Phaser.GameObjects.Sprite|Phaser.GameObjects.Container;
 
 export class MapView{
-  readonly actor;readonly target;readonly exits;readonly collision:DynamicCollision;readonly hero:Phaser.GameObjects.Sprite;readonly emitter:Phaser.GameObjects.Particles.ParticleEmitter;
+  readonly actor;readonly target;readonly exits;readonly collision:DynamicCollision;readonly hero:Phaser.GameObjects.Sprite;readonly effects:EffectRunner;
   bursts=0;private readonly owned:Visual[]=[];private disposed=false;private unsubscribe:(()=>void)|null=null;
   private characterView:CharacterView|null=null;private shown=false;
   private readonly definitions=new Map<string,LoadedMap['map']['objects'][number]>();
@@ -33,7 +34,7 @@ export class MapView{
       for(const object of map.objects){this.definitions.set(object.id,object);const state=resolveObjectState(object,session);this.states.set(object.id,state);const visual=this.own(scene.add.image(object.x*TILE,object.y*TILE,ATLAS,state.frame).setOrigin(0).setDepth(.5));visual.setVisible(state.visible);this.visuals.set(object.id,visual);}
     this.collision=createDynamicCollision(map,[...this.states.values()]);
       const position=actorPosition(this.actor,TILE);this.hero=this.own(scene.add.sprite(position.x,position.y,ATLAS,`hero-${spawn.facing}`).setDepth(1));
-      this.emitter=this.own(scene.add.particles(0,0,ATLAS,{frame:'spark',emitting:false,lifespan:{min:220,max:480},speed:{min:22,max:70},angle:{min:0,max:360},gravityY:28,alpha:{start:1,end:0},quantity:BURST_SIZE,maxParticles:PARTICLE_CAP,maxAliveParticles:PARTICLE_CAP,blendMode:Phaser.BlendModes.NORMAL}).setDepth(2));
+      this.effects=new EffectRunner(scene,ATLAS,id=>id==='hero'?{x:this.hero.x,y:this.hero.y}:null);
       if(art?.ready)this.attachCharacterArt(art);
     }catch(cause){this.destroy();throw cause;}
   }
@@ -55,7 +56,8 @@ export class MapView{
   /** Canonical (deferral-free) check: a save or export whose checkpoint restores into a room that resolves this tile solid would be unloadable. */
   checkpointBlocked(tile:Tile):boolean{return !resolvedCanEnter(this.content.map,[...this.states.values()],tile.x,tile.y);}
   releaseDeferred():void{this.collision.release(this.occupant);}
-  sync(deltaMs=0):void{const position=actorPosition(this.actor,TILE);this.hero.setPosition(Math.round(position.x),Math.round(position.y));const frame=`hero-${this.actor.facing}`;if(this.hero.frame.name!==frame)this.hero.setFrame(frame);this.characterView?.sync(this.actor,position.x,position.y,deltaMs);}
-  burst(enabled:boolean):void{this.bursts+=1;if(!enabled)return;const available=Math.max(0,PARTICLE_CAP-this.emitter.getAliveParticleCount());if(available>0)this.emitter.explode(Math.min(BURST_SIZE,available),this.hero.x,this.hero.y);}
-  destroy():void{if(this.disposed)return;this.disposed=true;this.unsubscribe?.();this.unsubscribe=null;for(let i=this.owned.length-1;i>=0;i-=1)this.owned[i]!.destroy();this.owned.length=0;this.visuals.clear();this.states.clear();this.definitions.clear();}
+  sync(deltaMs=0):void{const position=actorPosition(this.actor,TILE);this.hero.setPosition(Math.round(position.x),Math.round(position.y));const frame=`hero-${this.actor.facing}`;if(this.hero.frame.name!==frame)this.hero.setFrame(frame);this.characterView?.sync(this.actor,position.x,position.y,deltaMs);this.effects.update(deltaMs);}
+  burst(enabled:boolean):void{this.bursts+=1;this.effects.setQuality(enabled?'standard':'reduced');this.effects.request({effectId:'demo:fx.impact',anchor:{kind:'actor',id:'hero'},seed:this.bursts});}
+  setEffectsEnabled(enabled:boolean):void{this.effects.setQuality(enabled?'standard':'reduced');}
+  destroy():void{if(this.disposed)return;this.disposed=true;this.unsubscribe?.();this.unsubscribe=null;this.effects?.dispose();for(let i=this.owned.length-1;i>=0;i-=1)this.owned[i]!.destroy();this.owned.length=0;this.visuals.clear();this.states.clear();this.definitions.clear();}
 }

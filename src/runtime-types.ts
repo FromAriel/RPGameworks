@@ -39,6 +39,9 @@ export interface RuntimeSnapshot {
   textureCount: number;
   aliveParticles: number;
   pooledParticles: number;
+  activeEffects: number;
+  droppedEffects: number;
+  fallbackEffects: number;
   burstRequests: number;
   sessionSubscribers: number;
   activeObjectBindings: number;

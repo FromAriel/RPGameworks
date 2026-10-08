@@ -1,6 +1,6 @@
-# HANDOFF — working notes through the M4 minimum local candidate
+# HANDOFF — working notes through the M5 practice-battle local candidate
 
-**Written:** September 26, 2026, after M4.1–M4.3 source delivery. [STATUS](STATUS.md) remains the evidence ledger. M4's minimum contract and one impact cue are locally verified and pushed to `main` as `c396b77`; Ariel's visual review remains open. No new Pages run occurred. The public game remains G1.3 plus the quest UI correction from `00a568b`, deployed in manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434). Specific hosted gameplay feedback remains open.
+**Written:** September 26, 2026, after the M5.1–M5.2 local candidate. **Continuity refreshed:** October 7, 2026 (documentation only). [STATUS](STATUS.md) remains the evidence ledger and [current next-action reference](STATUS.md#next-concrete-packet). Ariel accepted the local M4 impact cue; M4 source is on `main` as `c396b77`. M5 battle gameplay changes are uncommitted and available for local play review. The last recorded public deployment is G1.3 plus the quest UI correction from `00a568b`, through manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434); hosting was not reverified for this documentation correction. Specific hosted gameplay feedback remains open.
 
 ## 1. Where the project stands
 
@@ -8,7 +8,8 @@
 
 | Milestone | Result | Evidence |
 | --- | --- | --- |
-| M4.1–M4.3 source delivered | Validated cosmetic requests and authored finite recipe runner, scene-owned cancellation, reduced fallback, caps and neutral impact cue | `c396b77`; [STATUS §M4](STATUS.md); 375 unit/content and 149 local browser tests; visual review and Pages open |
+| M5.1–M5.2 local candidate | Authored Practice Sigil encounter in Workshop Supply Room, pure seeded Attack/Guard turns, battle modal and safe exit/retry, transient HP only | [STATUS §M5](STATUS.md); 380 unit/content and 153 local browser tests; Ariel play review, source push and Pages open |
+| M4.1–M4.3 source delivered | Validated cosmetic requests and authored finite recipe runner, scene-owned cancellation, reduced fallback, caps and neutral impact cue | `c396b77`; [STATUS §M4](STATUS.md); 375 unit/content and 149 local browser tests; Ariel accepted the local cue; Pages open |
 | M3.5 source delivered | Deterministic authored-definition/referrer inventory, advisory orphan and structural route findings, precise fatal diagnostics and broken fixtures | `8fc7b05`; [STATUS §M3.5](STATUS.md); 369 unit/content and 26 focused browser tests; Pages decision open |
 | Quest UI released | Completion dialogue returns keyboard focus to a live button; Journal Close returns to exploration and the next Inventory opening starts at Inventory | `00a568b`; [STATUS §ad-hoc quest completion](STATUS.md); Ariel approved local correction; hosted Journal close smoke passed |
 | G1.3 released | Separate Workshop key and persistent west lock, sparse supply room with return door, additive v2 content IDs, corrected Workshop/Gallery arrival spacing | `00a568b`; [STATUS §G1.3](STATUS.md); 148/148 local Chromium checks, live room smoke; specific hosted route feedback separate |
@@ -17,21 +18,21 @@
 | CA1/CA2 game-art release (published) | Hash-pinned real-pixel `starter-hero` pack and six-layer idle/walk view in Workshop and Gallery; derived game-use pack and provenance only | [STATUS §animated hero](STATUS.md); build `05705b9`, Pages run 35789345759 |
 | CA1 synthetic foundations | Character pack v1 format (decision 0003), deterministic offline encoder, strict runtime reader, committed golden fixture | [STATUS §CA1](STATUS.md); decision `0003-character-pack-v1.md` |
 | G1.1 accepted | Conditional access contract: per-state `solid`, `interaction.prerequisites`, dynamic collision view + occupied-cell deferral, checkpoint save/load validation against resolved views, and the first chat-authored demo content (brass key, lever, choke-point gate, key crate, storeroom door) with end-to-end browser proof | ROADMAP checkbox marked; [STATUS §G1.1c](STATUS.md); commits `75b9bd6`…`846ca06` |
-| Ad-hoc playtest delivery | Manual, **build-only** GitHub Pages workflow; live playtest serves `fb17a1c` (includes the second accepted windowskin) | run 35685752229; [STATUS §delivery](STATUS.md) |
+| Historical initial playtest delivery | Manual, **build-only** GitHub Pages workflow; the initial release served `fb17a1c` (includes the second accepted windowskin), before the later `00a568b` deployment | run 35685752229; [STATUS §delivery](STATUS.md) |
 | Art: second windowskin | Ariel's second `Window.png` (3,112 bytes, 32 partial-alpha pixels) is canonical; provenance, audit and pinned tests updated; two `mid.right:N/S` adapter seams recorded, retained | `df7dfc2`; `Window.audit.json` |
 | U1.1–U1.3 | Shared token layer + components; all player screens normalized (dialogue, Inventory, Save/Load, Settings) | [STATUS §U1.x](STATUS.md) |
 | M2 spine | Facts/transactions/placements, three-slot IndexedDB saves, inventory menu | [status §M2](STATUS.md) |
 | Research docs | Cute Fantasy sprite layout (schema + 56-row Ariel map) + license decision; CA1–CA4 plan | [CHARACTER-ASSET-INTEGRATION.md](CHARACTER-ASSET-INTEGRATION.md), [asset-analysis/](asset-analysis/README.md) |
 
-**Current verification:** M4 passed `npm run validate`, `npm run check` with 375 unit/content tests, typecheck and production build, a project-path build, and the final full local Chromium suite 149/149. An initial run found three stale display-object/Debug assertions caused by removing the dormant emitter; the corrected affected files passed 28/28 before the full passing rerun. The built asset list excludes source art, import files and authoring reports. Pages run 36108392434 still serves game commit `00a568b`; no M3.5 or M4 Pages run has occurred.
+**Recorded M5 verification (September 26):** M5 passed `npm run validate`, `npm run check` with 380 unit/content tests, typecheck and production build, a project-path build, and the final full local Chromium suite 153/153. The first M5 browser run found duplicate Continue buttons and one Chromium `ERR_NO_BUFFER_SPACE` navigation failure; both affected tests passed after the UI correction, and the final full run passed. The built asset list contained the hashed encounter catalog and approved derived art, and excluded source art, import files, authoring reports and test fixtures. The last recorded Pages deployment is run 36108392434 for game commit `00a568b`; no M5 deployment evidence was added by the documentation correction. One pre-edit `.bak` was missed for `src/runtime-types.ts`; its small diff was inspected against `HEAD` and typechecked.
 
 **Deployment posture:** Pages deploys **only** by manual dispatch of the build-only workflow for an approved commit; ordinary pushes never publish. Public-repo builds are free of the runner-quota problem that exhausted the old matrix; the three-platform CI stays separately manual.
 
 ## 2. What is left (ordered)
 
-1. **Review the local M4 cue.** Try Spark in Workshop and Gallery, including the narrow Gallery view and the Cosmetic particles setting. The cue is subtle at 1×; Ariel's visual review is still open. Source is delivered; Pages deployment remains a separate decision.
-2. **Hosted play feedback.** Record Ariel's experience with the supply-room route and completed quests separately from the passing deployment and smoke. The live site serves game commit `00a568b`.
-3. **Next gameplay packet.** Use M4's request contract after a pure M5 battle action resolves; then build battle and preparation, M6.1's finishable chapter, and M7 hardening. The broader FX catalog/laboratory, region scale, world clock, and large-map proofs may follow tested needs.
+1. **Current next action.** Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for local practice-battle review and the remaining acceptance boundary.
+2. **Source and hosted decisions.** After Ariel accepts M5 locally, review the explicit gameplay source file list and decide on a source push. Pages remains a separate manual deployment decision. The last recorded hosted build is `00a568b`; record hosted supply-room/quest feedback separately.
+3. **Next gameplay packet.** M5.3–M5.5 add an item, one-shot persistent rewards, and the complete defeat/checkpoint policy. M5.6–M5.7 then add the small party and preparation loop needed for M6.1's finishable chapter. Expand PixelFX recipes against concrete battle needs.
 4. **Separate character-art path.** CA1/CA2 are published in `05705b9`. CA3's variants/tools/mounts and CA4's broader review can be scheduled when content needs them; art anchor/timing changes require a new visual check if Ariel requests them.
 
 ## 3. What we learned (alpha of the handbook)
@@ -60,7 +61,7 @@
 
 ## 5. First steps for the very next agent
 
-1. Read [STATUS](STATUS.md) and the M4/M5 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M4.1–M4.3 source is on `main` as `c396b77`, with visual review open; the public game is still `00a568b` from Pages run 36108392434.
+1. Read [STATUS's next concrete packet](STATUS.md#next-concrete-packet) and the M4/M5 rows in [ROADMAP](ROADMAP.md), then inspect the current tree. M4.1–M4.3 source is on `main` as `c396b77`, with local visual acceptance complete; M5.1–M5.2 gameplay is uncommitted and awaiting local play review. The last recorded public build is `00a568b` from Pages run 36108392434.
 2. Ariel approved the local hero candidate and Pages serves it. Record any hosted playtest feedback separately; changes to mirror, anchor, or timing require a new candidate and visual check.
 3. The approved derived pack and provenance are published; do not stage the local `.import/` source drop in later packets. The current tracked tree excludes it, although the earlier `846ca06` commit remains reachable in history. G1.2 and M3 content are included in game commit `00a568b`; record hosted playtest feedback separately.
-4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file is the narrative, STATUS is the evidence ledger.
+4. Keep `HANDOFF.md` and `STATUS.md` aligned: this file preserves the narrative, STATUS owns dated evidence and the current next action, and ROADMAP owns milestone order. Superseded directions must be explicitly historical.

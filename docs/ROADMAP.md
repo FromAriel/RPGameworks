@@ -1,6 +1,6 @@
 # RPGameworks — Implementation Roadmap
 
-**Version:** 1.1 · **Date:** September 26, 2026 · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3, G1.3, M3.5 and M4.1–M4.3 are delivered to `main`; the public game is still `00a568b` from manual Pages run 36108392434. The minimum PixelFX contract is locally verified and pushed as `c396b77`, with visual review and deployment separate. See STATUS for verification and publication boundaries.
+**Version:** 1.2 · **Date:** October 7, 2026 (documentation continuity correction) · **Status:** M1/W1, N1.1–N1.3, M2, U1, G1.1, G1.2, M3, G1.3, M3.5 and M4.1–M4.3 are delivered to `main`. Ariel accepted M4's local impact cue; M5.1–M5.2 gameplay is an uncommitted local candidate awaiting her play review. The last recorded public build is `00a568b` from manual Pages run 36108392434. See STATUS for dated verification, the current next action and publication boundaries.
 
 Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYSTEM](UI-DESIGN-SYSTEM.md) and [Decision 0002](decisions/0002-workshop-astral-ui-language.md). Long-range completion strategy: [JRPG-BUILDOUT](JRPG-BUILDOUT.md). Visual subsystem: [PixelFX](PIXELFX.md). Actual progress: [STATUS](STATUS.md). First implementation evidence: [FOUNDATION](FOUNDATION.md). Agreed feature contracts: [NEXT-SLICES](NEXT-SLICES.md). Base-skin/state decision: [0001](decisions/0001-base-skin-and-stateful-exploration.md).
 
@@ -10,13 +10,14 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 
 | Gate | Current state | Next decision |
 | --- | --- | --- |
-| Public playtest | G1.3 and the quest UI correction are hosted from game commit `00a568b`; live build, three rooms and Journal close passed a bounded smoke | Record Ariel's hosted gameplay feedback separately from automated checks |
+| Public playtest | Last recorded deployment: G1.3 and the quest UI correction from game commit `00a568b`; live build, three rooms and Journal close passed a bounded smoke for that release | Record Ariel's hosted gameplay feedback separately from automated checks; hosting was not reverified for this docs-only correction |
 | G1.2 conditional travel | Corrected visible locked/unlocked door and set-back arrivals were accepted and pushed as `070234a`; included in hosted game commit `00a568b` | Collect hosted gameplay feedback separately |
 | M3 missing-lens and archive-ledger quests | Locally accepted and source pushed as `6c17550`; generic dialogue/quest/item hand-in, Journal, lit Gallery and v1 migration passed 356 unit/content tests and 146 browser scenarios; included in hosted game commit `00a568b` | Collect hosted quest feedback separately |
 | G1.3 independent locks | Workshop supply room, retained Workshop key, independent persistent west door, and safer Workshop/Gallery arrivals are pushed and hosted from `00a568b`; 148/148 local browser checks passed | Collect specific hosted supply-room feedback separately |
 | M3.5 authoring reports | Source pushed as `8fc7b05`: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change; not deployed | Four unused records reviewed and retained for now; any Pages deployment is separate |
-| M4.1–M4.3 minimum PixelFX | Source pushed as `c396b77`: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed | Ariel reviews the local cue; Pages deployment is separate |
-| Later chapter release | Planned | Build battle using the minimum FX contract, finish M6.1, then perform M7 release hardening |
+| M4.1–M4.3 minimum PixelFX | Source pushed as `c396b77`: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed; Ariel accepted the local cue | Pages deployment remains a separate decision |
+| M5.1–M5.2 practice battle | Uncommitted local gameplay candidate: authored encounter, pure seeded Attack/Guard turns, transient HP and owned battle entry/exit; September 26 evidence records 380 unit/content and 153 browser checks | Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for local play review and separate source/Pages decisions |
+| Later chapter release | Planned | Complete M5's inventory, reward/defeat and preparation loop, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
 "Implemented", "locally verified", "Ariel accepted", "pushed", and "hosted" are separate states. A checked packet records implementation evidence; STATUS records the exact remaining acceptance and release boundary.
@@ -28,6 +29,8 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 **Ad-hoc quest UI correction:** Ariel reported lost keyboard control after completion and confusing close behavior in the completed-quest Journal. The local correction restores focus to the live dialogue control after a choice is replaced, closes the Journal directly to exploration, and starts the next Inventory opening at Inventory. Ariel reports that the correction works and authorized release of the current candidate. M3.5 order is unchanged. See [STATUS](STATUS.md) for verification and delivery status.
 
 A milestone is a working result, not a pile of scaffolding. Each work packet should be small enough to review in an ordinary chat/GitHub session. Finish the narrow implementation, its fixtures, and its status update before starting another architectural layer.
+
+**Ad-hoc documentation continuity correction (October 7):** Current M4/M5 delivery labels and the next-action links now agree with STATUS. Milestone order and acceptance checkboxes are unchanged; implementation evidence remains in the dated STATUS records.
 
 The ordering below is a recommended sequence, not a demand to implement all future features. A small game may ship before later milestones. Browser authoring tools and advanced graphics must not prevent finishing the demo.
 
@@ -209,9 +212,9 @@ Invalid references fail before deployment. A structurally unreachable node is fl
 
 ### Work packets
 
-- [x] **M4.1 — Presentation contract.** Add validated effect requests, scene/actor anchors, independent cosmetic seeds, cancellation handles, and missing-effect fallback. Source delivery is recorded in STATUS; visual review remains open.
+- [x] **M4.1 — Presentation contract.** Add validated effect requests, scene/actor anchors, independent cosmetic seeds, cancellation handles, and missing-effect fallback. Source delivery and Ariel's local visual acceptance are recorded in STATUS.
 - [x] **M4.2 — Recipe runner.** Implement finite timelines, parallel visual tracks, parameter bounds, and recursion/expansion limits. Begin with sprites, stock emitters, tint, and simple transforms. Nested recipes are rejected in this first vocabulary, bounding expansion.
-- [x] **M4.3 — Resource policy and first cue.** Add global/per-recipe caps, bounded emitter ownership, dropped-effect counters, and quality presets. Prove one battle cue remains readable with reduced effects and is fully disposable. The first cue allocates on request rather than keeping an unmeasured reserve; Ariel's visual review is open.
+- [x] **M4.3 — Resource policy and first cue.** Add global/per-recipe caps, bounded emitter ownership, dropped-effect counters, and quality presets. Prove one battle cue remains readable with reduced effects and is fully disposable. The first cue allocates on request rather than keeping an unmeasured reserve; Ariel accepted the local cue before M5 began.
 - [ ] **M4.4 — Reference catalog.** Author roughly six visually distinct effects. Test on bright and dark maps, under camera motion, and with reduced effects.
 - [ ] **M4.5 — FX laboratory.** Add recipe/seed selection, replay/step, background choice, parameter editing, diagnostics, and complete-file export/import. It must run the production effect code.
 - [ ] **M4.6 — Saturation and cleanup proof.** Test burst, steady-flow, large-alpha-overdraw, scene-exit, target-despawn, and cancellation cases. Compare domain state hashes with effects enabled, disabled, and saturated.
@@ -230,8 +233,8 @@ Record measured capacity separately from the provisional 500/1,500/4,000 particl
 
 ### Work packets
 
-- [ ] **M5.1 — Pure battle kernel.** Define combatants, minimal stats, turns, target rules, damage/rounding, and a seeded random stream. Implement one hero, one enemy, and basic attack first.
-- [ ] **M5.2 — Integration lifecycle.** Enter/exit battle without leaking exploration input, scene resources, or state. Preserve a safe return checkpoint.
+- [x] **M5.1 — Pure battle kernel.** The authored one-hero/one-enemy practice encounter uses integer stats, a separate seeded gameplay stream, Attack and Guard, explicit command/result/victory/defeat phases, and pinned deterministic traces. No persistent battle state or rewards yet.
+- [x] **M5.2 — Integration lifecycle.** The Workshop Supply Room sigil starts an optional battle through an authored `encounterId`; loading failure, cancellation, victory, defeat, Retry and Leave preserve the exploration room and focus. Local checks passed; Ariel's play review and source delivery remain open.
 - [ ] **M5.3 — Commands and inventory.** Add a consumable, invalid-target handling, cancellation before commitment, and atomic item spending.
 - [ ] **M5.4 — Presentation sequence.** Show already-resolved results through animation, PixelFX, numbers, and audio. Add skip/accelerate/reduced-effects behavior without changing outcomes.
 - [ ] **M5.5 — Reward and defeat rules.** Cover simultaneous defeat, repeated completion callbacks, rewards, escape if included, and game-over/retry behavior.
@@ -321,8 +324,8 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-**Review the local impact cue, then begin M5.** M3.5's four advisory findings were reviewed and retained for now. M4.1–M4.3 are locally verified and source delivered with one neutral impact preview; Ariel's visual review and Pages deployment are separate decisions. M5 should first resolve one hero/enemy attack in the pure battle kernel, then request this cue only after the result commits. Expand M4.4–M4.6 against tested battle needs. Continue collecting hosted G1.3/quest feedback separately.
+Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for the current play-review and delivery action. M4's local impact cue is accepted; M5.1–M5.2 gameplay is the uncommitted local candidate awaiting review. After that boundary, M5.3 is the next gameplay implementation packet, followed by M5.4–M5.5 in the order above. Expand M4.4–M4.6 against tested battle needs and collect hosted G1.3/quest feedback separately.
 
-G1.2 uses the completed M2 state and travel contracts for the first conditional doorway. The M3 local candidate now uses those contracts before G1.3's broader second-lock proof. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
+G1.2, M3 and G1.3 are already included in the last recorded public build. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout subsequent work. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 
 The detailed continuation through deterministic battle, party/progression, preparation/economy, the first complete chapter, content scale and release is recorded in [JRPG-BUILDOUT](JRPG-BUILDOUT.md). It is a sequencing companion, not evidence that those later systems exist.

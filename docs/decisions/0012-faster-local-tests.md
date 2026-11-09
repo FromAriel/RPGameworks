@@ -77,6 +77,12 @@
 
 **Acceptance:** three consecutive passing full runs and a measured gain; otherwise stay on one worker and record why.
 
+### Changes decided during T1.4 (Ariel, November 9, 2026)
+
+- **T1.4 scope.** The survey found that in almost every slow scenario the walking is what is being tested (travel, the full quest routes, locked doors, repeated round trips). Only "a lens found before acceptance…" walked purely to get into position, so T1.4 shortened that one scenario with a save fixture and recorded the finding.
+- **Order.** T1.6 (parallel workers) runs **before** T1.5, because it is likely the largest gain.
+- **T1.7 — fake-clock trial for real timeouts (optional, after T1.6).** Two scenarios wait through real 5-second load timeouts (the map-load timeout and the window-art timeout, about 16 s together). Try Playwright's page clock to fast-forward those timers, with no game-code change. Keep it only if both scenarios stay reliable over three runs and get faster; it may disturb Phaser's frame loop.
+
 ## 5. Which tier to run when (proposed)
 
 | When | Run |

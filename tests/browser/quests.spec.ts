@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { test,expect,openRoom,snapshot } from './helpers';
 
@@ -11,6 +12,17 @@ async function walk(page:Page,key:string,count:number):Promise<void>{for(let i=0
 async function exit(page:Page,key:string,mapId:string):Promise<void>{await page.keyboard.down(key);try{await expect.poll(async()=>(await snapshot(page)).mapId).toBe(mapId);}finally{await page.keyboard.up(key);}await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');}
 async function face(page:Page,key:string):Promise<void>{await page.keyboard.down(key);await page.waitForTimeout(120);await page.keyboard.up(key);await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);}
 async function interact(page:Page):Promise<void>{await page.keyboard.down('KeyE');try{await expect(page.locator('#interaction-dialog')).toBeVisible();}finally{await page.keyboard.up('KeyE');}}
+async function loadImport(page:Page,file:string):Promise<void>{
+  await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await page.locator('#inventory-saves').click();await expect(page.locator('#save-dialog')).toBeVisible();
+  await page.locator('#save-import').setInputFiles({name:'setup.json',mimeType:'application/json',buffer:readFileSync(file)});
+  await expect(page.locator('#save-status')).toContainText('Import validated');
+  await page.locator('#save-load-import').click();
+  const dialog=page.locator('#save-confirmation');await expect(dialog).toBeVisible();
+  await dialog.getByRole('button',{name:'Load import',exact:true}).click();await expect(dialog).toBeHidden();
+  await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
+  await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
+}
 async function close(page:Page):Promise<void>{await page.keyboard.press('Escape');await expect(page.locator('#interaction-dialog')).toBeHidden();}
 
 test('accepting and completing Mara’s quest updates the Journal and Gallery light',{ tag: ['@quests', '@dialogue'] }, async({page},info)=>{
@@ -54,13 +66,14 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
 
 test('a lens found before acceptance can be kept or handed to Mara immediately',{ tag: ['@quests', '@dialogue'] }, async({page})=>{
   test.setTimeout(120_000);
-  await openRoom(page,'?map=demo:map.gallery');
-  await step(page,'ArrowUp');await interact(page);await close(page);
-  await step(page,'ArrowDown');await step(page,'ArrowDown');await walk(page,'ArrowRight',4);
-  await face(page,'ArrowDown');await interact(page);await close(page);
-  expect((await snapshot(page)).session.inventory['demo:item.lens']).toBe(1);
-  await walk(page,'ArrowLeft',4);await step(page,'ArrowUp');await walk(page,'ArrowLeft',2);await exit(page,'ArrowLeft','demo:map.workshop');
-  await walk(page,'ArrowLeft',6);await step(page,'ArrowDown');await interact(page);
+  // Setup shortcut (decision 0012 T1.4): the plaque, the lens chest and the walk to Mara are proven by the first
+  // scenario above; this one starts beside Mara from a save with the plaque read and the lens held, loaded through
+  // the player's own import screen.
+  await openRoom(page);await loadImport(page,'tests/fixtures/saves/v2-lens-held-beside-mara.json');
+  const start=await snapshot(page);
+  expect(start.mapId).toBe('demo:map.workshop');expect(start.actorTile).toEqual({x:10,y:7});
+  expect(start.session.inventory['demo:item.lens']).toBe(1);expect(start.session.facts['demo:fact.gallery.plaque-read']).toBe(true);
+  await interact(page);
   await expect(page.locator('#dialog-text')).toContainText('May I take it?');
   await expect(page.locator('#dialog-choices')).toContainText('Keep it for now');
   await page.locator('[data-dialogue-choice="later"]').click();

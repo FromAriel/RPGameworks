@@ -1,16 +1,12 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test,expect,openRoom,snapshot } from './helpers';
+import { test,expect,openRoom,snapshot,tapDirection,holdToExit,type DirectionKey } from './helpers';
 
-async function step(page:Page,key:string):Promise<void>{
-  await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);
-  await page.keyboard.down(key);
-  try{await expect.poll(async()=>(await snapshot(page)).moving,{intervals:[10]}).toBe(true);}finally{await page.keyboard.up(key);}
-  await expect.poll(async()=>(await snapshot(page)).moving,{intervals:[10]}).toBe(false);
-}
-async function walk(page:Page,key:string,count:number):Promise<void>{for(let i=0;i<count;i++)await step(page,key);}
-async function exit(page:Page,key:string,mapId:string):Promise<void>{await page.keyboard.down(key);try{await expect.poll(async()=>(await snapshot(page)).mapId).toBe(mapId);}finally{await page.keyboard.up(key);}await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');}
-async function face(page:Page,key:string):Promise<void>{await page.keyboard.down(key);await page.waitForTimeout(120);await page.keyboard.up(key);await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);}
+// Walking uses the shared helpers, which release keys inside the page, so a loaded machine cannot add a step.
+async function step(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).toBe('walked');}
+async function walk(page:Page,key:DirectionKey,count:number):Promise<void>{for(let i=0;i<count;i++)await step(page,key);}
+async function exit(page:Page,key:DirectionKey,mapId:string):Promise<void>{await holdToExit(page,key);await expect.poll(async()=>(await snapshot(page)).mapId).toBe(mapId);await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');}
+async function face(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).not.toBe('none');}
 async function interact(page:Page):Promise<void>{await page.keyboard.down('KeyE');try{await expect(page.locator('#interaction-dialog')).toBeVisible();}finally{await page.keyboard.up('KeyE');}}
 async function loadImport(page:Page,file:string):Promise<void>{
   await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();

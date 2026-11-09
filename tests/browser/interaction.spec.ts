@@ -1,34 +1,27 @@
 import { openTools, openControllerSettings, enableTouch } from './helpers';
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, snapshot } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection, holdToExit, type DirectionKey } from './helpers';
 
 const WORKSHOP = 'demo:map.workshop', GALLERY = 'demo:map.gallery';
 const dialog = '#interaction-dialog';
 
-async function step(page: Page, key: string): Promise<void> {
+async function step(page: Page, key: DirectionKey): Promise<void> {
   // Modal actions are consumed on the next game update, not by keyboard.press itself.
   // Observe the real handoff; never focus the stage or bypass gameplay from this helper.
   await expect(page.locator(dialog)).not.toBeVisible();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   await expect(page.locator('#stage')).toBeFocused();
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
-  await page.keyboard.down(key);
-  try {
-    await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true);
-  } finally {
-    await page.keyboard.up(key);
-  }
-  await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(false);
+  // The shared tap releases the key inside the page, so a loaded machine cannot turn one tap into two steps.
+  expect(await tapDirection(page, key)).toBe('walked');
 }
 async function caretaker(page: Page): Promise<void> {
   await step(page, 'ArrowDown'); // (10,7), facing the solid caretaker at (10,8).
   expect((await snapshot(page)).interactionTarget).toBe('demo:object.workshop.caretaker');
 }
-async function cross(page: Page, key: string, target: string): Promise<void> {
-  await page.keyboard.down(key);
+async function cross(page: Page, key: DirectionKey, target: string): Promise<void> {
+  await holdToExit(page, key);
   await expect.poll(async () => (await snapshot(page)).mapId).toBe(target);
-  await page.keyboard.up(key);
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   await expect(page.locator(dialog)).not.toBeVisible();
 }

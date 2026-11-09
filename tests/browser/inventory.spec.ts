@@ -1,15 +1,10 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, openTools, closeTools, snapshot, setEffects } from './helpers';
+import { test, expect, openRoom, openTools, closeTools, snapshot, setEffects, tapDirection, holdToExit, type DirectionKey } from './helpers';
 const gallery='demo:map.gallery', workshop='demo:map.workshop', lens='demo:item.lens';
 const chest='demo:object.gallery.lens-chest';
-async function step(page:Page,key:string):Promise<void> {
-  await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);
-  await page.keyboard.down(key);
-  try {await expect.poll(async()=>(await snapshot(page)).moving,{intervals:[10]}).toBe(true);}
-  finally {await page.keyboard.up(key);}
-  await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);
-}
+// Walking uses the shared helpers, which release keys inside the page, so a loaded machine cannot add a step.
+async function step(page:Page,key:DirectionKey):Promise<void> {expect(await tapDirection(page,key)).toBe('walked');}
 async function chestFromStart(page:Page):Promise<void> {
   await step(page,'ArrowDown');await step(page,'ArrowDown');
   for(let i=0;i<3;i++)await step(page,'ArrowRight');
@@ -21,10 +16,9 @@ async function collect(page:Page):Promise<void> {
   await page.keyboard.press('Escape');await expect(page.locator('#interaction-dialog')).toBeHidden();
   await expect(page.locator('#stage')).toBeFocused();
 }
-async function cross(page:Page,key:string,target:string):Promise<void> {
-  await page.keyboard.down(key);
-  try {await expect.poll(async()=>(await snapshot(page)).mapId).toBe(target);}
-  finally {await page.keyboard.up(key);}
+async function cross(page:Page,key:DirectionKey,target:string):Promise<void> {
+  await holdToExit(page,key);
+  await expect.poll(async()=>(await snapshot(page)).mapId).toBe(target);
   await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
   await expect(page.locator('#stage')).toBeFocused();
 }
@@ -123,7 +117,7 @@ test('second chest stack failure keeps its closed state and correct inventory',{
   });
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);
   // Face a solid chest below without taking a step.
-  await page.keyboard.down('ArrowDown');await expect.poll(async()=>(await snapshot(page)).facing).toBe('down');await page.keyboard.up('ArrowDown');
+  expect(await tapDirection(page,'ArrowDown')).toBe('turned');
   await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('unchanged');
   const state=(await snapshot(page)).session;expect(state.inventory[lens]).toBe(1);
   expect(state.placements['demo:object.gallery.second']).toBeUndefined();expect(state.revision).toBe(1);
@@ -133,8 +127,8 @@ test('invalid chest item in destination fails safely and leaves current room and
   await page.route('**/generated/content/maps/gallery.*.json',async route=>{
     const response=await route.fetch(), data=await response.json();const object=data.objects.find((o:{id:string})=>o.id===chest);object.states.flatMap((s:{interaction?:{actions?:{type:string;itemId?:string}[]}})=>s.interaction?.actions??[]).find((a:{type:string})=>a.type==='changeItem').itemId='demo:item.missing';await route.fulfill({json:data});
   });
-  await openRoom(page);await page.keyboard.down('ArrowRight');
-  await expect(page.locator('#dialog-title')).toHaveText('The doorway could not open');await page.keyboard.up('ArrowRight');
+  await openRoom(page);await holdToExit(page,'ArrowRight');
+  await expect(page.locator('#dialog-title')).toHaveText('The doorway could not open');
   expect((await snapshot(page)).mapId).toBe(workshop);expect((await snapshot(page)).session.inventory).toEqual({});
   await page.locator('#dialog-cancel').click();await expect(page.locator('#stage')).toBeFocused();
 });
@@ -190,7 +184,7 @@ test('many content-authored items scroll and select directly without consuming t
   });
   await openRoom(page,'?map='+gallery);
   for(let i=0;i<14;i++) {
-    await step(page,'ArrowRight');await page.keyboard.down('ArrowUp');await expect.poll(async()=>(await snapshot(page)).facing).toBe('up');await page.keyboard.up('ArrowUp');
+    await step(page,'ArrowRight');expect(await tapDirection(page,'ArrowUp')).toBe('turned');
     await collect(page);
   }
   const state=(await snapshot(page)).session;expect(Object.keys(state.inventory)).toHaveLength(14);

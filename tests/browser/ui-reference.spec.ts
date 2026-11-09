@@ -1,17 +1,11 @@
 import type { Locator, Page, TestInfo } from '@playwright/test';
-import { expect, openRoom, openTools, snapshot, test } from './helpers';
+import { expect, openRoom, openTools, tapDirection, test, type DirectionKey } from './helpers';
 
 const gallery = 'demo:map.gallery';
 
-async function step(page: Page, key: string): Promise<void> {
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
-  await page.keyboard.down(key);
-  try {
-    await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true);
-  } finally {
-    await page.keyboard.up(key);
-  }
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
+// Shared tap: releases the key inside the page, so a loaded machine cannot add a step.
+async function step(page: Page, key: DirectionKey): Promise<void> {
+  expect(await tapDirection(page, key)).toBe('walked');
 }
 
 async function capture(target: Locator, name: string, info: TestInfo): Promise<void> {

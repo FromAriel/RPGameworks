@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, snapshot } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection, type DirectionKey } from './helpers';
 
 const gallery='demo:map.gallery';
-async function step(page:Page,key:string):Promise<void>{await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);await page.keyboard.down(key);try{await expect.poll(async()=>(await snapshot(page)).moving,{intervals:[10]}).toBe(true);}finally{await page.keyboard.up(key);}await expect.poll(async()=>(await snapshot(page)).moving).toBe(false);}
+// Shared tap: releases the key inside the page, so a loaded machine cannot add a step.
+async function step(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).toBe('walked');}
 async function openSaves(page:Page):Promise<void>{await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();await page.locator('#inventory-saves').click();await expect(page.locator('#save-dialog')).toBeVisible();await expect(page.locator('#save-slots .save-slot')).toHaveCount(3);}
 const slot=(page:Page,index:number)=>page.locator('#save-slots .save-slot').nth(index);
 async function confirm(page:Page,index:number,action:'Load'|'Save'|'Import here'|'Recover previous'):Promise<void>{

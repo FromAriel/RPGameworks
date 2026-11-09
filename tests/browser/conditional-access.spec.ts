@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { test, expect, openRoom, snapshot, tapDirection } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection, holdToExit } from './helpers';
 
 const GALLERY = 'demo:map.gallery';
 const STOREROOM = 'demo:map.storeroom';
@@ -96,9 +96,8 @@ test('the brass key unlocks storeroom travel, survives return and save reload', 
     destinationRequests += 1;
     return destinationRequests === 1 ? route.fulfill({ status: 503, body: 'Unavailable' }) : route.continue();
   });
-  await page.keyboard.down('ArrowDown');
+  await holdToExit(page, 'ArrowDown');
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('transition-error');
-  await page.keyboard.up('ArrowDown');
   expect((await snapshot(page)).mapId).toBe(GALLERY);
   expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
   expect((await snapshot(page)).session.inventory['demo:item.brass-key']).toBe(1);
@@ -112,9 +111,8 @@ test('the brass key unlocks storeroom travel, survives return and save reload', 
   await step(page, 'ArrowLeft'); // One backward step remains in the Storeroom.
   expect((await snapshot(page)).actorTile).toEqual({ x: 2, y: 3 });
   expect((await snapshot(page)).mapId).toBe(STOREROOM);
-  await page.keyboard.down('ArrowLeft');
+  await holdToExit(page, 'ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).mapId).toBe(GALLERY);
-  await page.keyboard.up('ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   expect((await snapshot(page)).actorTile).toEqual({ x: 22, y: 3 });
   await step(page, 'ArrowLeft'); // One backward step remains in the Gallery too.
@@ -132,9 +130,8 @@ test('the brass key unlocks storeroom travel, survives return and save reload', 
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
   expect((await snapshot(page)).session.inventory['demo:item.brass-key']).toBe(1);
-  await page.keyboard.down('ArrowLeft');
+  await holdToExit(page, 'ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).mapId).toBe(STOREROOM);
-  await page.keyboard.up('ArrowLeft');
 });
 
 test('a walkable denied exit shows one reason and makes zero destination requests', { tag: ['@world'] }, async ({ page }) => {
@@ -150,18 +147,16 @@ test('a walkable denied exit shows one reason and makes zero destination request
   });
   await openRoom(page, '?map=demo:map.workshop&spawn=from-gallery');
   await step(page, 'ArrowRight'); // Arrival is two tiles inside; the first step stays in Workshop.
-  await page.keyboard.down('ArrowRight');
+  await holdToExit(page, 'ArrowRight');
   await expect(page.locator('#dialog-text')).toContainText('doorway is closed');
-  await page.keyboard.up('ArrowRight');
   expect(destinationRequests).toBe(0);
   await page.keyboard.press('Escape');
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(200); await page.keyboard.up('ArrowRight');
   await expect(page.locator(dialog)).not.toBeVisible();
   expect(destinationRequests).toBe(0);
   await step(page, 'ArrowLeft');
-  await page.keyboard.down('ArrowRight');
+  await holdToExit(page, 'ArrowRight');
   await expect(page.locator('#dialog-text')).toContainText('doorway is closed');
-  await page.keyboard.up('ArrowRight');
   expect(destinationRequests).toBe(0);
 });
 

@@ -39,7 +39,7 @@ export async function openRoom(page: Page, suffix = ''): Promise<void> {
 
 export { expect };
 
-type DirectionKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
+export type DirectionKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
 type TapWindow = typeof window & { __tapResult__?: Promise<'walked' | 'turned' | 'none'> };
 
 /**
@@ -83,6 +83,44 @@ export async function tapDirection(page: Page, key: DirectionKey): Promise<'walk
   finally { await page.keyboard.up(key); }
   await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(false);
   return result;
+}
+
+type HoldWindow = typeof window & { __holdResult__?: Promise<string> };
+
+/**
+ * Hold a direction across as many tiles as it takes to leave exploration (a room exit starts its transition, a
+ * locked door shows its message, a failed load shows its error), then release. Like tapDirection, the release
+ * happens inside the page on the first frame the input mode changes, so a loaded machine cannot carry the held key
+ * into the next room's first step. Resolves with the new input mode; callers then wait for the outcome they expect.
+ * Use a plain keyboard hold only when the test is about held input itself.
+ */
+export async function holdToExit(page: Page, key: DirectionKey): Promise<RuntimeSnapshot['inputMode']> {
+  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
+  await page.evaluate(code => {
+    (window as HoldWindow).__holdResult__ = new Promise(resolve => {
+      let armed = false;
+      const deadline = performance.now() + 15000;
+      const onDown = (event: KeyboardEvent) => { if (event.code === code) armed = true; };
+      window.addEventListener('keydown', onDown, { capture: true });
+      const release = (mode: string) => {
+        window.removeEventListener('keydown', onDown, { capture: true });
+        window.dispatchEvent(new KeyboardEvent('keyup', { code, key: code }));
+        resolve(mode);
+      };
+      const tick = () => {
+        const mode = window.__RPGAMEWORKS__!.snapshot().inputMode;
+        if (armed && mode !== 'exploration') { release(mode); return; }
+        if (performance.now() > deadline) { release(mode); return; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }, key);
+  await page.keyboard.down(key);
+  let mode: string;
+  try { mode = await page.evaluate(() => (window as HoldWindow).__holdResult__!); }
+  finally { await page.keyboard.up(key); }
+  return mode as RuntimeSnapshot['inputMode'];
 }
 
 /** Reach controls through the real closed-by-default player menu. */

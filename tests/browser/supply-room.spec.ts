@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, snapshot, tapDirection } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection, holdToExit } from './helpers';
 
 const WORKSHOP = 'demo:map.workshop';
 const SUPPLY = 'demo:map.supply-room';
@@ -55,9 +55,8 @@ test('the Workshop lock denies travel without requesting the supply room, then k
   expect((await snapshot(page)).session.inventory['demo:item.workshop-key']).toBe(1);
   expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']).toBeUndefined();
   failNext = true;
-  await page.keyboard.down('ArrowLeft');
+  await holdToExit(page, 'ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('transition-error');
-  await page.keyboard.up('ArrowLeft');
   expect((await snapshot(page)).session.placements[doorId]?.opened).toBe(true);
   expect((await snapshot(page)).mapId).toBe(WORKSHOP);
   await page.locator('#dialog-advance').click();
@@ -66,9 +65,8 @@ test('the Workshop lock denies travel without requesting the supply room, then k
   await step(page, 'ArrowRight');
   expect((await snapshot(page)).actorTile).toEqual({ x: 5, y: 3 });
   expect((await snapshot(page)).mapId).toBe(SUPPLY);
-  await page.keyboard.down('ArrowRight');
+  await holdToExit(page, 'ArrowRight');
   await expect.poll(async () => (await snapshot(page)).mapId).toBe(WORKSHOP);
-  await page.keyboard.up('ArrowRight');
   expect((await snapshot(page)).actorTile).toEqual({ x: 3, y: 6 });
   await step(page, 'ArrowLeft');
   expect((await snapshot(page)).actorTile).toEqual({ x: 2, y: 6 });

@@ -1,25 +1,20 @@
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, snapshot } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection, type DirectionKey } from './helpers';
 
 const SUPPLY = 'demo:map.supply-room';
 const encounter = 'demo:encounter.practice-sigil';
 const TONIC = 'demo:item.tonic';
 
-async function step(page: Page, key: string): Promise<void> {
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
-  await page.keyboard.down(key);
-  try { await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true); }
-  finally { await page.keyboard.up(key); }
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
+// Walking uses the shared tap, which releases the key inside the page, so a loaded machine cannot add a step.
+async function step(page: Page, key: DirectionKey): Promise<void> {
+  expect(await tapDirection(page, key)).toBe('walked');
 }
 
 async function approach(page: Page, open = true): Promise<void> {
   if (open) await openRoom(page, `?map=${SUPPLY}`);
-  await page.keyboard.down('ArrowLeft');
-  await expect.poll(async () => (await snapshot(page)).actorTile.x).toBe(3);
-  await page.keyboard.up('ArrowLeft');
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
-  await page.keyboard.press('ArrowLeft');
+  for (let taps = 0; taps < 4 && (await snapshot(page)).actorTile.x !== 3; taps++) await step(page, 'ArrowLeft');
+  expect((await snapshot(page)).actorTile.x).toBe(3);
+  expect(await tapDirection(page, 'ArrowLeft')).not.toBe('none'); // The sigil is solid: this only turns to face it.
   expect((await snapshot(page)).interactionTarget).toBe('demo:object.practice-sigil');
 }
 
@@ -61,10 +56,17 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await enter(page);
   // The faster Sigil Shard opens the battle; its hit plays on the stage before the first command.
   const opening = (await snapshot(page)).battle!;
-  expect(opening).toMatchObject({ phase: 'command', playing: true, turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 }, menu: null });
+  expect(opening).toMatchObject({ phase: 'command', turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 } });
   expect(opening.timeline.slice(0, 3)).toEqual(['hero', 'sigil', 'shard']);
   expect(opening.frames).toBe('baked'); // Windows come from the UI theme's baked frames (decision 0010).
-  await expect(button(page, 'Skip')).toBeFocused();
+  // On a loaded machine the opening hit can finish playing before this check; while it plays, Skip has focus and
+  // the menu waits.
+  if (opening.playing) {
+    expect(opening.menu).toBeNull();
+    // Skip holds focus for as long as playback runs; playback ending first is also fine.
+    await expect.poll(async () => !(await snapshot(page)).battle?.playing
+      || await button(page, 'Skip').evaluate((element) => element === document.activeElement).catch(() => false)).toBe(true);
+  }
   await page.screenshot({ path: info.outputPath('battle-opening-playback.png') });
   await expect.poll(async () => (await snapshot(page)).battle?.playing, { timeout: 5000 }).toBe(false); // Plays out by itself.
   const dialog = page.locator('#interaction-dialog');
@@ -134,6 +136,8 @@ test('keyboard confirms in two presses, Cancel backs out without committing, and
 });
 
 test('playback speed and skipping never change the resolved battle', { tag: ['@battle'] }, async ({ page }) => {
+  // Three whole battles: about 15 s on a quiet machine, past the default 30 s budget with 4 workers.
+  test.setTimeout(60_000);
   let fastest = 1;
   const run = async (mode: 'watch' | 'fast' | 'skip') => {
     await approach(page);
@@ -169,9 +173,8 @@ test('a carried tonic is spent atomically in battle and stays spent after runnin
   await openRoom(page, `?map=${SUPPLY}`);
   await step(page, 'ArrowUp'); await step(page, 'ArrowUp'); // (4,3) → (4,1)
   // The crate at (5,1) is solid, so holding Right only turns to face it.
-  await page.keyboard.down('ArrowRight');
-  try { await expect.poll(async () => (await snapshot(page)).interactionTarget).toBe('demo:object.supply-room.tonic-crate'); }
-  finally { await page.keyboard.up('ArrowRight'); }
+  expect(await tapDirection(page, 'ArrowRight')).toBe('turned');
+  expect((await snapshot(page)).interactionTarget).toBe('demo:object.supply-room.tonic-crate');
   await page.keyboard.press('KeyE');
   await expect(page.locator('#interaction-dialog')).toContainText('Two Workshop tonics');
   await page.keyboard.press('Escape');

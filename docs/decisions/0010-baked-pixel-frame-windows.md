@@ -1,6 +1,6 @@
 # Decision 0010 — One window system: baked pixel frames from the Pixel Frame engine
 
-**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1 and W2.2 implemented November 9** (core port, interior fill, bake tool; then the UI theme file and the battle windows on baked frames; see the correction below and [STATUS](../STATUS.md)); W2.3–W2.4 are not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
+**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1–W2.3 implemented November 9** (core port, interior fill, bake tool; the UI theme file and battle windows; then every page window; see the notes below and [STATUS](../STATUS.md)); W2.4 is not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
 
 ## Context
 
@@ -70,6 +70,14 @@
 ## Note from W2.2 (November 9, 2026)
 
 The theme file is the bake's input, not a runtime file: `tools/bake-frames.ts` reads `content/games/demo/ui-theme.json` and writes everything the game needs, including the battle text colours, into `generated/frames/manifest.json`. Battles that cannot load the manifest draw plain fallback windows (the only remaining hard-coded window colours) and report `frames: 'fallback'` in the runtime snapshot.
+
+## Notes from W2.3 (November 9, 2026)
+
+- **One look everywhere.** Ariel chose the classic blue for page windows too, so the silver-and-midnight W1 look is not kept as a preset for now.
+- **Nameplate placement.** Titles sit on a baked nameplate inside the top of the window rather than across the top edge, which stays correct at every padding and scale; long titles wrap inside the plate. Midpoint ornaments are not reproduced.
+- **Page fill.** CSS cannot know an element's height, so `window-frames.ts` repaints each window's banded fill as a hard-stop gradient from `fillColumn` when its size changes (one scheduled invalidation, as W1 did).
+- **Minifier.** The production CSS minifier drops the value of `border-image: none`; the forced-colours rules use `border-image-source: none`.
+- **Not yet:** the inner control tokens still come from `tokens.css` rather than the theme, and the UI gallery fixture still mounts W1 until W2.4.
 
 ## Open questions
 

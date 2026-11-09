@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fillColumn } from '../pixel-frame/fill.ts';
-import { parseFrameManifest } from '../pixel-frame/manifest.ts';
+import { loadFrameManifest } from '../frame-manifest';
 import type { BattleTextColors, ManifestFrame } from '../pixel-frame/manifest.ts';
 import type { Rect } from './battle-windows';
 
@@ -35,13 +35,12 @@ const FALLBACK = {
 
 let loading: Promise<BattleFrames | null> | null = null;
 
-/** Fetch the bake manifest and the battle frame once per page. Resolves null on failure (and retries next time). */
+/** Load the shared bake manifest and the battle frame once per page. Resolves null on failure (and retries next time). */
 export function loadBattleFrames(base: string): Promise<BattleFrames | null> {
   loading ??= (async () => {
     try {
-      const response = await fetch(`${base}generated/frames/manifest.json`);
-      if (!response.ok) throw new Error(`frame manifest: HTTP ${response.status}`);
-      const manifest = parseFrameManifest(await response.json());
+      const manifest = await loadFrameManifest(base);
+      if (!manifest) throw new Error('frame manifest unavailable');
       const frame = manifest.frames.battle;
       if (!frame) throw new Error('frame manifest: no battle window');
       const image = new Image();

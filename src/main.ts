@@ -14,8 +14,9 @@ import { loadStateIndex } from './platform/state-index-loader';
 import { MenuNavigation } from './presentation/ui/menu-navigation';
 import { createConfirmationDialog, type ConfirmationDialogParts } from './presentation/ui/components';
 import './presentation/skin/windowskin.css';
+import './presentation/ui/window-frames.css';
 import './presentation/ui/battle-window.css';
-import { mountWindowskin } from './presentation/ui/windowskin';
+import { mountWindowFrames } from './presentation/ui/window-frames';
 import { mountPlayerShell } from './presentation/ui/player-shell';
 import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
@@ -69,10 +70,11 @@ const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel')
   else shell.close();
 });
 // The Save/Load confirmation frame must exist before the compositor snapshots
-// [data-window-skin] surfaces, or it would never receive the shared skin.
+// [data-window-skin] surfaces, or it would never receive the shared window frame.
 const saveConfirmation: ConfirmationDialogParts = createConfirmationDialog('save-confirmation');
 document.body.append(saveConfirmation.dialog);
-const windowSkin = mountWindowskin();
+// W2.3: page windows use the baked frames from the UI theme; the W1 atlas compositor is retired in W2.4.
+const windowSkin = mountWindowFrames();
 function inventoryPrompt(): PromptEntry[] {
   const buttons = controller.settings.buttons;
   const label = (index: number): string => index === -1 ? 'unassigned' : `button ${index}`;

@@ -1,0 +1,72 @@
+/*
+ * Page windows on baked Pixel Frame frames (decision 0010, W2.3). window-frames.ts publishes the frame images and
+ * slice numbers from the bake manifest as --pf-page-* and --pf-plate-* and paints each window's banded fill. One
+ * logical frame pixel is --skin-scale CSS pixels. The frame's dark outline sits one pixel outside the window box.
+ * Battle windows are drawn on the canvas instead, so the battle layer is excluded.
+ */
+:is(#tools-panel, #interaction-dialog, #inventory-dialog, #save-dialog, .ui-confirmation)[data-skin-state="ready"]:not([data-layout="battle"]) {
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--pf-page-border) * var(--skin-scale) * 1px);
+  border-image-source: var(--pf-page-src);
+  border-image-slice: var(--pf-page-slice);
+  border-image-width: calc(var(--pf-page-slice) * var(--skin-scale) * 1px);
+  border-image-outset: calc(var(--pf-page-outset) * var(--skin-scale) * 1px);
+  border-image-repeat: stretch;
+  background-color: transparent;
+  background-clip: padding-box;
+  background-origin: padding-box;
+  background-repeat: no-repeat;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+/* Titles sit on a baked nameplate inside the top of the window, with live text. */
+[data-skin-title-mode="plate"] [data-skin-title]:not(.skin-divider [data-skin-title]) {
+  width: fit-content;
+  margin-inline: auto;
+  padding: calc(1px * var(--skin-scale)) calc(6px * var(--skin-scale));
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--pf-plate-border) * var(--skin-scale) * 1px);
+  border-image-source: var(--pf-plate-src);
+  border-image-slice: var(--pf-plate-slice);
+  border-image-width: calc(var(--pf-plate-slice) * var(--skin-scale) * 1px);
+  border-image-outset: calc(var(--pf-plate-outset) * var(--skin-scale) * 1px);
+  border-image-repeat: stretch;
+  background: var(--pf-plate-fill) padding-box;
+  color: var(--ui-text-title);
+  image-rendering: pixelated;
+}
+
+/* W1 kept room beside titles for its bracket tiles; a nameplate needs none. */
+#tools-panel[data-skin-title-mode="plate"] #tools-title,
+#interaction-dialog[data-skin-title-mode="plate"] #dialog-title,
+#inventory-dialog[data-skin-title-mode="plate"] #inventory-title,
+#save-dialog[data-skin-title-mode="plate"] #save-title { max-width: 100%; }
+
+/* A section divider is the window's top bar alone, stretched across. */
+.skin-divider[data-skin-state="ready"] { border-bottom: 0; }
+.skin-divider[data-skin-state="ready"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 0;
+  border-top: calc(var(--pf-page-slice) * var(--skin-scale) * 1px) solid transparent;
+  border-image-source: var(--pf-page-src);
+  border-image-slice: var(--pf-page-slice);
+  border-image-width: calc(var(--pf-page-slice) * var(--skin-scale) * 1px) 0 0 0;
+  border-image-repeat: stretch;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+@media (forced-colors: active) {
+  :is(#tools-panel, #interaction-dialog, #inventory-dialog, #save-dialog, .ui-confirmation)[data-skin-state="ready"]:not([data-layout="battle"]),
+  [data-skin-title-mode="plate"] [data-skin-title]:not(.skin-divider [data-skin-title]) {
+    border-image-source: none;
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .skin-divider[data-skin-state="ready"]::after { border-image-source: none; border-top: 1px solid CanvasText; }
+}

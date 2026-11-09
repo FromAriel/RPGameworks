@@ -20,6 +20,7 @@ import type { EndChoice, MenuContext, MenuItemInfo, MenuOutcome } from '../domai
 import type { PlacedChoice, PlacedOverlay } from './ui/interaction-dialog';
 import { nextSpeed } from './battle/playback';
 import { loadPixelFont } from './pixel-font';
+import { loadBattleFrames } from './battle/battle-frames';
 import { loadEncounter } from '../platform/encounter-loader';
 import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
@@ -267,13 +268,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
       lifetime.addEventListener('abort',cancel,{once:true});
       this.setMode('battle');this.dialog.show('Preparing battle','Loading the practice encounter…','',null,'Leave');
       try{
-        const [encounter]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL)]);
+        const [encounter,,frames]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL),loadBattleFrames(import.meta.env.BASE_URL)]);
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
         const uses=new Map<string,BattleItemUse>();
         for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
         this.battle=new BattleSession(encounter,uses);this.battleLoad=null;this.battleMenu=new BattleMenu();
         const opening=this.battle.snapshot();
-        this.battleView=new BattleView(this,opening,{atlas:ATLAS,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
+        this.battleView=new BattleView(this,opening,{atlas:ATLAS,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),frames,
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});
         this.playBattle(opening);
       }catch(cause){
@@ -586,7 +587,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
-        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor)};})() : null,
+        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,speed:current.battleView?.speed??1,frames:current.battleView?.frameSource??null,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor)};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,

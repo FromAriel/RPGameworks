@@ -1,15 +1,20 @@
 /**
- * Frame presets the game bakes (decision 0010 §3). Each preset is a style, a theme, bake settings
- * and an interior fill. The colours are a starting point for play review; W2.2 moves the choice of
- * preset into a schema-validated UI theme file.
+ * Frame presets from the game's UI theme file (decision 0010 §4). Each window surface in the theme
+ * becomes a preset: a style, a theme, bake settings and an interior fill. Changing a window's look
+ * is a content edit plus a rebuild.
  */
+import type { UiTheme, Window as ThemeWindow } from '../../content/generated/ui-theme';
 import type { BakeSettings } from './bake.ts';
 import type { Fill } from './fill.ts';
-import { RAMPS } from './palettes.ts';
+import { RAMPS, THEMES, themeFromBase } from './palettes.ts';
 import type { Theme } from './palettes.ts';
+import { STYLES } from './styles.ts';
 import type { FrameStyle } from './styles.ts';
 
+export type { UiTheme, ThemeWindow };
+
 export interface FramePreset {
+  /** The window surface this look is for, such as "battle". */
   readonly id: string;
   readonly description: string;
   readonly style: FrameStyle;
@@ -18,27 +23,32 @@ export interface FramePreset {
   readonly fill: Fill;
 }
 
-/** White-to-pale-blue border ramp, darkest first. */
-const FF_BORDER = ['#1a2250', '#4c5ca0', '#8fa2d8', '#c4cdec', '#e8ecf6', '#ffffff'] as const;
+function styleOf(window: ThemeWindow): FrameStyle {
+  const frame = window.frame;
+  if ('style' in frame) return STYLES[frame.style];
+  return { name: 'Custom window', tier: 'panel', profile: frame.profile, corner: frame.corner ?? null };
+}
 
-/**
- * Final Fantasy-style window: a thin bevelled light border with a dark outline and a 1-px corner
- * notch, no ornaments, brushed metal or wear, over a deep blue banded fill. Replaces M5.3c's
- * hard-coded PANEL_STYLE (W2.2).
- */
-export const FF_WINDOW: FramePreset = {
-  id: 'ff-window',
-  description: 'Classic JRPG blue window (Ariel\'s chosen battle look)',
-  // Two-pixel bevel: the light from the top left gives a white inner line on every side and a
-  // pale-blue outer line, closest to the M5.3c panel among the variants compared on November 9.
-  style: { name: 'FF window', tier: 'panel', profile: [1, 2], corner: 'notch' },
-  theme: { name: 'FF blue', metal: FF_BORDER, accent: FF_BORDER, gem: RAMPS.gemBlue, patina: { metal: null, accent: null } },
-  settings: {
-    az: 225, el: 40, steps: 6, dither: false, outline: true, shadow: false,
-    normalMode: 'profile', strength: 0.8, brushed: false, ao: 0, wear: 0, glow: 0,
-    flair: 'full', ornament: 'medium', animate: false, contrast: 'normal',
-  },
-  fill: { kind: 'bands', top: '#3050b8', bottom: '#0c1854', band: 4 },
-};
+function themeOf(window: ThemeWindow): Theme {
+  const colors = window.colors;
+  if ('theme' in colors) return THEMES[colors.theme];
+  if ('base' in colors) return themeFromBase(colors.base);
+  return { name: 'Custom ramp', metal: colors.ramp, accent: colors.ramp, gem: RAMPS.gemBlue, patina: { metal: null, accent: null } };
+}
 
-export const PRESETS: readonly FramePreset[] = [FF_WINDOW];
+/** One preset per window surface. Plain windows: no brushed metal, wear or contact shadow; profile normals. */
+export function presetsFromTheme(theme: UiTheme): FramePreset[] {
+  return Object.entries(theme.windows).map(([surface, window]) => ({
+    id: surface,
+    description: window.description,
+    style: styleOf(window),
+    theme: themeOf(window),
+    settings: {
+      az: window.light.azimuth, el: window.light.elevation, steps: window.light.steps,
+      outline: window.light.outline, shadow: window.light.shadow, dither: false,
+      normalMode: 'profile', strength: 0.8, brushed: false, ao: 0, wear: 0, glow: 0,
+      flair: 'full', ornament: window.ornament ?? 'medium', animate: false, contrast: 'normal',
+    },
+    fill: window.fill,
+  }));
+}

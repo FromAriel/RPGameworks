@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ART_MAX, COVERED, FF_WINDOW, Frame, HIGH_CONTRAST, MAT, RAMPS, SRC, THEMES,
+  ART_MAX, ART_NAMES, COVERED, Frame, STYLES, HIGH_CONTRAST, MAT, RAMPS, SRC, THEMES,
   artDef, artFromImage, artToImage, artToStrings, classify, composeFrame, computeNormals, createImage,
   fillColumn, geometry, getArt, hexToRgb, profileSlope, ramp, rampsFromBase, reconstruct, renderBaked,
-  ridgeIndices, rgbToHsl, shade, shadeForBake, themeFromBase,
+  parseFrameManifest, presetsFromTheme, ridgeIndices, rgbToHsl, shade, shadeForBake, themeFromBase,
 } from '../../src/presentation/pixel-frame/index.ts';
+import type { UiTheme } from '../../src/presentation/pixel-frame/index.ts';
+import validateTheme from '../../src/content/generated/ui-theme-validator.mjs';
+import schema from '../../schemas/ui-theme.schema.json';
 import type { BakeSettings, ComposedFrame, RgbaImage, StyleId } from '../../src/presentation/pixel-frame/index.ts';
-import { bakeAll } from '../../tools/bake-frames.ts';
+import { DEFAULT_THEME, bakeAll, readTheme } from '../../tools/bake-frames.ts';
+
+const THEME = readTheme(DEFAULT_THEME);
+const FF_WINDOW = presetsFromTheme(THEME).find(preset => preset.id === 'battle')!;
 
 // Carried over from the Pixel Frame demonstrator's engine checks (numbers in brackets), plus fill and bake checks.
 
@@ -274,6 +280,53 @@ describe('Window fill (decision 0010 §3)', () => {
   });
 });
 
+describe('UI theme file (W2.2)', () => {
+  it('accepts the demo theme and rejects unknown fields, bad colours and fractional bands', () => {
+    expect(validateTheme(THEME)).toBe(true);
+    const battle = THEME.windows.battle;
+    const bad: unknown[] = [
+      { ...THEME, extra: 1 },
+      { ...THEME, windows: { battle: { ...battle, colors: { ramp: ['#fff', '#000000', '#111111'] } } } },
+      { ...THEME, windows: { battle: { ...battle, fill: { kind: 'bands', top: '#000000', bottom: '#ffffff', band: 2.5 } } } },
+      { ...THEME, windows: { battle: { ...battle, frame: { profile: [1, 2], corner: 'nope' } } } },
+      { ...THEME, windows: { battle: { ...battle, frame: { style: 'round', profile: [1] } } } },
+      { ...THEME, battleText: { ...THEME.battleText, text: 'white' } },
+      { ...THEME, id: 'demo:theme.blue' },
+    ];
+    for (const value of bad) expect(validateTheme(value)).toBe(false);
+  });
+
+  it("lists only the engine's corner art and styles", () => {
+    const frame = schema.definitions.window.properties.frame.oneOf;
+    for (const name of frame[1]!.properties.corner!.enum) expect(ART_NAMES).toContain(name);
+    for (const name of frame[0]!.properties.style!.enum) expect(Object.keys(STYLES)).toContain(name);
+  });
+
+  it('turns named, one-colour and ramp colours into bakeable presets', () => {
+    const variants: UiTheme[] = [
+      { ...THEME, windows: { battle: { ...THEME.windows.battle, frame: { style: 'round' }, colors: { theme: 'silver' } } } },
+      { ...THEME, windows: { battle: { ...THEME.windows.battle, colors: { base: '#5b7fa6' }, fill: { kind: 'flat', color: '#101828' } } } },
+    ];
+    for (const theme of variants) {
+      expect(validateTheme(theme)).toBe(true);
+      const { manifest, files } = bakeAll(theme);
+      expect(Object.keys(manifest.frames)).toEqual(['battle']);
+      expect(files.size).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('rejects a malformed manifest at runtime', () => {
+    const { manifest } = bakeAll(THEME);
+    const copy = () => JSON.parse(JSON.stringify(manifest));
+    const broken = [copy(), copy(), copy(), copy()];
+    broken[0].schemaVersion = 2;
+    broken[1].frames.battle.images.raised = '../secret.png';
+    broken[2].frames.battle.fill = { kind: 'bands', top: '#000000', bottom: '#ffffff', band: 0 };
+    broken[3].battleText.text = 'red';
+    for (const value of broken) expect(() => parseFrameManifest(value)).toThrow(/frame manifest/);
+  });
+});
+
 describe('Frame bake (W2.1)', () => {
   it('bakes the FF window from its own ramps only, exact at battle window sizes', () => {
     const settings = { ...FF_WINDOW.settings, theme: FF_WINDOW.theme };
@@ -297,15 +350,17 @@ describe('Frame bake (W2.1)', () => {
   });
 
   it('produces deterministic, content-hashed files and a manifest for every preset and state', () => {
-    const a = bakeAll();
-    const b = bakeAll();
+    const a = bakeAll(THEME);
+    const b = bakeAll(THEME);
     expect(JSON.stringify(a.manifest)).toBe(JSON.stringify(b.manifest));
     expect([...a.files.keys()]).toEqual([...b.files.keys()]);
     for (const [path, bytes] of a.files) expect(b.files.get(path)!.equals(bytes)).toBe(true);
-    const ff = a.manifest.frames['ff-window']!;
+    const ff = a.manifest.frames.battle!;
+    expect(parseFrameManifest(JSON.parse(JSON.stringify(a.manifest)))).toEqual(a.manifest);
+    expect(a.manifest.battleText).toEqual(THEME.battleText);
     expect(Object.keys(ff.images)).toEqual(['raised', 'hover', 'pressed', 'focus', 'active', 'disabled']);
     for (const path of Object.values(ff.images)) {
-      expect(path).toMatch(/^frames\/ff-window-[a-z]+\.[0-9a-f]{12}\.png$/);
+      expect(path).toMatch(/^frames\/battle-[a-z]+\.[0-9a-f]{12}\.png$/);
       const png = a.files.get(path)!;
       expect(png.subarray(1, 4).toString('ascii')).toBe('PNG');
       expect(png.readUInt32BE(16)).toBe(ff.size);

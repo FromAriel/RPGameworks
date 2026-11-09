@@ -1,6 +1,6 @@
 # Decision 0010 — One window system: baked pixel frames from the Pixel Frame engine
 
-**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1 implemented November 9** (core port, interior fill, FF preset, bake tool; see the correction below and [STATUS](../STATUS.md)); W2.2–W2.4 are not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
+**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1 and W2.2 implemented November 9** (core port, interior fill, bake tool; then the UI theme file and the battle windows on baked frames; see the correction below and [STATUS](../STATUS.md)); W2.3–W2.4 are not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
 
 ## Context
 
@@ -66,6 +66,10 @@
 ## Correction during W2.1 (November 9, 2026)
 
 §3 said the fill would be part of the 9-slice centre "so it stretches exactly". That only holds for a flat fill: banded and gradient fills depend on the window's height, and a stretched centre would scale the bands by fractions of a pixel. Frames are therefore baked with a transparent centre, and the fill is a separate pure function, `fillColumn(fill, height)`, drawn as a one-pixel-wide column stretched sideways, which is exact at any width. The manifest records each frame's fill. Canvas windows draw the column as a texture; page windows can use a flat background or hard-stop gradient built from the same column.
+
+## Note from W2.2 (November 9, 2026)
+
+The theme file is the bake's input, not a runtime file: `tools/bake-frames.ts` reads `content/games/demo/ui-theme.json` and writes everything the game needs, including the battle text colours, into `generated/frames/manifest.json`. Battles that cannot load the manifest draw plain fallback windows (the only remaining hard-coded window colours) and report `frames: 'fallback'` in the runtime snapshot.
 
 ## Open questions
 

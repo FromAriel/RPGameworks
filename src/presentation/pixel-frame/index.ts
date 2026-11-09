@@ -19,3 +19,4 @@ export * from './fill.ts';
 export * from './bake.ts';
 export * from './art-io.ts';
 export * from './presets.ts';
+export * from './manifest.ts';

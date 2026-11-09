@@ -1,6 +1,6 @@
 # Decision 0010 — One window system: baked pixel frames from the Pixel Frame engine
 
-**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026 for planning. Nothing is implemented. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
+**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1 implemented November 9** (core port, interior fill, FF preset, bake tool; see the correction below and [STATUS](../STATUS.md)); W2.2–W2.4 are not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
 
 ## Context
 
@@ -62,6 +62,10 @@
 2. **W2.2 — Battle windows on baked frames.** Replace `PANEL_STYLE` and the `Graphics` panels in `battle-windows.ts` with `NineSlice` frames from the bake. Then add the theme file and schema. Behaviour, layout and tests from M5.3c stay unchanged; display-object and texture counts stay bounded.
 3. **W2.3 — Page windows on baked frames.** Menus, inventory, saves and Settings, then the dialogue with a nameplate title. Parity captures against W1, forced colours, narrow layout and the existing browser checks.
 4. **W2.4 — Retire W1.** Remove the atlas compositor and its manifest and audit once W2.3 is accepted, and update WINDOW-SKIN.md into a short history note.
+
+## Correction during W2.1 (November 9, 2026)
+
+§3 said the fill would be part of the 9-slice centre "so it stretches exactly". That only holds for a flat fill: banded and gradient fills depend on the window's height, and a stretched centre would scale the bands by fractions of a pixel. Frames are therefore baked with a transparent centre, and the fill is a separate pure function, `fillColumn(fill, height)`, drawn as a one-pixel-wide column stretched sideways, which is exact at any width. The manifest records each frame's fill. Canvas windows draw the column as a texture; page windows can use a flat background or hard-stop gradient built from the same column.
 
 ## Open questions
 

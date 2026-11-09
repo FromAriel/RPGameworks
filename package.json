@@ -8,7 +8,7 @@
     "node": ">=22.16.0 <23 || >=24.15.0 <25"
   },
   "scripts": {
-    "assets": "node tools/generate-assets.mjs",
+    "assets": "node tools/generate-assets.mjs && node --experimental-strip-types tools/bake-frames.ts",
     "predev": "npm run assets && npm run content",
     "dev": "vite --host 127.0.0.1",
     "typecheck": "npm run schemas && tsc --noEmit",

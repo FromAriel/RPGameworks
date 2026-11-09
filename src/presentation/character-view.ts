@@ -10,6 +10,8 @@ const ACTIONS = ['idle', 'walk'] as const;
 const FRAMES = 6;
 const FOOT_X = 32 / CELL;
 const FOOT_Y = 41 / CELL;
+/** The starter pack was measured and accepted against 16-pixel tiles; larger tiles enlarge it by whole numbers. */
+const PACK_TILE = 16;
 const IDLE_MS = 180;
 const WALK_MS = 120;
 
@@ -78,9 +80,9 @@ export class CharacterArt {
     }
   }
 
-  createView(scene: Phaser.Scene): CharacterView {
+  createView(scene: Phaser.Scene, tileSize: number): CharacterView {
     if (!this.available) throw new Error('character art is not ready');
-    return new CharacterView(scene);
+    return new CharacterView(scene, tileSize);
   }
 
   dispose(): void {
@@ -96,11 +98,16 @@ export class CharacterView {
   private state = '';
   private elapsed = 0;
   private index = 0;
+  private readonly scale: number;
+  private readonly footOffset: number;
 
   get frame(): string { return `${this.state}|${this.index}`; }
   get mirrored(): boolean { return this.container.scaleX < 0; }
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, tileSize: number) {
+    if (!Number.isInteger(tileSize / PACK_TILE) || tileSize < PACK_TILE) throw new Error(`Unsupported tile size for the starter hero: ${tileSize}`);
+    this.scale = tileSize / PACK_TILE;
+    this.footOffset = tileSize / 2;
     const sprites: Phaser.GameObjects.Sprite[] = [];
     try {
       for (const layer of LAYERS) sprites.push(scene.add.sprite(0, 0, `character:${PACK_ID}:${layer}`, frameName('idle', 'down', 0)).setOrigin(FOOT_X, FOOT_Y));
@@ -124,8 +131,8 @@ export class CharacterView {
     }
     const frame = frameName(action, direction, this.index);
     for (const layer of this.layers) if (layer.frame.name !== frame) layer.setFrame(frame);
-    this.container.setScale(actor.facing === 'left' ? -1 : 1, 1);
-    this.container.setPosition(Math.round(x), Math.round(y + 8));
+    this.container.setScale(actor.facing === 'left' ? -this.scale : this.scale, this.scale);
+    this.container.setPosition(Math.round(x), Math.round(y + this.footOffset));
   }
 
   destroy(): void { this.container.destroy(); }

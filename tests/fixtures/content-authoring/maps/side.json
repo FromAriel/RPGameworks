@@ -3,7 +3,7 @@
   "id": "demo:map.fixture-side",
   "name": "Fixture Side",
   "orientation": "orthogonal",
-  "tileSize": 16,
+  "tileSize": 32,
   "width": 4,
   "height": 4,
   "legend": {"#": "wall", "a": "floor-a"},

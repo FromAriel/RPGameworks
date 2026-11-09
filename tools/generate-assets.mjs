@@ -34,7 +34,7 @@ async function main() {
   const source = resolve(option('--source', 'assets/source/foundation.json'));
   const destination = resolve(option('--output', 'public/generated'));
   const data = JSON.parse(await readFile(source, 'utf8'));
-  if (data.schemaVersion !== 1 || !data.palette || !data.frames) throw new Error(`${source}: invalid foundation asset format`);
+  if (data.schemaVersion !== 1 || !data.palette || !data.frames || data.cellSize === undefined) throw new Error(`${source}: invalid foundation asset format`);
   const entries = Object.entries(data.frames);
   if (entries.length < 1 || entries.length > 32) throw new Error('Expected 1–32 bounded atlas frames.');
   const palette = new Map();
@@ -42,7 +42,8 @@ async function main() {
     if (symbol.length !== 1 || typeof hex !== 'string' || !/^[a-f0-9]{8}$/i.test(hex)) throw new Error(`Invalid palette entry: ${symbol}`);
     palette.set(symbol, Buffer.from(hex, 'hex'));
   }
-  const cell = 16;
+  const cell = data.cellSize;
+  if (cell !== 16 && cell !== 32) throw new Error(`${source}: cellSize must be 16 or 32 (decision 0008)`);
   const width = cell * entries.length;
   const height = cell;
   const pixels = Buffer.alloc(width * height * 4);

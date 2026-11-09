@@ -31,6 +31,15 @@ A 1.5-second warmup follows setup. Settings is opened through the real UI to est
 
 Input is ordinary Playwright keyboard/pointer input. There are no teleports, direct engine actions, altered clocks, fake frame delays or route replacements in these workloads. The existing cosmetic particle random ranges are not seeded, so this is not a pixel-identical random replay. The controls/failure tests separately retain synthetic Gamepad API fixtures; neither path certifies physical Elite hardware.
 
+## Workload revision: s1.4-640x360-v1 (November 8, 2026)
+
+The same eight workloads and input sequences now run against the 640 × 360 logical canvas with 32-pixel tiles ([decision 0008](decisions/0008-32px-world-scale.md)). The viewport is 1680 × 760 so that closed and Debug-docked runs both display the canvas at 2× (1280 × 720). Two invariants were updated because they had gone stale before this revision and had never been rerun:
+
+- **Door tour arrivals** use the set-back spawns from G1.3: Workshop (16, 6) and Gallery (3, 6). Each arrival's room shape is compared after the departure burst has released its objects.
+- **Display objects during walking** are no longer required to be constant. Since M4, effects allocate display objects per request, so a room's map and texture count must stay constant, its display objects may rise by at most 4 concurrent effects × 6 objects, every sample without an active effect must equal the pre-measurement count, and the count must return to it once effects finish.
+
+The local record is [S1.4-2026-11-08.json](benchmarks/S1.4-2026-11-08.json): all eight workloads passed on one Windows machine in headless Chromium with SwiftShader, from the uncommitted S1.4 tree. It is not comparable to the M1 Linux CI record as a regression gate.
+
 ## What the numbers mean
 
 **Frame pacing** is the interval between the benchmark's `requestAnimationFrame` callback timestamps. The report provides count, mean, nearest-rank p50/p95/p99, maximum, and counts above 33.334 and 50 ms. Every observed interval is retained, including stalls. It is never clamped to the movement system's 50 ms catch-up limit. `meanCallbackHz` is 1000 divided by the mean interval, not a claim of frames physically presented to a monitor. The runtime's existing rounded FPS reading is reported separately.

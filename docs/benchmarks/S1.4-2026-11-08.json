@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "workloadVersion": "s1.4-640x360-v1",
+  "recordedDate": "2026-11-08",
+  "method": "../BASELINE.md",
+  "measurement": "rAF callback intervals, NOT CPU/GPU work or physical display FPS. No timing gate. One local headless Chromium run.",
+  "provenance": "Local run on the uncommitted S1.4 working tree (source.dirty is true); the raw reports stay in ignored benchmark-results/. Not a CI artifact and not comparable as a regression gate against the M1 Linux CI record without equal hardware.",
+  "unmeasured": [
+    "game CPU time",
+    "GPU time",
+    "heap bytes",
+    "GPU memory",
+    "exact listener counts",
+    "cold throttled startup",
+    "long-session plateau",
+    "physical mobile hardware"
+  ],
+  "environment": {
+    "source": {
+      "sha": "838790561f5a3637488e2fc6288685f116b03b19",
+      "tree": "803272c8fdd660eae4f108c201973e8044970114",
+      "dirty": true,
+      "lockSha256": "30f55447724b264cc3cc02a2f3684aee019b74a98d695b7875cfbaf3ce342751",
+      "runtimeFingerprintSha256": "9eda7b94e0305886fdc2cd0112170f3a2cc4ccb16c31a73ce345f738565c0ad4"
+    },
+    "node": "v24.15.0",
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "arch": "x64",
+    "logicalCPUs": 24,
+    "cpuModel": "AMD Ryzen 9 5900X 12-Core Processor            ",
+    "hostMemoryBytes": 68619636736,
+    "ci": false,
+    "ciRun": null,
+    "ciAttempt": null,
+    "hostLabel": "local",
+    "renderingPolicy": "Headless Chromium; --enable-unsafe-swiftshader; actual driver recorded below.",
+    "throttling": "None. Localhost static production preview; no physical-device inference.",
+    "tracing": "Off during measurement. Single worker, zero retries.",
+    "cosmeticRandomness": "Existing unseeded cosmetic particle lifespan/speed ranges; not a deterministic pixel replay."
+  },
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+  "driver": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "viewport": {
+    "width": 1680,
+    "height": 760
+  },
+  "canvas": {
+    "width": 640,
+    "height": 360,
+    "cssWidth": 1280,
+    "cssHeight": 720
+  },
+  "outcomeStats": {
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "workloads": [
+    {
+      "name": "workshop-idle",
+      "workloadCompleted": true,
+      "rawReportSha256": "a17932c3c3067c0aaf3f90d052ea4c808d7b014253ce9cf56a2cbdbd7e051c96",
+      "elapsedMs": 10006.100000023842,
+      "frameIntervalsMs": {
+        "count": 599,
+        "p50": 16.7,
+        "p95": 16.8,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 247
+      },
+      "aliveParticlesMax": 0
+    },
+    {
+      "name": "gallery-idle",
+      "workloadCompleted": true,
+      "rawReportSha256": "3af3863e127dda2b08ec772056c807227701b9ef6ef875793a5258309625a9cb",
+      "elapsedMs": 10002.599999964237,
+      "frameIntervalsMs": {
+        "count": 599,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 348,
+        "max": 348
+      },
+      "aliveParticlesMax": 0
+    },
+    {
+      "name": "walk-effects-off",
+      "workloadCompleted": true,
+      "rawReportSha256": "7f82d16611d29f8d7d593d92cbeeb8a458bb9fd3f2c1a3d30321017fe1952c38",
+      "elapsedMs": 10211.5,
+      "frameIntervalsMs": {
+        "count": 612,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 257
+      },
+      "aliveParticlesMax": 0
+    },
+    {
+      "name": "walk-effects-on",
+      "workloadCompleted": true,
+      "rawReportSha256": "b5b5e317814d4a7c67562080bae8a1518d250c2a8717e6d10053bfacdb0225dc",
+      "elapsedMs": 10218.900000035763,
+      "frameIntervalsMs": {
+        "count": 612,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 259
+      },
+      "aliveParticlesMax": 32
+    },
+    {
+      "name": "walk-effects-debug",
+      "workloadCompleted": true,
+      "rawReportSha256": "a3b7a8b8f9e0d92483d4997338c33cc0e7298332c451b3a4ae91f3ddeba32dc7",
+      "elapsedMs": 10206,
+      "frameIntervalsMs": {
+        "count": 611,
+        "p50": 16.7,
+        "p95": 16.8,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 259
+      },
+      "aliveParticlesMax": 32
+    },
+    {
+      "name": "mara-message",
+      "workloadCompleted": true,
+      "rawReportSha256": "24a6bb4d39c25e4acd0eeb3a122de6aea731665bfc8ab36c1503fe2be9382809",
+      "elapsedMs": 10004.5,
+      "frameIntervalsMs": {
+        "count": 599,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 247
+      },
+      "aliveParticlesMax": 0
+    },
+    {
+      "name": "settings-idle",
+      "workloadCompleted": true,
+      "rawReportSha256": "38bcfa7e8b1e7ed6ee29683d6bb3a117e2be31a7ea905f81ad1753df6105ce1b",
+      "elapsedMs": 10005,
+      "frameIntervalsMs": {
+        "count": 600,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 247
+      },
+      "aliveParticlesMax": 0
+    },
+    {
+      "name": "door-tour",
+      "workloadCompleted": true,
+      "rawReportSha256": "cb274366c1a483fc6e08f1365da5642039811ae32f47c71c2150f6a35742a407",
+      "elapsedMs": 17169.5,
+      "frameIntervalsMs": {
+        "count": 1029,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 16.8,
+        "mean": 16.666
+      },
+      "over33_334Ms": 0,
+      "over50Ms": 0,
+      "displayObjects": {
+        "min": 247,
+        "max": 354
+      },
+      "aliveParticlesMax": 16,
+      "travelAllMs": {
+        "count": 40,
+        "p50": 15.9,
+        "p95": 17.1,
+        "max": 17.2
+      }
+    }
+  ]
+}

@@ -10,6 +10,11 @@ import type { Capture } from './probe';
 
 const DURATION_MS = 10_000;
 const WORKSHOP = 'demo:map.workshop', GALLERY = 'demo:map.gallery';
+// Arrival tiles set back from each doorway since G1.3 (Workshop from-gallery, Gallery from-workshop).
+const WORKSHOP_ARRIVAL = { x: 16, y: 6 }, GALLERY_ARRIVAL = { x: 3, y: 6 };
+// Effects allocate display objects per request since M4: at most 4 concurrent effects, and the impact
+// recipe owns 5 sprite tracks plus 1 particle emitter. A room's own objects must never change.
+const MAX_EFFECT_DISPLAY_OBJECTS = 4 * (5 + 1);
 function git(...args: string[]): string {
   return execFileSync('git', args, { encoding: 'utf8', timeout: 3000 }).trim();
 }
@@ -56,7 +61,7 @@ async function writeReport(page: Page, info: TestInfo, name: string, capture: Ca
   const counters = ['activeScenes', 'loadedMaps', 'displayObjects', 'textureCount', 'aliveParticles', 'pooledParticles'] as const;
   const resources = Object.fromEntries(counters.map(key => [key, distribution(capture.samples.map(s => s.runtime[key]))]));
   const report = {
-    schemaVersion: 1, workloadVersion: 'm1-baseline-v1', name, workloadCompleted: complete,
+    schemaVersion: 1, workloadVersion: 's1.4-640x360-v1', name, workloadCompleted: complete,
     generatedAt: new Date().toISOString(), environment, page: await pageEnvironment(page),
     requestedSteadyDurationMs: name === 'door-tour' ? null : DURATION_MS,
     measurement: {
@@ -141,8 +146,10 @@ for (const scenario of cases) test(`baseline: ${scenario.name}`, async ({ page }
   else if (scenario.mode === 'debug') { await openTools(page, 'debug'); await page.locator('#stage').click({ position: { x: 10, y: 10 } }); }
   // Warmup excludes image decoding and initial skin composition from steady-state measurements.
   await page.waitForTimeout(1500);
+  const before = await snapshot(page);
+  expect(before.activeEffects).toBe(0);
   const screen = await pageEnvironment(page);
-  expect(screen.canvas).toMatchObject({ width: 320, height: 192, cssWidth: 960, cssHeight: 576 });
+  expect(screen.canvas).toMatchObject({ width: 640, height: 360, cssWidth: 1280, cssHeight: 720 });
   await startProbe(page);
   let complete = false;
   let capture!: Capture;
@@ -160,8 +167,16 @@ for (const scenario of cases) test(`baseline: ${scenario.name}`, async ({ page }
   expect(last.paints).toEqual(first.paints); // Stable chrome never repaints just because the game runs.
   if (scenario.mode === 'debug') expect(capture.diagnosticsMutations).toBeGreaterThan(0);
   else expect(capture.diagnosticsMutations).toBe(0);
-  const shapes = new Set(capture.samples.map(s => `${s.runtime.mapId}/${s.runtime.displayObjects}/${s.runtime.textureCount}`));
+  // The room and its textures never change; effect objects come and go but stay bounded and fully release.
+  const shapes = new Set(capture.samples.map(s => `${s.runtime.mapId}/${s.runtime.textureCount}`));
   expect(shapes.size).toBe(1);
+  for (const { runtime } of capture.samples) {
+    expect(runtime.displayObjects).toBeGreaterThanOrEqual(before.displayObjects);
+    expect(runtime.displayObjects).toBeLessThanOrEqual(before.displayObjects + MAX_EFFECT_DISPLAY_OBJECTS);
+    if (runtime.activeEffects === 0) expect(runtime.displayObjects).toBe(before.displayObjects);
+  }
+  await expect.poll(async () => (await snapshot(page)).activeEffects).toBe(0);
+  expect((await snapshot(page)).displayObjects).toBe(before.displayObjects);
   expect(last.runtime.transitions).toBe(0);
   if (scenario.mode === 'walk' || scenario.mode === 'debug') {
     expect(last.runtime.burstRequests - first.runtime.burstRequests).toBe(40);
@@ -198,11 +213,13 @@ test('baseline: door-tour', async ({ page }, info) => {
       await expect(page.locator('#stage')).toBeFocused();
       // Wait for the read-only observer, not an arbitrary delay or a game-state override.
       await page.waitForFunction(n => window.__RPG_BENCHMARK__?.observedTransfers === n, leg + 1);
+      // Room shapes are compared after the departure cue has released its per-request objects (M4).
+      await expect.poll(async () => (await snapshot(page)).activeEffects).toBe(0);
       const s = await snapshot(page);
       const shape = { objects: s.displayObjects, textures: s.textureCount };
       if (perMap.has(target)) expect(shape).toEqual(perMap.get(target)); else perMap.set(target, shape);
       expect(s.aliveParticles).toBe(0); expect(s.pooledParticles).toBe(0);
-      expect(s.actorTile).toEqual(leg % 2 ? { x: 17, y: 6 } : { x: 2, y: 6 });
+      expect(s.actorTile).toEqual(leg % 2 ? WORKSHOP_ARRIVAL : GALLERY_ARRIVAL);
       checkpoints.push({ leg: leg + 1, ...s });
     }
     await page.waitForTimeout(100); // Include the final readiness observation.

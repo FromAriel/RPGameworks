@@ -6,12 +6,12 @@ test('selected layered hero idles, walks, mirrors left, and keeps its feet on th
   expect(state.characterArtStatus).toBe('ready');
   expect(state.heroArt).toBe('layered');
   expect(state.heroFrame).toMatch(/^idle\|down\|[0-5]$/);
-  expect(state.heroFeet).toEqual({ x: state.actorPixel.x, y: state.actorPixel.y + 8 });
+  expect(state.heroFeet).toEqual({ x: state.actorPixel.x, y: state.actorPixel.y + state.view.tileSize / 2 });
   await page.keyboard.down('ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).heroFrame).toMatch(/^walk\|side\|[0-5]$/);
   state = await snapshot(page);
   expect(state.heroMirrored).toBe(true);
-  expect(state.heroFeet).toEqual({ x: state.actorPixel.x, y: state.actorPixel.y + 8 });
+  expect(state.heroFeet).toEqual({ x: state.actorPixel.x, y: state.actorPixel.y + state.view.tileSize / 2 });
   await page.keyboard.up('ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
   await page.keyboard.down('ArrowRight');

@@ -9,7 +9,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect(state.activeScenes).toBe(1);
   expect(state.displayObjects).toBeGreaterThan(240);
   expect(state.displayObjects).toBeLessThanOrEqual(250); // One room and its owned visuals, with no preallocated effect emitters.
-  expect(state.view).toEqual({ width: 640, height: 360, tileSize: 16 });
+  expect(state.view).toEqual({ width: 640, height: 360, tileSize: 32 });
   await expect(page.locator('canvas')).toHaveAttribute('width', '640');
   await expect(page.locator('canvas')).toHaveAttribute('height', '360');
   const size = await page.locator('canvas').boundingBox();

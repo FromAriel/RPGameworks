@@ -61,7 +61,7 @@ describe('canonical map schema and local semantics', () => {
   it.each([
     ['future version', 'schemaVersion', 2], ['non-orthogonal map', 'orientation', 'isometric'],
     ['fractional width', 'width', 2.5], ['infinite dimensions', 'width', Infinity],
-    ['oversize dimensions', 'height', 129], ['incompatible tile size', 'tileSize', 32],
+    ['oversize dimensions', 'height', 129], ['incompatible tile size', 'tileSize', 16],
     ['unknown property', 'widht', 20], ['bad map namespace', 'id', 'Workshop'],
   ])('rejects structural error: %s', (_name, key, value) => {
     const map = {...workshop(), [key]:value};
@@ -134,7 +134,7 @@ describe('manifest and world references', () => {
   });
   it('rejects a map whose tile size differs from the game tile size',()=>{
     const a=readMap(workshop(),'maps/workshop.json',frames),b=readMap(gallery(),'maps/gallery.json',frames);
-    const mismatched={...b,tileSize:32} as unknown as typeof b;
+    const mismatched={...b,tileSize:16} as unknown as typeof b;
     expect(()=>validateWorld(manifest(),worldMaps(a,mismatched))).toThrow('Map tile size differs from the game tile size');
   });
   it('rejects unknown cross-object condition and action placement IDs',()=>{

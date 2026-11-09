@@ -3,7 +3,7 @@
   "id": "demo:map.gallery",
   "name": "The Pillar Gallery",
   "orientation": "orthogonal",
-  "tileSize": 16,
+  "tileSize": 32,
   "width": 24,
   "height": 14,
   "legend": {"#": "wall", "a": "floor-a", "b": "floor-b"},

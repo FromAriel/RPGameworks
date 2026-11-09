@@ -23,6 +23,6 @@ export default defineConfig({
     colorScheme: 'dark',
     reducedMotion: 'no-preference',
   },
-  // Both closed and docked Debug use the SAME 960 × 576 displayed game canvas.
-  projects: [{ name: 'chromium-baseline', use: { viewport: { width: 1500, height: 760 } } }],
+  // Both closed and docked Debug use the SAME 1280 × 720 displayed game canvas (640 × 360 at 2×, decision 0008).
+  projects: [{ name: 'chromium-baseline', use: { viewport: { width: 1680, height: 760 } } }],
 });

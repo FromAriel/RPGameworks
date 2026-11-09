@@ -12,7 +12,7 @@ const resolved = (id: string, solid: boolean): ResolvedObjectState => ({
 });
 
 const gateMap = (): MapDefinition => ({
-  schemaVersion: 1, id: 'test:map.room', name: 'Room', orientation: 'orthogonal', tileSize: 16,
+  schemaVersion: 1, id: 'test:map.room', name: 'Room', orientation: 'orthogonal', tileSize: 32,
   width: 4, height: 4, legend: { a: 'floor' },
   layers: [{ id: 'ground', rows: ['aaaa', 'aaaa', 'aaaa', 'aaaa'] }],
   collision: ['....', '....', '....', '....'],

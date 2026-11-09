@@ -6,7 +6,7 @@
   "properties": {
     "schemaVersion": {"const": 1},
     "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:game\\.[a-z][a-z0-9.-]{0,95}$"},
-    "tileSize": {"const": 16},
+    "tileSize": {"const": 32},
     "view": {
       "description": "Logical canvas size in game pixels; enlarged by whole numbers to fit the screen.",
       "type": "object", "additionalProperties": false,

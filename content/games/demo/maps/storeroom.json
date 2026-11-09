@@ -3,7 +3,7 @@
   "id": "demo:map.storeroom",
   "name": "Gallery Storeroom",
   "orientation": "orthogonal",
-  "tileSize": 16,
+  "tileSize": 32,
   "width": 8,
   "height": 6,
   "legend": {"#": "wall", "a": "floor-a", "b": "floor-b"},

@@ -42,7 +42,7 @@ export class MapView{
   private own<T extends Visual>(object:T):T{this.owned.push(object);object.setVisible(false);return object;}
   bind(controller:SessionController):void{this.unsubscribe?.();if(this.dependencies.size)this.unsubscribe=controller.subscribe(this.dependencies,result=>this.refresh(result.changed));}
   show():void{this.shown=true;const camera=this.scene.cameras.main,x=cameraAxis(this.content.map.width*this.tile,camera.width),y=cameraAxis(this.content.map.height*this.tile,camera.height);camera.setBounds(x.offset,y.offset,x.length,y.length);this.scene.cameras.main.startFollow(this.hero,true,1,1);for(const object of this.owned)object.setVisible(true);if(this.characterView)this.hero.setVisible(false);this.refresh();}
-  attachCharacterArt(art:CharacterArt):void{if(this.disposed||this.characterView||!art.ready)return;const view=art.createView(this.scene);this.characterView=view;this.own(view.container);this.sync();if(this.shown){view.container.setVisible(true);this.hero.setVisible(false);}}
+  attachCharacterArt(art:CharacterArt):void{if(this.disposed||this.characterView||!art.ready)return;const view=art.createView(this.scene,this.tile);this.characterView=view;this.own(view.container);this.sync();if(this.shown){view.container.setVisible(true);this.hero.setVisible(false);}}
   get heroArt(): 'static'|'layered' { return this.characterView?'layered':'static'; }
   get heroFrame(): string|null { return this.characterView?.frame??null; }
   get heroMirrored(): boolean { return this.characterView?.mirrored??false; }

@@ -41,5 +41,5 @@ At 32-pixel tiles, the current 320 × 192 view would show only 10 × 6 tiles, an
 ## Not decided here
 
 - Whether the demo maps are redrawn at 32 pixels or replaced by new maps.
-- The committed fallback tile set used when external art is absent.
+- ~~The committed fallback tile set used when external art is absent.~~ Decided November 8 (S1.4): our own repository-authored placeholder atlas, converted to 32 pixels by exact 2× doubling and extended with original symbols or freely usable public resources as needed.
 - Whether the Cute Fantasy hero is kept alongside LPC characters.

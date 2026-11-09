@@ -4,6 +4,49 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## T1.0 browser-suite baseline — November 9, 2026, local measurement
+
+The first packet of [decision 0012](decisions/0012-faster-local-tests.md): one measured full run, no test or code change. This table is the baseline later T1 packets are compared against.
+
+- **Machine and build:** AMD Ryzen 9 5900X (12 cores, 24 threads), 64 GB, Windows 11 Pro; Node 24.15.0; Playwright 1.63.0, Chromium with SwiftShader, one worker; source `53e024b` (still W2 windows).
+- **Fixture build:** `npm run build:browser-fixtures` took **11.5 s and 11.6 s** in two consecutive timed runs (game build under `/RPGameworks/` plus the UI gallery).
+- **Suite:** `npx playwright test --reporter=list,json` on the fresh build: **158/158 passed** in **6.7 minutes** (406 s wall clock; 391 s summed test time; about 13 s for the two preview servers to start). With the build, a full `npm run test:browser` is about **7 minutes**.
+
+| Spec | Tests | Time (s) | Share | s/test | Page loads* | Walk/key calls* | Fixed waits* |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| interaction | 16 | 70.6 | 18.1% | 4.4 | 12 | 40 | 9 |
+| inventory | 14 | 41.6 | 10.6% | 3.0 | 15 | 33 | 13 |
+| window-frames (W2, removed in W3.0) | 13 | 35.3 | 9.0% | 2.7 | 11 | 13 | 6 |
+| save | 15 | 34.8 | 8.9% | 2.3 | 17 | 20 | 12 |
+| quests | 4 | 34.1 | 8.7% | 8.5 | 5 | 63 | 2 |
+| battle | 8 | 32.7 | 8.4% | 4.1 | 2 | 24 | 1 |
+| controller | 12 | 26.1 | 6.7% | 2.2 | 2 | 3 | 7 |
+| foundation | 9 | 19.3 | 4.9% | 2.1 | 9 | 6 | 4 |
+| conditional-access | 4 | 18.8 | 4.8% | 4.7 | 5 | 51 | 1 |
+| player-shell | 9 | 15.4 | 3.9% | 1.7 | 10 | 13 | 2 |
+| ui-reference | 7 | 12.7 | 3.2% | 1.8 | 7 | 16 | 3 |
+| controller-recovery | 7 | 8.9 | 2.3% | 1.3 | 2 | 1 | 0 |
+| maps | 10 | 7.8 | 2.0% | 0.8 | 9 | 1 | 1 |
+| ui-gallery | 14 | 6.7 | 1.7% | 0.5 | 1 | 4 | 0 |
+| mousejoy-parity | 5 | 6.4 | 1.6% | 1.3 | 4 | 0 | 2 |
+| residency | 1 | 5.8 | 1.5% | 5.8 | 1 | 1 | 0 |
+| supply-room | 2 | 5.7 | 1.4% | 2.8 | 2 | 17 | 0 |
+| character-art | 4 | 4.3 | 1.1% | 1.1 | 4 | 3 | 0 |
+| benchmark-probe | 3 | 3.0 | 0.8% | 1.0 | 3 | 0 | 4 |
+| windowskin-scroll | 1 | 1.4 | 0.4% | 1.4 | 1 | 4 | 0 |
+
+\* Static counts from the spec source, not from the run: `openRoom`/`goto`/`reload` calls, key presses and walk/step/face/tapDirection calls, and `waitForTimeout` calls. Loops and helpers make the real numbers higher.
+
+**Slowest scenarios:** interaction "twenty round trips…" 20.3 s; battle "playback speed and skipping…" 14.7 s; quests "Mara's quest…" 13.4 s and "archive clerk…" 12.0 s; interaction "timeout is recoverable…" 10.7 s; conditional-access "brass key…" 10.6 s; window-frames "frames timeout…" 9.5 s; inventory "many content-authored items…" 8.2 s and "chest grants once…" 7.6 s; save "repeated save-window openings…" 7.6 s.
+
+**What this shows for the next packets:**
+- Five specs (interaction, inventory, save, quests, battle) are 55% of the time. Walking-heavy scenarios (quests, conditional-access, battle, interaction) are the slowest per test, so T1.4's setup shortcuts target them.
+- The two timeout scenarios (10.7 s and 9.5 s) wait for real 5-second load timeouts. Shortening them would need a configurable timeout, which is a runtime test hook and needs Ariel's approval under 0012 §3; it is not planned yet.
+- The build is only about 3% of a full run, so T1.3's rebuild skipping matters mainly for the quick tiers.
+- The previously quoted 156 scenarios is now 158; the earlier "about 7.5 minutes" matches.
+
+No test, source, content or dependency change. Next: T1.1 area tags and commands.
+
 ## Direction reset: back to W1, faster tests first — November 9, 2026, planning only
 
 Ariel reviewed the W2 work and the open questions with Claude and decided:
@@ -418,7 +461,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**T1.0 — measure the browser suite** ([decision 0012](decisions/0012-faster-local-tests.md), approved; the revised [decision 0011](decisions/0011-reusable-window-skins.md) is approved too). Order: T1.0–T1.6 (faster local tests), then W3.0 (revert all of W2 and remove the Pixel Frame port), W3.1–W3.7 (extend W1: skin geometry as data, automatic fitting, skin choice, battle windows on W1, the Final Fantasy-like skin), then M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**T1.1 — area tags and commands** ([decision 0012](decisions/0012-faster-local-tests.md), approved; T1.0's baseline is recorded above; the revised [decision 0011](decisions/0011-reusable-window-skins.md) is approved too). Order: T1.1–T1.6 (faster local tests), then W3.0 (revert all of W2 and remove the Pixel Frame port), W3.1–W3.7 (extend W1: skin geometry as data, automatic fitting, skin choice, battle windows on W1, the Final Fantasy-like skin), then M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

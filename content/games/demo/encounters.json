@@ -5,7 +5,7 @@
     "name": "Practice Sigil",
     "seed": 1776,
     "party": [
-      {"id": "hero", "name": "Hero", "frame": "hero-right", "hp": 30, "attack": 7, "defense": 2, "speed": 10}
+      {"id": "hero", "name": "Hero", "frame": "hero-left", "hp": 30, "attack": 7, "defense": 2, "speed": 10}
     ],
     "enemies": [
       {"id": "sigil", "name": "Practice Sigil", "frame": "sigil", "hp": 20, "attack": 5, "defense": 1, "speed": 8},

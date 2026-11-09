@@ -164,7 +164,7 @@ describe('authored encounter validation', () => {
   it('accepts the demo catalog and rejects duplicates, empty names, unknown frames and the old format', () => {
     expect(catalog.encounters).toHaveLength(1);
     const valid = { schemaVersion: 2, encounters: [practice] };
-    expect(readEncounters(valid, 'encounters.json', ['hero-right', 'sigil', 'sigil-lit']).encounters).toHaveLength(1);
+    expect(readEncounters(valid, 'encounters.json', ['hero-left', 'sigil', 'sigil-lit']).encounters).toHaveLength(1);
     expect(() => readEncounters({ schemaVersion: 2, encounters: [practice, practice] })).toThrow(/Duplicate encounter ID/);
     expect(() => readEncounters({ schemaVersion: 2, encounters: [{ ...practice, enemies: [...practice.enemies, { ...practice.enemies[0]! }] }] })).toThrow(/Duplicate combatant ID/);
     expect(() => readEncounters({ schemaVersion: 2, encounters: [{ ...practice, party: [{ ...practice.party[0]!, name: '   ' }] }] })).toThrow(/visible text/);

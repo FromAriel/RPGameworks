@@ -40,7 +40,8 @@ describe('browser test area tags (decision 0012 T1.1)', () => {
   });
 
   it('turns area names into a whole-tag grep and passes Playwright options through', () => {
-    expect(parseAreaArgs(['battle', '@saves', 'battle', '--list'])).toEqual({ grep: '@battle(?![\\w-])|@saves(?![\\w-])', passThrough: ['--list'] });
+    expect(parseAreaArgs(['battle', '@saves', 'battle', '--list'])).toEqual({ grep: '@battle(?![\\w-])|@saves(?![\\w-])', passThrough: ['--list'], rebuild: false });
+    expect(parseAreaArgs(['battle', '--rebuild'])).toEqual({ grep: '@battle(?![\\w-])', passThrough: [], rebuild: true });
     const grep = new RegExp((parseAreaArgs(['world']) as { grep: string }).grep);
     expect(grep.test('title @world')).toBe(true);
     expect(grep.test('title @worldmap')).toBe(false);
@@ -55,6 +56,6 @@ describe('browser test area tags (decision 0012 T1.1)', () => {
     expect(TEST_TIERS).toEqual(['@smoke']);
     expect(findTagProblems([{ file: 'maps.spec.ts', title: 'quick', tags: ['@world', '@smoke'] }])).toEqual([]);
     expect(findTagProblems([{ file: 'maps.spec.ts', title: 'tier only', tags: ['@smoke'] }])).toEqual(['maps.spec.ts: "tier only" has no area tag']);
-    expect(parseAreaArgs(['@smoke'])).toEqual({ grep: '@smoke(?![\\w-])', passThrough: [] });
+    expect(parseAreaArgs(['@smoke'])).toEqual({ grep: '@smoke(?![\\w-])', passThrough: [], rebuild: false });
   });
 });

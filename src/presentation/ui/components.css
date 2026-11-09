@@ -208,7 +208,7 @@
   margin: 0 0 var(--ui-space-2);
   color: var(--ui-authored-text-bright);
   font: 700 var(--ui-text-label)/1.4 var(--ui-font-title);
-  letter-spacing: .02em;
+  letter-spacing: 0;
   -webkit-text-stroke: 1px var(--ui-authored-text-outline);
   paint-order: stroke fill;
 }

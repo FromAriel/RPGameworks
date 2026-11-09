@@ -1,6 +1,6 @@
 :root {
   font-family: var(--ui-font-body);
-  color: var(--ui-text-document); background: var(--ui-world); font-synthesis: none;
+  color: var(--ui-text-document); background: var(--ui-world); font-synthesis: none; font-weight: 400; -webkit-font-smoothing: none; font-smooth: never; font-variant-ligatures: none;
   --panel-width: 360px; --play-right: 0px;
 }
 * { box-sizing: border-box; }
@@ -20,37 +20,37 @@ button:disabled { opacity: .45; cursor: default; }
 button.secondary { background: var(--ui-surface-control-secondary); border-color: #414b5d; }
 input { accent-color: #b9c5d7; }
 h2, h3 { font-weight: 600; }
-h2 { font-size: 17px; margin: 0; }
-h3 { font-size: 14px; margin: 22px 0 14px; }
+h2 { font-size: var(--ui-text-body); margin: 0; }
+h3 { font-size: var(--ui-text-body); margin: 22px 0 14px; }
 .hint { color: var(--ui-text-muted); font-size: var(--ui-text-sm); line-height: 1.6; }
-.setting { display: flex; gap: 10px; align-items: center; font-size: 13px; margin: 14px 0; }
+.setting { display: flex; gap: 10px; align-items: center; font-size: var(--ui-text-body); margin: 14px 0; }
 .setting input { flex: none; }
 #tools-toggle { position: absolute; z-index: 10; top: max(var(--ui-space-3), var(--ui-safe-top)); right: max(var(--ui-space-3), var(--ui-safe-right)); display: flex; align-items: center; gap: 9px; background: var(--ui-surface-menu-control); color: #c7ced9; border-color: #4c536466; box-shadow: 0 2px 12px #0008; }
 #tools-toggle[aria-expanded="true"] { visibility: hidden; }
 #tools-panel { position: absolute; z-index: 20; right: 0; top: 0; bottom: 0; width: min(var(--panel-width), 100%); padding: max(var(--ui-frame-clearance-compact), var(--ui-safe-top)) max(var(--ui-frame-clearance-compact), var(--ui-safe-right)) max(var(--ui-frame-clearance-compact), var(--ui-safe-bottom)) var(--ui-frame-clearance-compact); overflow: auto; overscroll-behavior: contain; background: var(--ui-surface-tools); border-left: 1px solid #414855; box-shadow: -10px 0 40px #0007; scrollbar-color: #5d6678 #12161f; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; }
-.panel-heading h2 { letter-spacing: .04em; }
-#tools-close { font-size: 22px; width: var(--ui-touch-target); padding: 0; }
+.panel-heading h2 { letter-spacing: 0; }
+#tools-close { font-size: var(--ui-text-icon); width: var(--ui-touch-target); padding: 0; }
 .panel-tabs { margin-bottom: 18px; }
 .resume-button { width: 100%; margin-top: 24px; }
-summary { cursor: pointer; padding: 10px 0; font-size: 13px; font-weight: 600; }
+summary { cursor: pointer; padding: 10px 0; font-size: var(--ui-text-body); font-weight: 600; }
 .help-panel { border-block: 1px solid #343b49; margin: 18px 0; }
-.stage-heading { display: flex; gap: 12px; justify-content: space-between; color: #c6bdac; font-size: 11px; letter-spacing: .08em; }
+.stage-heading { display: flex; gap: 12px; justify-content: space-between; color: #c6bdac; font-size: var(--ui-text-body); letter-spacing: 0; }
 #status { font-size: var(--ui-text-sm); color: var(--ui-text-diagnostic); line-height: 1.6; }
-.map-picker { display: grid; gap: 8px; margin-block: 16px; font-size: 12px; color: #bac2d1; }
+.map-picker { display: grid; gap: 8px; margin-block: 16px; font-size: var(--ui-text-body); color: #bac2d1; }
 select, textarea { min-width: 0; max-width: 100%; color: #e4e9f2; background: var(--ui-surface-inset); border: 1px solid #465065; border-radius: 4px; padding: var(--ui-space-2); }
-dl { margin: 20px 0; font-size: 12px; }
+dl { margin: 20px 0; font-size: var(--ui-text-body); }
 dl div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #252c39; }
 dt { color: #a0aabc; }
 dd { margin: 0; font: var(--ui-text-sm) var(--ui-font-numeric); text-align: right; overflow-wrap: anywhere; }
 footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #343b49; display: flex; justify-content: space-between; gap: 12px; color: #9aa5b6; font: var(--ui-text-xs) var(--ui-font-numeric); }
-.game-notice { position: absolute; z-index: 15; inset: 50% auto auto 50%; transform: translate(-50%, -50%); margin: 0; width: min(520px, calc(100% - 32px)); padding: 20px; max-height: calc(100% - 120px); overflow: auto; text-align: center; color: #c6cad4; font-size: 14px; line-height: 1.6; background: #141925ed; border: 1px solid #454e60; border-radius: 4px; }
+.game-notice { position: absolute; z-index: 15; inset: 50% auto auto 50%; transform: translate(-50%, -50%); margin: 0; width: min(520px, calc(100% - 32px)); padding: 20px; max-height: calc(100% - 120px); overflow: auto; text-align: center; color: #c6cad4; font-size: var(--ui-text-body); line-height: 1.6; background: #141925ed; border: 1px solid #454e60; border-radius: 4px; }
 #error { color: var(--ui-danger-text-soft); border-color: var(--ui-danger-line-soft); overflow-wrap: anywhere; }
 /* Controls are an optional overlay, never a reserved strip of the desktop layout. */
 .controls { position: absolute; z-index: 5; bottom: max(18px, var(--ui-safe-bottom)); left: max(var(--ui-space-4), var(--ui-safe-left)); right: max(var(--ui-space-4), var(--ui-safe-right)); display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; pointer-events: none; }
 .controls button { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--ui-surface-overlay-control); }
 .dpad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 4px; }
-.dpad button { padding: 0; font-size: 22px; }
+.dpad button { padding: 0; font-size: var(--ui-text-icon); }
 [data-direction="up"] { grid-column: 2; }
 [data-direction="left"] { grid-column: 1; grid-row: 2; }
 [data-direction="down"] { grid-column: 2; grid-row: 2; }
@@ -59,24 +59,24 @@ footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #343b49; dis
 .actions button { min-width: 74px; }
 /* Semantic controller configuration is retained inside the closed-by-default menu. */
 .controller-panel { padding-top: 8px; border-top: 1px solid #343b49; margin-top: 16px; }
-.controller-panel label { display: block; font-size: 12px; margin-top: 14px; }
+.controller-panel label { display: block; font-size: var(--ui-text-body); margin-top: 14px; }
 .controller-panel .setting { display: flex; align-items: center; gap: 8px; }
 .controller-panel select { display: block; width: 100%; margin-top: 6px; }
 .controller-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
 .controller-panel input[type="range"] { width: 100%; }
-.controller-panel pre { padding: 10px; border: 1px solid #344052; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.controller-panel pre { padding: 10px; border: 1px solid #344052; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--ui-text-body); }
 .controller-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-#controller-status, #controller-message, #controller-brief { overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; }
+#controller-status, #controller-message, #controller-brief { overflow-wrap: anywhere; font-size: var(--ui-text-body); line-height: 1.6; }
 #controller-brief { flex: 1 1 100%; color: var(--ui-text-muted); }
-#controller-report { display: block; width: 100%; margin: 8px 0; font: 12px/1.45 monospace; }
+#controller-report { display: block; width: 100%; margin: 8px 0; font: var(--ui-text-body)/1.45 var(--ui-font-numeric); }
 #page-error-notice { border-left: 3px solid #c9a869; padding: 8px 12px; overflow-wrap: anywhere; }
 a { color: #b6c9e9; }
 /* A bottom message window, not a dashboard dialog. Native modality is unchanged. */
 #interaction-dialog { position: fixed; inset: auto var(--play-right) max(var(--ui-space-6), var(--ui-safe-bottom)) 0; margin: 0 auto; width: min(640px, calc(100% - var(--play-right) - 32px)); max-height: calc(100dvh - 64px); padding: 22px 26px; overflow: auto; color: var(--ui-text-control); background: var(--ui-surface-dialog); border: 2px solid #a9b4cb; border-radius: 4px; box-shadow: 0 0 0 3px #080c14, 0 12px 48px #0008, inset 0 0 0 2px #27314a; }
 #interaction-dialog::backdrop { background: var(--ui-backdrop-light); }
 #interaction-dialog h2 { margin: 0 0 14px; color: var(--ui-authored-heading); overflow-wrap: anywhere; }
-#dialog-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; font-size: 16px; }
-#dialog-page { color: #a0aec7; font-size: 11px; letter-spacing: .08em; min-height: 1.2em; margin: 0 0 10px; }
+#dialog-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; font-size: var(--ui-text-dialogue); }
+#dialog-page { color: #a0aec7; font-size: var(--ui-text-body); letter-spacing: 0; min-height: 1.2em; margin: 0 0 10px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 @media (min-width: 1000px) { body.tools-open { --play-right: var(--panel-width); } }
 @media (max-width: 360px) { .controller-grid { grid-template-columns: 1fr; } #interaction-dialog { padding: 16px; } }

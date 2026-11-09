@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cameraAxis, integerScale, viewportScale } from '../../src/domain/viewport';
+import { cameraAxis, integerScale, uiTextScale, viewportScale } from '../../src/domain/viewport';
 
 describe('player viewport fit', () => {
   it.each([[1920,1080,5], [3840,2160,11], [1100,850,3], [740,850,2], [390,844,1], [844,390,2]])(
@@ -36,5 +36,12 @@ describe('camera bounds per axis', () => {
   });
   it('rejects empty or non-finite lengths', () => {
     for (const [world,view] of [[0,360],[320,0],[Infinity,360],[320,Number.NaN]]) expect(() => cameraAxis(world!,view!)).toThrow();
+  });
+});
+
+describe('interface text scale', () => {
+  it('follows the whole game scale, clamped to 1–2 so UNSCII stays on its grid and menus stay usable', () => {
+    expect([0.6, 1, 1.9, 2, 2.7, 3, 6].map(uiTextScale)).toEqual([1, 1, 1, 2, 2, 2, 2]);
+    expect([0, -1, Number.NaN, Number.POSITIVE_INFINITY].map(uiTextScale)).toEqual([1, 1, 1, 1]);
   });
 });

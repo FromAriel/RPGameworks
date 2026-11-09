@@ -34,44 +34,94 @@ async function skip(page: Page): Promise<void> {
   await expect.poll(async () => (await snapshot(page)).battle?.playing).toBe(false);
 }
 
-/** Choose a command, check the result is already decided while it plays, then skip to the next decision. */
-async function choose(page: Page, name: string | RegExp): Promise<void> {
-  await page.getByRole('button', { name, exact: typeof name === 'string' }).click();
+const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+
+/**
+ * Tap through the classic menu (for example Attack, then a target). The last tap commits; the result is already
+ * decided while it plays, and skipping to the next decision does not change it.
+ */
+async function command(page: Page, ...names: string[]): Promise<void> {
+  for (const name of names) await button(page, name).click();
   const resolved = (await snapshot(page)).battle!;
   await skip(page);
-  expect({ ...(await snapshot(page)).battle!, playing: true }).toEqual({ ...resolved, playing: true });
+  expect({ ...(await snapshot(page)).battle!, playing: true, menu: null }).toEqual({ ...resolved, playing: true, menu: null });
 }
 
-test('side-view battle plays resolved turns, previews order, and restores exploration focus', async ({ page }, info) => {
+test('classic battle windows play resolved turns and restore exploration focus', async ({ page }, info) => {
   await approach(page);
   const before = await snapshot(page);
   await enter(page);
   // The faster Sigil Shard opens the battle; its hit plays on the stage before the first command.
   const opening = (await snapshot(page)).battle!;
-  expect(opening).toMatchObject({ phase: 'command', playing: true, turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 } });
+  expect(opening).toMatchObject({ phase: 'command', playing: true, turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 }, menu: null });
   expect(opening.timeline.slice(0, 3)).toEqual(['hero', 'sigil', 'shard']);
-  await expect(page.getByRole('button', { name: 'Skip' })).toBeVisible();
+  await expect(button(page, 'Skip')).toBeFocused();
   await page.screenshot({ path: info.outputPath('battle-opening-playback.png') });
   await expect.poll(async () => (await snapshot(page)).battle?.playing, { timeout: 5000 }).toBe(false); // Plays out by itself.
-  await expect(page.locator('#interaction-dialog')).toContainText('Sigil Shard hits Hero for 1.');
-  await expect(page.locator('#interaction-dialog')).toContainText('Next: Hero → Practice Sigil → Sigil Shard');
+  const dialog = page.locator('#interaction-dialog');
+  await expect(dialog).toContainText('Sigil Shard hits Hero for 1.');
+  await expect(dialog).toContainText('Next: Hero → Practice Sigil → Sigil Shard'); // Screen-reader details.
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'root', cursor: 0, target: null });
+  await expect(button(page, 'Attack')).toBeFocused();
+  await expect(button(page, 'Special')).toHaveAttribute('aria-disabled', 'true');
+  await expect(button(page, 'Item')).toHaveAttribute('aria-disabled', 'true'); // None carried yet.
+  await expect(button(page, 'Item')).toHaveAttribute('aria-description', 'No usable items.');
   expect((await snapshot(page)).displayObjects).toBeGreaterThan(before.displayObjects); // The stage is drawn.
   await page.screenshot({ path: info.outputPath('battle-command.png') });
-  await expect(page.getByRole('button', { name: /Use Workshop tonic/ })).toHaveCount(0); // None carried yet.
-  await choose(page, 'Attack Sigil Shard');
+  await button(page, 'Attack').click();
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil' });
+  await page.screenshot({ path: info.outputPath('battle-target.png') });
+  await button(page, 'Sigil Shard').click();
+  await skip(page);
   expect((await snapshot(page)).battle).toMatchObject({ hp: { hero: 25, shard: 4 } });
-  await choose(page, 'Attack Sigil Shard');
-  await expect(page.locator('#interaction-dialog')).toContainText('Sigil Shard is defeated.');
-  await expect(page.getByRole('button', { name: 'Attack Sigil Shard' })).toHaveCount(0); // Defeated targets are not offered.
-  for (let turns = 0; turns < 8 && (await snapshot(page)).battle?.phase !== 'victory'; turns++) await choose(page, 'Attack Practice Sigil');
+  await command(page, 'Attack', 'Sigil Shard'); // The target is remembered, so a keyboard player would press Enter twice.
+  await expect(dialog).toContainText('Sigil Shard is defeated.');
+  await button(page, 'Attack').click();
+  await expect(button(page, 'Sigil Shard')).toHaveCount(0); // Defeated targets are not offered.
+  expect((await snapshot(page)).battle?.menu?.target).toBe('sigil');
+  await button(page, 'Practice Sigil').click();
+  await skip(page);
+  for (let turns = 0; turns < 8 && (await snapshot(page)).battle?.phase !== 'victory'; turns++) await command(page, 'Attack', 'Practice Sigil');
   expect((await snapshot(page)).battle?.phase).toBe('victory');
-  await page.getByRole('button', { name: 'Finish' }).click();
+  await button(page, 'Finish').click();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   await expect(page.locator('#stage')).toBeFocused();
   const after = await snapshot(page);
   expect(after.session).toEqual(before.session);
-  expect(after.displayObjects).toBe(before.displayObjects); // Every stage object, number and tween was released.
+  expect(after.displayObjects).toBe(before.displayObjects); // Every window, number and tween was released.
   expect(after.textureCount).toBe(before.textureCount);
+});
+
+test('keyboard confirms in two presses, Cancel backs out without committing, and tapping an enemy attacks it', async ({ page }) => {
+  await approach(page);
+  await enter(page);
+  await skip(page);
+  const start = (await snapshot(page)).battle!;
+  await page.keyboard.press('Enter'); // Attack.
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil' });
+  await page.keyboard.press('ArrowDown');
+  expect((await snapshot(page)).battle?.menu?.target).toBe('shard');
+  await page.keyboard.press('Escape'); // Back to the commands; nothing happened.
+  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, hp: start.hp, menu: { level: 'root', cursor: 0 } });
+  await page.keyboard.press('Escape'); // At the top, Cancel only points at Run.
+  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, phase: 'command', menu: { level: 'root', cursor: 4 } });
+  await expect(button(page, 'Run')).toBeFocused();
+  await page.keyboard.press('ArrowUp'); await page.keyboard.press('ArrowUp'); await page.keyboard.press('ArrowUp');
+  await expect(button(page, 'Special')).toBeFocused(); // Disabled entries can be highlighted to read why…
+  await page.keyboard.press('Enter');
+  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, menu: { level: 'root', cursor: 1 } }); // …but do nothing.
+  // Tapping an enemy sprite while choosing a command attacks it directly.
+  const box = (await page.locator('#stage canvas').boundingBox())!;
+  const scale = box.width / 640;
+  await page.mouse.click(box.x + 200 * scale, box.y + 128 * scale); // Practice Sigil stands at (200, 128).
+  const tapped = (await snapshot(page)).battle!;
+  expect(tapped.turn).toBeGreaterThan(start.turn);
+  expect(tapped.hp.sigil).toBeLessThan(start.hp.sigil!);
+  await skip(page);
+  await page.keyboard.press('Enter'); await page.keyboard.press('Enter'); // Attack is remembered, and so is the Sigil.
+  const pressed = (await snapshot(page)).battle!;
+  expect(pressed.turn).toBeGreaterThan(tapped.turn);
+  expect(pressed.hp.sigil).toBeLessThan(tapped.hp.sigil!);
 });
 
 test('playback speed and skipping never change the resolved battle', async ({ page }) => {
@@ -93,7 +143,8 @@ test('playback speed and skipping never change the resolved battle', async ({ pa
         await expect.poll(async () => (await snapshot(page)).battle?.playing, { timeout: 5000 }).toBe(false);
       }
       states.push({ ...(await snapshot(page)).battle!, speed: 0 });
-      await page.getByRole('button', { name: turn % 2 ? 'Guard' : 'Attack Practice Sigil' }).click();
+      if (turn % 2) await button(page, 'Guard').click();
+      else { await button(page, 'Attack').click(); await button(page, 'Practice Sigil').click(); }
     }
     await skip(page);
     states.push({ ...(await snapshot(page)).battle!, speed: 0 });
@@ -105,7 +156,7 @@ test('playback speed and skipping never change the resolved battle', async ({ pa
   expect(await run('skip')).toEqual(watched);
 });
 
-test('a carried tonic is spent atomically in battle and stays spent after escaping', async ({ page }) => {
+test('a carried tonic is spent atomically in battle and stays spent after running', async ({ page }) => {
   await openRoom(page, `?map=${SUPPLY}`);
   await step(page, 'ArrowUp'); await step(page, 'ArrowUp'); // (4,3) → (4,1)
   // The crate at (5,1) is solid, so holding Right only turns to face it.
@@ -120,15 +171,19 @@ test('a carried tonic is spent atomically in battle and stays spent after escapi
   await approach(page, false);
   await enter(page);
   await skip(page);
-  await choose(page, 'Use Workshop tonic (2)');
+  await button(page, 'Item').click();
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'item', cursor: 0, target: null });
+  await expect(button(page, 'Workshop tonic (2)')).toHaveAttribute('aria-description', 'Restores 12 HP.');
+  await button(page, 'Workshop tonic (2)').click();
+  expect((await snapshot(page)).battle?.menu?.target).toBe('hero'); // The most injured ally.
+  await command(page, 'Hero');
   await expect(page.locator('#interaction-dialog')).toContainText('Hero uses Workshop tonic: Hero recovers 1 HP.');
   expect((await snapshot(page)).session.inventory[TONIC]).toBe(1);
-  const full = page.getByRole('button', { name: 'Use Workshop tonic (1)' });
-  if ((await snapshot(page)).battle?.hp.hero === 30) await expect(full).toBeDisabled();
-  await page.getByRole('button', { name: 'Escape' }).click();
+  if ((await snapshot(page)).battle?.hp.hero === 30) await expect(button(page, 'Item')).toHaveAttribute('aria-description', 'HP is already full.');
+  await button(page, 'Run').click();
   expect((await snapshot(page)).battle?.phase).toBe('escaped');
   await skip(page);
-  await page.getByRole('button', { name: 'Return to room' }).click();
+  await button(page, 'Leave').click();
   await expect(page.locator('#stage')).toBeFocused();
   expect((await snapshot(page)).session.inventory[TONIC]).toBe(1);
 });
@@ -146,7 +201,7 @@ test('failed catalog load leaves the room playable', async ({ page }) => {
   expect(after.displayObjects).toBe(before.displayObjects);
 });
 
-test('narrow battle supports controller cancel and pointer Escape without owned-resource growth', async ({ page }) => {
+test('narrow battle supports controller cancel, Run and pointer taps without owned-resource growth', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => Object.defineProperty(navigator, 'getGamepads', {
     configurable: true, value: () => [(window as typeof window & { __BATTLE_PAD__?: unknown }).__BATTLE_PAD__ ?? null],
@@ -166,12 +221,16 @@ test('narrow battle supports controller cancel and pointer Escape without owned-
     if (entry === 0) {
       await pad([]); await pad([1]); await pad([]); // Cancel first skips the opening playback…
       await expect.poll(async () => (await snapshot(page)).battle?.playing).toBe(false);
-      await pad([1]); await pad([]); // …then escapes, which always works in an ordinary battle.
+      await pad([1]); await pad([]); // …then points at Run…
+      expect((await snapshot(page)).battle?.menu).toMatchObject({ level: 'root', cursor: 4 });
+      await pad([2]); await pad([]); // …which Interact confirms; it always works in an ordinary battle.
+      expect((await snapshot(page)).battle?.phase).toBe('escaped');
+      for (let tries = 0; tries < 4 && (await snapshot(page)).inputMode !== 'exploration'; tries++) { await pad([1]); await pad([]); }
     } else {
       await skip(page);
-      await page.getByRole('button', { name: 'Escape', exact: true }).click();
+      await button(page, 'Run').click();
       await skip(page);
-      await page.getByRole('button', { name: 'Return to room' }).click();
+      await button(page, 'Leave').click();
     }
     await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
     await expect(page.locator('#stage')).toBeFocused();
@@ -197,14 +256,15 @@ test('authored defeat offers Retry with the identical opening and a safe Leave',
   const opening = (await snapshot(page)).battle;
   expect(opening).toMatchObject({ phase: 'command', playing: true });
   await skip(page);
-  for (let turns = 0; turns < 6 && (await snapshot(page)).battle?.phase === 'command'; turns++) await choose(page, 'Guard');
+  for (let turns = 0; turns < 6 && (await snapshot(page)).battle?.phase === 'command'; turns++) await command(page, 'Guard');
   await expect.poll(async () => (await snapshot(page)).battle?.phase).toBe('defeat');
-  await page.getByRole('button', { name: 'Retry' }).click();
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'end', cursor: 0, target: null });
+  await button(page, 'Retry').click();
   expect((await snapshot(page)).battle).toEqual(opening);
   await skip(page);
-  await page.getByRole('button', { name: 'Escape', exact: true }).click();
+  await button(page, 'Run').click();
   await skip(page);
-  await page.getByRole('button', { name: 'Return to room' }).click();
+  await button(page, 'Leave').click();
   await expect(page.locator('#stage')).toBeFocused();
   expect((await snapshot(page)).session).toEqual(before);
 });

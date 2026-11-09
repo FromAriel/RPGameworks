@@ -14,6 +14,7 @@ import { loadStateIndex } from './platform/state-index-loader';
 import { MenuNavigation } from './presentation/ui/menu-navigation';
 import { createConfirmationDialog, type ConfirmationDialogParts } from './presentation/ui/components';
 import './presentation/skin/windowskin.css';
+import './presentation/ui/battle-window.css';
 import { mountWindowskin } from './presentation/ui/windowskin';
 import { mountPlayerShell } from './presentation/ui/player-shell';
 import { PageErrorLog } from './platform/page-errors';

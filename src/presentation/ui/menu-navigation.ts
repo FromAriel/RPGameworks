@@ -30,7 +30,7 @@ export class MenuNavigation {
   private candidates(): HTMLElement[] {
     return [...this.root.querySelectorAll<HTMLElement>(focusSelector)].filter(node =>
       node.getClientRects().length > 0 && !node.closest('[hidden],[inert]') &&
-      !node.matches(':disabled') && node.getAttribute('aria-disabled') !== 'true');
+      !node.matches(':disabled') && (node.getAttribute('aria-disabled') !== 'true' || node.hasAttribute('data-focusable-disabled')));
   }
   private focus(node: HTMLElement): void {
     node.focus({preventScroll:true});

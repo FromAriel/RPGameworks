@@ -15,6 +15,6 @@
 @media(max-width:600px) { #inventory-dialog { --skin-scale:1; padding:var(--ui-frame-clearance-compact); } .inventory-columns { grid-template-columns:1fr; gap:12px; } #inventory-list { max-height:25vh; } }
 
 #inventory-dialog[data-skin-state="ready"] { background-color:transparent; border-color:transparent; }
-#inventory-title { color:var(--ui-text-title); font-family:var(--ui-font-title); font-weight:600; font-size:var(--ui-text-heading); line-height:1.4; letter-spacing:.03em; text-align:center; max-width:calc(100% - 96px); margin:0; overflow-wrap:anywhere; }
+#inventory-title { color:var(--ui-text-title); font-family:var(--ui-font-title); font-weight:600; font-size:var(--ui-text-heading); line-height:1.4; letter-spacing:0; text-align:center; max-width:calc(100% - 96px); margin:0; overflow-wrap:anywhere; }
 #inventory-dialog :focus-visible { outline:var(--ui-focus-width) dashed var(--ui-focus-ring); outline-offset:var(--ui-focus-offset); }
 @media (forced-colors:active) { #inventory-dialog { background-color:Canvas; outline:2px solid CanvasText; } }

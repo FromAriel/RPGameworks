@@ -1,3 +1,4 @@
+@font-face { font-family: "UNSCII 16"; src: url("/fonts/unscii/unscii-16.ttf") format("truetype"); font-display: block; }
 :root {
   color-scheme: dark;
 
@@ -57,17 +58,23 @@
   --ui-danger-text-soft: #f0d4d4;
   --ui-danger-line-soft: #ae8282;
 
-  /* Typography */
-  --ui-font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Typography: UNSCII 16 everywhere (public/fonts/CREDITS.md). It is a bitmap design, so every size token is its
+     16 px design size; other sizes get smoothed. Hierarchy comes from colour, case and spacing, not size or weight. */
+  --ui-font-body: "UNSCII 16", ui-monospace, monospace;
   --ui-font-title: var(--ui-font-body);
   --ui-font-label: var(--ui-font-body);
-  --ui-font-numeric: ui-monospace, monospace;
-  --ui-text-xs: 11px;
-  --ui-text-sm: 12px;
-  --ui-text-label: 13px;
-  --ui-text-body: 14px;
-  --ui-text-dialogue: 16px;
-  --ui-text-heading: 18px;
+  --ui-font-numeric: var(--ui-font-body);
+  /* --ui-scale (1 or 2) follows the game's whole pixel scale; set by the scene's resize (domain/viewport uiTextScale). */
+  --ui-scale: 1;
+  --ui-text-base: calc(16px * var(--ui-scale));
+  --ui-text-xs: var(--ui-text-base);
+  --ui-text-sm: var(--ui-text-base);
+  --ui-text-label: var(--ui-text-base);
+  --ui-text-body: var(--ui-text-base);
+  --ui-text-dialogue: var(--ui-text-base);
+  --ui-text-heading: var(--ui-text-base);
+  /* Twice the design size, for single-glyph icons such as the d-pad arrows. */
+  --ui-text-icon: 32px;
 
   /* Four-pixel rhythm and interaction metrics */
   --ui-space-1: 4px;

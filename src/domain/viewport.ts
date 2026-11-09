@@ -23,3 +23,13 @@ export function cameraAxis(worldLength: number, viewLength: number): { offset: n
   if (worldLength >= viewLength) return { offset: 0, length: worldLength };
   return { offset: -Math.floor((viewLength - worldLength) / 2), length: viewLength };
 }
+
+/**
+ * Whole-number multiplier for interface text, following the game's pixel scale so DOM windows grow with the canvas.
+ * UNSCII 16 stays on its design grid only at whole multiples of 16 px, and very large text crowds the menus, so the
+ * result is clamped to 1–2.
+ */
+export function uiTextScale(gameScale: number): number {
+  if (!Number.isFinite(gameScale) || gameScale <= 0) return 1;
+  return Math.min(2, Math.max(1, Math.floor(gameScale)));
+}

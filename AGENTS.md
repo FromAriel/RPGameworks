@@ -41,6 +41,8 @@ Track asset provenance. Do not copy commercial game assets because they are conv
 
 Run the checks available for the packet: source checks, content validation, domain tests, browser flows, production build, and lifecycle/performance fixtures where relevant. Never claim a placeholder script, unexecuted command, or guessed deployment passed.
 
+Run tests locally, not on GitHub Actions. Ariel disabled the full-matrix test workflow (`ci.yml`) on November 9, 2026, because Actions bills whole minutes per job and repeated three-runner suites drain the monthly allowance. Do not re-enable it, add test jobs to other workflows, or dispatch workflows to "verify" a change unless Ariel asks. The Pages workflow (build and deploy only) runs when Ariel asks for a publish.
+
 A GitHub commit is not evidence of a successful build. A successful build is not evidence of deployment or playtesting. Report those outcomes separately, including exact failures and access limitations.
 
 For optimization, retain correctness tests and compare equivalent workloads. Record device/browser, build, scene, quality, and measurement method. Provisional budgets in the plan are targets, not benchmark results.

@@ -121,7 +121,7 @@ function drawDiagnostics(): void {
     ['Map', snapshot.mapName],
     ['Map cells', `${snapshot.mapWidth} × ${snapshot.mapHeight}`],
     ['Resident maps', String(snapshot.loadedMaps)],
-    ['Logical view', '320 × 192'],
+    ['Logical view', `${snapshot.view.width} × ${snapshot.view.height} · ${snapshot.view.tileSize} px tiles`],
     ['Player tile', `${snapshot.actorTile.x}, ${snapshot.actorTile.y}`],
     ['Active scenes', String(snapshot.activeScenes)],
     ['Input owner', snapshot.inputMode],

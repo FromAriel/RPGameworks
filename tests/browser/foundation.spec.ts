@@ -9,10 +9,11 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect(state.activeScenes).toBe(1);
   expect(state.displayObjects).toBeGreaterThan(240);
   expect(state.displayObjects).toBeLessThanOrEqual(250); // One room and its owned visuals, with no preallocated effect emitters.
-  await expect(page.locator('canvas')).toHaveAttribute('width', '320');
-  await expect(page.locator('canvas')).toHaveAttribute('height', '192');
+  expect(state.view).toEqual({ width: 640, height: 360, tileSize: 16 });
+  await expect(page.locator('canvas')).toHaveAttribute('width', '640');
+  await expect(page.locator('canvas')).toHaveAttribute('height', '360');
   const size = await page.locator('canvas').boundingBox();
-  expect(size!.width / 320).toBe(3);
+  expect(size!.width / 640).toBe(1); // 1100 x 850 fits 640 x 360 once; 1280 x 720 and larger enlarge by whole numbers.
   expect(await page.locator('canvas').evaluate((canvas) => getComputedStyle(canvas).imageRendering)).toBe('pixelated');
   await page.screenshot({ path: info.outputPath('foundation-desktop.png'), fullPage: true });
 });
@@ -87,10 +88,10 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect((await snapshot(page)).burstRequests).toBe(1);
 });
 
- test('small viewport uses 1x pixels and pointer controls, not fractional stretching', async ({ page }, info) => {
+ test('narrow portrait viewport fits 640 x 360 proportionally and keeps pointer controls', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openRoom(page);
-  expect((await page.locator('canvas').boundingBox())!.width).toBe(320);
+  expect((await page.locator('canvas').boundingBox())!.width).toBeCloseTo(390, 0); // Below 1x, the documented proportional fallback applies.
   await enableTouch(page);
   const left = page.getByRole('button', { name: 'Move left', exact: true });
   const box = (await left.boundingBox())!;

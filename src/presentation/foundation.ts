@@ -16,7 +16,7 @@ import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
 import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
-import { MapView, ATLAS, TILE } from './map-view';
+import { MapView, ATLAS } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
 import { CharacterArt } from './character-view';
 import type { ConfirmationDialogParts, PromptEntry } from './ui/components';
@@ -24,8 +24,6 @@ import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 
-const WIDTH = 320;
-const HEIGHT = 192;
 const SCENE = 'rpgameworks:map';
 
 export interface FoundationElements {
@@ -54,6 +52,8 @@ export interface FoundationElements {
 }
 
 export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
+  // Logical canvas and world tile size come from the validated game manifest (decision 0008).
+  const WIDTH = content.game.view.width, HEIGHT = content.game.view.height, TILE = content.game.tileSize;
   const spawnActor = () => ({ ...createActor(content.spawn.x, content.spawn.y), facing: content.spawn.facing });
   let transitions = 0, cancelledTransitions = 0, failedTransitions = 0;
   let starts = 0;
@@ -488,6 +488,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const position = actorPosition(actor, TILE);
       return {
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
+        view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
         battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,round:state.round,heroHp:state.heroHp,enemyHp:state.enemyHp};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,

@@ -16,7 +16,7 @@ test('launch is only the centered game, black letterboxing, and a compact menu',
   await expect(page).toHaveTitle('RPGameworks');
   await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(1280);
   const canvas = (await page.locator('canvas').boundingBox())!;
-  expect(canvas).toMatchObject({ x: 80, y: 66, width: 1280, height: 768 });
+  expect(canvas).toMatchObject({ x: 80, y: 90, width: 1280, height: 720 }); // 640 x 360 at 2x
   expect(await page.locator('#stage').evaluate(node => getComputedStyle(node).backgroundColor)).toBe('rgb(0, 0, 0)');
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(900);
   await page.screenshot({ path: info.outputPath('player-clean.png') });
@@ -33,7 +33,7 @@ test('Debug docks beside play, stays live, and stops rebuilding rows when closed
   await expect(page.locator('#debug-tab')).toBeFocused();
   await expect(page.locator('#diagnostics div')).toHaveCount(17);
   await expect.poll(async () => (await page.locator('#stage').boundingBox())?.width).toBe(1080);
-  await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(960);
+  await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(640); // a 1080 px docked stage fits 640 x 360 once
   await page.locator('#stage').click({ position: { x: 50, y: 50 } });
   await page.keyboard.down('ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeLessThan(10);
@@ -138,13 +138,13 @@ test('fatal loading errors stay visible outside the hidden debug interface', asy
 
 test('small, wide, and large viewports fit without cropping or scrollbars', async ({ page }, info) => {
   await openRoom(page);
-  for (const [width, height, zoom] of [[280,160,160/192], [390,844,1], [844,390,2], [3840,2160,11]]) {
+  for (const [width, height, zoom] of [[280,160,280/640], [390,844,390/640], [844,390,1], [1280,720,2], [3840,2160,6]]) {
     await page.setViewportSize({ width: width!, height: height! });
-    await expect.poll(async () => (await page.locator('canvas').boundingBox())!.width).toBeCloseTo(320*zoom!, 1);
+    await expect.poll(async () => (await page.locator('canvas').boundingBox())!.width).toBeCloseTo(640*zoom!, 1);
     const box = (await page.locator('canvas').boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0); expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.x+box.width).toBeLessThanOrEqual(width!+.1); expect(box.y+box.height).toBeLessThanOrEqual(height!+.1);
-    await expect(page.locator('canvas')).toHaveAttribute('width','320');
+    await expect(page.locator('canvas')).toHaveAttribute('width','640');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(height);
   }

@@ -7,6 +7,14 @@
     "schemaVersion": {"const": 1},
     "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:game\\.[a-z][a-z0-9.-]{0,95}$"},
     "tileSize": {"const": 16},
+    "view": {
+      "description": "Logical canvas size in game pixels; enlarged by whole numbers to fit the screen.",
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "width": {"type": "integer", "minimum": 160, "maximum": 1920},
+        "height": {"type": "integer", "minimum": 120, "maximum": 1080}
+      }, "required": ["width", "height"]
+    },
     "itemsFile": {"type": "string", "pattern": "^items(\\.[a-f0-9]{12})?\\.json$"},
     "factsFile": {"type": "string", "pattern": "^facts(\\.[a-f0-9]{12})?\\.json$"},
     "questsFile": {"type": "string", "pattern": "^quests(\\.[a-f0-9]{12})?\\.json$"},
@@ -31,5 +39,5 @@
       }
     }
   },
-  "required": ["schemaVersion", "id", "tileSize", "start", "maps"]
+  "required": ["schemaVersion", "id", "tileSize", "view", "start", "maps"]
 }

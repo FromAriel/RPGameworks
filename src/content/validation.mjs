@@ -385,6 +385,7 @@ export function validateWorld(game, maps, catalog, encounters) {
   for (const entry of game.maps) {
     const map = maps.get(entry.id);
     if (!map || map.id !== entry.id) { issue(entry.file, entry.id, '/id', 'Registered map is missing or has a different ID', map?.id); continue; }
+    if (map.tileSize !== game.tileSize) issue(entry.file, map.id, '/tileSize', 'Map tile size differs from the game tile size', map.tileSize);
     if (catalog) validateMapItems(map, catalog, entry.file);
     for (const object of map.objects) {
       if (objectIds.has(object.id)) issue(entry.file, map.id, '/objects', 'Duplicate world placement ID', object.id);

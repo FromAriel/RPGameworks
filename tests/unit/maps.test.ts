@@ -125,6 +125,18 @@ describe('manifest and world references', () => {
     m.maps[m.maps.length-1]!.id='demo:map.other';expect(()=>readGame(m)).toThrow('Duplicate map file');
   });
   it('rejects an unregistered start map',()=>{const m=manifest();m.start.mapId='demo:map.missing';expect(()=>readGame(m)).toThrow('Start map is not registered');});
+  it('requires a bounded whole-pixel logical view',()=>{
+    expect(readGame(manifest()).view).toEqual({width:expect.any(Number),height:expect.any(Number)});
+    const missing=manifest() as Partial<GameManifest>;delete missing.view;expect(()=>readGame(missing)).toThrow(ContentError);
+    for(const view of [{width:159,height:192},{width:320,height:1081},{width:320.5,height:192},{width:320},{width:320,height:192,depth:1}]){
+      const m=manifest() as unknown as {view:unknown};m.view=view;expect(()=>readGame(m)).toThrow(ContentError);
+    }
+  });
+  it('rejects a map whose tile size differs from the game tile size',()=>{
+    const a=readMap(workshop(),'maps/workshop.json',frames),b=readMap(gallery(),'maps/gallery.json',frames);
+    const mismatched={...b,tileSize:32} as unknown as typeof b;
+    expect(()=>validateWorld(manifest(),worldMaps(a,mismatched))).toThrow('Map tile size differs from the game tile size');
+  });
   it('rejects unknown cross-object condition and action placement IDs',()=>{
     for(const kind of ['condition','action'] as const){const a=workshop(),b=gallery(),game=manifest(),plaque=b.objects.find(object=>object.id==='demo:object.gallery.plaque')!;
       if(kind==='condition')plaque.states![0]!.when={type:'placementOpened',placementId:'demo:object.missing',value:true};

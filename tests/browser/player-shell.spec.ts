@@ -1,6 +1,6 @@
 import { test, expect, openRoom, snapshot, openTools, closeTools } from './helpers';
 
-test('launch is only the centered game, black letterboxing, and a compact menu', async ({ page }, info) => {
+test('launch is only the centered game, black letterboxing, and a compact menu', { tag: ['@shell'] }, async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('./');
   await expect.poll(() => page.evaluate(() => window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');
@@ -25,7 +25,7 @@ test('launch is only the centered game, black letterboxing, and a compact menu',
   await page.keyboard.up('ArrowRight');
 });
 
-test('Debug docks beside play, stays live, and stops rebuilding rows when closed', async ({ page }, info) => {
+test('Debug docks beside play, stays live, and stops rebuilding rows when closed', { tag: ['@shell'] }, async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openRoom(page);
   await page.keyboard.press('F2');
@@ -55,7 +55,7 @@ test('Debug docks beside play, stays live, and stops rebuilding rows when closed
   await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(1280);
 });
 
-test('menu tabs support keyboard navigation and repeated opening does not recreate the game', async ({ page }) => {
+test('menu tabs support keyboard navigation and repeated opening does not recreate the game', { tag: ['@shell'] }, async ({ page }) => {
   await openRoom(page); const initial = await snapshot(page);
   for (let i = 0; i < 8; i += 1) {
     await page.keyboard.press('Escape');
@@ -77,7 +77,7 @@ test('menu tabs support keyboard navigation and repeated opening does not recrea
   expect(final.actorTile).toEqual(initial.actorTile); expect(final.burstRequests).toBe(0);
 });
 
-test('dialogue keeps Escape and F2 cannot cover an active conversation', async ({ page }, info) => {
+test('dialogue keeps Escape and F2 cannot cover an active conversation', { tag: ['@shell', '@dialogue'] }, async ({ page }, info) => {
   await openRoom(page);
   await page.keyboard.down('ArrowDown');
   await expect.poll(async () => (await snapshot(page)).moving).toBe(true);
@@ -97,7 +97,7 @@ test('dialogue keeps Escape and F2 cannot cover an active conversation', async (
   await expect(page.locator('#tools-panel')).toBeHidden();
 });
 
-test('controller input pauses in the menu and does not replay a held action when closed', async ({ page }) => {
+test('controller input pauses in the menu and does not replay a held action when closed', { tag: ['@shell', '@input'] }, async ({ page }) => {
   await page.addInitScript(() => {
     const pad = { id: 'shell-test', index: 0, connected: true, mapping: 'standard', axes: [0, 0],
       buttons: Array.from({ length: 17 }, () => ({ value: 0, pressed: false })) };
@@ -126,7 +126,7 @@ test('controller input pauses in the menu and does not replay a held action when
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
 });
 
-test('fatal loading errors stay visible outside the hidden debug interface', async ({ page }) => {
+test('fatal loading errors stay visible outside the hidden debug interface', { tag: ['@shell', '@boot'] }, async ({ page }) => {
   await page.route('**/generated/content/game.json', route => route.abort());
   await page.goto('./');
   await expect(page.locator('#error')).toBeVisible();
@@ -136,7 +136,7 @@ test('fatal loading errors stay visible outside the hidden debug interface', asy
   await expect(page.locator('#status')).toContainText('could not continue');
 });
 
-test('small, wide, and large viewports fit without cropping or scrollbars', async ({ page }, info) => {
+test('small, wide, and large viewports fit without cropping or scrollbars', { tag: ['@shell'] }, async ({ page }, info) => {
   await openRoom(page);
   for (const [width, height, zoom] of [[280,160,280/640], [390,844,390/640], [844,390,1], [1280,720,2], [3840,2160,6]]) {
     await page.setViewportSize({ width: width!, height: height! });
@@ -156,7 +156,7 @@ test('small, wide, and large viewports fit without cropping or scrollbars', asyn
   await page.screenshot({ path: info.outputPath('player-clean-narrow.png') });
 });
 
-test('open tools are not restored on reload and closing nested settings cannot leave input blocked', async ({ page }) => {
+test('open tools are not restored on reload and closing nested settings cannot leave input blocked', { tag: ['@shell'] }, async ({ page }) => {
   await openRoom(page); await openTools(page);
   await page.locator('#controller-settings summary').click();
   await closeTools(page);
@@ -171,7 +171,7 @@ test('open tools are not restored on reload and closing nested settings cannot l
 
 test.describe('touch-first player layout', () => {
   test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
-  test('touch controls appear automatically but diagnostics stay hidden', async ({ page }, info) => {
+  test('touch controls appear automatically but diagnostics stay hidden', { tag: ['@shell', '@input'] }, async ({ page }, info) => {
     await openRoom(page);
     await expect(page.locator('#touch-controls')).toBeVisible();
     await expect(page.locator('#tools-panel')).toBeHidden();

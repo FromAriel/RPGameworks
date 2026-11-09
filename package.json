@@ -17,6 +17,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "pretest:browser": "npm run build:browser-fixtures",
     "test:browser": "playwright test",
+    "test:area": "node tools/test-area.mjs",
+    "check:test-tags": "node tools/check-test-tags.mjs",
     "build:browser-fixtures": "npm run build -- --base=/RPGameworks/ && npm run build:ui-gallery",
     "build:ui-gallery": "vite build --config vite.ui-gallery.config.ts",
     "preview:ui-gallery": "vite preview --config vite.ui-gallery.config.ts --host 127.0.0.1 --port 4174 --strictPort",

@@ -1,7 +1,7 @@
 import { openTools, setEffects, enableTouch } from './helpers';
 import { test, expect, snapshot, openRoom } from './helpers';
 
- test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', async ({ page }, info) => {
+ test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', { tag: ['@boot'] }, async ({ page }, info) => {
   await openRoom(page);
   const state = await snapshot(page);
   expect(state.phaser).toBe('4.2.1');
@@ -18,7 +18,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await page.screenshot({ path: info.outputPath('foundation-desktop.png'), fullPage: true });
 });
 
- test('keyboard movement, wall collision, release, and blur are bounded', async ({ page }) => {
+ test('keyboard movement, wall collision, release, and blur are bounded', { tag: ['@boot', '@world', '@input'] }, async ({ page }) => {
   await openRoom(page);
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
@@ -37,7 +37,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await page.keyboard.up('ArrowDown');
 });
 
- test('cosmetic bursts are capped, expire, and can be disabled without changing the actor', async ({ page }) => {
+ test('cosmetic bursts are capped, expire, and can be disabled without changing the actor', { tag: ['@boot'] }, async ({ page }) => {
   await openRoom(page);
   await setEffects(page, true);
   await enableTouch(page);
@@ -69,7 +69,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await page.keyboard.up('ArrowRight');
 });
 
- test('twelve restarts keep scene, texture, object, and burst ownership bounded', async ({ page }) => {
+ test('twelve restarts keep scene, texture, object, and burst ownership bounded', { tag: ['@boot', '@perf'] }, async ({ page }) => {
   await openRoom(page);
   const baseline = await snapshot(page);
   for (let i = 1; i <= 12; i += 1) {
@@ -88,7 +88,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect((await snapshot(page)).burstRequests).toBe(1);
 });
 
- test('narrow portrait viewport fits 640 x 360 proportionally and keeps pointer controls', async ({ page }, info) => {
+ test('narrow portrait viewport fits 640 x 360 proportionally and keeps pointer controls', { tag: ['@boot', '@shell'] }, async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openRoom(page);
   expect((await page.locator('canvas').boundingBox())!.width).toBeCloseTo(390, 0); // Below 1x, the documented proportional fallback applies.
@@ -106,7 +106,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   expect(await page.locator('#stage').evaluate((stage) => stage.scrollWidth > stage.clientWidth)).toBe(false);
 });
 
- test('reduced-motion preference disables initial particles; explicit opt-in still works', async ({ page }) => {
+ test('reduced-motion preference disables initial particles; explicit opt-in still works', { tag: ['@boot'] }, async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openRoom(page);
   await enableTouch(page);
@@ -119,7 +119,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
   await expect.poll(async () => (await snapshot(page)).aliveParticles).toBeGreaterThan(0);
 });
 
-test('authored impact is visible in both rooms and reduced mode, then releases its objects', async ({ page }, info) => {
+test('authored impact is visible in both rooms and reduced mode, then releases its objects', { tag: ['@boot'] }, async ({ page }, info) => {
   for (const [name, suffix] of [['workshop', ''], ['gallery', '?map=demo:map.gallery']] as const) {
     await page.setViewportSize(name === 'gallery' ? { width: 390, height: 700 } : { width: 960, height: 720 });
     await openRoom(page, suffix);
@@ -138,7 +138,7 @@ test('authored impact is visible in both rooms and reduced mode, then releases i
   await expect.poll(async () => (await snapshot(page)).activeEffects).toBe(0);
 });
 
- test('Canvas renderer fallback boots and moves', async ({ page }) => {
+ test('Canvas renderer fallback boots and moves', { tag: ['@boot'] }, async ({ page }) => {
   await openRoom(page, '?renderer=canvas');
   expect((await snapshot(page)).renderer).toBe('Canvas');
   await page.keyboard.down('ArrowUp');
@@ -146,7 +146,7 @@ test('authored impact is visible in both rooms and reduced mode, then releases i
   await page.keyboard.up('ArrowUp');
 });
 
- test('missing atlas shows a visible error rather than a false ready state', async ({ page }) => {
+ test('missing atlas shows a visible error rather than a false ready state', { tag: ['@boot'] }, async ({ page }) => {
   await page.route('**/generated/foundation.png', (route) => route.abort());
   await page.goto('./');
   await expect(page.locator('#error')).toContainText('atlas failed to load');

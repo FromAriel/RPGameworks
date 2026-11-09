@@ -33,7 +33,7 @@ async function moveStick(page: Page): Promise<void> {
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
 }
 
-test('unrelated rejection during startup cannot disable autofocus or controller movement', async ({ page }) => {
+test('unrelated rejection during startup cannot disable autofocus or controller movement', { tag: ['@input', '@boot'] }, async ({ page }) => {
   await simulatedController(page);
   await page.route('**/generated/foundation.png', async (route) => {
     await page.evaluate((message) => { void Promise.reject(new Error(message)); }, CHECKSUM);
@@ -47,7 +47,7 @@ test('unrelated rejection during startup cannot disable autofocus or controller 
   await expect(page.locator('#status')).toContainText('Ready');
 });
 
-test('unrelated rejection after startup stays observable without stopping keyboard input', async ({ page }) => {
+test('unrelated rejection after startup stays observable without stopping keyboard input', { tag: ['@input'] }, async ({ page }) => {
   await ready(page);
   await page.evaluate((message) => { void Promise.reject(new Error(message)); }, CHECKSUM);
   await expect(page.locator('#page-error-notice')).toContainText('checksum mismatch');
@@ -63,7 +63,7 @@ test('unrelated rejection after startup stays observable without stopping keyboa
   expect(report.fatalGameError).toBeNull();
 });
 
-test('activation restores viewport focus and reports the actual input gate', async ({ page }, testInfo) => {
+test('activation restores viewport focus and reports the actual input gate', { tag: ['@input'] }, async ({ page }, testInfo) => {
   await simulatedController(page); await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('Ready');
   await openTools(page); await page.locator('#effects').focus();
@@ -88,7 +88,7 @@ test('activation restores viewport focus and reports the actual input gate', asy
   await moveStick(page);
 });
 
-test('controller detection and reporting work even if the map cannot load', async ({ page }) => {
+test('controller detection and reporting work even if the map cannot load', { tag: ['@input', '@boot'] }, async ({ page }) => {
   await simulatedController(page);
   await page.route('**/generated/content/game.json', (route) => route.abort());
   await page.goto('./');
@@ -103,7 +103,7 @@ test('controller detection and reporting work even if the map cannot load', asyn
   expect(report.controller.detectedCount).toBe(1);
 });
 
-test('blocked API stays isolated and preserves its reason in the report', async ({ page }) => {
+test('blocked API stays isolated and preserves its reason in the report', { tag: ['@input'] }, async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator, 'getGamepads', {
     value: () => { throw new DOMException('Gamepad permission denied', 'SecurityError'); },
   }));
@@ -117,7 +117,7 @@ test('blocked API stays isolated and preserves its reason in the report', async 
   await expect(page.locator('#error')).toBeHidden();
 });
 
-test('neutral wait is distinguished from an undetected controller', async ({ page }) => {
+test('neutral wait is distinguished from an undetected controller', { tag: ['@input'] }, async ({ page }) => {
   await simulatedController(page); await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('Ready');
   await openControllerSettings(page);
@@ -130,7 +130,7 @@ test('neutral wait is distinguished from an undetected controller', async ({ pag
   await moveStick(page);
 });
 
-test('a genuine scene update exception is still fatal and visible', async ({ page }) => {
+test('a genuine scene update exception is still fatal and visible', { tag: ['@input', '@boot'] }, async ({ page }) => {
   await simulatedController(page); await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('Ready');
   await page.evaluate(() => {

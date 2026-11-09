@@ -47,7 +47,7 @@ async function confirmLoad(page: Page, index: number): Promise<void> {
   await expect(confirmation).toBeHidden();
 }
 
-test('a locked storeroom denies entry without requesting a destination', async ({ page }) => {
+test('a locked storeroom denies entry without requesting a destination', { tag: ['@world'] }, async ({ page }) => {
   let destinationRequests = 0;
   await page.route('**/generated/content/maps/storeroom.*.json', route => {
     destinationRequests += 1;
@@ -65,7 +65,7 @@ test('a locked storeroom denies entry without requesting a destination', async (
   expect((await snapshot(page)).mapId).toBe(GALLERY);
 });
 
-test('the brass key unlocks storeroom travel, survives return and save reload', async ({ page }, info) => {
+test('the brass key unlocks storeroom travel, survives return and save reload', { tag: ['@world', '@saves'] }, async ({ page }, info) => {
   await openRoom(page, `?map=${GALLERY}`);
   await step(page, 'ArrowDown'); // (4,7)
   await step(page, 'ArrowRight', 7); // (11,7)
@@ -137,7 +137,7 @@ test('the brass key unlocks storeroom travel, survives return and save reload', 
   await page.keyboard.up('ArrowLeft');
 });
 
-test('a walkable denied exit shows one reason and makes zero destination requests', async ({ page }) => {
+test('a walkable denied exit shows one reason and makes zero destination requests', { tag: ['@world'] }, async ({ page }) => {
   const map = JSON.parse(readFileSync('content/games/demo/maps/workshop.json', 'utf8'));
   map.exits[0].prerequisites = { type: 'factEquals', factId: 'demo:fact.gallery.gate-open', value: true };
   map.exits[0].rejectionMessageId = 'travel-locked';
@@ -165,7 +165,7 @@ test('a walkable denied exit shows one reason and makes zero destination request
   expect(destinationRequests).toBe(0);
 });
 
- test('the gate blocks the crossing while closed, opens with the lever, defers its close when occupied, and refuses saving there', async ({ page }) => {
+ test('the gate blocks the crossing while closed, opens with the lever, defers its close when occupied, and refuses saving there', { tag: ['@world', '@saves'] }, async ({ page }) => {
   await openRoom(page, `?map=${GALLERY}`);
   await step(page, 'ArrowDown'); // (4,7)
   await step(page, 'ArrowRight', 7); // (11,7)

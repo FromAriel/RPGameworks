@@ -41,7 +41,7 @@ async function tapPad(page:Page,index:number):Promise<void> {
   await padButton(page,index,true);await page.waitForTimeout(70);await padButton(page,index,false);await page.waitForTimeout(70);
 }
 
-test('chest grants once, reconstructs after actual room travel and room restart, but not reload',async({page},info)=>{
+test('chest grants once, reconstructs after actual room travel and room restart, but not reload',{ tag: ['@inventory', '@world'] }, async({page},info)=>{
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);
   let state=(await snapshot(page)).session;expect(state.inventory[lens]).toBe(1);expect(state.placements[chest]?.opened).toBe(true);
   await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('already took');
@@ -65,7 +65,7 @@ test('chest grants once, reconstructs after actual room travel and room restart,
   expect((await snapshot(page)).session.placements).toEqual({});
 });
 
-test('Menu opens real inventory with no tools, empty state, and working Settings route',async({page})=>{
+test('Menu opens real inventory with no tools, empty state, and working Settings route',{ tag: ['@inventory'] }, async({page})=>{
   await openRoom(page);await page.locator('#tools-toggle').click();
   await expect(page.locator('#inventory-dialog')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
   await expect(page.locator('#item-name')).toHaveText('Empty inventory');
@@ -75,7 +75,7 @@ test('Menu opens real inventory with no tools, empty state, and working Settings
   await expect(page.locator('#inventory-dialog')).toBeHidden();await closeTools(page);
 });
 
-test('menu queued during movement stops at a safe tile and cannot move or burst underneath it',async({page})=>{
+test('menu queued during movement stops at a safe tile and cannot move or burst underneath it',{ tag: ['@inventory'] }, async({page})=>{
   await openRoom(page);await page.keyboard.down('ArrowRight');
   await expect.poll(async()=>(await snapshot(page)).moving,{intervals:[10]}).toBe(true);
   await page.keyboard.press('KeyI');await page.keyboard.up('ArrowRight');
@@ -89,7 +89,7 @@ test('menu queued during movement stops at a safe tile and cannot move or burst 
   await expect(page.locator('#stage')).toBeFocused();
 });
 
-test('controller Menu opens inventory, keeps held inputs isolated, and cancel restores exploration',async({page})=>{
+test('controller Menu opens inventory, keeps held inputs isolated, and cancel restores exploration',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page);await expect(page.locator('#controller-brief')).toContainText('Ready');
   await padButton(page,9,true);await expect(page.locator('#inventory-dialog')).toBeVisible();
   await page.waitForTimeout(220);await expect(page.locator('#inventory-dialog')).toBeVisible();
@@ -104,7 +104,7 @@ test('controller Menu opens inventory, keeps held inputs isolated, and cancel re
   await tapPad(page,0);await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
 });
 
-test('v2 custom bindings survive v3 migration and use an unoccupied menu button',async({page})=>{
+test('v2 custom bindings survive v3 migration and use an unoccupied menu button',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('rpgameworks.controller.v2',JSON.stringify({version:2,enabled:true,allowUnmapped:false,
     deadzone:.4,axisX:2,axisY:3,invertX:true,invertY:false,buttons:{up:12,down:13,left:14,right:15,burst:9,interact:4,cancel:5}})));
   await openRoom(page);await openTools(page);await page.locator('#controller-settings summary').click();
@@ -116,7 +116,7 @@ test('v2 custom bindings survive v3 migration and use an unoccupied menu button'
   await closeTools(page);await page.keyboard.press('KeyI');await expect(page.locator('#inventory-prompt')).toContainText('button 4');
 });
 
-test('second chest stack failure keeps its closed state and correct inventory',async({page})=>{
+test('second chest stack failure keeps its closed state and correct inventory',{ tag: ['@inventory'] }, async({page})=>{
   await page.route('**/generated/content/maps/gallery.*.json',async route=>{
     const response=await route.fetch(), data=await response.json(), first=data.objects.find((o:{id:string})=>o.id===chest);
     data.objects.push({...first,id:'demo:object.gallery.second',x:7,y:9});await route.fulfill({json:data});
@@ -129,7 +129,7 @@ test('second chest stack failure keeps its closed state and correct inventory',a
   expect(state.placements['demo:object.gallery.second']).toBeUndefined();expect(state.revision).toBe(1);
 });
 
-test('invalid chest item in destination fails safely and leaves current room and session intact',async({page})=>{
+test('invalid chest item in destination fails safely and leaves current room and session intact',{ tag: ['@inventory'] }, async({page})=>{
   await page.route('**/generated/content/maps/gallery.*.json',async route=>{
     const response=await route.fetch(), data=await response.json();const object=data.objects.find((o:{id:string})=>o.id===chest);object.states.flatMap((s:{interaction?:{actions?:{type:string;itemId?:string}[]}})=>s.interaction?.actions??[]).find((a:{type:string})=>a.type==='changeItem').itemId='demo:item.missing';await route.fulfill({json:data});
   });
@@ -139,7 +139,7 @@ test('invalid chest item in destination fails safely and leaves current room and
   await page.locator('#dialog-cancel').click();await expect(page.locator('#stage')).toBeFocused();
 });
 
-test('inventory stays usable at narrow sizes, with skin failure, and with literal Unicode text',async({page},info)=>{
+test('inventory stays usable at narrow sizes, with skin failure, and with literal Unicode text',{ tag: ['@inventory', '@windows'] }, async({page},info)=>{
   await page.setViewportSize({width:390,height:650});
   await page.route('**/generated/frames/manifest.json',route=>route.abort());
   await page.route('**/generated/content/items.*.json',async route=>{
@@ -152,7 +152,7 @@ test('inventory stays usable at narrow sizes, with skin failure, and with litera
   await page.screenshot({path:info.outputPath('m2-inventory-narrow-fallback.png')});await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();
 });
 
-test('repeated inventory opens preserve state, scene counts and single frame manifest loading',async({page})=>{
+test('repeated inventory opens preserve state, scene counts and single frame manifest loading',{ tag: ['@inventory'] }, async({page})=>{
   const requests:string[]=[];page.on('request',r=>{if(r.url().endsWith('/generated/frames/manifest.json'))requests.push(r.url());});
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);const before=await snapshot(page);
   for(let i=0;i<12;i++) {await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();}
@@ -162,18 +162,18 @@ test('repeated inventory opens preserve state, scene counts and single frame man
   await expect(page.locator('#inventory-list button')).toHaveCount(0);expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
 });
 
-test('missing item catalog reports a visible loading error without a fake empty inventory',async({page})=>{
+test('missing item catalog reports a visible loading error without a fake empty inventory',{ tag: ['@inventory'] }, async({page})=>{
   await page.route('**/generated/content/items.*.json',route=>route.abort());await page.goto('./');
   await expect(page.locator('#error')).toBeVisible();await expect(page.locator('#inventory-dialog')).toBeHidden();
 });
 
-test('effects disabled cannot change chest rewards',async({page})=>{
+test('effects disabled cannot change chest rewards',{ tag: ['@inventory'] }, async({page})=>{
   await openRoom(page,'?map='+gallery);await setEffects(page,false);await chestFromStart(page);await collect(page);
   expect((await snapshot(page)).session.inventory[lens]).toBe(1);expect((await snapshot(page)).effectsEnabled).toBe(false);
 });
 
 // Reusable authoring proof: a larger list is collected through ordinary interactions, not a write-capable debug hook.
-test('many content-authored items scroll and select directly without consuming them',async({page},info)=>{
+test('many content-authored items scroll and select directly without consuming them',{ tag: ['@inventory'] }, async({page},info)=>{
   test.setTimeout(60000);await syntheticPad(page);await page.setViewportSize({width:390,height:650});
   await page.route('**/generated/content/items.*.json',async route=>{
     const data=JSON.parse(readFileSync('content/games/demo/items.json','utf8'));data.items=[];data.strings.en={};
@@ -203,7 +203,7 @@ test('many content-authored items scroll and select directly without consuming t
   await page.screenshot({path:info.outputPath('m2-inventory-list-narrow.png')});
 });
 
-test('direct configuration steps skip conflicts and text entry does not close the menu',async({page})=>{
+test('direct configuration steps skip conflicts and text entry does not close the menu',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page);await openTools(page);await page.locator('#controller-settings summary').click();
   await page.locator('#controller-axis-x').focus();await page.waitForTimeout(120);await tapPad(page,15);
   await expect(page.locator('#controller-axis-x')).toHaveValue('2'); // Y already occupies axis 1.
@@ -216,7 +216,7 @@ test('direct configuration steps skip conflicts and text entry does not close th
   const before=await snapshot(page);await page.waitForTimeout(150);expect((await snapshot(page)).actorTile).toEqual(before.actorTile);
 });
 
-test('disconnect and reconnect during inventory never consume a held confirm or cancel',async({page})=>{
+test('disconnect and reconnect during inventory never consume a held confirm or cancel',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);
   await tapPad(page,9);await expect(page.locator('#inventory-dialog')).toBeVisible();const before=(await snapshot(page)).session;
   await page.evaluate(()=>{(navigator.getGamepads()[0] as unknown as {connected:boolean}).connected=false;});

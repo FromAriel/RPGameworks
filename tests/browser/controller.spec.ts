@@ -28,7 +28,7 @@ async function neutral(page: Page, index = 0, mapping = 'standard'): Promise<voi
 }
 async function rest(page: Page): Promise<void> { await page.waitForTimeout(250); }
 
-test('launch accepts keyboard without any click and does not repeatedly steal focus', async ({ page }) => {
+test('launch accepts keyboard without any click and does not repeatedly steal focus', { tag: ['@input'] }, async ({ page }) => {
   await ready(page);
   const initial = await snapshot(page);
   await page.keyboard.down('ArrowRight');
@@ -38,7 +38,7 @@ test('launch accepts keyboard without any click and does not repeatedly steal fo
   await expect(page.locator('#effects')).toBeFocused();
 });
 
-test('slow startup preserves intentional settings focus', async ({ page }) => {
+test('slow startup preserves intentional settings focus', { tag: ['@input'] }, async ({ page }) => {
   await page.route('**/generated/foundation.png', async (route) => {
     await openControllerSettings(page);
     await page.locator('#controller-deadzone').focus();
@@ -50,7 +50,7 @@ test('slow startup preserves intentional settings focus', async ({ page }) => {
   await expect(page.locator('#controller-deadzone')).toBeFocused();
 });
 
-test('standard controller drives left stick and D-pad with drift rejection', async ({ page }) => {
+test('standard controller drives left stick and D-pad with drift rejection', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   const initial = (await snapshot(page)).actorTile;
   await setPad(page, [0.2, 0]); await rest(page); expect((await snapshot(page)).actorTile).toEqual(initial);
@@ -61,7 +61,7 @@ test('standard controller drives left stick and D-pad with drift rejection', asy
   await expect.poll(async () => (await snapshot(page)).actorTile.y).toBeLessThan(moved.y);
 });
 
-test('A emits one burst per press, disconnect releases movement and held reconnect cannot fire', async ({ page }) => {
+test('A emits one burst per press, disconnect releases movement and held reconnect cannot fire', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   await setPad(page, [0, 0], [0]); await expect.poll(async () => (await snapshot(page)).burstRequests).toBe(1);
   await page.waitForTimeout(300); expect((await snapshot(page)).burstRequests).toBe(1);
@@ -73,7 +73,7 @@ test('A emits one burst per press, disconnect releases movement and held reconne
   await neutral(page); await setPad(page, [0, 0], [0]); await expect.poll(async () => (await snapshot(page)).burstRequests).toBe(2);
 });
 
-test('settings freeze input, save deadzone/remapping, and resume only after controls are released', async ({ page }, testInfo) => {
+test('settings freeze input, save deadzone/remapping, and resume only after controls are released', { tag: ['@input'] }, async ({ page }, testInfo) => {
   await fakePads(page); await ready(page); await neutral(page);
   await openControllerSettings(page);
   await page.locator('#controller-deadzone').evaluate((element: HTMLInputElement) => { element.value = '45'; element.dispatchEvent(new Event('change', { bubbles: true })); });
@@ -95,7 +95,7 @@ test('settings freeze input, save deadzone/remapping, and resume only after cont
   await page.screenshot({ path: testInfo.outputPath('controller-settings-narrow.png'), fullPage: true });
 });
 
-test('right stick and inversion can be configured', async ({ page }) => {
+test('right stick and inversion can be configured', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   await openControllerSettings(page);
   await page.locator('#controller-axis-x').selectOption('2'); await page.locator('#controller-axis-y').selectOption('3');
@@ -105,7 +105,7 @@ test('right stick and inversion can be configured', async ({ page }) => {
   await expect.poll(async () => (await snapshot(page)).actorTile.y).toBeLessThan(initial);
 });
 
-test('controller selection and non-standard mapping require explicit configuration', async ({ page }) => {
+test('controller selection and non-standard mapping require explicit configuration', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page); await neutral(page, 1, '');
   await openControllerSettings(page);
   await expect(page.locator('#controller-device option')).toHaveCount(3);
@@ -117,7 +117,7 @@ test('controller selection and non-standard mapping require explicit configurati
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
 });
 
-test('disabled and blocked controller APIs do not break keyboard gameplay', async ({ page }) => {
+test('disabled and blocked controller APIs do not break keyboard gameplay', { tag: ['@input'] }, async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator, 'getGamepads', { value: () => { throw new DOMException('blocked', 'SecurityError'); } }));
   await ready(page); await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(10); await page.keyboard.up('ArrowRight');
@@ -125,7 +125,7 @@ test('disabled and blocked controller APIs do not break keyboard gameplay', asyn
   await expect(page.locator('#controller-status')).toContainText('unavailable or blocked');
 });
 
-test('corrupt preferences and unavailable storage have visible fallbacks', async ({ page }) => {
+test('corrupt preferences and unavailable storage have visible fallbacks', { tag: ['@input'] }, async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('rpgameworks.controller.v1', '{oops'));
   await ready(page); await openControllerSettings(page);
   await expect(page.locator('#controller-message')).toContainText('defaults');
@@ -137,7 +137,7 @@ test('corrupt preferences and unavailable storage have visible fallbacks', async
   await expect(page.locator('#error')).toBeHidden();
 });
 
-test('room restarts keep controller settings and cannot multiply action edges', async ({ page }) => {
+test('room restarts keep controller settings and cannot multiply action edges', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   for (let i = 1; i <= 4; i += 1) {
     await openTools(page, 'debug'); await page.locator('#restart').click(); await expect.poll(async () => (await snapshot(page)).starts).toBe(i + 1);
@@ -149,7 +149,7 @@ test('room restarts keep controller settings and cannot multiply action edges', 
 });
 
 
-test('disabling the controller leaves keyboard input active', async ({ page }) => {
+test('disabling the controller leaves keyboard input active', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   await openControllerSettings(page);
   await page.locator('#controller-enabled').uncheck(); await page.locator('#controller-return').click();
@@ -159,7 +159,7 @@ test('disabling the controller leaves keyboard input active', async ({ page }) =
   await page.keyboard.up('ArrowLeft');
 });
 
-test('window blur and hidden state discard held controller actions until neutral', async ({ page }) => {
+test('window blur and hidden state discard held controller actions until neutral', { tag: ['@input'] }, async ({ page }) => {
   await fakePads(page); await ready(page); await neutral(page);
   await setPad(page, [0.8, 0], [0]); await expect.poll(async () => (await snapshot(page)).burstRequests).toBe(1);
   await page.evaluate(() => {

@@ -36,7 +36,7 @@ async function capture(page: Page, info: TestInfo, name: string): Promise<void> 
   await page.screenshot({ path: info.outputPath(name), fullPage: true, animations: 'disabled' });
 }
 
-test('gallery renders production components with semantic text and state cues', async ({ page }) => {
+test('gallery renders production components with semantic text and state cues', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   await expect(page.locator('.ui-action-button')).toHaveCount(9);
   await expect(page.locator('.ui-list-row')).toHaveCount(16);
@@ -57,7 +57,7 @@ test('gallery renders production components with semantic text and state cues', 
   await expect(page.locator('#interactive-prompts')).toHaveAttribute('aria-label', 'Controls');
 });
 
-test('bright brass text has the requested one-pixel half-black outline', async ({ page }) => {
+test('bright brass text has the requested one-pixel half-black outline', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   expect(await page.locator('.ui-inset__title').evaluate((element) => {
     const style = getComputedStyle(element);
@@ -65,7 +65,7 @@ test('bright brass text has the requested one-pixel half-black outline', async (
   })).toEqual({ color: 'rgb(242, 221, 166)', strokeWidth: '1px', strokeColor: 'rgba(0, 0, 0, 0.5)' });
 });
 
-test('optional glow uses one opacity-only pulse layer and can be disabled without losing state', async ({ page }, info) => {
+test('optional glow uses one opacity-only pulse layer and can be disabled without losing state', { tag: ['@windows'] }, async ({ page }, info) => {
   await openGallery(page);
   const toggle = page.locator('#gallery-glow-toggle');
   const meter = page.locator('#gallery-meter-info');
@@ -88,7 +88,7 @@ test('optional glow uses one opacity-only pulse layer and can be disabled withou
   expect((await snapshot(page)).glowEnabled).toBe(false);
 });
 
-test('tabs, rows, prompts, and semantic controller navigation share one behavior path', async ({ page }) => {
+test('tabs, rows, prompts, and semantic controller navigation share one behavior path', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   const items = page.locator('#gallery-tab-items');
   await items.focus();
@@ -114,7 +114,7 @@ test('tabs, rows, prompts, and semantic controller navigation share one behavior
   await expect(page.locator('#interactive-prompts')).toContainText('Tap');
 });
 
-test('selected cyan and neutral focus remain simultaneous and busy controls cannot activate', async ({ page }) => {
+test('selected cyan and neutral focus remain simultaneous and busy controls cannot activate', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   const selected = page.locator('#interactive-row-0');
   await selected.focus();
@@ -136,7 +136,7 @@ test('selected cyan and neutral focus remain simultaneous and busy controls cann
   await expect(page.locator('#interaction-status')).toContainText('Choose a row');
 });
 
-test('scroll affordances expose above and below content without color alone', async ({ page }) => {
+test('scroll affordances expose above and below content without color alone', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   await expect(page.locator('.ui-scroll-affordance--above')).toBeHidden();
   await expect(page.locator('.ui-scroll-affordance--below')).toHaveText('More below');
@@ -148,7 +148,7 @@ test('scroll affordances expose above and below content without color alone', as
   await expect(page.locator('.ui-scroll-affordance--below')).toBeHidden();
 });
 
-test('confirmation requires fresh intent, rejects overlap, cancels safely, and restores focus', async ({ page }) => {
+test('confirmation requires fresh intent, rejects overlap, cancels safely, and restores focus', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   const opener = page.locator('#open-confirmation');
   await opener.focus();
@@ -170,7 +170,7 @@ test('confirmation requires fresh intent, rejects overlap, cancels safely, and r
   expect((await snapshot(page)).boundaryClears).toBe(4);
 });
 
-test('repeated disposable lifecycles return to the same active-owner count', async ({ page }) => {
+test('repeated disposable lifecycles return to the same active-owner count', { tag: ['@windows'] }, async ({ page }) => {
   await openGallery(page);
   const before = await snapshot(page);
   await page.evaluate(() => window.__UI_GALLERY__?.cycleLifecycle(40));
@@ -184,7 +184,7 @@ test('repeated disposable lifecycles return to the same active-owner count', asy
   expect(await page.evaluate(() => window.__UI_GALLERY__)).toBeUndefined();
 });
 
-test('wide and compact gallery references remain reviewable', async ({ page }, info) => {
+test('wide and compact gallery references remain reviewable', { tag: ['@windows'] }, async ({ page }, info) => {
   await page.setViewportSize({ width: 1100, height: 850 });
   await openGallery(page);
   await capture(page, info, 'u1.2-gallery-wide-1100x850.png');
@@ -197,7 +197,7 @@ test('wide and compact gallery references remain reviewable', async ({ page }, i
 });
 
 test.describe('gallery accessibility media', () => {
-  test('forced colors retain structure, selection, focus, and disabled reasons', async ({ page }, info) => {
+  test('forced colors retain structure, selection, focus, and disabled reasons', { tag: ['@windows'] }, async ({ page }, info) => {
     await page.emulateMedia({ forcedColors: 'active' });
     await openGallery(page);
     expect(await page.locator('[data-window-skin]').evaluateAll((elements) => elements.every(
@@ -213,7 +213,7 @@ test.describe('gallery accessibility media', () => {
     await capture(page, info, 'u1.2-gallery-forced-colors.png');
   });
 
-  test('reduced motion removes transitions without removing selected state', async ({ page }) => {
+  test('reduced motion removes transitions without removing selected state', { tag: ['@windows'] }, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openGallery(page);
     await expect(page.locator('#gallery-row-selected')).toHaveAttribute('aria-pressed', 'true');
@@ -225,7 +225,7 @@ test.describe('gallery accessibility media', () => {
     })).toEqual(expect.objectContaining({ animationName: 'none', opacity: '0.55' }));
   });
 
-  test('two-times page enlargement reflows without horizontal document clipping', async ({ page }) => {
+  test('two-times page enlargement reflows without horizontal document clipping', { tag: ['@windows'] }, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openGallery(page);
     await page.evaluate(() => { document.body.style.zoom = '2'; });
@@ -233,7 +233,7 @@ test.describe('gallery accessibility media', () => {
     await expect(page.locator('#gallery-disabled-disabled-reason')).toBeVisible();
   });
 
-  test('plain fallback remains usable when the decorative atlas fails', async ({ page }) => {
+  test('plain fallback remains usable when the decorative atlas fails', { tag: ['@windows'] }, async ({ page }) => {
     await page.route('**/Window-*.png', (route) => route.abort());
     await openGallery(page);
     await expect(page.locator('#gallery-window')).toHaveAttribute('data-skin-state', 'fallback');
@@ -247,7 +247,7 @@ test.describe('gallery accessibility media', () => {
 test.describe('touch-first gallery', () => {
   test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
 
-  test('keeps direct controls at the shared touch target and captures the stacked layout', async ({ page }, info) => {
+  test('keeps direct controls at the shared touch target and captures the stacked layout', { tag: ['@windows'] }, async ({ page }, info) => {
     await openGallery(page);
     await expect(page.locator('#gallery-primary')).toHaveCSS('min-height', '44px');
     await page.locator('#interactive-row-2').tap();

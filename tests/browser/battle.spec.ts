@@ -47,7 +47,7 @@ async function command(page: Page, ...names: string[]): Promise<void> {
   expect({ ...(await snapshot(page)).battle!, playing: true, menu: null }).toEqual({ ...resolved, playing: true, menu: null });
 }
 
-test('classic battle windows play resolved turns and restore exploration focus', async ({ page }, info) => {
+test('classic battle windows play resolved turns and restore exploration focus', { tag: ['@battle'] }, async ({ page }, info) => {
   await approach(page);
   const before = await snapshot(page);
   await enter(page);
@@ -93,7 +93,7 @@ test('classic battle windows play resolved turns and restore exploration focus',
   expect(after.textureCount).toBe(before.textureCount);
 });
 
-test('keyboard confirms in two presses, Cancel backs out without committing, and tapping an enemy attacks it', async ({ page }) => {
+test('keyboard confirms in two presses, Cancel backs out without committing, and tapping an enemy attacks it', { tag: ['@battle'] }, async ({ page }) => {
   await approach(page);
   await enter(page);
   await skip(page);
@@ -125,7 +125,7 @@ test('keyboard confirms in two presses, Cancel backs out without committing, and
   expect(pressed.hp.sigil).toBeLessThan(tapped.hp.sigil!);
 });
 
-test('playback speed and skipping never change the resolved battle', async ({ page }) => {
+test('playback speed and skipping never change the resolved battle', { tag: ['@battle'] }, async ({ page }) => {
   let fastest = 1;
   const run = async (mode: 'watch' | 'fast' | 'skip') => {
     await approach(page);
@@ -157,7 +157,7 @@ test('playback speed and skipping never change the resolved battle', async ({ pa
   expect(await run('skip')).toEqual(watched);
 });
 
-test('a carried tonic is spent atomically in battle and stays spent after running', async ({ page }) => {
+test('a carried tonic is spent atomically in battle and stays spent after running', { tag: ['@battle', '@inventory'] }, async ({ page }) => {
   await openRoom(page, `?map=${SUPPLY}`);
   await step(page, 'ArrowUp'); await step(page, 'ArrowUp'); // (4,3) → (4,1)
   // The crate at (5,1) is solid, so holding Right only turns to face it.
@@ -189,7 +189,7 @@ test('a carried tonic is spent atomically in battle and stays spent after runnin
   expect((await snapshot(page)).session.inventory[TONIC]).toBe(1);
 });
 
-test('missing baked frames fall back to plain windows and release every texture', async ({ page }) => {
+test('missing baked frames fall back to plain windows and release every texture', { tag: ['@battle'] }, async ({ page }) => {
   await page.route('**/generated/frames/manifest.json', route => route.fulfill({ status: 404, body: 'missing' }));
   await approach(page);
   const before = await snapshot(page);
@@ -207,7 +207,7 @@ test('missing baked frames fall back to plain windows and release every texture'
   expect(after.textureCount).toBe(before.textureCount);
 });
 
-test('failed catalog load leaves the room playable', async ({ page }) => {
+test('failed catalog load leaves the room playable', { tag: ['@battle'] }, async ({ page }) => {
   await page.route('**/generated/content/encounters.*.json', route => route.fulfill({ status: 503, body: 'unavailable' }));
   await approach(page);
   const before = await snapshot(page);
@@ -220,7 +220,7 @@ test('failed catalog load leaves the room playable', async ({ page }) => {
   expect(after.displayObjects).toBe(before.displayObjects);
 });
 
-test('narrow battle supports controller cancel, Run and pointer taps without owned-resource growth', async ({ page }) => {
+test('narrow battle supports controller cancel, Run and pointer taps without owned-resource growth', { tag: ['@battle'] }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => Object.defineProperty(navigator, 'getGamepads', {
     configurable: true, value: () => [(window as typeof window & { __BATTLE_PAD__?: unknown }).__BATTLE_PAD__ ?? null],
@@ -262,7 +262,7 @@ test('narrow battle supports controller cancel, Run and pointer taps without own
   }
 });
 
-test('authored defeat offers Retry with the identical opening and a safe Leave', async ({ page }) => {
+test('authored defeat offers Retry with the identical opening and a safe Leave', { tag: ['@battle'] }, async ({ page }) => {
   await page.route('**/generated/content/encounters.*.json', async route => {
     const response = await route.fetch();
     const catalog = await response.json() as { encounters: { enemies: { attack: number }[] }[] };

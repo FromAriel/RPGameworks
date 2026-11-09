@@ -1,7 +1,7 @@
 import { test, expect, openRoom, snapshot } from './helpers';
 import { startProbe, stopProbe } from '../benchmark/probe';
 
-test('benchmark probe is absent at launch, refuses duplicate ownership and disposes cleanly', async ({ page }) => {
+test('benchmark probe is absent at launch, refuses duplicate ownership and disposes cleanly', { tag: ['@perf'] }, async ({ page }) => {
   await openRoom(page);
   expect(await page.evaluate(() => window.__RPG_BENCHMARK__)).toBeUndefined();
   const before = await snapshot(page);
@@ -17,7 +17,7 @@ test('benchmark probe is absent at launch, refuses duplicate ownership and dispo
   await startProbe(page); await page.waitForTimeout(60); await stopProbe(page);
 });
 
-test('benchmark preserves long intervals instead of hiding stalls with movement clamping', async ({ page }) => {
+test('benchmark preserves long intervals instead of hiding stalls with movement clamping', { tag: ['@perf'] }, async ({ page }) => {
   await openRoom(page); await startProbe(page); await page.waitForTimeout(100);
   // Deliberately exercise the measurement path, not a performance claim about the game.
   await page.evaluate(() => { const until = performance.now() + 90; while (performance.now() < until) { /* test stall */ } });
@@ -27,7 +27,7 @@ test('benchmark preserves long intervals instead of hiding stalls with movement 
   expect(data.samples.at(-1)!.runtime.phase).toBe('ready');
 });
 
-test('benchmark records hidden/blur contamination and refuses a hidden capture', async ({ page }) => {
+test('benchmark records hidden/blur contamination and refuses a hidden capture', { tag: ['@perf'] }, async ({ page }) => {
   await openRoom(page); await startProbe(page);
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true });

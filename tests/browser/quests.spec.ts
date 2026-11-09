@@ -13,7 +13,7 @@ async function face(page:Page,key:string):Promise<void>{await page.keyboard.down
 async function interact(page:Page):Promise<void>{await page.keyboard.down('KeyE');try{await expect(page.locator('#interaction-dialog')).toBeVisible();}finally{await page.keyboard.up('KeyE');}}
 async function close(page:Page):Promise<void>{await page.keyboard.press('Escape');await expect(page.locator('#interaction-dialog')).toBeHidden();}
 
-test('accepting and completing Mara’s quest updates the Journal and Gallery light',async({page},info)=>{
+test('accepting and completing Mara’s quest updates the Journal and Gallery light',{ tag: ['@quests', '@dialogue'] }, async({page},info)=>{
   test.setTimeout(120_000);
   await openRoom(page,'?map=demo:map.gallery');
   await step(page,'ArrowUp');await interact(page);await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await close(page);
@@ -52,7 +52,7 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
   expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('completed');
 });
 
-test('a lens found before acceptance can be kept or handed to Mara immediately',async({page})=>{
+test('a lens found before acceptance can be kept or handed to Mara immediately',{ tag: ['@quests', '@dialogue'] }, async({page})=>{
   test.setTimeout(120_000);
   await openRoom(page,'?map=demo:map.gallery');
   await step(page,'ArrowUp');await interact(page);await close(page);
@@ -73,7 +73,7 @@ test('a lens found before acceptance can be kept or handed to Mara immediately',
   await interact(page);await expect(page.locator('[data-dialogue-choice="hand-in"]')).toHaveCount(0);await close(page);
 });
 
-test('the archive clerk uses the same item hand-in flow across the keyed Storeroom',async({page})=>{
+test('the archive clerk uses the same item hand-in flow across the keyed Storeroom',{ tag: ['@quests', '@dialogue', '@world'] }, async({page})=>{
   test.setTimeout(120_000);
   await openRoom(page,'?map=demo:map.gallery');
   await step(page,'ArrowDown');await walk(page,'ArrowRight',7);await step(page,'ArrowUp');await step(page,'ArrowUp');await face(page,'ArrowRight');await interact(page);await expect(page.locator('#dialog-text')).toContainText('gate clatters open');await close(page);
@@ -100,7 +100,7 @@ test('the archive clerk uses the same item hand-in flow across the keyed Storero
   state=(await snapshot(page)).session;expect(state.quests['demo:quest.archive-ledger']).toBe('completed');expect(state.inventory['demo:item.brass-key']).toBe(1);
 });
 
-test('controller selects a dialogue choice and cancel returns to exploration',async({page})=>{
+test('controller selects a dialogue choice and cancel returns to exploration',{ tag: ['@quests', '@dialogue', '@input'] }, async({page})=>{
   await page.setViewportSize({width:390,height:844});
   await page.addInitScript(()=>{Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[(window as any).__QUEST_PAD__??null]});});
   await openRoom(page,'?map=demo:map.gallery&spawn=from-storeroom');

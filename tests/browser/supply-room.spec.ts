@@ -35,7 +35,7 @@ async function approachLockedDoor(page: Page): Promise<void> {
   expect((await snapshot(page)).interactionTarget).toBe(doorId);
 }
 
-test('the Workshop lock denies travel without requesting the supply room, then keeps its own key', async ({ page }) => {
+test('the Workshop lock denies travel without requesting the supply room, then keeps its own key', { tag: ['@world'] }, async ({ page }) => {
   let requests = 0, failNext = false;
   await page.route('**/generated/content/maps/supply-room.*.json', route => {
     requests += 1;
@@ -80,7 +80,7 @@ test('the Workshop lock denies travel without requesting the supply room, then k
   expect((await snapshot(page)).mapId).toBe(WORKSHOP);
 });
 
-test('the supply-room return door is visible and its arrival stays inside the room', async ({ page }) => {
+test('the supply-room return door is visible and its arrival stays inside the room', { tag: ['@world'] }, async ({ page }) => {
   await openRoom(page, `?map=${SUPPLY}`);
   const state = await snapshot(page);
   expect(state.mapId).toBe(SUPPLY);

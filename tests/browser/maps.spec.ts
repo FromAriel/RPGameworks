@@ -4,7 +4,7 @@ import { test, expect, snapshot, openRoom } from './helpers';
 const original = (): any => JSON.parse(readFileSync('content/games/demo/maps/workshop.json','utf8'));
 const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.json','utf8'));
 
- test('starting workshop only fetches its own map payload',async({page})=>{
+ test('starting workshop only fetches its own map payload',{ tag: ['@world'] }, async({page})=>{
   const requested:string[]=[];page.on('request',r=>requested.push(r.url()));
   await openRoom(page);
   const state=await snapshot(page);expect(state.mapId).toBe('demo:map.workshop');expect(state.loadedMaps).toBe(1);
@@ -13,7 +13,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   expect(requested.some(url=>url.includes('/gallery.'))).toBe(false);
 });
 
- test('larger gallery uses the same renderer, named spawn and authored collision',async({page},info)=>{
+ test('larger gallery uses the same renderer, named spawn and authored collision',{ tag: ['@world'] }, async({page},info)=>{
   await openRoom(page,'?map=demo:map.gallery');
   let state=await snapshot(page);
   expect(state.mapWidth).toBe(24);expect(state.mapHeight).toBe(14);expect(state.collisionCells).toBe(336);
@@ -28,7 +28,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   expect((await snapshot(page)).actorTile).toEqual({x:3,y:6});expect((await snapshot(page)).facing).toBe('right');
 });
 
- test('preview selector reloads into a selected map and restart retains it',async({page})=>{
+ test('preview selector reloads into a selected map and restart retains it',{ tag: ['@world'] }, async({page})=>{
   await openRoom(page);
   await openTools(page, 'debug');
   // Navigation replaces the execution context. Wait for the new document before polling it.
@@ -47,7 +47,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   }
 });
 
- test('an added content-only map needs no scene subclass',async({page})=>{
+ test('an added content-only map needs no scene subclass',{ tag: ['@world'] }, async({page})=>{
   const game=registry();delete game.itemsFile;delete game.factsFile;delete game.questsFile;game.saveCompatibilityVersion=1;game.stateIndexFile='state-index.aaaaaaaaaaaa.json';game.maps.push({id:'demo:map.fixture',file:'maps/fixture.json'});
   const map=original();Object.assign(map,{id:'demo:map.fixture',name:'Content-only fixture',width:2,height:2,layers:[{id:'floor',rows:['aa','aa']}],collision:['..','..'],spawns:[{id:'start',x:0,y:0,facing:'up'}],objects:[],exits:[]});
   await page.route('**/generated/content/game.json',route=>route.fulfill({json:game}));
@@ -58,7 +58,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
 });
 
 for(const mode of ['malformed','blocked-spawn','wrong-id','missing-frame'] as const){
-  test(`bad map ${mode} never reaches a ready state`,async({page})=>{
+  test(`bad map ${mode} never reaches a ready state`,{ tag: ['@world'] }, async({page})=>{
     const data=original();
     if(mode==='blocked-spawn')data.spawns[0].x=0;
     if(mode==='wrong-id')data.id='demo:map.wrong';
@@ -70,12 +70,12 @@ for(const mode of ['malformed','blocked-spawn','wrong-id','missing-frame'] as co
   });
 }
 
- test('unregistered map and invalid spawn show actionable errors',async({page})=>{
+ test('unregistered map and invalid spawn show actionable errors',{ tag: ['@world'] }, async({page})=>{
   await page.goto('./?map=demo:map.absent');await expect(page.locator('#error')).toContainText('Unknown map ID');
   await page.goto('./?spawn=absent');await expect(page.locator('#error')).toContainText('unknown spawn ID');
 });
 
- test('missing content manifest is a visible load failure',async({page})=>{
+ test('missing content manifest is a visible load failure',{ tag: ['@world'] }, async({page})=>{
   await page.route('**/generated/content/game.json',route=>route.fulfill({status:404,body:'missing'}));
   await page.goto('./');await expect(page.locator('#error')).toContainText('HTTP 404');
   await expect(page.locator('canvas')).toHaveCount(0);

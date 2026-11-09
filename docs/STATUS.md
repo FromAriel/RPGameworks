@@ -4,6 +4,32 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## T1.1 area tags and commands — November 9, 2026, local
+
+Every browser scenario now belongs to one or more areas, and one command runs an area ([decision 0012](decisions/0012-faster-local-tests.md)).
+
+- **Tags.** Each `test(...)` in `tests/browser/` carries Playwright's `{ tag: [...] }` option. Areas: `@boot`, `@world`, `@input`, `@dialogue`, `@quests`, `@inventory`, `@saves`, `@windows`, `@battle`, `@shell`, `@perf`. File-level areas plus title-based extras (for example the brass-key and gate scenarios are also `@saves`, the tonic battle is also `@inventory`). 138 declarations in 19 spec files were edited by a one-off script; titles and bodies are unchanged. `window-frames.spec.ts` (W2-only, 13 scenarios) is deliberately untagged because W3.0 deletes it.
+- **`npm run test:area -- battle`** (or several: `-- saves world`; `@` optional; options starting with `--` go to Playwright, for example `--list`). `tools/test-area.mjs` rejects unknown areas, builds the browser fixtures, then runs Playwright with a whole-tag `--grep`. It always rebuilds for now (T1.3 adds skipping).
+- **`npm run check:test-tags`** (`tools/check-test-tags.mjs`) reads Playwright's own `--list` JSON, without starting a browser or server, and fails on any scenario outside the exempt spec that has no area tag or an unknown tag. It is a separate command, not part of `npm run check`.
+- **Checks run locally:** `check:test-tags` passed (145 tagged scenarios, 13 exempt, 158 total, the same as T1.0); `npm run typecheck` passed; `npm test` passed **446/446** (6 new tests in `tests/unit/test-tags.test.ts`: known and unknown tags, missing tags, the exemption, nested suites in the list JSON, whole-tag grep, unknown and missing areas); the external-art guard passed; an unknown area exits 2 with the known list. **Every area command passed**, each with its own build:
+
+| Area | Scenarios | Tests | Command total |
+| --- | ---: | ---: | ---: |
+| boot | 13 | 30.5 s | 43.6 s |
+| world | 35 | 2.3 min | 2.5 min |
+| input | 35 | 1.3 min | 1.5 min |
+| dialogue | 13 | 1.1 min | 1.3 min |
+| quests | 5 | 44.0 s | 57.0 s |
+| inventory | 15 | 51.0 s | 64.8 s |
+| saves | 17 | 58.5 s | 71.8 s |
+| windows | 24 | 31.3 s | 44.7 s |
+| battle | 8 | 42.0 s | 55.1 s |
+| shell | 10 | 23.3 s | 35.9 s |
+| perf | 6 | 39.3 s | 52.3 s |
+
+  The command total includes the ~11.5 s fixture build and server start. `npm run test:browser` was not run again: no scenario body changed, and every tagged scenario passed in the area runs; the 13 exempt W2 scenarios passed in T1.0 and are unchanged.
+- Migration: none. Next: T1.2 smoke tier.
+
 ## T1.0 browser-suite baseline — November 9, 2026, local measurement
 
 The first packet of [decision 0012](decisions/0012-faster-local-tests.md): one measured full run, no test or code change. This table is the baseline later T1 packets are compared against.
@@ -455,13 +481,13 @@ Mara/travel, the Settings/Debug frame and its labeled divider use the bounded, l
 
 Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `npm ci --include=dev`. `npm run dev` starts the development server on port 5173 with strict conflict handling; this documentation correction changes no dependencies or lockfile.
 
-`npm run check` runs strict source checks, unit/content tests, the external-art guard (`npm run check:external-art`), content validation and the production build. `npm run test:browser` builds production fixtures and runs the Chromium flows under the project subpath. The latest record above (S1.4) reports 398 unit/content tests and 153/153 browser scenarios; counts and execution evidence belong to the dated milestone records. `npm run benchmark` runs eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
+`npm run check` runs strict source checks, unit/content tests, the external-art guard (`npm run check:external-art`), content validation and the production build. `npm run test:browser` builds production fixtures and runs the Chromium flows under the project subpath. `npm run test:area -- <area>…` builds the fixtures and runs only the named areas (see T1.1); `npm run check:test-tags` checks that every scenario has an area tag. The latest record above (S1.4) reports 398 unit/content tests and 153/153 browser scenarios; counts and execution evidence belong to the dated milestone records. `npm run benchmark` runs eight separate production measurement workloads; install the pinned browser with `npx playwright install --with-deps chromium` first when it is absent. Raw reports go to ignored `benchmark-results/` and `benchmark-report/`; all three CI legs upload them with 14-day retention. A normal Git checkout is required to identify the measured revision.
 
 `node tools/audit-windowskin.mjs` retains the exact-art audit (`--write` changes its report, not the PNG). Existing `npm run validate` and `npm run content` remain; no content watcher was added. Benchmarks do not configure hosting or publish a site.
 
 ## Next concrete packet
 
-**T1.1 — area tags and commands** ([decision 0012](decisions/0012-faster-local-tests.md), approved; T1.0's baseline is recorded above; the revised [decision 0011](decisions/0011-reusable-window-skins.md) is approved too). Order: T1.1–T1.6 (faster local tests), then W3.0 (revert all of W2 and remove the Pixel Frame port), W3.1–W3.7 (extend W1: skin geometry as data, automatic fitting, skin choice, battle windows on W1, the Final Fantasy-like skin), then M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**T1.2 — smoke tier** ([decision 0012](decisions/0012-faster-local-tests.md), approved; T1.0's baseline and T1.1's area tags are recorded above; the revised [decision 0011](decisions/0011-reusable-window-skins.md) is approved too). Order: T1.2–T1.6 (faster local tests), then W3.0 (revert all of W2 and remove the Pixel Frame port), W3.1–W3.7 (extend W1: skin geometry as data, automatic fitting, skin choice, battle windows on W1, the Final Fantasy-like skin), then M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

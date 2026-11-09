@@ -82,7 +82,7 @@ test.describe('U1.1 real-screen references', () => {
     });
   });
 
-  test('captures wide dialogue and Settings', async ({ page }, info) => {
+  test('captures wide dialogue and Settings', { tag: ['@windows'] }, async ({ page }, info) => {
     await page.setViewportSize({ width: 1100, height: 850 });
     await openRoom(page);
     await openMaraDialogue(page);
@@ -92,7 +92,7 @@ test.describe('U1.1 real-screen references', () => {
     await capture(page.locator('#tools-panel'), 'u1-settings-1100x850.png', info);
   });
 
-  test('resolves semantic tokens and preserves selected plus focus-visible states', async ({ page }) => {
+  test('resolves semantic tokens and preserves selected plus focus-visible states', { tag: ['@windows'] }, async ({ page }) => {
     await installSyntheticPad(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openRoom(page, `?map=${gallery}`);
@@ -142,7 +142,7 @@ test.describe('U1.1 real-screen references', () => {
     await expect(page.locator('#item-name')).toHaveText('Polished lens');
   });
 
-  test('captures wide lens Inventory and empty and populated Save Load', async ({ page }, info) => {
+  test('captures wide lens Inventory and empty and populated Save Load', { tag: ['@windows'] }, async ({ page }, info) => {
     await page.setViewportSize({ width: 1100, height: 850 });
     await openRoom(page, `?map=${gallery}`);
     await collectLens(page);
@@ -168,7 +168,7 @@ test.describe('U1.1 real-screen references', () => {
     await expect(confirmation).toBeHidden();
   });
 
-  test('captures unavailable-storage feedback', async ({ page }, info) => {
+  test('captures unavailable-storage feedback', { tag: ['@windows'] }, async ({ page }, info) => {
     await page.addInitScript(() => Object.defineProperty(globalThis, 'indexedDB', {
       value: undefined,
       configurable: true,
@@ -182,7 +182,7 @@ test.describe('U1.1 real-screen references', () => {
     await capture(page.locator('#save-dialog'), 'u1-save-storage-unavailable-1100x850.png', info);
   });
 
-  test('captures narrow dialogue Inventory and Save Load', async ({ page }, info) => {
+  test('captures narrow dialogue Inventory and Save Load', { tag: ['@windows'] }, async ({ page }, info) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openRoom(page);
     await openMaraDialogue(page);
@@ -199,7 +199,7 @@ test.describe('U1.1 real-screen references', () => {
   test.describe('touch-first', () => {
     test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
 
-    test('captures narrow touch Inventory', async ({ page }, info) => {
+    test('captures narrow touch Inventory', { tag: ['@windows'] }, async ({ page }, info) => {
       await openRoom(page);
       await page.locator('#tools-toggle').tap();
       await expect(page.locator('#inventory-dialog')).toBeVisible();
@@ -210,7 +210,7 @@ test.describe('U1.1 real-screen references', () => {
   test.describe('forced colors', () => {
     test.use({ forcedColors: 'active', viewport: { width: 1100, height: 850 } });
 
-    test('retains focused Inventory and disabled Save Load reasons', async ({ page }, info) => {
+    test('retains focused Inventory and disabled Save Load reasons', { tag: ['@windows'] }, async ({ page }, info) => {
       await openRoom(page);
       expect(await page.locator('[data-window-skin]').evaluateAll((elements) => elements.every(
         (element) => getComputedStyle(element).backgroundImage === 'none',

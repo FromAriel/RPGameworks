@@ -8,7 +8,7 @@ const makeMap=(index:number)=>({schemaVersion:1,id:mapId(index),name:`Residency 
   objects:[{id:`demo:object.residency-${index}`,frame:'plaque',x:1,y:0,solid:true,states:[{id:'changed',when:{type:'factEquals',factId:'demo:fact.residency',value:true},frame:'plaque-read',visible:true},{id:'base',fallback:true,frame:'plaque',visible:true}]}],
   exits:[{id:'next',x:2,y:1,width:1,height:1,targetMap:mapId((index+1)%count),targetSpawn:'start'}],strings:{en:{'fixture.label':'Residency fixture'}},messages:[]});
 
-test('test-only twelve-map residency tour keeps one room, one binding, and shared textures bounded',async({page})=>{
+test('test-only twelve-map residency tour keeps one room, one binding, and shared textures bounded',{ tag: ['@perf', '@world'] }, async({page})=>{
   test.setTimeout(60000);const maps=Array.from({length:count},(_,index)=>({id:mapId(index),file:mapFile(index)}));
   await page.route('**/generated/content/game.json',route=>route.fulfill({json:{schemaVersion:1,id:'demo:game.foundation',tileSize:32,view:{width:320,height:192},saveCompatibilityVersion:1,start:{mapId:mapId(0),spawnId:'start'},maps,factsFile:'facts.aaaaaaaaaaaa.json',stateIndexFile:'state-index.aaaaaaaaaaaa.json'}}));
   await page.route('**/generated/content/facts.aaaaaaaaaaaa.json',route=>route.fulfill({json:{schemaVersion:1,facts:[{id:'demo:fact.residency',type:'boolean',default:false,scope:'global',persistence:'saved'}]}}));

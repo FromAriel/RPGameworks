@@ -22,7 +22,7 @@ async function axis(page: Page, index: number, x: number): Promise<void> {
   await page.evaluate(({ index, x }) => { (window.__PARITY_PADS__[index]!.axes as number[])[0] = x; }, { index, x });
 }
 
-test('game accepts a high native slot and numeric buttons like the supplied reader', async ({ page }) => {
+test('game accepts a high native slot and numeric buttons like the supplied reader', { tag: ['@input'] }, async ({ page }) => {
   await install(page, 20, true); await ready(page);
   await axis(page,20,.9); await expect.poll(async() => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
   await axis(page,20,0);
@@ -36,7 +36,7 @@ test('game accepts a high native slot and numeric buttons like the supplied read
   expect(report.controller.chosenIndex).toBe(20);
 });
 
-test('page-level gamepad input works without focusing the viewport but respects form fields', async ({ page }) => {
+test('page-level gamepad input works without focusing the viewport but respects form fields', { tag: ['@input'] }, async ({ page }) => {
   await install(page); await ready(page);
   // Blur the viewport into body: a connected controller should not require a canvas click.
   await page.locator('#stage').evaluate((stage:HTMLElement) => stage.blur());
@@ -51,7 +51,7 @@ test('page-level gamepad input works without focusing the viewport but respects 
   expect((await snapshot(page)).actorTile).toEqual(before);
 });
 
-test('raw detection continues before map loading finishes', async ({ page }) => {
+test('raw detection continues before map loading finishes', { tag: ['@input'] }, async ({ page }) => {
   await install(page);
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
@@ -70,7 +70,7 @@ test('raw detection continues before map loading finishes', async ({ page }) => 
   await expect.poll(() => page.evaluate(() => window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');
 });
 
-test('standalone reference probe reads both sticks on the production project subpath', async ({ page }) => {
+test('standalone reference probe reads both sticks on the production project subpath', { tag: ['@input'] }, async ({ page }) => {
   await install(page,20,true);
   const requests: string[] = []; page.on('request', request => requests.push(request.url()));
   await page.goto('./controller-probe.html');
@@ -88,7 +88,7 @@ test('standalone reference probe reads both sticks on the production project sub
   await expect(page.getByRole('link', { name:'Return to RPGameworks' })).toHaveAttribute('href','./');
 });
 
-test('an empty native response remains empty in the game and the independent probe', async ({ page }) => {
+test('an empty native response remains empty in the game and the independent probe', { tag: ['@input'] }, async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator,'getGamepads',{ value:() => [null,null,null,null] }));
   await page.goto('./');
   await expect.poll(() => page.evaluate(() => window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');

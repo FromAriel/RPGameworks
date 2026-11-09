@@ -1,6 +1,6 @@
 import { test, expect, openRoom, openTools, snapshot } from './helpers';
 
-test('selected layered hero idles, walks, mirrors left, and keeps its feet on the tile', async ({ page }) => {
+test('selected layered hero idles, walks, mirrors left, and keeps its feet on the tile', { tag: ['@world'] }, async ({ page }) => {
   await openRoom(page);
   let state = await snapshot(page);
   expect(state.characterArtStatus).toBe('ready');
@@ -19,7 +19,7 @@ test('selected layered hero idles, walks, mirrors left, and keeps its feet on th
   await page.keyboard.up('ArrowRight');
 });
 
-test('a failed pack request leaves the static hero visible and gameplay usable', async ({ page }) => {
+test('a failed pack request leaves the static hero visible and gameplay usable', { tag: ['@world'] }, async ({ page }) => {
   await page.route('**/character/starter-hero.rpgpack', route => route.abort());
   await openRoom(page);
   const state = await snapshot(page);
@@ -31,7 +31,7 @@ test('a failed pack request leaves the static hero visible and gameplay usable',
   await page.keyboard.up('ArrowRight');
 });
 
-test('a corrupt pack leaves the static hero visible with a clear error', async ({ page }) => {
+test('a corrupt pack leaves the static hero visible with a clear error', { tag: ['@world'] }, async ({ page }) => {
   await page.route('**/character/starter-hero.rpgpack', route => route.fulfill({ body: 'invalid character pack' }));
   await openRoom(page);
   const state = await snapshot(page);
@@ -40,7 +40,7 @@ test('a corrupt pack leaves the static hero visible with a clear error', async (
   await expect(page.locator('#status')).toContainText('Character art could not load');
 });
 
-test('narrow viewport and repeated restarts retain one layered hero and bounded textures', async ({ page }) => {
+test('narrow viewport and repeated restarts retain one layered hero and bounded textures', { tag: ['@world'] }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openRoom(page, '?map=demo:map.gallery');
   const baseline = await snapshot(page);

@@ -45,7 +45,7 @@ async function fakePad(page: Page): Promise<void> {
   });
 }
 
- test('caretaker dialogue locks movement, advances once per press, and returns focus', async ({page}, info) => {
+ test('caretaker dialogue locks movement, advances once per press, and returns focus', { tag: ['@dialogue'] }, async ({page}, info) => {
   await openRoom(page); await caretaker(page);
   await page.keyboard.down('KeyE');
   await expect(page.locator(dialog)).toBeVisible();
@@ -67,7 +67,7 @@ async function fakePad(page: Page): Promise<void> {
   await step(page,'ArrowLeft'); expect((await snapshot(page)).actorTile.x).toBe(9);
 });
 
- test('controller interaction owns the modal and held actions do not leak across it', async ({page}) => {
+ test('controller interaction owns the modal and held actions do not leak across it', { tag: ['@dialogue', '@input'] }, async ({page}) => {
   await fakePad(page); await openRoom(page); await caretaker(page); await pad(page);
   await pad(page,[0,0],[2,0]);
   await expect(page.locator(dialog)).toBeVisible();
@@ -84,7 +84,7 @@ async function fakePad(page: Page): Promise<void> {
   await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
 });
 
- test('real doors load only their destination, preserve the document, and use named spawns', async ({page}) => {
+ test('real doors load only their destination, preserve the document, and use named spawns', { tag: ['@world'] }, async ({page}) => {
   const maps:string[]=[];page.on('request',request=>{if(request.url().includes('/content/maps/'))maps.push(request.url());});
   await openRoom(page);
   const marker=await page.evaluate(()=>{(window as any).__DOCUMENT_MARKER__=Math.random();return (window as any).__DOCUMENT_MARKER__;});
@@ -106,7 +106,7 @@ async function fakePad(page: Page): Promise<void> {
   expect((await snapshot(page)).loadedMaps).toBe(1);
 });
 
- test('the gallery plaque uses authored text and works with pointer actions on a narrow screen', async ({page}, info) => {
+ test('the gallery plaque uses authored text and works with pointer actions on a narrow screen', { tag: ['@dialogue'] }, async ({page}, info) => {
   await page.setViewportSize({width:390,height:844});
   await openRoom(page,'?map=demo:map.gallery');
   await enableTouch(page);
@@ -123,7 +123,7 @@ async function fakePad(page: Page): Promise<void> {
   await expect(page.locator('#stage')).toBeFocused();
 });
 
- test('plaque fact commits once and reconstructs after travel and room restart',async({page})=>{
+ test('plaque fact commits once and reconstructs after travel and room restart',{ tag: ['@dialogue', '@world'] }, async({page})=>{
   await openRoom(page,'?map='+GALLERY);await step(page,'ArrowUp');await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await page.keyboard.press('Escape');
   const committed=(await snapshot(page)).session;expect(committed.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(committed.revision).toBe(1);
   await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('revealed line still glows');await page.keyboard.press('Escape');expect((await snapshot(page)).session.revision).toBe(1);
@@ -131,7 +131,7 @@ async function fakePad(page: Page): Promise<void> {
   await openTools(page,'debug');await page.locator('#restart').click();await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
  });
 
- test('Mara offers an explicit quest after returning from the Gallery',async({page})=>{
+ test('Mara offers an explicit quest after returning from the Gallery',{ tag: ['@dialogue', '@quests'] }, async({page})=>{
   await openRoom(page,'?map='+GALLERY);
   await step(page,'ArrowUp');await page.keyboard.press('KeyE');
   await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await page.keyboard.press('Escape');
@@ -151,7 +151,7 @@ async function fakePad(page: Page): Promise<void> {
  });
 
 for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing-frame'] as const) {
-  test(`destination ${fault} failure preserves the old room and retries safely`, async ({page}) => {
+  test(`destination ${fault} failure preserves the old room and retries safely`, { tag: ['@world'] }, async ({page}) => {
     let broken=true, calls=0;
     await page.route('**/generated/content/maps/gallery.*.json', async route => {
       calls+=1;
@@ -179,7 +179,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   });
 }
 
- test('cancellation ignores a late destination and requires exit re-entry before retry', async ({page}) => {
+ test('cancellation ignores a late destination and requires exit re-entry before retry', { tag: ['@world'] }, async ({page}) => {
   let release!:()=>void, calls=0;
   const pending=new Promise<void>(resolve=>{release=resolve;});
   await page.route('**/generated/content/maps/gallery.*.json', async route => {
@@ -199,7 +199,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   await step(page,'ArrowLeft'); await cross(page,'ArrowRight',GALLERY); expect(calls).toBe(2);
 });
 
- test('timeout is recoverable and staying on a failed exit does not retry automatically', async ({page}) => {
+ test('timeout is recoverable and staying on a failed exit does not retry automatically', { tag: ['@world'] }, async ({page}) => {
   test.setTimeout(30_000);
   await page.route('**/generated/content/maps/gallery.*.json', async route => {
     await new Promise(resolve=>setTimeout(resolve,9000));
@@ -213,7 +213,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   await step(page,'ArrowLeft'); expect((await snapshot(page)).actorTile.x).toBe(17);
 });
 
- test('twenty round trips keep scene objects, textures, input responses, and particles bounded', async ({page}) => {
+ test('twenty round trips keep scene objects, textures, input responses, and particles bounded', { tag: ['@world', '@perf'] }, async ({page}) => {
   test.setTimeout(90000);
   await openRoom(page); const initial=await snapshot(page);
   let galleryObjects=0;
@@ -232,7 +232,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   expect((await snapshot(page)).mapId).toBe(WORKSHOP); expect((await snapshot(page)).stops).toBe(1);
 });
 
- test('literal authored text is not executed, and turning effects off does not break dialogue or travel', async ({page}) => {
+ test('literal authored text is not executed, and turning effects off does not break dialogue or travel', { tag: ['@dialogue', '@world'] }, async ({page}) => {
   await page.route('**/generated/content/maps/workshop.*.json',route=>{
     const map=JSON.parse(readFileSync('content/games/demo/maps/workshop.json','utf8'));
     map.strings.en['caretaker.welcome']='<img src=x onerror=alert(1)> 世界 🌟';
@@ -250,7 +250,7 @@ for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing
   expect((await snapshot(page)).effectsEnabled).toBe(false);
 });
 
- test('legacy remapping survives reload without conflicting with new dialogue bindings', async ({page}) => {
+ test('legacy remapping survives reload without conflicting with new dialogue bindings', { tag: ['@input', '@dialogue'] }, async ({page}) => {
   await page.addInitScript(()=>localStorage.setItem('rpgameworks.controller.v1',JSON.stringify({
     version:1,enabled:true,allowUnmapped:false,deadzone:0.4,axisX:2,axisY:3,invertX:true,invertY:false,
     buttons:{up:12,down:13,left:14,right:15,burst:2},

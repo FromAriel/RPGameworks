@@ -21,3 +21,9 @@ src/content/generated/
 benchmark-results/
 benchmark-report/
 .import/
+
+# Third-party art (LPC, Stone Soup, ...) is fetched locally and never committed: decision 0007.
+# external/ holds fetched sources and derived output; public/external/ is reserved for local-only served art.
+/external/*
+!/external/README.md
+/public/external/

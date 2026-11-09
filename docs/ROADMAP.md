@@ -17,7 +17,7 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 | M3.5 authoring reports | Source pushed as `8fc7b05`: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change; not deployed | Four unused records reviewed and retained for now; any Pages deployment is separate |
 | M4.1–M4.3 minimum PixelFX | Source pushed as `c396b77`: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed; Ariel accepted the local cue | Pages deployment remains a separate decision |
 | M5.1–M5.2 practice battle | Uncommitted local gameplay candidate: authored encounter, pure seeded Attack/Guard turns, transient HP and owned battle entry/exit; September 26 evidence records 380 unit/content and 153 browser checks | Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for local play review and separate source/Pages decisions |
-| Battle redesign and world scale | Planned November 8, 2026: decisions [0006](decisions/0006-battle-system-direction.md), [0007](decisions/0007-public-repo-external-art-assets.md) and [0008](decisions/0008-32px-world-scale.md); no implementation | Ariel reviews the notes; then S1.1 and M5.3 can begin |
+| Battle redesign and world scale | Planned November 8, 2026: decisions [0006](decisions/0006-battle-system-direction.md), [0007](decisions/0007-public-repo-external-art-assets.md) and [0008](decisions/0008-32px-world-scale.md); no implementation | S1.1 delivered locally; S1.3 (configurable scale, then 640 × 360) is next, before M5.3 |
 | Later chapter release | Planned | Complete M5's inventory, reward/defeat and preparation loop, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
@@ -239,7 +239,7 @@ Record measured capacity separately from the provisional 500/1,500/4,000 particl
 ### Work packets
 
 - [x] **M5.1 — Pure battle kernel.** The authored one-hero/one-enemy practice encounter uses integer stats, a separate seeded gameplay stream, Attack and Guard, explicit command/result/victory/defeat phases, and pinned deterministic traces. No persistent battle state or rewards yet.
-- [x] **M5.2 — Integration lifecycle.** The Workshop Supply Room sigil starts an optional battle through an authored `encounterId`; loading failure, cancellation, victory, defeat, Retry and Leave preserve the exploration room and focus. Local checks passed; Ariel's play review and source delivery remain open. Its dialogue-window presentation is superseded by M5.3; whether to commit it first as a stepping stone is Ariel's decision.
+- [x] **M5.2 — Integration lifecycle.** The Workshop Supply Room sigil starts an optional battle through an authored `encounterId`; loading failure, cancellation, victory, defeat, Retry and Leave preserve the exploration room and focus. Local checks passed; Ariel's play review and source delivery remain open. Committed as stepping stone `b7b3d70` on November 8; its dialogue-window presentation is superseded by M5.3 and will be rebuilt.
 - [ ] **M5.3 — Battle screen and visible timeline.** A dedicated battle scene with side-view placement, command and status windows on the shared UI, and a timeline kernel whose preview equals execution. One hero against two enemies; Attack, Guard, one consumable with atomic spending, and Escape; invalid targets rejected and cancellation before commitment. Resolved events play back with hit flash, damage numbers, PixelFX and skip/accelerate without changing outcomes. Placeholder or original art is acceptable.
 - [ ] **M5.4 — Rows and party.** Three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, and pincer/back-attack orientation from one rule. Party grows from two to four members.
 - [ ] **M5.5 — Weakness, break and momentum.** Authored weaknesses and shields (per encounter and per phase), break stun and timeline push-back, the shared momentum gauge and end-of-round MP recovery per full pip. Bestiary discovery records commit atomically with a save-schema and migration decision.
@@ -267,7 +267,7 @@ Governing notes: [Decision 0007](decisions/0007-public-repo-external-art-assets.
 
 ### Work packets
 
-- [ ] **S1.1 — Ignore rules and guards.** Add ignored roots for fetched sources and derived output before any import, plus a check that fails if tracked files contain external art. Verify with a dry run that no art appears in `git status`.
+- [x] **S1.1 — Ignore rules and guards.** Add ignored roots for fetched sources and derived output before any import, plus a check that fails if tracked files contain external art. Verify with a dry run that no art appears in `git status`. Delivered locally November 8: `external/` and `public/external/` are ignored alongside `.import/`, and `npm run check:external-art` runs inside `npm run check`; see STATUS.
 - [ ] **S1.2 — Pinned manifests and fetch scripts.** Cross-platform Node fetch scripts that download LPC (pinned revision) and Stone Soup from their original sources, verify per-file hashes, and write only to ignored folders. Committed manifests hold URLs, revisions, hashes and license metadata only.
 - [ ] **S1.3 — Configurable scale.** Move tile size and logical view out of constants; keep 16-pixel behavior passing, then switch to 640 × 360 and rerun layout/browser checks.
 - [ ] **S1.4 — 32-pixel world with committable fallback art.** Migrate the demo maps to 32-pixel tiles using original or otherwise committable art; confirm old saves restore the same tiles; re-baseline benchmarks and canvas captures.
@@ -275,7 +275,7 @@ Governing notes: [Decision 0007](decisions/0007-public-repo-external-art-assets.
 - [ ] **S1.6 — Creature motion.** Port the pixel-motion functions (shadow mask, shape, pose) as a typed, tested module and bake poses into owned Phaser textures for battlers and map enemies, with reduced-motion fallback.
 - [ ] **S1.7 — Public build decision.** Ariel chooses how public builds obtain art (fallback-only, local build-and-deploy, or pinned upstream fetch during the build) before any external art is deployed.
 
-S1.1–S1.4 can proceed before or alongside M5.3, which uses placeholder art. S1.5–S1.6 should land before battle presentation is judged on final art.
+Agreed order (November 8): S1.1 → S1.3 → then M5.3 and S1.4 in either order, so the battle screen is laid out once at 640 × 360. S1.2 can follow whenever an import is scheduled. S1.5–S1.6 should land before battle presentation is judged on final art.
 
 ## M6 — Complete chapter and expansive-world proof
 
@@ -350,7 +350,7 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for the current review and delivery action. M4's local impact cue is accepted; M5.1–M5.2 gameplay is the uncommitted local candidate, now superseded in presentation by the [battle direction](decisions/0006-battle-system-direction.md). After Ariel reviews the November 8 planning notes, S1.1 (ignore rules and guards) and M5.3 (battle screen and visible timeline) are the next implementation packets, followed by the M5 and S1 orders above. Expand M4.4–M4.6 against tested battle needs and collect hosted G1.3/quest feedback separately.
+Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for the current review and delivery action. M4's local impact cue is accepted; M5.1–M5.2 gameplay is the uncommitted local candidate, now superseded in presentation by the [battle direction](decisions/0006-battle-system-direction.md). The M5.1–M5.2 stepping stone is committed and S1.1 is delivered locally. S1.3 (configurable scale, then 640 × 360) is next, then M5.3 and S1.4. Expand M4.4–M4.6 against tested battle needs and collect hosted G1.3/quest feedback separately.
 
 G1.2, M3 and G1.3 are already included in the last recorded public build. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout subsequent work. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 

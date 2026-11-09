@@ -21,7 +21,7 @@ At 32-pixel tiles, the current 320 × 192 view would show only 10 × 6 tiles, an
 
 ## Consequences
 
-- **Movement, collision, interaction and saves are tile-based**, so map coordinates, spawns, exits and saved checkpoints keep their meaning. The migration should not need a save-format change; that must be confirmed by the existing save fixtures.
+- **Movement, collision, interaction and saves are tile-based**, so map coordinates, spawns, exits and saved checkpoints keep their meaning. The migration should not need a save-format change. **Save compatibility during the demo phase (Ariel, November 8):** existing local demo saves are test data and need not be preserved across this or later early-demo changes. A breaking change still bumps the save version so old saves are rejected with a clear message instead of loading into a wrong state; preserving or migrating them is optional.
 - **Existing demo maps** declare `"tileSize": 16`. They need either re-authored 32-pixel art or a defined transitional rule. Workshop is 20 × 12 tiles, which becomes 640 × 384: slightly taller than the view, so the camera follows vertically.
 - **The generated foundation atlas** (16-pixel frames) and the PixelFX recipes and caps were tuned at the old scale and need review.
 - **The Cute Fantasy starter hero** was tuned for 16-pixel tiles. Its anchor, scale and its future relative to LPC characters need a visual decision.

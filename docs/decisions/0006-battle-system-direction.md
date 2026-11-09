@@ -77,7 +77,7 @@ Players should be able to summarize it as "exploit weaknesses, build momentum, c
 
 ## Relationship to the M5.1–M5.2 candidate
 
-The uncommitted candidate's seeded kernel, encounter catalog, loader, failure handling and lifecycle tests are a usable base. Its dialogue-window presentation is superseded by the battle screen. Whether to commit the candidate as a stepping stone before the rework, or fold it into the first battle-screen packet, is Ariel's decision and is not made here.
+The uncommitted candidate's seeded kernel, encounter catalog, loader, failure handling and lifecycle tests are a usable base. Its dialogue-window presentation is superseded by the battle screen. Ariel chose to commit it as a stepping stone (`b7b3d70`, November 8) and rebuild the presentation; it is a starting demo, not a design to preserve.
 
 ## Open questions
 

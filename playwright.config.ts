@@ -4,8 +4,11 @@ export default defineConfig({
   testDir: './tests/browser',
   timeout: 30_000,
   expect: { timeout: 10_000 },
+  // Spec files run in parallel; scenarios inside one file stay in order. Three workers passed the full suite four
+  // times in a row on November 9, 2026 (about 3.5 minutes instead of 6.5); four workers exposed timing races in
+  // walking and playback tests (decision 0012 T1.6). Override with --workers=N, for example --workers=1 to debug.
   fullyParallel: false,
-  workers: 1,
+  workers: 3,
   retries: 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {

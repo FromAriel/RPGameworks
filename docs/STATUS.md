@@ -4,6 +4,25 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## T1.6 parallel workers — November 9, 2026, local
+
+**Kept: Playwright now runs 3 workers** (`playwright.config.ts`; `fullyParallel` stays `false`, so spec files run in parallel and scenarios inside a file keep their order). **The full suite takes about 3.5 minutes instead of 6.5**, and the smoke tier about 18.5 s instead of about 30 ([decision 0012](decisions/0012-faster-local-tests.md)). `--workers=1` restores the old behaviour, for example to debug.
+
+- **Before the trial:** every test writes screenshots only to its own `outputPath`, and each browser context has its own storage, so workers share nothing but the two preview servers.
+- **Trial, one full run each** (same machine and build as T1.0, fixtures current, wall clock including server start):
+
+| Workers | Result | Time |
+| ---: | --- | ---: |
+| 1 (T1.4 run) | 158/158 | 6.5 min (393 s) |
+| 2 | 158/158 | 3.9 min (233 s) |
+| 3 | 158/158 | 3.5 min (212 s) |
+| 4 | **156/158** | 3.6 min (215 s) |
+
+- **The two failures at 4 workers are timing races in the tests under CPU load**, not game bugs: supply-room "the Workshop lock denies travel…" took one key hold as two steps and walked back through the door (its own walk helper still releases after a fixed delay rather than using `tapDirection`, the same race fixed in conditional-access on November 9); battle "classic battle windows…" timed out clicking Skip during playback. Four workers was also no faster than three.
+- **Keep rule met at 3 workers:** three consecutive full runs passed **158/158** in **210 s, 211 s and 219 s**, plus the 212 s trial run: four passing runs in a row, no flaky or retried tests (`retries` stays 0). `test:smoke` then passed 12/12 on 3 workers in 18.5 s. `npm run typecheck` passed.
+- **Caveat:** 3 workers is measured on this machine only (Ryzen 9 5900X, 24 threads). A slower machine may need `--workers=1` or 2; the races above would appear first.
+- Migration: none. Next: T1.5 pure rule checks moved to unit tests, then the optional T1.7.
+
 ## T1.4 setup shortcuts — November 9, 2026, local
 
 **Finding:** in almost every slow scenario the walking is what is being tested: travel and arrival tiles, the full lens and ledger quest routes, locked doors, the gate, and the repeated round trips. Only one scenario walked purely to get into position. Ariel chose to shorten just that one, and to record the rest ([decision 0012](decisions/0012-faster-local-tests.md), "Changes decided during T1.4").
@@ -518,7 +537,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**T1.6 — parallel workers** ([decision 0012](decisions/0012-faster-local-tests.md), approved; T1.0–T1.4 are recorded above; the revised [decision 0011](decisions/0011-reusable-window-skins.md) is approved too). Order: T1.6, T1.5, optional T1.7 (faster local tests), then W3.0 (revert all of W2 and remove the Pixel Frame port), W3.1–W3.7 (extend W1: skin geometry as data, automatic fitting, skin choice, battle windows on W1, the Final Fantasy-like skin), then M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**T1.5 — pure rule checks moved to unit tests** ([decision 0012](decisions/0012-faster-local-tests.md), approved; T1.0–T1.4 and T1.6 are recorded above; the revised [decision 0011](decisions/0011-reusable-window-skins.md) is approved too). Order: T1.5, then optional T1.7 (faster local tests), then W3.0 (revert all of W2 and remove the Pixel Frame port), W3.1–W3.7 (extend W1: skin geometry as data, automatic fitting, skin choice, battle windows on W1, the Final Fantasy-like skin), then M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

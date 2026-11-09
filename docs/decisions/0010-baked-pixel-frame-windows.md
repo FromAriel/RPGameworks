@@ -1,6 +1,8 @@
 # Decision 0010 — One window system: baked pixel frames from the Pixel Frame engine
 
-**Status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1–W2.3 implemented November 9** (core port, interior fill, bake tool; the UI theme file and battle windows; then every page window; see the notes below and [STATUS](../STATUS.md)); W2.4 is not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
+**Superseded (November 9, 2026):** Ariel decided to keep and extend the W1 window system instead. [Decision 0011](0011-reusable-window-skins.md) replaces this note, its W3.0 packet reverts W2.1–W2.3 and removes the Pixel Frame port from the game, and W2.4 is cancelled. The text below is kept as history.
+
+**Original status:** Proposed by Claude and accepted by Ariel on November 9, 2026. **W2.1–W2.3 implemented November 9** (core port, interior fill, bake tool; the UI theme file and battle windows; then every page window; see the notes below and [STATUS](../STATUS.md)); W2.4 is not started. It changes how [0009](0009-classic-battle-interface.md) draws its battle windows and will replace the W1 windowskin ([WINDOW-SKIN.md](../WINDOW-SKIN.md)) once the replacement matches it.
 
 ## Context
 

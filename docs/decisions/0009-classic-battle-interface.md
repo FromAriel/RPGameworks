@@ -73,8 +73,9 @@ Two play reviews of M5.3b found the battle reading as a web dialogue: one large 
 
 **Later packets use it:** M5.4 fills the party window with four rows and row positions; M5.5 adds momentum pips to the party window; M5.8 puts combos under Special and adds repeat-last-turn and auto-battle; M5.9 adds the first real skill and spell lists.
 
-## Open questions
+## Answered questions (Ariel, November 9, 2026)
 
-- Whether the full battle log also gets a visible History view, or stays available only to screen readers and in the help line.
-- Enemy HP bars: always shown, or only after the bestiary has identified the enemy.
-- The Special label for the starting hero's class.
+- **Battle log:** stays in the help line and screen-reader text for now; a visible History view can be reconsidered with the pacing options (M5.8).
+- **Enemy HP bars:** stay on the stage next to the enemies, even where HP is also shown by name, because they are good visual feedback.
+- **Special label:** **Skills** for now. It may later follow each character's class (for example Magic for a wizard).
+- **Play review:** Ariel played this interface and reports that it played well. The window art is replaced separately by [decision 0011](0011-reusable-window-skins.md) (W3.5); until then the battle windows use the hard-coded panels described above.

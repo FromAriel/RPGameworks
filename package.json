@@ -18,6 +18,7 @@
     "pretest:browser": "npm run build:browser-fixtures",
     "test:browser": "playwright test",
     "test:area": "node tools/test-area.mjs",
+    "test:smoke": "node tools/test-area.mjs @smoke",
     "check:test-tags": "node tools/check-test-tags.mjs",
     "build:browser-fixtures": "npm run build -- --base=/RPGameworks/ && npm run build:ui-gallery",
     "build:ui-gallery": "vite build --config vite.ui-gallery.config.ts",

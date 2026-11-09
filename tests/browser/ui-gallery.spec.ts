@@ -36,7 +36,7 @@ async function capture(page: Page, info: TestInfo, name: string): Promise<void> 
   await page.screenshot({ path: info.outputPath(name), fullPage: true, animations: 'disabled' });
 }
 
-test('gallery renders production components with semantic text and state cues', { tag: ['@windows'] }, async ({ page }) => {
+test('gallery renders production components with semantic text and state cues', { tag: ['@windows', '@smoke'] }, async ({ page }) => {
   await openGallery(page);
   await expect(page.locator('.ui-action-button')).toHaveCount(9);
   await expect(page.locator('.ui-list-row')).toHaveCount(16);

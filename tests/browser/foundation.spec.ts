@@ -1,7 +1,7 @@
 import { openTools, setEffects, enableTouch } from './helpers';
 import { test, expect, snapshot, openRoom } from './helpers';
 
- test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', { tag: ['@boot'] }, async ({ page }, info) => {
+ test('production build boots under /RPGameworks/ with an atlas and crisp logical canvas', { tag: ['@boot', '@smoke'] }, async ({ page }, info) => {
   await openRoom(page);
   const state = await snapshot(page);
   expect(state.phaser).toBe('4.2.1');

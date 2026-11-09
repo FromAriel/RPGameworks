@@ -47,7 +47,7 @@ async function command(page: Page, ...names: string[]): Promise<void> {
   expect({ ...(await snapshot(page)).battle!, playing: true, menu: null }).toEqual({ ...resolved, playing: true, menu: null });
 }
 
-test('classic battle windows play resolved turns and restore exploration focus', { tag: ['@battle'] }, async ({ page }, info) => {
+test('classic battle windows play resolved turns and restore exploration focus', { tag: ['@battle', '@smoke'] }, async ({ page }, info) => {
   await approach(page);
   const before = await snapshot(page);
   await enter(page);
@@ -207,7 +207,7 @@ test('missing baked frames fall back to plain windows and release every texture'
   expect(after.textureCount).toBe(before.textureCount);
 });
 
-test('failed catalog load leaves the room playable', { tag: ['@battle'] }, async ({ page }) => {
+test('failed catalog load leaves the room playable', { tag: ['@battle', '@smoke'] }, async ({ page }) => {
   await page.route('**/generated/content/encounters.*.json', route => route.fulfill({ status: 503, body: 'unavailable' }));
   await approach(page);
   const before = await snapshot(page);

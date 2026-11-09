@@ -45,7 +45,7 @@ async function fakePad(page: Page): Promise<void> {
   });
 }
 
- test('caretaker dialogue locks movement, advances once per press, and returns focus', { tag: ['@dialogue'] }, async ({page}, info) => {
+ test('caretaker dialogue locks movement, advances once per press, and returns focus', { tag: ['@dialogue', '@smoke'] }, async ({page}, info) => {
   await openRoom(page); await caretaker(page);
   await page.keyboard.down('KeyE');
   await expect(page.locator(dialog)).toBeVisible();
@@ -84,7 +84,7 @@ async function fakePad(page: Page): Promise<void> {
   await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
 });
 
- test('real doors load only their destination, preserve the document, and use named spawns', { tag: ['@world'] }, async ({page}) => {
+ test('real doors load only their destination, preserve the document, and use named spawns', { tag: ['@world', '@smoke'] }, async ({page}) => {
   const maps:string[]=[];page.on('request',request=>{if(request.url().includes('/content/maps/'))maps.push(request.url());});
   await openRoom(page);
   const marker=await page.evaluate(()=>{(window as any).__DOCUMENT_MARKER__=Math.random();return (window as any).__DOCUMENT_MARKER__;});

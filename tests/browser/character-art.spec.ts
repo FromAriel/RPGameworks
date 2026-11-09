@@ -19,7 +19,7 @@ test('selected layered hero idles, walks, mirrors left, and keeps its feet on th
   await page.keyboard.up('ArrowRight');
 });
 
-test('a failed pack request leaves the static hero visible and gameplay usable', { tag: ['@world'] }, async ({ page }) => {
+test('a failed pack request leaves the static hero visible and gameplay usable', { tag: ['@world', '@smoke'] }, async ({ page }) => {
   await page.route('**/character/starter-hero.rpgpack', route => route.abort());
   await openRoom(page);
   const state = await snapshot(page);

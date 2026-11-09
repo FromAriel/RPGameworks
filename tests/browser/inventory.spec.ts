@@ -65,7 +65,7 @@ test('chest grants once, reconstructs after actual room travel and room restart,
   expect((await snapshot(page)).session.placements).toEqual({});
 });
 
-test('Menu opens real inventory with no tools, empty state, and working Settings route',{ tag: ['@inventory'] }, async({page})=>{
+test('Menu opens real inventory with no tools, empty state, and working Settings route',{ tag: ['@inventory', '@smoke'] }, async({page})=>{
   await openRoom(page);await page.locator('#tools-toggle').click();
   await expect(page.locator('#inventory-dialog')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
   await expect(page.locator('#item-name')).toHaveText('Empty inventory');
@@ -89,7 +89,7 @@ test('menu queued during movement stops at a safe tile and cannot move or burst 
   await expect(page.locator('#stage')).toBeFocused();
 });
 
-test('controller Menu opens inventory, keeps held inputs isolated, and cancel restores exploration',{ tag: ['@inventory', '@input'] }, async({page})=>{
+test('controller Menu opens inventory, keeps held inputs isolated, and cancel restores exploration',{ tag: ['@inventory', '@input', '@smoke'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page);await expect(page.locator('#controller-brief')).toContainText('Ready');
   await padButton(page,9,true);await expect(page.locator('#inventory-dialog')).toBeVisible();
   await page.waitForTimeout(220);await expect(page.locator('#inventory-dialog')).toBeVisible();

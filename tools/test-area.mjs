@@ -4,6 +4,7 @@
  *   npm run test:area -- battle
  *   npm run test:area -- @saves @world
  *   npm run test:area -- battle --list        (arguments starting with -- go to Playwright)
+ *   npm run test:smoke                        (the @smoke tier, T1.2)
  *
  * Areas are listed in tools/check-test-tags.mjs. The build always runs for now; T1.3 adds skipping when
  * nothing changed.
@@ -11,7 +12,9 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TEST_AREAS, playwrightCli } from './check-test-tags.mjs';
+import { TEST_AREAS, TEST_TIERS, playwrightCli } from './check-test-tags.mjs';
+
+const SELECTABLE = [...TEST_AREAS, ...TEST_TIERS];
 
 /**
  * @param {readonly string[]} args
@@ -23,10 +26,10 @@ export function parseAreaArgs(args) {
   for (const arg of args) {
     if (arg.startsWith('--')) { passThrough.push(arg); continue; }
     const tag = arg.startsWith('@') ? arg : `@${arg}`;
-    if (!TEST_AREAS.includes(tag)) return { error: `Unknown area "${arg}". Known areas: ${TEST_AREAS.join(' ')}` };
+    if (!SELECTABLE.includes(tag)) return { error: `Unknown area "${arg}". Known areas: ${SELECTABLE.join(' ')}` };
     if (!areas.includes(tag)) areas.push(tag);
   }
-  if (!areas.length) return { error: `Name at least one area: ${TEST_AREAS.join(' ')}` };
+  if (!areas.length) return { error: `Name at least one area: ${SELECTABLE.join(' ')}` };
   // A tag must match as a whole word: "@world" must not match a hypothetical "@worldmap".
   return { grep: areas.map((tag) => `${tag}(?![\\w-])`).join('|'), passThrough };
 }

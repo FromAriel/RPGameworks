@@ -16,6 +16,12 @@ export const TEST_AREAS = Object.freeze([
   '@boot', '@world', '@input', '@dialogue', '@quests', '@inventory', '@saves', '@windows', '@battle', '@shell', '@perf',
 ]);
 
+/**
+ * Tiers cut across areas: `@smoke` marks the quick set (decision 0012 T1.2, `npm run test:smoke`).
+ * A tier is never a scenario's only tag; it still needs an area.
+ */
+export const TEST_TIERS = Object.freeze(['@smoke']);
+
 /** Spec files allowed to stay untagged. window-frames is W2-only and is deleted by W3.0 (decision 0011). */
 export const UNTAGGED_SPECS = Object.freeze(['window-frames.spec.ts']);
 
@@ -24,14 +30,15 @@ export const UNTAGGED_SPECS = Object.freeze(['window-frames.spec.ts']);
  * @returns {string[]} one message per problem, in input order
  */
 export function findTagProblems(tests) {
-  const known = new Set(TEST_AREAS);
+  const areas = new Set(TEST_AREAS);
+  const known = new Set([...TEST_AREAS, ...TEST_TIERS]);
   const exempt = new Set(UNTAGGED_SPECS);
   const problems = [];
   for (const { file, title, tags } of tests) {
     if (exempt.has(path.basename(file))) continue;
     const unknown = tags.filter((tag) => !known.has(tag));
     if (unknown.length) problems.push(`${file}: "${title}" has unknown tag(s) ${unknown.join(', ')}`);
-    if (!tags.some((tag) => known.has(tag))) problems.push(`${file}: "${title}" has no area tag`);
+    if (!tags.some((tag) => areas.has(tag))) problems.push(`${file}: "${title}" has no area tag`);
   }
   return problems;
 }

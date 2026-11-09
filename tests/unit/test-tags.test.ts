@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { TEST_AREAS, UNTAGGED_SPECS, findTagProblems, testsFromReport } from '../../tools/check-test-tags.mjs';
+import { TEST_AREAS, TEST_TIERS, UNTAGGED_SPECS, findTagProblems, testsFromReport } from '../../tools/check-test-tags.mjs';
+
+const SELECTABLE = [...TEST_AREAS, ...TEST_TIERS].join(' ');
 import { parseAreaArgs } from '../../tools/test-area.mjs';
 
 describe('browser test area tags (decision 0012 T1.1)', () => {
@@ -45,7 +47,14 @@ describe('browser test area tags (decision 0012 T1.1)', () => {
   });
 
   it('rejects unknown or missing areas with the known list', () => {
-    expect(parseAreaArgs(['battel'])).toEqual({ error: `Unknown area "battel". Known areas: ${TEST_AREAS.join(' ')}` });
-    expect(parseAreaArgs([])).toEqual({ error: `Name at least one area: ${TEST_AREAS.join(' ')}` });
+    expect(parseAreaArgs(['battel'])).toEqual({ error: `Unknown area "battel". Known areas: ${SELECTABLE}` });
+    expect(parseAreaArgs([])).toEqual({ error: `Name at least one area: ${SELECTABLE}` });
+  });
+
+  it('accepts the smoke tier beside an area, but not as a scenario\'s only tag', () => {
+    expect(TEST_TIERS).toEqual(['@smoke']);
+    expect(findTagProblems([{ file: 'maps.spec.ts', title: 'quick', tags: ['@world', '@smoke'] }])).toEqual([]);
+    expect(findTagProblems([{ file: 'maps.spec.ts', title: 'tier only', tags: ['@smoke'] }])).toEqual(['maps.spec.ts: "tier only" has no area tag']);
+    expect(parseAreaArgs(['@smoke'])).toEqual({ grep: '@smoke(?![\\w-])', passThrough: [] });
   });
 });

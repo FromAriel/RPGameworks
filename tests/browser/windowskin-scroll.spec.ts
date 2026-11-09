@@ -1,6 +1,6 @@
 import { test, expect, openRoom, snapshot } from './helpers';
 
-test('long dialogue starts at the first line and page changes reset only its text scroller', { tag: ['@windows', '@dialogue'] }, async ({page}) => {
+test('long dialogue starts at the first line and page changes reset only its text scroller', { tag: ['@windows', '@dialogue', '@smoke'] }, async ({page}) => {
   await page.setViewportSize({width:390,height:600});
   await page.route('**/generated/content/maps/*workshop*',async route=>{
     const response=await route.fetch(), data=await response.json(), message=data.messages[0];

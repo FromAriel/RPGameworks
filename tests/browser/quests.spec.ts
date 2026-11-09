@@ -100,7 +100,7 @@ test('the archive clerk uses the same item hand-in flow across the keyed Storero
   state=(await snapshot(page)).session;expect(state.quests['demo:quest.archive-ledger']).toBe('completed');expect(state.inventory['demo:item.brass-key']).toBe(1);
 });
 
-test('controller selects a dialogue choice and cancel returns to exploration',{ tag: ['@quests', '@dialogue', '@input'] }, async({page})=>{
+test('controller selects a dialogue choice and cancel returns to exploration',{ tag: ['@quests', '@dialogue', '@input', '@smoke'] }, async({page})=>{
   await page.setViewportSize({width:390,height:844});
   await page.addInitScript(()=>{Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[(window as any).__QUEST_PAD__??null]});});
   await openRoom(page,'?map=demo:map.gallery&spawn=from-storeroom');

@@ -61,7 +61,7 @@ Each packet keeps the existing behaviour for Ariel's current skin byte-for-byte 
 - Revert `9b1017b` (W2.3), `7cc6cb5` (W2.2) and `43546a9` (W2.1) with `git revert`, newest first, which keeps history. The game mounts W1 again on every page window, with the title gaps.
 - Battle windows go back to M5.3c's hard-coded `PANEL_STYLE` panels until W3.5. Ariel accepted that temporary look.
 - The Pixel Frame port leaves the game entirely (`src/presentation/pixel-frame/`, `tools/bake-frames.ts`, the UI theme file and schema, the frame manifest code and their tests).
-- Where the revert conflicts with the 0012 test packets (tags, `package.json` scripts), keep 0012's changes and tag the restored W1 specs.
+- Where the revert conflicts with the 0012 test packets (tags, `package.json` scripts), keep 0012's changes and tag the restored W1 specs. Add the restored W1 titled-window scenario to `@smoke`, and remove `window-frames.spec.ts` from the untagged-spec exemption in `tools/check-test-tags.mjs`.
 - Mark decision 0010 superseded by this note.
 
 **Acceptance:**

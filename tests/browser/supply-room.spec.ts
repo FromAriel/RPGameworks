@@ -1,22 +1,17 @@
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, snapshot } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection } from './helpers';
 
 const WORKSHOP = 'demo:map.workshop';
 const SUPPLY = 'demo:map.supply-room';
 const doorId = 'demo:object.workshop.supply-door';
 const dialog = '#interaction-dialog';
 
-async function step(page: Page, key: string, times = 1): Promise<void> {
-  for (let index = 0; index < times; index += 1) {
-    await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
-    await page.keyboard.down(key);
-    try {
-      await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true);
-    } finally {
-      await page.keyboard.up(key);
-    }
-    await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(false);
-  }
+/**
+ * One tile per tap. The shared tapDirection releases the key from inside the page in the frame the step starts; a
+ * release timed from the test process let a loaded machine (4 workers, November 9) walk two tiles, back through a door.
+ */
+async function step(page: Page, key: Parameters<typeof tapDirection>[1], times = 1): Promise<void> {
+  for (let index = 0; index < times; index += 1) expect(await tapDirection(page, key)).toBe('walked');
 }
 async function interact(page: Page): Promise<string> {
   await page.keyboard.down('KeyE');

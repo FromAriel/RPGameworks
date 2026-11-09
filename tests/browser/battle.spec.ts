@@ -28,9 +28,17 @@ async function enter(page: Page): Promise<void> {
   await expect.poll(async () => (await snapshot(page)).battle?.encounterId).toBe(encounter);
 }
 
-/** Skip whatever is playing; the outcome was decided before playback started. */
+/**
+ * Skip whatever is playing; the outcome was decided before playback started. Playback can end between the check
+ * and the click, which removes the Skip button (seen on a loaded machine with 4 workers, November 9). A failed click
+ * is only an error if playback is still running.
+ */
 async function skip(page: Page): Promise<void> {
-  if ((await snapshot(page)).battle?.playing) await page.getByRole('button', { name: 'Skip' }).click();
+  if ((await snapshot(page)).battle?.playing) {
+    await page.getByRole('button', { name: 'Skip' }).click({ timeout: 3000 }).catch(async (error: unknown) => {
+      if ((await snapshot(page)).battle?.playing) throw error;
+    });
+  }
   await expect.poll(async () => (await snapshot(page)).battle?.playing).toBe(false);
 }
 

@@ -33,6 +33,9 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
   await walk(page,'ArrowLeft',6);await step(page,'ArrowDown');await interact(page);
   await page.locator('[data-dialogue-choice="hand-in"]').click();await expect(page.locator('#dialog-text')).toContainText('light');
   await expect(page.locator('#dialog-advance')).toBeFocused();
+  // A last page offers one Close, not "Close message" beside "Close".
+  await expect(page.locator('#dialog-advance')).toHaveText('Close');
+  await expect(page.locator('#dialog-cancel')).toBeHidden();
   await page.keyboard.press('KeyE');await expect(page.locator('#interaction-dialog')).toBeHidden();
   await expect(page.locator('#stage')).toBeFocused();
   await step(page,'ArrowUp'); // Keyboard movement resumes after the completion message.

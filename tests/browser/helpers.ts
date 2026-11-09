@@ -39,6 +39,52 @@ export async function openRoom(page: Page, suffix = ''): Promise<void> {
 
 export { expect };
 
+type DirectionKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
+type TapWindow = typeof window & { __tapResult__?: Promise<'walked' | 'turned' | 'none'> };
+
+/**
+ * Press a direction for exactly one gameplay reaction: one step onto a walkable tile, or a turn toward a solid one.
+ * A held direction starts another step whenever the current 160 ms step ends, so a release timed from the test
+ * process races the game on slow machines (a 120 ms hold once walked two tiles on the Windows CI runner). The key
+ * down is a real key press; an in-page watcher releases it (a window keyup, which the input owner listens for) in the
+ * same frame the step starts, or after a few frames when the direction only turns the hero. Resolves when movement
+ * has finished.
+ */
+export async function tapDirection(page: Page, key: DirectionKey): Promise<'walked' | 'turned' | 'none'> {
+  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
+  await page.evaluate(code => {
+    const want = ({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' } as Record<string, string>)[code];
+    (window as TapWindow).__tapResult__ = new Promise(resolve => {
+      let frames = -1;
+      const deadline = performance.now() + 5000;
+      const armed = (event: KeyboardEvent) => { if (event.code === code && frames < 0) frames = 0; };
+      window.addEventListener('keydown', armed, { capture: true });
+      const release = (result: 'walked' | 'turned' | 'none') => {
+        window.removeEventListener('keydown', armed, { capture: true });
+        window.dispatchEvent(new KeyboardEvent('keyup', { code, key: code }));
+        resolve(result);
+      };
+      const tick = () => {
+        const state = window.__RPGAMEWORKS__!.snapshot();
+        if (frames >= 0) {
+          frames += 1;
+          if (state.moving) { release('walked'); return; }
+          if (frames >= 3) { release(state.facing === want ? 'turned' : 'none'); return; }
+        }
+        if (performance.now() > deadline) { release('none'); return; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }, key);
+  await page.keyboard.down(key);
+  let result: 'walked' | 'turned' | 'none';
+  try { result = await page.evaluate(() => (window as TapWindow).__tapResult__!); }
+  finally { await page.keyboard.up(key); }
+  await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(false);
+  return result;
+}
+
 /** Reach controls through the real closed-by-default player menu. */
 export async function openTools(page: Page, tab: 'options' | 'debug' = 'options'): Promise<void> {
   if (await page.locator('#tools-panel').isHidden()) {

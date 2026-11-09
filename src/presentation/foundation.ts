@@ -391,18 +391,18 @@ export function createFoundation(elements: FoundationElements, onError: (message
         const prepared=new MapView(this,next,candidate,characterArt??undefined);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
       });
-      if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close message','Close');return;}
+      if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close','Close',{soleAction:true});return;}
       if(result.kind==='cancelled')return;this.resume();
     }
     private showMessage(): void {
       const message = this.message!;
       this.dialog.show(message.speaker, message.text, `${message.page} / ${message.total}`,
-        message.page === message.total ? 'Close message' : 'Next page', 'Close');
+        message.page === message.total ? 'Close' : 'Next page', 'Close', { soleAction: message.page === message.total });
     }
     private showDialogue():void{
       const dialogue=this.dialogue!;
       this.setMode(dialogue.atChoices?'dialogue':'message');
-      this.dialog.show(dialogue.speaker,dialogue.text,`${dialogue.page} / ${dialogue.total}`,dialogue.atChoices?null:dialogue.page===dialogue.total?'Close message':'Next page','Close');
+      this.dialog.show(dialogue.speaker,dialogue.text,`${dialogue.page} / ${dialogue.total}`,dialogue.atChoices?null:dialogue.page===dialogue.total?'Close':'Next page','Close',{soleAction:!dialogue.atChoices&&dialogue.page===dialogue.total});
       if(dialogue.atChoices)this.dialog.showChoices(dialogue.choices(),id=>this.chooseDialogue(id));
     }
     private chooseDialogue(id:string):void{

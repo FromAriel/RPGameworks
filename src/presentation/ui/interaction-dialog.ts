@@ -54,10 +54,11 @@ export class InteractionDialog {
 
   /**
    * `layout` 'battle' anchors the window to the battle stage's lower band (battle-window.css). `details` is read by
-   * screen readers but not shown, for state the canvas already draws (HP, turn order).
+   * screen readers but not shown, for state the canvas already draws (HP, turn order). `soleAction` hides the cancel
+   * button when the advance button already does the same thing (a message's last page), so only one Close shows.
    */
   show(title: string, text: string, page: string, advanceLabel: string | null, cancelLabel: string,
-    options: { readonly layout?: 'battle'; readonly details?: string } = {}): void {
+    options: { readonly layout?: 'battle'; readonly details?: string; readonly soleAction?: boolean } = {}): void {
     this.ensureAffordance();
     const focusWasChoice = this.choices.contains(document.activeElement);
     this.navigation?.dispose();this.navigation=null;
@@ -68,7 +69,7 @@ export class InteractionDialog {
     if (options.layout) this.element.dataset.layout = options.layout; else delete this.element.dataset.layout;
     this.scroll.scrollTop = 0; // A new page starts at its beginning, not the last page's scroll position.
     this.advance.hidden = advanceLabel === null;
-    this.cancel.hidden = false;
+    this.cancel.hidden = !!options.soleAction && advanceLabel !== null;
     this.advance.textContent = advanceLabel ?? '';
     this.cancel.textContent = cancelLabel;
     if (!this.element.open) {

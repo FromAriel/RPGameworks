@@ -1,31 +1,22 @@
 import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { test, expect, openRoom, snapshot } from './helpers';
+import { test, expect, openRoom, snapshot, tapDirection } from './helpers';
 
 const GALLERY = 'demo:map.gallery';
 const STOREROOM = 'demo:map.storeroom';
 const dialog = '#interaction-dialog';
 
-async function step(page: Page, key: string, times = 1): Promise<void> {
+type Arrow = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
+async function step(page: Page, key: Arrow, times = 1): Promise<void> {
   for (let index = 0; index < times; index += 1) {
     // Observe the real handoff; never focus the stage or bypass gameplay from this helper.
     await expect(page.locator(dialog)).not.toBeVisible();
-    await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
-    await page.keyboard.down(key);
-    try {
-      await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(true);
-    } finally {
-      await page.keyboard.up(key);
-    }
-    await expect.poll(async () => (await snapshot(page)).moving, { intervals: [10] }).toBe(false);
+    expect(await tapDirection(page, key)).toBe('walked');
   }
 }
-async function face(page: Page, key: string): Promise<void> {
+async function face(page: Page, key: Arrow): Promise<void> {
   // Facing is one gesture with movement: a walkable direction walks a tile; a solid one only turns.
-  await page.keyboard.down(key);
-  await page.waitForTimeout(120);
-  await page.keyboard.up(key);
-  await expect.poll(async () => (await snapshot(page)).moving).toBe(false);
+  expect(await tapDirection(page, key)).not.toBe('none');
 }
 async function interact(page: Page): Promise<string> {
   await expect(page.locator(dialog)).not.toBeVisible();

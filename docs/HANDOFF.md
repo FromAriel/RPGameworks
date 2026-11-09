@@ -1,6 +1,6 @@
 # HANDOFF — working notes through the M5 practice-battle local candidate
 
-**Written:** September 26, 2026, after the M5.1–M5.2 local candidate. **Continuity refreshed:** October 7, 2026 (documentation only). [STATUS](STATUS.md) remains the evidence ledger and [current next-action reference](STATUS.md#next-concrete-packet). Ariel accepted the local M4 impact cue; M4 source is on `main` as `c396b77`. M5 battle gameplay changes are uncommitted and available for local play review. The last recorded public deployment is G1.3 plus the quest UI correction from `00a568b`, through manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434); hosting was not reverified for this documentation correction. Specific hosted gameplay feedback remains open.
+**Written:** September 26, 2026, after the M5.1–M5.2 local candidate. **Continuity refreshed:** November 8, 2026 (battle, external-art and world-scale planning; documentation only). [STATUS](STATUS.md) remains the evidence ledger and [current next-action reference](STATUS.md#next-concrete-packet). Ariel accepted the local M4 impact cue; M4 source is on `main` as `c396b77`. M5 battle gameplay changes are uncommitted and available for local play review. The last recorded public deployment is G1.3 plus the quest UI correction from `00a568b`, through manual [run 36108392434](https://github.com/FromAriel/RPGameworks/actions/runs/36108392434); hosting was not reverified for this documentation correction. Specific hosted gameplay feedback remains open.
 
 ## 1. Where the project stands
 
@@ -32,7 +32,7 @@
 
 1. **Current next action.** Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for local practice-battle review and the remaining acceptance boundary.
 2. **Source and hosted decisions.** After Ariel accepts M5 locally, review the explicit gameplay source file list and decide on a source push. Pages remains a separate manual deployment decision. The last recorded hosted build is `00a568b`; record hosted supply-room/quest feedback separately.
-3. **Next gameplay packet.** M5.3–M5.5 add an item, one-shot persistent rewards, and the complete defeat/checkpoint policy. M5.6–M5.7 then add the small party and preparation loop needed for M6.1's finishable chapter. Expand PixelFX recipes against concrete battle needs.
+3. **Next gameplay packets (re-planned November 8).** [Decision 0006](decisions/0006-battle-system-direction.md) replaces the dialogue-window battle with a side-view timeline battle screen; [0007](decisions/0007-public-repo-external-art-assets.md) keeps all third-party art out of this public repository behind pinned fetch scripts; [0008](decisions/0008-32px-world-scale.md) moves the world to 32-pixel tiles at 640 × 360. ROADMAP's M5.3–M5.10 and the planned S1 track carry the order: S1.1 ignore rules and guards first, M5.3 battle screen with placeholder art alongside. Expand PixelFX recipes against concrete battle needs.
 4. **Separate character-art path.** CA1/CA2 are published in `05705b9`. CA3's variants/tools/mounts and CA4's broader review can be scheduled when content needs them; art anchor/timing changes require a new visual check if Ariel requests them.
 
 ## 3. What we learned (alpha of the handbook)

@@ -17,6 +17,7 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 | M3.5 authoring reports | Source pushed as `8fc7b05`: deterministic reference inventory, advisory orphan/route warnings and broken fixtures; no gameplay or save change; not deployed | Four unused records reviewed and retained for now; any Pages deployment is separate |
 | M4.1–M4.3 minimum PixelFX | Source pushed as `c396b77`: owned requests, finite recipes, bounded particles, reduced fallback and one impact cue; 375 unit/content and 149 browser checks passed; Ariel accepted the local cue | Pages deployment remains a separate decision |
 | M5.1–M5.2 practice battle | Uncommitted local gameplay candidate: authored encounter, pure seeded Attack/Guard turns, transient HP and owned battle entry/exit; September 26 evidence records 380 unit/content and 153 browser checks | Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for local play review and separate source/Pages decisions |
+| Battle redesign and world scale | Planned November 8, 2026: decisions [0006](decisions/0006-battle-system-direction.md), [0007](decisions/0007-public-repo-external-art-assets.md) and [0008](decisions/0008-32px-world-scale.md); no implementation | Ariel reviews the notes; then S1.1 and M5.3 can begin |
 | Later chapter release | Planned | Complete M5's inventory, reward/defeat and preparation loop, finish M6.1, then perform M7 release hardening |
 | Region-scale proof and optional art/tools | Later packets | Expand only after the small complete chapter has a tested release path |
 
@@ -29,6 +30,8 @@ Architecture: [Master Plan](PLAN.md). Player-interface standard: [UI-DESIGN-SYST
 **Ad-hoc quest UI correction:** Ariel reported lost keyboard control after completion and confusing close behavior in the completed-quest Journal. The local correction restores focus to the live dialogue control after a choice is replaced, closes the Journal directly to exploration, and starts the next Inventory opening at Inventory. Ariel reports that the correction works and authorized release of the current candidate. M3.5 order is unchanged. See [STATUS](STATUS.md) for verification and delivery status.
 
 A milestone is a working result, not a pile of scaffolding. Each work packet should be small enough to review in an ordinary chat/GitHub session. Finish the narrow implementation, its fixtures, and its status update before starting another architectural layer.
+
+**Battle and art planning (November 8):** Decisions 0006–0008 record the side-view timeline battle direction, the public-repository policy that external art is fetched locally and never committed, and the move to 32-pixel tiles at 640 × 360. M5.3 onward was re-sequenced and the planned S1 track was added; no checkbox changed and nothing was implemented.
 
 **Ad-hoc documentation continuity correction (October 7):** Current M4/M5 delivery labels and the next-action links now agree with STATUS. Milestone order and acceptance checkboxes are unchanged; implementation evidence remains in the dated STATUS records.
 
@@ -229,17 +232,22 @@ Record measured capacity separately from the provisional 500/1,500/4,000 particl
 
 ## M5 — Battle and core RPG rules
 
-**Player-visible outcome:** Enter a short turn-based battle, select an action or item, see readable feedback, win or lose, and return with correct persistent rewards.
+**Player-visible outcome:** Enter a side-view battle with a visible turn timeline, choose actions for a party, exploit weaknesses and rows, see readable animated feedback, win, lose or escape, and return with correct persistent rewards.
+
+**Design direction (November 8, 2026):** [Decision 0006](decisions/0006-battle-system-direction.md) replaces the dialogue-window battle presentation with a dedicated side-view battle screen: visible turn timeline (wait mode default, optional active mode), party of four as the target, three-row formations with pincer/back attacks and area falloff, a single weakness → break → momentum → combo loop with passive MP recovery, visible map enemies plus a threat meter, and modern conveniences (speed, auto/repeat, always-available escape on ordinary fights, instant retry, previews, bestiary). Packets M5.3 onward below were re-sequenced for that direction; the earlier M5.3–M5.7 scope (consumable, presentation, rewards/defeat, expansion, preparation) is preserved inside them.
 
 ### Work packets
 
 - [x] **M5.1 — Pure battle kernel.** The authored one-hero/one-enemy practice encounter uses integer stats, a separate seeded gameplay stream, Attack and Guard, explicit command/result/victory/defeat phases, and pinned deterministic traces. No persistent battle state or rewards yet.
-- [x] **M5.2 — Integration lifecycle.** The Workshop Supply Room sigil starts an optional battle through an authored `encounterId`; loading failure, cancellation, victory, defeat, Retry and Leave preserve the exploration room and focus. Local checks passed; Ariel's play review and source delivery remain open.
-- [ ] **M5.3 — Commands and inventory.** Add a consumable, invalid-target handling, cancellation before commitment, and atomic item spending.
-- [ ] **M5.4 — Presentation sequence.** Show already-resolved results through animation, PixelFX, numbers, and audio. Add skip/accelerate/reduced-effects behavior without changing outcomes.
-- [ ] **M5.5 — Reward and defeat rules.** Cover simultaneous defeat, repeated completion callbacks, rewards, escape if included, and game-over/retry behavior.
-- [ ] **M5.6 — Controlled expansion.** Add a small party, one equipment modifier, a skill, and a status effect only after the minimum battle passes its tests.
-- [ ] **M5.7 — Preparation and economy loop.** Add transactional currency, one shop, usable items, equip/unequip comparison, and one paid rest/recovery point. Until M6.4 adds an explicit world clock, rest restores resources without implicitly advancing game time. Keep prices and rules authored and validated; do not introduce crafting or a generalized economy engine.
+- [x] **M5.2 — Integration lifecycle.** The Workshop Supply Room sigil starts an optional battle through an authored `encounterId`; loading failure, cancellation, victory, defeat, Retry and Leave preserve the exploration room and focus. Local checks passed; Ariel's play review and source delivery remain open. Its dialogue-window presentation is superseded by M5.3; whether to commit it first as a stepping stone is Ariel's decision.
+- [ ] **M5.3 — Battle screen and visible timeline.** A dedicated battle scene with side-view placement, command and status windows on the shared UI, and a timeline kernel whose preview equals execution. One hero against two enemies; Attack, Guard, one consumable with atomic spending, and Escape; invalid targets rejected and cancellation before commitment. Resolved events play back with hit flash, damage numbers, PixelFX and skip/accelerate without changing outcomes. Placeholder or original art is acceptable.
+- [ ] **M5.4 — Rows and party.** Three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, and pincer/back-attack orientation from one rule. Party grows from two to four members.
+- [ ] **M5.5 — Weakness, break and momentum.** Authored weaknesses and shields (per encounter and per phase), break stun and timeline push-back, the shared momentum gauge and end-of-round MP recovery per full pip. Bestiary discovery records commit atomically with a save-schema and migration decision.
+- [ ] **M5.6 — Rewards, defeat and retry.** Experience/currency/item rewards granted exactly once, simultaneous defeat, repeated completion callbacks, instant retry from battle start, explicit game-over/checkpoint policy, and escape rules including content-marked no-escape fights.
+- [ ] **M5.7 — Map encounters and threat.** Visible roaming enemies with first-strike/back-attack contact, the threat meter with safe areas and a separate seeded encounter stream, neutral threat-triggered fights, and the classic/visible/hybrid Settings toggle.
+- [ ] **M5.8 — Combos and pacing options.** The first two-member combo tech using the multi-actor action model, the optional active-time mode, battle speed, auto-battle and repeat-last-turn.
+- [ ] **M5.9 — Controlled expansion.** One equipment modifier, one skill and one status effect, after the minimum battle passes its tests.
+- [ ] **M5.10 — Preparation and economy loop.** Add transactional currency, one shop, usable items, equip/unequip comparison, and one paid rest/recovery point. Until M6.4 adds an explicit world clock, rest restores resources without implicitly advancing game time. Keep prices and rules authored and validated; do not introduce crafting or a generalized economy engine.
 
 ### Acceptance
 
@@ -250,6 +258,24 @@ Battle saves remain checkpoint-only unless a separately tested serialization des
 Before M5 exits, the player can prepare for a second battle through at least one purchase, item use, equipment decision, recovery service, or progression reward. Charges, inventory changes and derived statistics commit atomically and remain correct after save/load.
 
 **Defer:** Real-time swarms, multiplayer combat, universal skill trees, hundreds of statuses, and an arbitrary formula interpreter.
+
+## S1 — World scale and external art (planned)
+
+**Player-visible outcome:** The world and battles run at 32-pixel tiles in a 640 × 360 view, with animated LPC-derived characters and Stone Soup creatures available locally, while the public repository contains no third-party art and still builds and plays with fallback art.
+
+Governing notes: [Decision 0007](decisions/0007-public-repo-external-art-assets.md) (public repo, private external art, fetch-don't-redistribute) and [Decision 0008](decisions/0008-32px-world-scale.md) (32-pixel tiles, 640 × 360). Source material to port lives in Ariel's private DanJen Delver project; nothing is copied until each packet runs.
+
+### Work packets
+
+- [ ] **S1.1 — Ignore rules and guards.** Add ignored roots for fetched sources and derived output before any import, plus a check that fails if tracked files contain external art. Verify with a dry run that no art appears in `git status`.
+- [ ] **S1.2 — Pinned manifests and fetch scripts.** Cross-platform Node fetch scripts that download LPC (pinned revision) and Stone Soup from their original sources, verify per-file hashes, and write only to ignored folders. Committed manifests hold URLs, revisions, hashes and license metadata only.
+- [ ] **S1.3 — Configurable scale.** Move tile size and logical view out of constants; keep 16-pixel behavior passing, then switch to 640 × 360 and rerun layout/browser checks.
+- [ ] **S1.4 — 32-pixel world with committable fallback art.** Migrate the demo maps to 32-pixel tiles using original or otherwise committable art; confirm old saves restore the same tiles; re-baseline benchmarks and canvas captures.
+- [ ] **S1.5 — LPC bake tooling.** Port the LPC recipe rules and PixiPPL reducer adapter as offline tools writing only to ignored output, with generated per-file credits and chosen-license records. Decide the 144-pixel oversized-frame question against the pack format.
+- [ ] **S1.6 — Creature motion.** Port the pixel-motion functions (shadow mask, shape, pose) as a typed, tested module and bake poses into owned Phaser textures for battlers and map enemies, with reduced-motion fallback.
+- [ ] **S1.7 — Public build decision.** Ariel chooses how public builds obtain art (fallback-only, local build-and-deploy, or pinned upstream fetch during the build) before any external art is deployed.
+
+S1.1–S1.4 can proceed before or alongside M5.3, which uses placeholder art. S1.5–S1.6 should land before battle presentation is judged on final art.
 
 ## M6 — Complete chapter and expansive-world proof
 
@@ -324,7 +350,7 @@ A commit is not a build. A build is not a deployment. A deployment is not a play
 
 ## Next implementation packet
 
-Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for the current play-review and delivery action. M4's local impact cue is accepted; M5.1–M5.2 gameplay is the uncommitted local candidate awaiting review. After that boundary, M5.3 is the next gameplay implementation packet, followed by M5.4–M5.5 in the order above. Expand M4.4–M4.6 against tested battle needs and collect hosted G1.3/quest feedback separately.
+Follow [STATUS's next concrete packet](STATUS.md#next-concrete-packet) for the current review and delivery action. M4's local impact cue is accepted; M5.1–M5.2 gameplay is the uncommitted local candidate, now superseded in presentation by the [battle direction](decisions/0006-battle-system-direction.md). After Ariel reviews the November 8 planning notes, S1.1 (ignore rules and guards) and M5.3 (battle screen and visible timeline) are the next implementation packets, followed by the M5 and S1 orders above. Expand M4.4–M4.6 against tested battle needs and collect hosted G1.3/quest feedback separately.
 
 G1.2, M3 and G1.3 are already included in the last recorded public build. Preserve controller migration, modal ownership, lazy loading, cancellation, optimistic storage and residency tests throughout subsequent work. Reuse `npm run benchmark` for comparable future measurements; preserve the exact skin and do not treat a headless baseline as phone certification.
 

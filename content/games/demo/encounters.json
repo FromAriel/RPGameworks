@@ -1,10 +1,15 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "encounters": [{
     "id": "demo:encounter.practice-sigil",
     "name": "Practice Sigil",
     "seed": 1776,
-    "hero": {"name": "Hero", "hp": 24, "attack": 6, "defense": 2},
-    "enemy": {"name": "Practice Sigil", "hp": 18, "attack": 4, "defense": 1}
+    "party": [
+      {"id": "hero", "name": "Hero", "frame": "hero-right", "hp": 30, "attack": 7, "defense": 2, "speed": 10}
+    ],
+    "enemies": [
+      {"id": "sigil", "name": "Practice Sigil", "frame": "sigil", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
+      {"id": "shard", "name": "Sigil Shard", "frame": "sigil-lit", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
+    ]
   }]
 }

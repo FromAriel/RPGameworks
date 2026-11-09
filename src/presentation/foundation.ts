@@ -11,6 +11,7 @@ import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
 import { DialogueSession } from '../domain/dialogue';
 import { BattleSession } from '../domain/battle';
+import type { BattleCommand, BattleItemUse } from '../domain/battle';
 import { loadEncounter } from '../platform/encounter-loader';
 import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
@@ -74,6 +75,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     message: MessageSession | null = null;
     dialogue:DialogueSession|null=null;
     battle: BattleSession | null = null;
+    /** Interim presentation state: the latest resolved events are on screen and await Continue. */
+    battleReview = false;
     private battleLoad: AbortController | null = null;
     private battleObjectId: string | null = null;
     transitionError: string | null = null;
@@ -257,41 +260,77 @@ export function createFoundation(elements: FoundationElements, onError: (message
       try{
         const encounter=await loadEncounter(elements.base,content.game,id,request.signal);
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
-        this.battle=new BattleSession(encounter);this.battleLoad=null;this.showBattle();
+        const uses=new Map<string,BattleItemUse>();
+        for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
+        this.battle=new BattleSession(encounter,uses);this.battleLoad=null;
+        this.battleReview=this.battle.snapshot().events.length>0;this.showBattle();
       }catch(cause){
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
         this.battleLoad=null;this.battleObjectId=null;this.setMode('message');
         this.dialog.show('Battle unavailable',`The encounter could not load: ${cause instanceof Error?cause.message:String(cause)}`,'Your room is unchanged.',null,'Return to game');
       }finally{lifetime.removeEventListener('abort',cancel);}
     }
+    /** Interim M5.3a presentation in the dialogue window; M5.3b replaces it with the side-view battle scene. */
     private showBattle():void{
       const battle=this.battle;if(!battle)return;
-      const state=battle.snapshot(),encounter=battle.encounter;
-      const feedback=state.events.map(event=>event.kind==='guard'?'You guard against the next hit.':
-        `${event.actor==='hero'?encounter.hero.name:encounter.enemy.name} deals ${event.damage} damage.`).join(' ');
-      const title=state.phase==='victory'?'Victory':state.phase==='defeat'?'Defeat':encounter.name;
-      const text=`${encounter.hero.name}: ${state.heroHp}/${encounter.hero.hp} HP  •  ${encounter.enemy.name}: ${state.enemyHp}/${encounter.enemy.hp} HP\n${feedback||'Choose a command. Leave to return to exploration.'}`;
-      const options=state.phase==='command'?[['attack','Attack'],['guard','Guard'],['leave','Leave']]:
-        state.phase==='result'?[['continue','Continue']]:state.phase==='victory'?[['finish','Finish']]:[['retry','Retry'],['leave','Leave']];
-      this.dialog.show(title,text,`Round ${state.round} · ${state.phase}`,null,
-        state.phase==='result'?'Next round':state.phase==='victory'?'Return to room':'Close battle');
-      this.dialog.showChoices(options.map(([id,label])=>({id:id!,label:label!,enabled:true})),id=>this.chooseBattle(id),true);
+      const state=battle.snapshot(),session=elements.session.current;
+      const names=new Map(state.combatants.map(c=>[c.id,c.name]));
+      const itemName=(itemId:string)=>{const item=session.catalog.items.find(candidate=>candidate.id===itemId);return item?session.catalog.strings.en[item.nameKey]??itemId:itemId;};
+      const feedback=state.events.map(event=>event.kind==='guard'?`${names.get(event.actor)} guards.`:
+        event.kind==='heal'?`${names.get(event.actor)} uses ${itemName(event.itemId)}: ${names.get(event.target)} recovers ${event.amount} HP.`:
+        event.kind==='escape'?`${names.get(event.actor)} gets away.`:
+        `${names.get(event.actor)} hits ${names.get(event.target)} for ${event.damage}${event.guarded?' (guarded)':''}.${event.defeated?` ${names.get(event.target)} is defeated.`:''}`).join(' ');
+      const hp=(side:'party'|'enemy')=>state.combatants.filter(c=>c.side===side).map(c=>c.hp>0?`${c.name} ${c.hp}/${c.maxHp} HP`:`${c.name} defeated`).join('  •  ');
+      const timeline=state.timeline.slice(0,6).map(turn=>names.get(turn.actor)).join(' → ');
+      const title=state.phase==='victory'?'Victory':state.phase==='defeat'?'Defeat':state.phase==='escaped'?'Escaped':battle.encounter.name;
+      const review=this.battleReview&&state.phase==='command';
+      const prompt=review||state.phase!=='command'?'':`${names.get(state.active!)}'s turn. Choose a command.`;
+      const text=[hp('party'),hp('enemy'),feedback,prompt,state.phase==='command'?`Next: ${timeline}`:''].filter(Boolean).join('\n');
+      let options:{id:string;label:string;enabled:boolean;reason?:string}[];
+      if(review)options=[{id:'continue',label:'Continue',enabled:true}];
+      else if(state.phase==='command'){
+        const active=state.active!;
+        options=state.combatants.filter(c=>c.side==='enemy'&&c.hp>0).map(c=>({id:`attack:${c.id}`,label:`Attack ${c.name}`,enabled:true}));
+        options.push({id:'guard',label:'Guard',enabled:true});
+        for(const item of session.catalog.items){
+          if(!item.battleUse)continue;
+          const count=session.count(item.id);if(count<=0)continue;
+          const reason=battle.validate({type:'item',itemId:item.id,target:active});
+          options.push({id:`item:${item.id}`,label:`Use ${itemName(item.id)} (${count})`,enabled:reason===null,...(reason==='full-hp'?{reason:'HP is already full.'}:reason?{reason:'Cannot be used now.'}:{})});
+        }
+        options.push({id:'escape',label:'Escape',enabled:true});
+      }else if(state.phase==='victory')options=[{id:'finish',label:'Finish',enabled:true}];
+      else if(state.phase==='defeat')options=[{id:'retry',label:'Retry',enabled:true},{id:'leave',label:'Leave',enabled:true}];
+      else options=[{id:'leave',label:'Return to room',enabled:true}];
+      this.dialog.show(title,text,`Turn ${state.turn} · ${review?'result':state.phase}`,null,'Close battle');
+      this.dialog.showChoices(options,id=>this.chooseBattle(id),true);
     }
     private chooseBattle(id:string):void{
       const battle=this.battle;if(!battle)return;
       const before=battle.snapshot();
-      if(before.phase==='command'&&(id==='attack'||id==='guard')){
-        const after=battle.command(id);
+      if(id==='continue'&&this.battleReview){this.battleReview=false;this.showBattle();return;}
+      if(before.phase==='command'&&!this.battleReview){
+        const active=before.active!;
+        const command:BattleCommand|null=id==='guard'?{type:'guard'}:id==='escape'?{type:'escape'}:
+          id.startsWith('attack:')?{type:'attack',target:id.slice(7)}:id.startsWith('item:')?{type:'item',itemId:id.slice(5),target:active}:null;
+        if(!command||battle.validate(command)!==null)return;
+        if(command.type==='item'){
+          // Spend the item first; the battle only resolves if that transaction committed.
+          const result=elements.session.transact({prerequisites:{type:'itemAtLeast',itemId:command.itemId,quantity:1},actions:[{type:'changeItem',itemId:command.itemId,delta:-1}]});
+          if(result.kind!=='committed'){this.showBattle();return;}
+        }
+        const after=battle.command(command);
         const object=this.room?.content.map.objects.find(candidate=>candidate.id===this.battleObjectId);
         after.events.forEach((event,index)=>{
           if(event.kind!=='attack')return;
-          const anchor=event.actor==='enemy'||!object?{kind:'actor' as const,id:'hero'}:
+          const targetIsEnemy=after.combatants.find(c=>c.id===event.target)?.side==='enemy';
+          const anchor=!targetIsEnemy||!object?{kind:'actor' as const,id:'hero'}:
             {kind:'world' as const,x:object.x*TILE+TILE/2,y:object.y*TILE+TILE/2};
-          this.room?.effects.request({effectId:'demo:fx.impact',anchor,seed:after.round*2+index});
+          this.room?.effects.request({effectId:'demo:fx.impact',anchor,seed:after.turn*4+index});
         });
-      }else if(before.phase==='result'&&id==='continue')battle.continue();
-      else if(before.phase==='defeat'&&id==='retry')battle.retry();
-      else if((before.phase==='command'||before.phase==='defeat')&&id==='leave'||before.phase==='victory'&&id==='finish'){this.resume();return;}
+        this.battleReview=after.phase==='command';
+      }else if(before.phase==='defeat'&&id==='retry'){battle.retry();this.battleReview=battle.snapshot().events.length>0;}
+      else if((before.phase==='defeat'||before.phase==='escaped')&&id==='leave'||before.phase==='victory'&&id==='finish'){this.resume();return;}
       else return;
       this.showBattle();
     }
@@ -343,9 +382,10 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private cancelModal(): void {
       if(this.mode==='battle'){
         const phase=this.battle?.snapshot().phase;
-        if(phase==='result')this.chooseBattle('continue');
+        if(phase==='command'&&this.battleReview)this.chooseBattle('continue');
         else if(phase==='victory')this.chooseBattle('finish');
-        else if(phase==='command'||phase==='defeat')this.chooseBattle('leave');
+        else if(phase==='command'){this.battle!.command({type:'escape'});this.resume();} // Cancel escapes; ordinary escapes always work.
+        else if(phase==='defeat'||phase==='escaped')this.chooseBattle('leave');
         else this.resume();
         return;
       }
@@ -490,7 +530,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
-        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,round:state.round,heroHp:state.heroHp,enemyHp:state.enemyHp};})() : null,
+        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,review:current.battleReview&&state.phase==='command',hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor)};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,

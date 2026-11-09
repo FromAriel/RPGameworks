@@ -109,16 +109,28 @@ export function readFacts(value, file = 'facts.json') {
   return freezeCopy(data);
 }
 
-/** @param {unknown} value @param {string} file */
-export function readEncounters(value, file = 'encounters.json') {
+/**
+ * @param {unknown} value @param {string} file
+ * @param {readonly string[]=} frames atlas frames available to battlers; omitted at runtime where the atlas already loaded
+ */
+export function readEncounters(value, file = 'encounters.json', frames) {
   if (!validateEncounters(value)) schemaFailure(value, file, validateEncounters.errors);
   const data = /** @type {import('./generated/encounters.js').EncounterCatalog} */ (value);
   const ids = new Set();
+  const known = frames ? new Set(frames) : null;
   /** @type {ContentIssue[]} */ const issues = [];
   data.encounters.forEach((encounter, index) => {
     if (ids.has(encounter.id)) issues.push({file, id:encounter.id, path:`/encounters/${index}/id`, message:'Duplicate encounter ID', value:encounter.id});
     ids.add(encounter.id);
-    if (!encounter.name.trim() || !encounter.hero.name.trim() || !encounter.enemy.name.trim()) issues.push({file,id:encounter.id,path:`/encounters/${index}`,message:'Combatant names must contain visible text',value:encounter});
+    if (!encounter.name.trim()) issues.push({file,id:encounter.id,path:`/encounters/${index}/name`,message:'Encounter name must contain visible text',value:encounter.name});
+    const combatantIds = new Set();
+    for (const side of /** @type {const} */ (['party', 'enemies'])) encounter[side].forEach((combatant, slot) => {
+      const path = `/encounters/${index}/${side}/${slot}`;
+      if (combatantIds.has(combatant.id)) issues.push({file,id:encounter.id,path:`${path}/id`,message:'Duplicate combatant ID in encounter',value:combatant.id});
+      combatantIds.add(combatant.id);
+      if (!combatant.name.trim()) issues.push({file,id:encounter.id,path:`${path}/name`,message:'Combatant names must contain visible text',value:combatant.name});
+      if (known && !known.has(combatant.frame)) issues.push({file,id:encounter.id,path:`${path}/frame`,message:'Unknown battler frame',value:combatant.frame});
+    });
   });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);

@@ -27,6 +27,7 @@
   "spawns": [{"id": "from-workshop", "x": 4, "y": 3, "facing": "left"}],
   "objects": [
     {"id": "demo:object.supply-room.return-door", "frame": "door", "x": 6, "y": 3, "solid": false},
+    {"id": "demo:object.supply-room.tonic-crate", "frame": "chest-closed", "x": 5, "y": 1, "solid": true, "chest": {"itemId": "demo:item.tonic", "quantity": 2, "openedFrame": "chest-open", "openedMessageId": "tonic-crate-found", "emptyMessageId": "tonic-crate-empty"}},
     {"id":"demo:object.practice-sigil","frame":"sigil","x":2,"y":3,"solid":true,"states":[
       {"id":"ready","frame":"sigil","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.practice-sigil"}}
     ]}
@@ -34,6 +35,14 @@
   "exits": [
     {"id": "to-workshop", "x": 6, "y": 3, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-supply-room"}
   ],
-  "strings": {"en": {"room.name": "Workshop Supply Room"}},
-  "messages": []
+  "strings": {"en": {
+    "room.name": "Workshop Supply Room",
+    "tonic-crate.name": "Supply crate",
+    "tonic-crate.found": "Two Workshop tonics are packed in straw. They restore HP in battle.",
+    "tonic-crate.empty": "Only straw is left in the crate."
+  }},
+  "messages": [
+    {"id": "tonic-crate-found", "speakerKey": "tonic-crate.name", "pages": ["tonic-crate.found"]},
+    {"id": "tonic-crate-empty", "speakerKey": "tonic-crate.name", "pages": ["tonic-crate.empty"]}
+  ]
 }

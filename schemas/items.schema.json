@@ -35,6 +35,25 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9999
+          },
+          "battleUse": {
+            "description": "Optional use during battle. Only healing exists so far (M5.3).",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "heal"
+              },
+              "amount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999
+              }
+            },
+            "required": [
+              "type",
+              "amount"
+            ]
           }
         },
         "required": [

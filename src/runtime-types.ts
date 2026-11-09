@@ -6,7 +6,7 @@ export interface RuntimeSnapshot {
   /** Logical canvas size and world tile size from the game manifest. */
   view: { width: number; height: number; tileSize: number };
   inputMode: 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'inventory' | 'save';
-  battle: { encounterId: string; phase: string; round: number; heroHp: number; enemyHp: number } | null;
+  battle: { encounterId: string; phase: string; turn: number; active: string | null; review: boolean; hp: Record<string, number>; timeline: string[] } | null;
   messageId: string | null;
   messagePage: number;
   interactionTarget: string | null;

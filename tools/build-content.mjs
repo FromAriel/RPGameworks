@@ -49,9 +49,9 @@ try {
   let questsData={schemaVersion:1,quests:[]};
   if(game.questsFile){const file=realpathSync(join(source,game.questsFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.questsFile}: file escapes the content root`);questsData=readJSON(file);}
   const quests=readQuests(questsData);
-  let encountersData={schemaVersion:1,encounters:[]};
+  let encountersData={schemaVersion:2,encounters:[]};
   if(game.encountersFile){const file=realpathSync(join(source,game.encountersFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.encountersFile}: file escapes the content root`);encountersData=readJSON(file);}
-  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile):encountersData;
+  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames):encountersData;
   for(const [id,map] of maps){validateMapFacts(map,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   for(const [id,map] of maps){validateMapDialogues(map,quests.quests,catalog,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   validateWorld(game, maps, catalog, encounters);

@@ -25,6 +25,16 @@
       "nameKey": "workshop-key.name",
       "descriptionKey": "workshop-key.description",
       "maxStack": 1
+    },
+    {
+      "id": "demo:item.tonic",
+      "nameKey": "tonic.name",
+      "descriptionKey": "tonic.description",
+      "maxStack": 9,
+      "battleUse": {
+        "type": "heal",
+        "amount": 12
+      }
     }
   ],
   "strings": {
@@ -36,7 +46,9 @@
       "ledger.name": "Archive ledger",
       "ledger.description": "A bound record from the Gallery Storeroom. The archive clerk asked for it.",
       "workshop-key.name": "Workshop key",
-      "workshop-key.description": "A small iron key for the Workshop's west supply-room door. It stays on your keyring."
+      "workshop-key.description": "A small iron key for the Workshop's west supply-room door. It stays on your keyring.",
+      "tonic.name": "Workshop tonic",
+      "tonic.description": "A small bottle of bitter restorative from the supply room. In battle, it restores 12 HP to one ally."
     }
   }
 }

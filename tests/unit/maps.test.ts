@@ -51,8 +51,8 @@ describe('canonical map schema and local semantics', () => {
   it('reports an unknown encounter at the authored map field', () => {
     const maps=worldMaps();
     const catalog=readEncounters(json('content/games/demo/encounters.json'));
-    expect(() => validateWorld(manifest(), maps, undefined, readEncounters({schemaVersion:1,encounters:[{...catalog.encounters[0],id:'demo:encounter.other'}]})))
-      .toThrow(/maps\/supply-room.json \[demo:object.practice-sigil\] \/objects\/1\/states\/0\/interaction\/encounterId/);
+    expect(() => validateWorld(manifest(), maps, undefined, readEncounters({schemaVersion:2,encounters:[{...catalog.encounters[0],id:'demo:encounter.other'}]})))
+      .toThrow(/maps\/supply-room.json \[demo:object.practice-sigil\] \/objects\/2\/states\/0\/interaction\/encounterId/);
   });
   it.each(badMaps)('rejects %s', (_name, change, expected) => {
     const map = workshop(); change(map);

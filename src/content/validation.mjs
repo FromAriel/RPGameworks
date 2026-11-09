@@ -2,6 +2,7 @@ import validateMap from './generated/map-validator.mjs';
 import validateGame from './generated/game-validator.mjs';
 import validateItems from './generated/items-validator.mjs';
 import validateFacts from './generated/facts-validator.mjs';
+import validateEncounters from './generated/encounters-validator.mjs';
 import { createCollision } from '../domain/map.mjs';
 
 /** @typedef {import('./generated/map.js').MapDefinition} MapDefinition */
@@ -105,6 +106,21 @@ export function readFacts(value, file = 'facts.json') {
   /** @type {ContentIssue[]} */ const issues=[];
   data.facts.forEach((fact,index)=>{if(seen.has(fact.id))issues.push({file,id:fact.id,path:`/facts/${index}/id`,message:'Duplicate fact ID',value:fact.id});seen.add(fact.id);});
   if(issues.length)throw new ContentError(issues.slice(0,MAX_ISSUES));
+  return freezeCopy(data);
+}
+
+/** @param {unknown} value @param {string} file */
+export function readEncounters(value, file = 'encounters.json') {
+  if (!validateEncounters(value)) schemaFailure(value, file, validateEncounters.errors);
+  const data = /** @type {import('./generated/encounters.js').EncounterCatalog} */ (value);
+  const ids = new Set();
+  /** @type {ContentIssue[]} */ const issues = [];
+  data.encounters.forEach((encounter, index) => {
+    if (ids.has(encounter.id)) issues.push({file, id:encounter.id, path:`/encounters/${index}/id`, message:'Duplicate encounter ID', value:encounter.id});
+    ids.add(encounter.id);
+    if (!encounter.name.trim() || !encounter.hero.name.trim() || !encounter.enemy.name.trim()) issues.push({file,id:encounter.id,path:`/encounters/${index}`,message:'Combatant names must contain visible text',value:encounter});
+  });
+  if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
 }
 
@@ -337,8 +353,9 @@ export function readMap(value, file = 'map.json', frames) {
       if (!messages.some(message => message.id === id)) issue(`/objects/${index}`, 'Message does not exist', id);
     }
     object.states?.forEach((state,stateIndex)=>{const interaction=state.interaction;if(!interaction)return;
-      if(!!interaction.messageId===!!interaction.dialogueId)issue(`/objects/${index}/states/${stateIndex}/interaction`,'Choose exactly one message or dialogue',object.id);
+      if([interaction.messageId,interaction.dialogueId,interaction.encounterId].filter(Boolean).length!==1)issue(`/objects/${index}/states/${stateIndex}/interaction`,'Choose exactly one message, dialogue, or encounter',object.id);
       if(interaction.dialogueId&&(interaction.actions||interaction.prerequisites||interaction.rejectionMessageId))issue(`/objects/${index}/states/${stateIndex}/interaction`,'Dialogue interaction cannot also run message actions or denial',object.id);
+      if(interaction.encounterId&&(interaction.actions||interaction.prerequisites||interaction.rejectionMessageId))issue(`/objects/${index}/states/${stateIndex}/interaction`,'Encounter interaction cannot also run message actions or denial',object.id);
       if(interaction.dialogueId&&!dialogues.some(dialogue=>dialogue.id===interaction.dialogueId))issue(`/objects/${index}/states/${stateIndex}/interaction/dialogueId`,'Dialogue does not exist',interaction.dialogueId);
     });
     const cell = `${object.x},${object.y}`;
@@ -355,8 +372,9 @@ export function readMap(value, file = 'map.json', frames) {
 
 /** Complete build-time graph checks. Runtime does not fetch all maps to repeat them.
  * @param {GameManifest} game @param {ReadonlyMap<string, MapDefinition>} maps @param {ItemCatalog=} catalog
+ * @param {import('./generated/encounters.js').EncounterCatalog=} encounters
  */
-export function validateWorld(game, maps, catalog) {
+export function validateWorld(game, maps, catalog, encounters) {
   /** @type {ContentIssue[]} */ const issues = [];
   const objectIds = new Set();
   const registered = new Set(game.maps.map((entry) => entry.id));
@@ -372,6 +390,10 @@ export function validateWorld(game, maps, catalog) {
       if (objectIds.has(object.id)) issue(entry.file, map.id, '/objects', 'Duplicate world placement ID', object.id);
       objectIds.add(object.id);
     }
+    map.objects.forEach((object, objectIndex) => object.states?.forEach((state, stateIndex) => {
+      const id = state.interaction?.encounterId;
+      if (id && !encounters?.encounters.some(encounter => encounter.id === id)) issue(entry.file, object.id, `/objects/${objectIndex}/states/${stateIndex}/interaction/encounterId`, 'Encounter does not exist', id);
+    }));
     map.exits.forEach((exit, index) => {
       const target = registered.has(exit.targetMap) ? maps.get(exit.targetMap) : undefined;
       if (!target) issue(entry.file, exit.id, `/exits/${index}/targetMap`, 'Target map does not exist', exit.targetMap);

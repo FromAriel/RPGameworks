@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "encounters": [{
+    "id": "demo:encounter.practice-sigil",
+    "name": "Practice Sigil",
+    "seed": 1776,
+    "hero": {"name": "Hero", "hp": 24, "attack": 6, "defense": 2},
+    "enemy": {"name": "Practice Sigil", "hp": 18, "attack": 4, "defense": 1}
+  }]
+}

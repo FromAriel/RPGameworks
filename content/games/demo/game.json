@@ -27,5 +27,6 @@
   ],
   "itemsFile": "items.json",
   "factsFile": "facts.json",
-  "questsFile": "quests.json"
+  "questsFile": "quests.json",
+  "encountersFile": "encounters.json"
 }

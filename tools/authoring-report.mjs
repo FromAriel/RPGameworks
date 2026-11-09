@@ -21,8 +21,9 @@ function reachable(start, edges) {
  * @param {import('../src/content/generated/items.js').ItemCatalog} items
  * @param {import('../src/content/generated/facts.js').FactCatalog} facts
  * @param {{quests: readonly {id:string}[]}} quests
+ * @param {{encounters: readonly {id:string}[]}=} encounters
  */
-export function createAuthoringReport(game, maps, items, facts, quests) {
+export function createAuthoringReport(game, maps, items, facts, quests, encounters) {
   const definitions = new Map();
   const key = (kind, file, id) => `${kind}\u0000${file}\u0000${id}`;
   const define = (kind, id, file, path) => {
@@ -35,6 +36,7 @@ export function createAuthoringReport(game, maps, items, facts, quests) {
   const itemFile = game.itemsFile ?? 'items.json';
   const factFile = game.factsFile ?? 'facts.json';
   const questFile = game.questsFile ?? 'quests.json';
+  const encounterFile = game.encountersFile ?? 'encounters.json';
   const objectFiles = new Map();
   for (const [index, entry] of game.maps.entries()) {
     const map = maps.get(entry.id);
@@ -49,6 +51,7 @@ export function createAuthoringReport(game, maps, items, facts, quests) {
   for (const stringKey of Object.keys(items.strings.en)) define('string', stringKey, itemFile, `/strings/en/${pointer(stringKey)}`);
   facts.facts.forEach((fact, i) => define('fact', fact.id, factFile, `/facts/${i}/id`));
   quests.quests.forEach((quest, i) => define('quest', quest.id, questFile, `/quests/${i}/id`));
+  encounters?.encounters.forEach((encounter, i) => define('encounter', encounter.id, encounterFile, `/encounters/${i}/id`));
 
   const condition = (node, file, ownerId, path, selfId) => {
     if (!node) return;
@@ -120,6 +123,7 @@ export function createAuthoringReport(game, maps, items, facts, quests) {
         local('message', interaction.messageId, file, object.id, `${stateAt}/interaction/messageId`);
         local('message', interaction.rejectionMessageId, file, object.id, `${stateAt}/interaction/rejectionMessageId`);
         local('dialogue', interaction.dialogueId, file, object.id, `${stateAt}/interaction/dialogueId`);
+        if (interaction.encounterId) reference('encounter', interaction.encounterId, encounterFile, file, object.id, `${stateAt}/interaction/encounterId`);
         condition(interaction.prerequisites, file, object.id, `${stateAt}/interaction/prerequisites`, object.id);
         actions(interaction.actions, file, object.id, `${stateAt}/interaction/actions`, object.id);
       });
@@ -139,7 +143,7 @@ export function createAuthoringReport(game, maps, items, facts, quests) {
   const warnings = [];
   for (const definition of sorted) {
     definition.referencedBy.sort((a, b) => compare(a.file, b.file) || compare(a.path, b.path) || compare(a.id, b.id));
-    if (['message', 'dialogue', 'string', 'item', 'fact', 'quest'].includes(definition.kind) && definition.referencedBy.length === 0) {
+    if (['message', 'dialogue', 'string', 'item', 'fact', 'quest', 'encounter'].includes(definition.kind) && definition.referencedBy.length === 0) {
       warnings.push({severity: 'warning', code: 'orphan-definition', file: definition.file, id: definition.id, path: definition.path, message: `Unreferenced ${definition.kind} definition`});
     }
   }

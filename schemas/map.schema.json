@@ -30,9 +30,9 @@
         "rejectionMessageId":{"type":"string","pattern":"^[a-z][a-z0-9_-]{0,63}$"},
         "prerequisites":{"$ref":"#/definitions/condition"},
         "actions":{"type":"array","minItems":1,"maxItems":16,"items":{"$ref":"#/definitions/action"}}
-        ,"dialogueId":{"type":"string"}
+        ,"dialogueId":{"type":"string"},"encounterId":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,31}:encounter\\.[a-z][a-z0-9.-]{0,95}$"}
       },
-      "oneOf":[{"properties":{"messageId":{}},"required":["messageId"]},{"properties":{"dialogueId":{}},"required":["dialogueId"]}]
+      "oneOf":[{"properties":{"messageId":{}},"required":["messageId"]},{"properties":{"dialogueId":{}},"required":["dialogueId"]},{"properties":{"encounterId":{}},"required":["encounterId"]}]
     },
     "dialogueChoice": {"type":"object","additionalProperties":false,"properties":{"id":{"type":"string"},"labelKey":{"type":"string"},"when":{"$ref":"#/definitions/condition"},"enabledWhen":{"$ref":"#/definitions/condition"},"disabledReasonKey":{"type":"string"},"actions":{"type":"array","minItems":1,"maxItems":16,"items":{"$ref":"#/definitions/action"}},"nextNodeId":{"type":"string"}},"required":["id","labelKey"]},
     "dialogueNode": {"type":"object","additionalProperties":false,"properties":{"id":{"type":"string"},"speakerKey":{"type":"string"},"pages":{"type":"array","minItems":1,"maxItems":8,"items":{"type":"string"}},"choices":{"type":"array","minItems":1,"maxItems":8,"items":{"$ref":"#/definitions/dialogueChoice"}}},"required":["id","speakerKey","pages"]},
@@ -100,7 +100,7 @@
           "y": {"type": "integer", "minimum": 0, "maximum": 127},
           "solid": {"type": "boolean"},
           "messageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
-          "states": {"type":"array","minItems":2,"maxItems":16,"items":{"$ref":"#/definitions/objectState"}},
+          "states": {"type":"array","minItems":1,"maxItems":16,"items":{"$ref":"#/definitions/objectState"}},
           "chest": {"type": "object", "additionalProperties": false, "properties": {"itemId": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:item\\.[a-z][a-z0-9.-]{0,95}$"}, "quantity": {"type": "integer", "minimum": 1, "maximum": 9999}, "openedFrame": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"}, "openedMessageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}, "emptyMessageId": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}}, "required": ["itemId", "quantity", "openedFrame", "openedMessageId", "emptyMessageId"]}
         }, "required": ["id", "frame", "x", "y", "solid"]
       }

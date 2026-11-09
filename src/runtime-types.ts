@@ -3,7 +3,8 @@ import type { SessionSnapshot } from './domain/session';
 export interface RuntimeSnapshot {
   session: SessionSnapshot;
   phase: 'booting' | 'ready' | 'error' | 'stopped';
-  inputMode: 'exploration' | 'message' | 'dialogue' | 'transition' | 'transition-error' | 'inventory' | 'save';
+  inputMode: 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'inventory' | 'save';
+  battle: { encounterId: string; phase: string; round: number; heroHp: number; enemyHp: number } | null;
   messageId: string | null;
   messagePage: number;
   interactionTarget: string | null;

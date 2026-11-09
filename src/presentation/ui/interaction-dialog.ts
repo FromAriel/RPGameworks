@@ -48,6 +48,7 @@ export class InteractionDialog {
     this.title.textContent = title; this.text.textContent = text; this.page.textContent = page;
     this.scroll.scrollTop = 0; // A new page starts at its beginning, not the last page's scroll position.
     this.advance.hidden = advanceLabel === null;
+    this.cancel.hidden = false;
     this.advance.textContent = advanceLabel ?? '';
     this.cancel.textContent = cancelLabel;
     if (!this.element.open) {
@@ -59,9 +60,9 @@ export class InteractionDialog {
       (advanceLabel ? this.advance : this.cancel).focus({ preventScroll: true });
     }
   }
-  showChoices(options:readonly AvailableChoice[],choose:(id:string)=>void):void{
+  showChoices(options:readonly AvailableChoice[],choose:(id:string)=>void,hideCancel=false):void{
     this.navigation?.dispose();this.navigation=new MenuNavigation(this.element,this.cancelChoices);
-    this.advance.hidden=true;this.choices.replaceChildren();this.choices.hidden=false;
+    this.advance.hidden=true;this.cancel.hidden=hideCancel;this.choices.replaceChildren();this.choices.hidden=false;
     for(const option of options){const button=document.createElement('button');button.type='button';button.className='ui-action-button';button.dataset.dialogueChoice=option.id;button.textContent=option.label;
       button.disabled=!option.enabled;if(!option.enabled&&option.reason){button.title=option.reason;button.setAttribute('aria-description',option.reason);const reason=document.createElement('span');reason.className='hint';reason.textContent=option.reason;const row=document.createElement('div');row.append(button,reason);this.choices.append(row);}else this.choices.append(button);
       button.addEventListener('click',()=>choose(option.id),{once:true});

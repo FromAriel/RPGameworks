@@ -26,7 +26,10 @@
   "defaultSpawn": "from-workshop",
   "spawns": [{"id": "from-workshop", "x": 4, "y": 3, "facing": "left"}],
   "objects": [
-    {"id": "demo:object.supply-room.return-door", "frame": "door", "x": 6, "y": 3, "solid": false}
+    {"id": "demo:object.supply-room.return-door", "frame": "door", "x": 6, "y": 3, "solid": false},
+    {"id":"demo:object.practice-sigil","frame":"sigil","x":2,"y":3,"solid":true,"states":[
+      {"id":"ready","frame":"sigil","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.practice-sigil"}}
+    ]}
   ],
   "exits": [
     {"id": "to-workshop", "x": 6, "y": 3, "width": 1, "height": 1, "targetMap": "demo:map.workshop", "targetSpawn": "from-supply-room"}

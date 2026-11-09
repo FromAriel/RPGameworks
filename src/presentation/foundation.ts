@@ -10,6 +10,8 @@ import { viewportScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
 import { DialogueSession } from '../domain/dialogue';
+import { BattleSession } from '../domain/battle';
+import { loadEncounter } from '../platform/encounter-loader';
 import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
 import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
@@ -71,6 +73,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
     mode: InputMode = 'exploration';
     message: MessageSession | null = null;
     dialogue:DialogueSession|null=null;
+    battle: BattleSession | null = null;
+    private battleLoad: AbortController | null = null;
+    private battleObjectId: string | null = null;
     transitionError: string | null = null;
     private sceneLifetime: AbortController | null = null;
     private transfer = new TransitionTask<LoadedMap>();
@@ -109,7 +114,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
         this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
         this.transfer = new TransitionTask<LoadedMap>();
-        this.mode = 'exploration'; this.message = null;this.dialogue=null; this.transitionError = null; this.menuPending = false;
+        this.mode = 'exploration'; this.message = null;this.dialogue=null;this.battle=null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
         characterArt ??= new CharacterArt(this.textures, import.meta.env.BASE_URL);
         this.room = new MapView(this, content, elements.session.current, characterArt);
@@ -180,6 +185,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
       }
       if(this.mode==='save'){this.saveMenu?.sample({direction,interact,cancel,menu,burst:false},delta);return;}
       if(this.mode==='dialogue'){this.dialog.sampleChoices({direction,interact,cancel,menu,burst:false},delta);return;}
+      if(this.mode==='battle'){
+        room.sync(delta); // Keep cosmetic timelines alive while exploration simulation is paused.
+        if(this.battle)this.dialog.sampleChoices({direction,interact,cancel,menu,burst:false},delta);
+        else if(cancel)this.cancelModal();
+        return;
+      }
       if (this.mode === 'exploration' && menu) { this.openInventory(); return; }
       if (this.mode !== 'exploration') {
         if (cancel) this.cancelModal();
@@ -193,6 +204,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const target = interact ? room.target(room.actor) : null;
       if (target) {
         let state=room.resolve(target.objectId);if(!state?.interaction)return;
+        if(state.interaction.encounterId){void this.startBattle(state.interaction.encounterId,target.objectId);return;}
         if(state.interaction.dialogueId){
           const dialogueId=state.interaction.dialogueId;
           const graph=content.map.dialogues?.find(candidate=>candidate.id===dialogueId);
@@ -235,6 +247,54 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const locked = mode !== 'exploration';
       elements.burst.disabled = locked; elements.restart.disabled = locked; elements.interact.disabled = locked;
     }
+    private async startBattle(id:string,objectId:string):Promise<void>{
+      if(this.mode!=='exploration'||!this.sceneLifetime)return;
+      const request=new AbortController();this.battleLoad=request;this.battleObjectId=objectId;
+      const lifetime=this.sceneLifetime.signal;
+      const cancel=():void=>request.abort();
+      lifetime.addEventListener('abort',cancel,{once:true});
+      this.setMode('battle');this.dialog.show('Preparing battle','Loading the practice encounter…','',null,'Leave');
+      try{
+        const encounter=await loadEncounter(elements.base,content.game,id,request.signal);
+        if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
+        this.battle=new BattleSession(encounter);this.battleLoad=null;this.showBattle();
+      }catch(cause){
+        if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
+        this.battleLoad=null;this.battleObjectId=null;this.setMode('message');
+        this.dialog.show('Battle unavailable',`The encounter could not load: ${cause instanceof Error?cause.message:String(cause)}`,'Your room is unchanged.',null,'Return to game');
+      }finally{lifetime.removeEventListener('abort',cancel);}
+    }
+    private showBattle():void{
+      const battle=this.battle;if(!battle)return;
+      const state=battle.snapshot(),encounter=battle.encounter;
+      const feedback=state.events.map(event=>event.kind==='guard'?'You guard against the next hit.':
+        `${event.actor==='hero'?encounter.hero.name:encounter.enemy.name} deals ${event.damage} damage.`).join(' ');
+      const title=state.phase==='victory'?'Victory':state.phase==='defeat'?'Defeat':encounter.name;
+      const text=`${encounter.hero.name}: ${state.heroHp}/${encounter.hero.hp} HP  •  ${encounter.enemy.name}: ${state.enemyHp}/${encounter.enemy.hp} HP\n${feedback||'Choose a command. Leave to return to exploration.'}`;
+      const options=state.phase==='command'?[['attack','Attack'],['guard','Guard'],['leave','Leave']]:
+        state.phase==='result'?[['continue','Continue']]:state.phase==='victory'?[['finish','Finish']]:[['retry','Retry'],['leave','Leave']];
+      this.dialog.show(title,text,`Round ${state.round} · ${state.phase}`,null,
+        state.phase==='result'?'Next round':state.phase==='victory'?'Return to room':'Close battle');
+      this.dialog.showChoices(options.map(([id,label])=>({id:id!,label:label!,enabled:true})),id=>this.chooseBattle(id),true);
+    }
+    private chooseBattle(id:string):void{
+      const battle=this.battle;if(!battle)return;
+      const before=battle.snapshot();
+      if(before.phase==='command'&&(id==='attack'||id==='guard')){
+        const after=battle.command(id);
+        const object=this.room?.content.map.objects.find(candidate=>candidate.id===this.battleObjectId);
+        after.events.forEach((event,index)=>{
+          if(event.kind!=='attack')return;
+          const anchor=event.actor==='enemy'||!object?{kind:'actor' as const,id:'hero'}:
+            {kind:'world' as const,x:object.x*TILE+TILE/2,y:object.y*TILE+TILE/2};
+          this.room?.effects.request({effectId:'demo:fx.impact',anchor,seed:after.round*2+index});
+        });
+      }else if(before.phase==='result'&&id==='continue')battle.continue();
+      else if(before.phase==='defeat'&&id==='retry')battle.retry();
+      else if((before.phase==='command'||before.phase==='defeat')&&id==='leave'||before.phase==='victory'&&id==='finish'){this.resume();return;}
+      else return;
+      this.showBattle();
+    }
     private openSaves():void{if(this.mode!=='inventory')return;this.inventory?.close();this.setMode('save');void this.saveMenu?.open().catch(cause=>this.fail(cause));}
     private returnToInventory():void{if(this.mode!=='save')return;this.setMode('inventory');this.inventory?.open();}
     private checkpoint(){const room=this.room!;return{mapId:room.content.map.id,tile:{...room.actor.tile},facing:room.actor.facing};}
@@ -276,10 +336,19 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if(choice.nextNodeId){dialogue.move(choice.nextNodeId);this.showDialogue();}else this.resume();
     }
     private resume(): void {
+      this.battleLoad?.abort();this.battleLoad=null;this.battle=null;this.battleObjectId=null;
       this.dialog.close(); this.inventory?.close();this.saveMenu?.close(); this.message = null;this.dialogue=null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
     private cancelModal(): void {
+      if(this.mode==='battle'){
+        const phase=this.battle?.snapshot().phase;
+        if(phase==='result')this.chooseBattle('continue');
+        else if(phase==='victory')this.chooseBattle('finish');
+        else if(phase==='command'||phase==='defeat')this.chooseBattle('leave');
+        else this.resume();
+        return;
+      }
       if (this.mode === 'transition') {
         this.generation += 1; this.transfer.cancel(); cancelledTransitions += 1;
       }
@@ -340,7 +409,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private fail(cause: unknown): void {
       if (phase === 'error') return;
       phase = 'error';
-      this.generation += 1; this.transfer.cancel(); this.dialog.close(); this.inventory?.close(); this.inputOwner?.clear();
+      this.generation += 1; this.transfer.cancel();this.battleLoad?.abort();this.battleLoad=null;this.battle=null; this.dialog.close(); this.inventory?.close(); this.inputOwner?.clear();
       elements.burst.disabled = true; elements.restart.disabled = true; elements.interact.disabled = true;
       console.error('[RPGameworks] Map scene failed', cause);
       onError(`Map scene failed: ${cause instanceof Error ? cause.message : String(cause)}`);
@@ -349,6 +418,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private release(): void {
       if (!this.sceneLifetime) return;
       this.sceneLifetime.abort(); this.sceneLifetime = null;
+      this.battleLoad?.abort();this.battleLoad=null;this.battle=null;this.battleObjectId=null;
       this.generation += 1; this.transfer.dispose();
       this.dialog.dispose(); this.message = null;this.dialogue=null;
       this.inventory?.dispose(); this.inventory = null;this.saveMenu?.dispose();this.saveMenu=null;
@@ -419,6 +489,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       return {
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         inputMode: current?.mode ?? 'exploration',
+        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,round:state.round,heroHp:state.heroHp,enemyHp:state.enemyHp};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,

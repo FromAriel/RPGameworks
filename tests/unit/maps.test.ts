@@ -3,7 +3,7 @@ import { readFileSync, mkdtempSync, rmSync, writeFileSync, readdirSync, cpSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readMap, readGame, readItems, readFacts, validateMapItems, validateMapFacts, validateWorld, ContentError } from '../../src/content/validation.mjs';
+import { readMap, readGame, readItems, readFacts, readEncounters, validateMapItems, validateMapFacts, validateWorld, ContentError } from '../../src/content/validation.mjs';
 import { createCollision } from '../../src/domain/map.mjs';
 import { createActor, advanceActor } from '../../src/domain/movement';
 import type { MapDefinition } from '../../src/content/generated/map';
@@ -46,7 +46,13 @@ describe('canonical map schema and local semantics', () => {
   it('accepts the authored maps and resolves the complete world', () => {
     const a = readMap(workshop(), 'maps/workshop.json', frames);
     const b = readMap(gallery(), 'maps/gallery.json', frames);
-    expect(() => validateWorld(manifest(), worldMaps(a,b))).not.toThrow();
+    expect(() => validateWorld(manifest(), worldMaps(a,b), undefined, readEncounters(json('content/games/demo/encounters.json')))).not.toThrow();
+  });
+  it('reports an unknown encounter at the authored map field', () => {
+    const maps=worldMaps();
+    const catalog=readEncounters(json('content/games/demo/encounters.json'));
+    expect(() => validateWorld(manifest(), maps, undefined, readEncounters({schemaVersion:1,encounters:[{...catalog.encounters[0],id:'demo:encounter.other'}]})))
+      .toThrow(/maps\/supply-room.json \[demo:object.practice-sigil\] \/objects\/1\/states\/0\/interaction\/encounterId/);
   });
   it.each(badMaps)('rejects %s', (_name, change, expected) => {
     const map = workshop(); change(map);

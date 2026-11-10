@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WindowSkinManifestV2",
+  "description": "Window skin manifest, format version 2 (decision 0011 W3.1): the skin declares its own geometry. Structure only; cross-field rules (overlaps, bounds, required roles, corner and band fit) are checked by src/presentation/skin/skin-manifest.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "formatVersion", "theme", "image", "size", "geometry", "tiles"],
+  "properties": {
+    "format": {"const": "rpgameworks.windowskin"},
+    "formatVersion": {"const": 2},
+    "theme": {"type": "string", "pattern": "^[^\\u0000-\\u001f]{1,120}$"},
+    "image": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\\.png$"},
+    "size": {"$ref": "#/definitions/size"},
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["band", "title", "rails"],
+      "properties": {
+        "band": {"$ref": "#/definitions/sides"},
+        "title": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["textCenter", "textGap"],
+          "description": "The title band height is the height of title.open/fill/close. textCenter: where the title text's centre line sits in that band. textGap: space between the title text and each bracket.",
+          "properties": {
+            "textCenter": {"type": "integer", "minimum": 0, "maximum": 512},
+            "textGap": {"type": "integer", "minimum": 0, "maximum": 512}
+          }
+        },
+        "rails": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["top", "right", "bottom", "left"],
+          "properties": {
+            "top": {"$ref": "#/definitions/rail"},
+            "right": {"$ref": "#/definitions/rail"},
+            "bottom": {"$ref": "#/definitions/rail"},
+            "left": {"$ref": "#/definitions/rail"}
+          }
+        },
+        "midpoints": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional medallions at the middle of an edge. A side that is absent has none. The top medallion is drawn only on windows without a title.",
+          "properties": {
+            "top": {"$ref": "#/definitions/midpoint"},
+            "right": {"$ref": "#/definitions/midpoint"},
+            "bottom": {"$ref": "#/definitions/midpoint"},
+            "left": {"$ref": "#/definitions/midpoint"}
+          }
+        },
+        "contentMargin": {"type": "integer", "minimum": 0, "maximum": 512, "description": "Extra space between the deepest frame piece on a side and the content. Default 4."},
+        "contentInsets": {"$ref": "#/definitions/sides", "description": "Optional exact insets that replace the derived ones; each must still clear the frame."}
+      }
+    },
+    "tiles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9]+)*$"},
+          "rect": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y", "w", "h"],
+            "properties": {
+              "x": {"type": "integer", "minimum": 0, "maximum": 4096},
+              "y": {"type": "integer", "minimum": 0, "maximum": 4096},
+              "w": {"type": "integer", "minimum": 1, "maximum": 4096},
+              "h": {"type": "integer", "minimum": 1, "maximum": 4096}
+            }
+          },
+          "same": {"type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9]+)*$", "description": "Reuse another tile's art instead of declaring a rectangle."},
+          "outset": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y"],
+            "description": "How far a corner's art reaches outside the window box. Must be 0 until a skin needs outward overhang (decision 0011 D10).",
+            "properties": {
+              "x": {"type": "integer", "minimum": 0, "maximum": 512},
+              "y": {"type": "integer", "minimum": 0, "maximum": 512}
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1, "maximum": 4096},
+        "height": {"type": "integer", "minimum": 1, "maximum": 4096}
+      }
+    },
+    "sides": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top", "right", "bottom", "left"],
+      "properties": {
+        "top": {"type": "integer", "minimum": 0, "maximum": 512},
+        "right": {"type": "integer", "minimum": 0, "maximum": 512},
+        "bottom": {"type": "integer", "minimum": 0, "maximum": 512},
+        "left": {"type": "integer", "minimum": 0, "maximum": 512}
+      }
+    },
+    "rail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spacing", "gapFill"],
+      "properties": {
+        "spacing": {"enum": ["mirrored-end", "even"], "description": "mirrored-end: whole tiles, then a plain gap, then one whole mirrored tile (W1). even: whole tiles spread evenly between the corners, the leftover shared out between them."},
+        "gapFill": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "How plain gaps are filled: a plain tile, or a stretch of the rail tile's own first ('start') or last ('end') pixel row or column.",
+          "properties": {
+            "tile": {"type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9]+)*$"},
+            "railEdge": {"enum": ["start", "end"]}
+          }
+        }
+      }
+    },
+    "midpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minEdge"],
+      "properties": {
+        "minEdge": {"type": "integer", "minimum": 1, "maximum": 4096, "description": "The medallion appears only on an edge at least this long."}
+      }
+    }
+  }
+}

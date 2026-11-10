@@ -183,6 +183,14 @@ Rules:
 | **D10** | Corner overhang | Inward only for now; outward as soon as a skin needs it. |
 | **D11** | Skin choice | Per-surface defaults in content, plus a per-window skin request. Content authors only for now. |
 
+### Decided during W3.1 (Ariel, November 9, 2026)
+
+- **Content margin:** derived insets are the deepest inward reach of any frame piece on a side (band, corners, title band at the top, an enabled medallion) **plus a 4-pixel default margin**; a skin may set `contentMargin` or exact `contentInsets`.
+- **Reusing art:** a tile may say `"same": "<id>"` instead of a rectangle. Overlap checks consider only real rectangles, so an accidental overlap is still an error.
+- **Gap fill is data:** each rail declares how plain gaps are filled, either a plain tile (`gapFill.tile`) or a stretch of its own first or last pixel row or column (`gapFill.railEdge`). Ariel's right edge declares `railEdge: "start"`, which is today's derived connector in `paint.ts`.
+- **Runtime unchanged in W3.1:** the format, reader, validator, audit and tests land first; the compositor starts reading v2 in W3.2 behind its byte-identical golden test.
+- **Shared module language:** the reader is plain JavaScript with JSDoc types (`src/presentation/skin/skin-manifest.mjs`), so the audit tool runs under plain Node 22 and 24 and TypeScript still checks it.
+
 ## 7. Future directions (recorded, not scheduled)
 
 - **Richer fills in W1:** a stencil or texture pattern repeated across the interior; a two-point gradient (point 1 and point 2 with their colours), so a blend can run at any angle, corner to corner or corner to the middle of the bottom.

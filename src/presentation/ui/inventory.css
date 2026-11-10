@@ -1,4 +1,5 @@
-#inventory-dialog { --skin-scale:2; position:fixed; inset:0; margin:auto; width:min(760px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); box-sizing:border-box; color:var(--ui-text-primary); background-color:var(--ui-surface-strong); border:1px solid var(--ui-line-window-fallback); padding:var(--ui-frame-clearance); }
+#inventory-dialog { --skin-scale:2; position:fixed; inset:0; margin:auto; width:min(760px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); box-sizing:border-box; color:var(--ui-text-primary); background-color:var(--ui-surface-strong); border:1px solid var(--ui-line-window-fallback); padding:var(--ui-frame-clearance) var(--skin-inset-right, var(--ui-frame-clearance)) var(--skin-inset-bottom, var(--ui-frame-clearance)) var(--skin-inset-left, var(--ui-frame-clearance)); }
+#inventory-dialog[data-skin-title-mode="header"] { padding-top:max(var(--ui-frame-clearance), var(--skin-content-top, 0px)); }
 #inventory-dialog[open] { display:flex; flex-direction:column; gap:12px; }
 #inventory-dialog::backdrop { background:var(--ui-backdrop); }
 .inventory-body { min-height:0; overflow:auto; }
@@ -12,7 +13,7 @@
 .inventory-columns:has(#inventory-list:empty) #inventory-detail { grid-column:1/-1; }
 #item-description { white-space:pre-wrap; line-height:1.6; }
 #inventory-dialog .dialog-actions { flex-shrink:0; }
-@media(max-width:600px) { #inventory-dialog { --skin-scale:1; padding:var(--ui-frame-clearance-compact); } .inventory-columns { grid-template-columns:1fr; gap:12px; } #inventory-list { max-height:25vh; } }
+@media(max-width:600px) { #inventory-dialog { --skin-scale:1; padding:var(--ui-frame-clearance-compact) calc(var(--skin-inset-right, 16px) + 2px) calc(var(--skin-inset-bottom, 16px) + 2px) calc(var(--skin-inset-left, 16px) + 2px); } #inventory-dialog[data-skin-title-mode="header"] { padding-top:max(var(--ui-frame-clearance-compact), var(--skin-content-top, 0px)); } .inventory-columns { grid-template-columns:1fr; gap:12px; } #inventory-list { max-height:25vh; } }
 
 #inventory-dialog[data-skin-state="ready"] { background-color:transparent; border-color:transparent; }
 #inventory-title { color:var(--ui-text-title); font-family:var(--ui-font-title); font-weight:600; font-size:var(--ui-text-heading); line-height:1.4; letter-spacing:0; text-align:center; max-width:calc(100% - 96px); margin:0; overflow-wrap:anywhere; }

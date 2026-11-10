@@ -1,15 +1,19 @@
 import manifest from '../../../assets/source/ui/base/Window.manifest.json';
-import { readSkinManifest } from './skin-manifest.mjs';
+import { contentInsets, readSkinManifest } from './skin-manifest.mjs';
 import { frameGeometry, skinGeometry, spanParts } from './layout';
-import type { Rect, RailRule, SkinGeometry, TitleBox } from './layout';
+import type { Rect, RailRule, Side, SkinGeometry, TitleBox } from './layout';
 
 type Axis = 'h' | 'v';
+/** What a composed window tells its element about fitting, in source-UI pixels (decision 0011 W3.3). */
+export interface FrameFit { url: string; titleMode: 'gap' | 'header'; top: number; titleSlot: number }
 
 /** A single bounded off-DOM bitmap; live text and controls are never rasterized. */
 export class SkinPainter {
   readonly canvas = document.createElement('canvas');
   /** The skin's resolved geometry; the loader uses it for divider placement. */
   readonly geometry: SkinGeometry;
+  /** Where content may start inside the frame on each side: the skin's override, or frame reach plus margin. */
+  readonly insets: Record<Side, number>;
   private readonly ctx: CanvasRenderingContext2D;
   constructor(private readonly image: HTMLImageElement, source: unknown = manifest) {
     const read = readSkinManifest(source);
@@ -18,6 +22,7 @@ export class SkinPainter {
       throw new Error(`Expected a ${read.skin.size.width} × ${read.skin.size.height} atlas`);
     }
     this.geometry = skinGeometry(read.skin);
+    this.insets = contentInsets(read.skin);
     const ctx = this.canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas 2D is unavailable for window decoration');
     this.ctx = ctx;
@@ -66,7 +71,17 @@ export class SkinPainter {
       }
     }
   }
-  frame(width: number, height: number, title?: TitleBox): { url: string; titleMode: 'gap' | 'header' } {
+  /** The widest title that still fits between the corners and both title brackets, at this window width. */
+  titleSlot(width: number): number {
+    const { corner, title: t } = this.geometry;
+    return Math.max(0, width - corner.tl.w - corner.tr.w - t.open.w - t.close.w - 2 * t.textGap);
+  }
+  /** The same for a divider: between its caps and label brackets. */
+  dividerSlot(width: number): number {
+    const d = this.geometry.divider;
+    return Math.max(0, width - d.capLeft.w - d.capRight.w - d.open.w - d.close.w - 2 * this.geometry.title.textGap);
+  }
+  frame(width: number, height: number, title?: TitleBox): FrameFit {
     const geo = this.geometry, g = frameGeometry(geo, width, height, title), { band, corner, rails, mids } = geo;
     this.reset(width, height);
     // Fill from the middle of each band, so transparent outer corner pixels stay clear.
@@ -104,9 +119,9 @@ export class SkinPainter {
     // Corners last: they sit over everything at the window's own corners and may reach inward past the band.
     this.stamp('corner.tl', 0, g.top); this.stamp('corner.tr', width - corner.tr.w, g.top);
     this.stamp('corner.bl', 0, height - corner.bl.h); this.stamp('corner.br', width - corner.br.w, height - corner.br.h);
-    return { url: this.canvas.toDataURL('image/png'), titleMode: g.title ? 'gap' : 'header' };
+    return { url: this.canvas.toDataURL('image/png'), titleMode: g.title ? 'gap' : 'header', top: g.top, titleSlot: this.titleSlot(width) };
   }
-  divider(width: number, title?: TitleBox): { url: string; titleMode: 'gap' | 'header' } {
+  divider(width: number, title?: TitleBox): FrameFit {
     const geo = this.geometry, d = geo.divider;
     const g = frameGeometry(geo, width, geo.minHeight, undefined); // Bounds the width like a frame.
     this.reset(g.width, d.height);
@@ -121,7 +136,7 @@ export class SkinPainter {
       this.stamp('divider.label.open', openX, 0); this.stamp('divider.label.close', closeX, 0);
       this.rail('divider.h.repeat', rule, 'h', closeX + d.close.w, 0, width - closeX - d.close.w - d.capRight.w);
     } else this.rail('divider.h.repeat', rule, 'h', d.capLeft.w, 0, width - d.capLeft.w - d.capRight.w);
-    return { url: this.canvas.toDataURL('image/png'), titleMode: fits ? 'gap' : 'header' };
+    return { url: this.canvas.toDataURL('image/png'), titleMode: fits ? 'gap' : 'header', top: 0, titleSlot: this.dividerSlot(width) };
   }
   dispose(): void { this.canvas.width = 0; this.canvas.height = 0; }
 }

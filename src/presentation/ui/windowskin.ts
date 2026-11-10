@@ -1,13 +1,25 @@
 import skinUrl from '../../../assets/source/ui/base/Window.png?no-inline';
+import manifest from '../../../assets/source/ui/base/Window.manifest.json';
 import { SkinPainter } from '../skin/paint';
 import type { TitleBox } from '../skin/layout';
 
 interface Surface { element: HTMLElement; title: HTMLElement; divider: boolean; key: string; paints: number }
+/** A skin to mount: its atlas image URL and its manifest (version 1 or 2). */
+export interface WindowSkinSource { atlasUrl: string; manifest: unknown }
+/** Ariel's canonical skin. */
+export const BASE_SKIN: WindowSkinSource = { atlasUrl: skinUrl, manifest };
+
+/**
+ * Fitting published on each skinned element, in CSS pixels including --skin-scale (decision 0011 W3.3). Window CSS
+ * reads these for padding and title width; each has a fallback in the CSS equal to Ariel's skin, used while loading
+ * and when the skin falls back to plain windows.
+ */
+const FIT_PROPERTIES = ['--skin-inset-left', '--skin-inset-right', '--skin-inset-bottom', '--skin-content-top', '--skin-title-max', '--skin-title-clearance'] as const;
 
 /** Decoration only. One lazy image, one scratch bitmap, one scheduled invalidation.
  * No listeners for gameplay inputs, no recurring frame loop, no per-tile DOM nodes.
  */
-export function mountWindowskin(root: ParentNode = document): { dispose(): void } {
+export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSource = BASE_SKIN): { dispose(): void } {
   const surfaces: Surface[] = Array.from(root.querySelectorAll<HTMLElement>('[data-window-skin]')).map(element => {
     const title = element.querySelector<HTMLElement>('[data-skin-title]');
     if (!title) throw new Error('Windowskin surface has no semantic title');
@@ -30,6 +42,7 @@ export function mountWindowskin(root: ParentNode = document): { dispose(): void 
     for (const { element } of surfaces) {
       element.dataset.skinState = 'fallback';
       element.style.removeProperty('background-image');
+      for (const property of FIT_PROPERTIES) element.style.removeProperty(property);
     }
     report(`Window skin unavailable: ${reason}. Plain accessible windows remain usable.`);
     console.warn('[RPGameworks] Window skin fallback:', reason);
@@ -43,14 +56,14 @@ export function mountWindowskin(root: ParentNode = document): { dispose(): void 
       if (timeout !== null) clearTimeout(timeout);
       timeout = null; image.onload = null; image.onerror = null; loading = false;
       try {
-        painter = new SkinPainter(image); // Reads and validates the manifest; checks the atlas size it declares.
+        painter = new SkinPainter(image, skin.manifest); // Reads and validates the manifest; checks the atlas size it declares.
         report('Base skin: Ariel’s edited Midnight Silver. Source preserved; connector audit in docs/WINDOW-SKIN.md.');
         invalidate();
       } catch (cause) { fallback(cause instanceof Error ? cause.message : String(cause)); }
     };
     image.onerror = () => { if (!disposed) fallback('The atlas could not be loaded'); };
     timeout = setTimeout(() => { if (!disposed) fallback('Atlas loading timed out'); }, 5000);
-    image.src = skinUrl;
+    image.src = skin.atlasUrl;
   }
   function paint(surface: Surface): void {
     const { element, title, divider } = surface;
@@ -74,6 +87,30 @@ export function mountWindowskin(root: ParentNode = document): { dispose(): void 
       element.style.backgroundImage = `url("${result.url}")`;
       element.style.backgroundSize = `${width * scale}px ${divider ? band * scale : height * scale}px`;
       element.style.backgroundPosition = `${left}px ${y}px`;
+      const px = (value: number) => `${Math.round(value * 100) / 100}px`;
+      element.style.setProperty('--skin-title-max', px(result.titleSlot * scale));
+      if (!divider) {
+        // Measured from the element's edges in whole skin pixels. The bitmap covers the element except for less than one
+        // scale step at the right and bottom (and its rounding offset at the left and top); a skin's derived insets
+        // include a margin of at least that, and Ariel's declared insets sit under each window's own extra spacing.
+        const insets = painter.insets;
+        element.style.setProperty('--skin-inset-left', px(insets.left * scale));
+        element.style.setProperty('--skin-inset-right', px(insets.right * scale));
+        element.style.setProperty('--skin-inset-bottom', px(insets.bottom * scale));
+        const contentTop = top + (result.top + insets.top) * scale;
+        element.style.setProperty('--skin-content-top', px(contentTop));
+        // With the title in the frame's top edge, content below it must still start at the content top. The title's
+        // own position never depends on this, so the extra space below the heading is exact in one step.
+        const heading = Array.from(element.children).find(child => child.contains(title));
+        const blocks = Array.from(element.children).filter(child => child !== heading && child.getClientRects().length > 0
+          && !['absolute', 'fixed'].includes(getComputedStyle(child).position));
+        const current = Number.parseFloat(element.style.getPropertyValue('--skin-title-clearance')) || 0;
+        if (result.titleMode === 'gap' && blocks.length) {
+          const natural = Math.min(...blocks.map(block => block.getBoundingClientRect().top)) - bounds.top - current;
+          const needed = Math.max(0, Math.ceil(contentTop - natural));
+          if (needed !== current) element.style.setProperty('--skin-title-clearance', px(needed));
+        } else if (current) element.style.removeProperty('--skin-title-clearance');
+      }
       element.dataset.skinState = 'ready'; element.dataset.skinTitleMode = result.titleMode;
       element.dataset.skinPaints = String(++surface.paints);
       surface.key = key;
@@ -114,6 +151,7 @@ export function mountWindowskin(root: ParentNode = document): { dispose(): void 
     image = null; painter?.dispose(); painter = null;
     for (const { element } of surfaces) {
       element.style.removeProperty('background-image'); element.style.removeProperty('background-size'); element.style.removeProperty('background-position');
+      for (const property of FIT_PROPERTIES) element.style.removeProperty(property);
       delete element.dataset.skinState; delete element.dataset.skinTitleMode; delete element.dataset.skinPaints;
     }
   } };

@@ -191,6 +191,12 @@ Rules:
 - **Runtime unchanged in W3.1:** the format, reader, validator, audit and tests land first; the compositor starts reading v2 in W3.2 behind its byte-identical golden test.
 - **Shared module language:** the reader is plain JavaScript with JSDoc types (`src/presentation/skin/skin-manifest.mjs`), so the audit tool runs under plain Node 22 and 24 and TypeScript still checks it.
 
+### Decided during W3.3 (Ariel, November 9, 2026)
+
+- **Padding = the skin's inset + each window's own spacing.** Side and bottom padding is `--skin-inset-*` plus the extra each window already had over Ariel's insets (dialogue +8, or +8 sides and +4 bottom at 2×; confirmation and gallery +16; compact layouts +2; inventory, Save/Load and the Settings panel +0, with +4 at the Settings bottom). Ariel's windows look exactly as before; a thicker skin pushes content in and a thinner one lets it out.
+- **Fixture skins in the browser** use a skin parameter on `mountWindowskin(root, skin)`; the game passes Ariel's skin, and the test-only UI gallery mounts each fixture skin through it. No test hook enters the game.
+- **Implementation notes** (no new decision): the top padding still places the title on the frame's top edge, so with the title in the gap the loader measures where content would start and publishes `--skin-title-clearance`, which each window heading adds below itself (0 for Ariel's skin); insets are measured in whole skin pixels from the element's edges, because the bitmap stops less than one scale step short of the right and bottom edges.
+
 ## 7. Future directions (recorded, not scheduled)
 
 - **Richer fills in W1:** a stencil or texture pattern repeated across the interior; a two-point gradient (point 1 and point 2 with their colours), so a blend can run at any angle, corner to corner or corner to the middle of the bottom.

@@ -42,6 +42,8 @@ declare global {
       setGlow(enabled: boolean): void;
       cycleLifecycle(count: number): void;
       tryOverlap(): Promise<string>;
+      /** Test-only (decision 0011 W3.3): remount the window skin from another atlas and manifest. */
+      useSkin(atlasUrl: string, manifest: unknown): void;
       dispose(): void;
     };
   }
@@ -277,7 +279,7 @@ let boundaryClears = 0;
 const confirmation = own(mountConfirmation(confirmationParts, { clearHeldInputs: () => { boundaryClears += 1; } }));
 const mainNavigation = own(new MenuNavigation(interactiveControls, () => interactionStatus.set('information', 'Back requested.')));
 const confirmationNavigation = own(new MenuNavigation(confirmationParts.dialog, () => confirmationParts.cancel.click()));
-own(mountWindowskin());
+let windowSkin = own(mountWindowskin());
 let lifecycleCycles = 0;
 
 function updateLifecycle(): void {
@@ -333,6 +335,10 @@ window.__UI_GALLERY__ = {
     } catch (cause) {
       return cause instanceof Error ? cause.message : String(cause);
     }
+  },
+  useSkin(atlasUrl, manifest): void {
+    disposeOwned(windowSkin);
+    windowSkin = own(mountWindowskin(document, { atlasUrl, manifest }));
   },
   dispose(): void {
     if (disposed) return;

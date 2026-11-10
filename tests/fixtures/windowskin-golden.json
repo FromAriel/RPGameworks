@@ -1,0 +1,74 @@
+{
+  "min 32x32": {
+    "hash": "07d02486a74c6f38f8b09f467e429d0bdfbdda0beaeccf8a6243fcda6f369153",
+    "titleMode": "header"
+  },
+  "odd 33x47": {
+    "hash": "549cdf59682f58a3f5feb429ded4434444cb9f23d86a01997c17cdecf526f51f",
+    "titleMode": "header"
+  },
+  "threshold 96x96": {
+    "hash": "af0355aad719545b68a11a05efc45d8567748a4fe905a72fcce7314297750977",
+    "titleMode": "header"
+  },
+  "below threshold 95x97": {
+    "hash": "2c3fe9d1d23bdd4ffa7777f57a16078b446c9c6bf28c91484633279e72852d49",
+    "titleMode": "header"
+  },
+  "remainder 200x120": {
+    "hash": "b376fd261a12e071c65343db714cded563be8f9c454ba06360750c0117b07daf",
+    "titleMode": "header"
+  },
+  "odd 321x187": {
+    "hash": "12ae101712dab0d18fbd40ea0ae0be7f733065354d220e4d489adfcb22c30179",
+    "titleMode": "header"
+  },
+  "wide 1023x77": {
+    "hash": "577ff6abc5486ed08e397fbe94fd48eb09db4ed60b2b693fb5b2bdbc5c84fdff",
+    "titleMode": "header"
+  },
+  "tall 64x400": {
+    "hash": "932a8aca958127d3ea26d1a98acd3601aef5653f14ac61df1bc63605c866aced",
+    "titleMode": "header"
+  },
+  "title 319x123": {
+    "hash": "7fefa432a3314c3c1e0629042dbd52667045196ec3380fc733ed0d8f88c4ba3e",
+    "titleMode": "gap"
+  },
+  "title near left 300x150": {
+    "hash": "2d736f05e5206185695806a94a977635e463a56644920a748f59e4c64375e84b",
+    "titleMode": "gap"
+  },
+  "title odd edges 257x99": {
+    "hash": "69c8c285c1ca1f143a49a6dd18ce0aa3a15254c37f7ce130eeb26c9f610bbebd",
+    "titleMode": "gap"
+  },
+  "title too wide 160x180": {
+    "hash": "50c3ebc71d5681110f0002f5b9b541ae6c2c131c543d833f6aa7da99a47b5991",
+    "titleMode": "header"
+  },
+  "title wrapped 160x180": {
+    "hash": "50c3ebc71d5681110f0002f5b9b541ae6c2c131c543d833f6aa7da99a47b5991",
+    "titleMode": "header"
+  },
+  "title low on short frame 200x60": {
+    "hash": "65a91d212914f77e9bb509c77427fb97bd6d3302b895cd04c8dc5db756a15cef",
+    "titleMode": "header"
+  },
+  "divider 32": {
+    "hash": "279b2fb4f98e65a49e51794e06f79df41df91d115ca6ca7e88ddd0a44bc7ab35",
+    "titleMode": "header"
+  },
+  "divider 200 untitled": {
+    "hash": "9338fa6865ac2cb10c3941b4ca8c0e3d33fcfa382f8a103ea11d680aa15c5583",
+    "titleMode": "header"
+  },
+  "divider 301 titled": {
+    "hash": "e5e7b7a8baccedfccb4dc87e78569a7abdef842ea72ef60204520c260a22f9de",
+    "titleMode": "gap"
+  },
+  "divider 120 title too wide": {
+    "hash": "faf96e94d6dee5949da27846650699f0b1d7c1c9de8f56bee29d0f5e06f0036a",
+    "titleMode": "header"
+  }
+}

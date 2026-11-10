@@ -2,7 +2,16 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { frameGeometry, spanParts } from '../../src/presentation/skin/layout';
+import { frameGeometry as frameFor, skinGeometry, spanParts as spanFor } from '../../src/presentation/skin/layout';
+import type { TitleBox } from '../../src/presentation/skin/layout';
+import { readSkinManifest } from '../../src/presentation/skin/skin-manifest.mjs';
+
+// Ariel's skin through the v2 reader: these W1 expectations must hold unchanged now that sizes come from the skin.
+const read = readSkinManifest(JSON.parse(readFileSync('assets/source/ui/base/Window.manifest.json', 'utf8')));
+if (!read.ok) throw new Error(read.errors.join('; '));
+const geo = skinGeometry(read.skin);
+const spanParts = (length: number) => spanFor(length, 16);
+const frameGeometry = (width: number, height: number, title?: TitleBox) => frameFor(geo, width, height, title);
 
 const asset = 'assets/source/ui/base/';
 /** Pinned to Ariel's second accepted edit (September 21, 2026). A future art edit must re-pin these with her acceptance. */
@@ -45,14 +54,14 @@ describe('bounded border geometry', () => {
   it('keeps a measured single-line live title in a protected gap',()=>{
     const g=frameGeometry(319,123,{left:120,right:198,centerY:22,height:14,lineHeight:16});
     expect(g.title).toEqual({openX:100,closeX:202});expect(g.top).toBe(14);
-    expect(g.bottomMid).toBe(151);
+    expect(g.mid.bottom).toBe(151);
   });
   it('uses an ordinary header for wrapped or overlong titles',()=>{
     expect(frameGeometry(160,180,{left:20,right:140,centerY:30,height:40,lineHeight:20}).title).toBeNull();
     expect(frameGeometry(160,180,{left:20,right:140,centerY:30,height:16,lineHeight:20}).title).toBeNull();
   });
   it('omits ornaments before they can crowd small frames',()=>{
-    expect(frameGeometry(40,40).sideMid).toBeNull();expect(frameGeometry(40,40).bottomMid).toBeNull();
+    expect(frameGeometry(40,40).mid).toEqual({top:null,right:null,bottom:null,left:null});
   });
   it.each([[0,80],[80,31],[NaN,80],[4097,64],[2000,2000]])('rejects unsafe frame %s × %s',(w,h)=>expect(()=>frameGeometry(w,h)).toThrow());
 });

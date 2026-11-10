@@ -43,8 +43,7 @@ export function mountWindowskin(root: ParentNode = document): { dispose(): void 
       if (timeout !== null) clearTimeout(timeout);
       timeout = null; image.onload = null; image.onerror = null; loading = false;
       try {
-        if (image.naturalWidth !== 192 || image.naturalHeight !== 192) throw new Error('Expected a 192 × 192 atlas');
-        painter = new SkinPainter(image);
+        painter = new SkinPainter(image); // Reads and validates the manifest; checks the atlas size it declares.
         report('Base skin: Ariel’s edited Midnight Silver. Source preserved; connector audit in docs/WINDOW-SKIN.md.');
         invalidate();
       } catch (cause) { fallback(cause instanceof Error ? cause.message : String(cause)); }
@@ -69,9 +68,11 @@ export function mountWindowskin(root: ParentNode = document): { dispose(): void 
     if (key === surface.key) return;
     try {
       const result = divider ? painter.divider(width, text) : painter.frame(width, height, text);
-      const y = divider ? (result.titleMode === 'gap' ? Math.max(0, Math.round(text.centerY - 8) * scale) : Math.max(0, height - 16) * scale) : top;
+      // A titled divider centres its band on the title text; otherwise it sits at the bottom of its element.
+      const band = painter.geometry.divider.height, half = Math.floor(band / 2);
+      const y = divider ? (result.titleMode === 'gap' ? Math.max(0, Math.round(text.centerY - half) * scale) : Math.max(0, height - band) * scale) : top;
       element.style.backgroundImage = `url("${result.url}")`;
-      element.style.backgroundSize = `${width * scale}px ${divider ? 16 * scale : height * scale}px`;
+      element.style.backgroundSize = `${width * scale}px ${divider ? band * scale : height * scale}px`;
       element.style.backgroundPosition = `${left}px ${y}px`;
       element.dataset.skinState = 'ready'; element.dataset.skinTitleMode = result.titleMode;
       element.dataset.skinPaints = String(++surface.paints);

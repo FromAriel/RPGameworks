@@ -16,7 +16,15 @@ const BASE_SKIN_ID = 'base';
  * (`data-skin-surface`), or the fallback skin.
  */
 export interface SkinChoice { readonly skins: ReadonlyMap<string, WindowSkinSource>; readonly surfaces: Readonly<Record<string, string>>; readonly fallback: string }
-export interface WindowskinHandle { dispose(): void; useTheme(choice: SkinChoice): void }
+export interface WindowskinHandle {
+  dispose(): void;
+  useTheme(choice: SkinChoice): void;
+  /**
+   * The loaded painter for a surface's skin (decision 0011 W3.5: the battle stage composes its windows with it), or null
+   * if that skin cannot load. Loads the skin once if no window has needed it yet; shared with the page windows.
+   */
+  painterFor(surface: string): Promise<SkinPainter | null>;
+}
 
 /**
  * Fitting published on each skinned element, in CSS pixels including --skin-scale (decision 0011 W3.3). Window CSS
@@ -30,6 +38,7 @@ interface SkinRecord {
   state: 'idle' | 'loading' | 'ready' | 'failed';
   image: HTMLImageElement | null; painter: SkinPainter | null; timeout: ReturnType<typeof setTimeout> | null;
   fetch: AbortController | null; name: string;
+  waiters: ((painter: SkinPainter | null) => void)[];
 }
 
 /** Decoration only. Lazy images (one per skin in use), one scratch bitmap per skin, one scheduled invalidation.
@@ -53,7 +62,7 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   function record(id: string): SkinRecord {
     let entry = records.get(id);
     if (!entry) {
-      entry = { id, source: choice.skins.get(id), state: 'idle', image: null, painter: null, timeout: null, fetch: null, name: id };
+      entry = { id, source: choice.skins.get(id), state: 'idle', image: null, painter: null, timeout: null, fetch: null, name: id, waiters: [] };
       records.set(id, entry);
     }
     return entry;
@@ -63,10 +72,15 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
     entry.timeout = null; entry.fetch?.abort(); entry.fetch = null;
     if (entry.image) { entry.image.onload = null; entry.image.onerror = null; }
   }
+  function settle(entry: SkinRecord): void {
+    const waiters = entry.waiters.splice(0);
+    for (const resolve of waiters) resolve(entry.state === 'ready' ? entry.painter : null);
+  }
   function fallback(entry: SkinRecord, reason: string): void {
     if (entry.state === 'failed') return;
     entry.state = 'failed'; release(entry);
     entry.painter?.dispose(); entry.painter = null;
+    settle(entry);
     report(`Window skin unavailable: ${reason}. Plain accessible windows remain usable.`);
     console.warn('[RPGameworks] Window skin fallback:', entry.id, reason);
     invalidate();
@@ -93,6 +107,7 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
         entry.state = 'ready';
         const theme = (manifestData as { theme?: unknown }).theme;
         entry.name = typeof theme === 'string' ? theme : entry.id;
+        settle(entry);
         report(`Window skin: ${[...records.values()].filter(r => r.state === 'ready').map(r => r.name).join(', ')}.`);
         invalidate();
       } catch (cause) { fallback(entry, cause instanceof Error ? cause.message : String(cause)); }
@@ -195,6 +210,13 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   void document.fonts.ready.then(() => { if (!disposed) invalidate(); });
   invalidate();
   return {
+    painterFor(surface: string): Promise<SkinPainter | null> {
+      if (disposed) return Promise.resolve(null);
+      const entry = record(choice.surfaces[surface] ?? choice.fallback);
+      if (entry.state === 'ready') return Promise.resolve(entry.painter);
+      if (entry.state === 'failed') return Promise.resolve(null);
+      return new Promise(resolve => { entry.waiters.push(resolve); load(entry); });
+    },
     useTheme(next: SkinChoice): void {
       if (disposed) return;
       choice = next;
@@ -210,6 +232,7 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
       pending = null;
       for (const entry of records.values()) {
         release(entry);
+        for (const resolve of entry.waiters.splice(0)) resolve(null);
         if (entry.image) entry.image.removeAttribute('src');
         entry.image = null; entry.painter?.dispose(); entry.painter = null;
       }

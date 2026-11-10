@@ -4,7 +4,8 @@ import type { MenuEntry } from '../../domain/battle-menu';
 import { battlerPosition, hpBefore, stepDuration } from './playback';
 import type { PlaybackSpeed } from './playback';
 import { BattleWindows, PANEL_STYLE } from './battle-windows';
-import type { Rect } from './battle-windows';
+import type { BattleLayout, Rect } from './battle-windows';
+import type { SkinPainter } from '../skin/paint';
 import { PIXEL_FONT_BITMAP_SIZE, addPixelFont, releasePixelFont } from '../pixel-font';
 
 /** Pixel labels use the UNSCII bitmap font; ordinary canvas text is only the fallback when that font is missing. */
@@ -21,7 +22,6 @@ const FALLBACK_TEXT = { fontFamily: 'ui-monospace, monospace', fontSize: '12px',
 const DEPTH = { backdrop: 1.5, floor: 1.51, battler: 1.6, ui: 1.7, windows: 1.8, numbers: 3 } as const;
 const BAR_WIDTH = 48;
 const TIMELINE_ICONS = 8;
-const TIMELINE_Y = 46;
 
 interface Battler {
   readonly combatant: CombatantSnapshot;
@@ -49,6 +49,8 @@ export interface BattleViewOptions {
   readonly impact: (screen: { x: number; y: number }, seed: number) => void;
   /** Display name for an item id, for the action line during playback. */
   readonly itemName: (itemId: string) => string;
+  /** The theme's battle skin (decision 0011 W3.5), or null for the fallback panels. */
+  readonly skin?: SkinPainter | null;
 }
 
 export class BattleView {
@@ -74,6 +76,9 @@ export class BattleView {
   constructor(private readonly scene: Phaser.Scene, initial: BattleSnapshot, private readonly options: BattleViewOptions) {
     const { width, height } = scene.scale;
     this.font = addPixelFont(scene);
+    // The windows come first: the skin decides the help window's height, and the timeline sits just below it.
+    this.windows = new BattleWindows(scene, (x, y, text, color) => this.label(x, y, text, color), DEPTH.windows, options.skin ?? null);
+    const TIMELINE_Y = this.windows.layout.timelineY;
     this.own(scene.add.rectangle(0, 0, width, height, 0x0b111b).setOrigin(0).setDepth(DEPTH.backdrop));
     this.own(scene.add.rectangle(0, 112, width, 104, 0x18243a).setOrigin(0).setDepth(DEPTH.floor));
     this.own(scene.add.rectangle(0, 112, width, 2, 0x2e4a66).setOrigin(0).setDepth(DEPTH.floor));
@@ -95,11 +100,14 @@ export class BattleView {
     this.targetCursor = this.own(this.downPointer()).setDepth(DEPTH.windows).setVisible(false);
     for (const object of this.owned) (object as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
     this.blink = scene.tweens.add({ targets: this.targetCursor, alpha: { from: 1, to: 0.55 }, duration: 360, yoyo: true, repeat: -1 });
-    this.windows = new BattleWindows(scene, (x, y, text, color) => this.label(x, y, text, color), DEPTH.windows);
     this.render(initial);
   }
 
   get playing(): boolean { return this.pending !== null; }
+  /** Where the battle windows and their entries are, for the input layer's buttons. */
+  get layout(): BattleLayout { return this.windows.layout; }
+  /** Whether the windows come from the battle skin or are the fallback panels. */
+  get windowSource(): 'skin' | 'fallback' { return this.windows.source; }
   get objectCount(): number { return this.owned.length + this.transient.size + this.windows.objectCount; }
   get speed(): PlaybackSpeed { return this.currentSpeed; }
   set speed(value: PlaybackSpeed) { this.currentSpeed = value; this.refreshWindows(); }

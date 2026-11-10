@@ -236,6 +236,7 @@ async function start(): Promise<void> {
       restart: required<HTMLButtonElement>('#restart'),
       effects,
       dialog: required<HTMLDialogElement>('#interaction-dialog'),
+      battleSkin: () => windowSkin.painterFor('battle'),
       interact: required<HTMLButtonElement>('#interact'),
       onArtWarning: message => { artWarning = message ?? ''; drawDiagnostics(); },
       gamepad: controller,

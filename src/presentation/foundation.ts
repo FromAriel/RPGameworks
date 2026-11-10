@@ -15,6 +15,7 @@ import type { BattleCommand, BattleItemUse, BattleSnapshot } from '../domain/bat
 import { BattleView } from './battle/battle-view';
 import type { StageMenu } from './battle/battle-view';
 import { entryRect } from './battle/battle-windows';
+import type { SkinPainter } from './skin/paint';
 import { BattleMenu } from '../domain/battle-menu';
 import type { EndChoice, MenuContext, MenuItemInfo, MenuOutcome } from '../domain/battle-menu';
 import type { PlacedChoice, PlacedOverlay } from './ui/interaction-dialog';
@@ -58,6 +59,8 @@ export interface FoundationElements {
   dialog: HTMLDialogElement;
   interact: HTMLButtonElement;
   onArtWarning: (message: string | null) => void;
+  /** The theme's battle skin (decision 0011 W3.5), shared with the page windows; null draws the fallback panels. */
+  battleSkin: () => Promise<SkinPainter | null>;
 }
 
 export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
@@ -267,13 +270,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
       lifetime.addEventListener('abort',cancel,{once:true});
       this.setMode('battle');this.dialog.show('Preparing battle','Loading the practice encounter…','',null,'Leave');
       try{
-        const [encounter]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL)]);
+        const [encounter,,skin]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL),elements.battleSkin()]);
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
         const uses=new Map<string,BattleItemUse>();
         for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
         this.battle=new BattleSession(encounter,uses);this.battleLoad=null;this.battleMenu=new BattleMenu();
         const opening=this.battle.snapshot();
-        this.battleView=new BattleView(this,opening,{atlas:ATLAS,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
+        this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});
         this.playBattle(opening);
       }catch(cause){
@@ -341,7 +344,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
           list:now.level==='item'?{entries:now.entries,cursor:now.cursor}:null,target:now.target};};
       view.setMenu(stage());
       const choices:PlacedChoice[]=state.entries.map((entry,index)=>({id:entry.id,name:entry.name,enabled:entry.enabled,help:entry.help,
-        rect:state.level==='target'?view.targetRect(entry.id.slice('target:'.length))??entryRect('root',index):entryRect(state.level,index)}));
+        rect:state.level==='target'?view.targetRect(entry.id.slice('target:'.length))??entryRect(view.layout,'root',index):entryRect(view.layout,state.level,index)}));
       // Tapping an enemy while choosing a command attacks it directly, as a shortcut for Attack, then the target.
       const overlays:PlacedOverlay[]=state.level!=='root'?[]:battle.snapshot().combatants
         .filter(c=>c.side==='enemy'&&battle.validate({type:'attack',target:c.id})===null)
@@ -586,7 +589,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
-        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor)};})() : null,
+        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,windows:current.battleView?.windowSource??'fallback',speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor)};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,

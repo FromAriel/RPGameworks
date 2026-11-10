@@ -1,43 +1,25 @@
 import Phaser from 'phaser';
-import type { MenuLevel, MenuEntry } from '../../domain/battle-menu';
+import type { MenuEntry } from '../../domain/battle-menu';
+import type { SkinPainter } from '../skin/paint';
 
 /**
  * Final Fantasy-style battle windows drawn on the stage (decision 0009): a help/action line at the top, and enemy
- * names, party status and the command column across the bottom band. Pure layout helpers are exported so the hidden
- * DOM mirror can place its transparent buttons exactly over the drawn entries.
+ * names, party status and the command column across the bottom band. Since W3.5 (decision 0011) the windows are
+ * composed by the W1 window skin (the theme's `battle` skin) and their text sits inside the skin's content insets;
+ * if that skin cannot load, M5.3c's blue panels are drawn instead, with M5.3c's exact layout. Pure layout helpers are
+ * exported so the hidden DOM mirror can place its transparent buttons exactly over the drawn entries.
  */
-export interface Rect { readonly x: number; readonly y: number; readonly w: number; readonly h: number }
+export { battleLayout, entryRect, fit, FALLBACK_LAYOUT } from './battle-layout';
+export type { BattleLayout, Rect } from './battle-layout';
+import { entryRect, fit, FALLBACK_LAYOUT, battleLayout, ROW, CURSOR_W } from './battle-layout';
+import type { BattleLayout, Rect } from './battle-layout';
 
-export const WINDOW = {
-  help: { x: 0, y: 0, w: 640, h: 24 },
-  enemies: { x: 0, y: 224, w: 168, h: 136 },
-  party: { x: 168, y: 224, w: 336, h: 136 },
-  commands: { x: 504, y: 224, w: 136, h: 136 },
-  /** Sub-lists (Item, later Special) open over the enemy and party windows, as in FF6. */
-  list: { x: 0, y: 224, w: 504, h: 136 },
-} as const satisfies Record<string, Rect>;
-const PAD = 10;
-const ROW = 20;
-const CURSOR_W = 12;
-
-/** FF-style blue panel: authored colours, tuned in play review. The fill steps in bands like a 16-bit gradient. */
+/** Fallback blue panel: authored colours, tuned in play review. Text and cursor colours are used with every skin. */
 export const PANEL_STYLE = {
   top: 0x3050b8, bottom: 0x0c1854, bandHeight: 4,
   outline: 0x05070e, border: 0xe8ecf6, bevel: 0x8fa2d8,
   text: 0xffffff, disabled: 0x8a93b0, muted: 0xc2cbe6, danger: 0xff9c8a, cursor: 0xffffff,
 } as const;
-
-/** Where entry `index` of a menu at `level` is drawn, for the cursor and for the mirror's button. */
-export function entryRect(level: MenuLevel, index: number): Rect {
-  const box = level === 'item' ? WINDOW.list : WINDOW.commands;
-  return { x: box.x + 4, y: box.y + PAD - 2 + index * ROW, w: box.w - 8, h: ROW };
-}
-
-/** Name text fits its window: 8 px per character in UNSCII 16. */
-export function fit(text: string, width: number): string {
-  const max = Math.floor(width / 8);
-  return text.length <= max ? text : `${text.slice(0, Math.max(0, max - 1))}.`;
-}
 
 export interface WindowsView {
   readonly help: string;
@@ -59,61 +41,78 @@ export interface WindowsView {
 type Label = Phaser.GameObjects.BitmapText | Phaser.GameObjects.Text;
 export type LabelFactory = (x: number, y: number, text: string, color: number) => Label;
 
+let instances = 0;
+
 export class BattleWindows {
+  readonly layout: BattleLayout;
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
-  constructor(private readonly scene: Phaser.Scene, private readonly label: LabelFactory, private readonly depth: number) {}
+  /** One composed texture per distinct window size, kept for the battle and removed by destroy(). */
+  private readonly textures = new Map<string, string>();
+  private readonly prefix = `battle-window-${++instances}`;
+  constructor(private readonly scene: Phaser.Scene, private readonly label: LabelFactory, private readonly depth: number,
+    private readonly skin: SkinPainter | null = null) {
+    this.layout = skin ? battleLayout(skin.insets) : FALLBACK_LAYOUT;
+  }
 
   get objectCount(): number { return this.objects.length; }
+  /** Whether the windows come from the battle skin or are the fallback panels. */
+  get source(): 'skin' | 'fallback' { return this.skin ? 'skin' : 'fallback'; }
 
   render(view: WindowsView): void {
     this.clear();
-    this.panel(WINDOW.help);
-    this.text(WINDOW.help.x + 8, WINDOW.help.y + 4, fit(view.help, WINDOW.help.w - 24 - view.hint.length * 8), PANEL_STYLE.text);
-    if (view.hint) this.text(WINDOW.help.x + WINDOW.help.w - 8 - view.hint.length * 8, WINDOW.help.y + 4, view.hint, PANEL_STYLE.muted);
+    const L = this.layout, i = L.inset;
+    this.panel(L.help);
+    const ht = L.helpText;
+    this.text(L.help.x + ht.x, L.help.y + ht.y, fit(view.help, L.help.w - ht.x - ht.right - 8 - view.hint.length * 8), PANEL_STYLE.text);
+    if (view.hint) this.text(L.help.x + L.help.w - ht.right - view.hint.length * 8, L.help.y + ht.y, view.hint, PANEL_STYLE.muted);
 
-    this.panel(WINDOW.enemies);
+    this.panel(L.enemies);
     view.enemies.forEach((enemy, index) => {
-      const y = WINDOW.enemies.y + PAD + index * ROW;
-      if (enemy.id === view.target) this.cursor(WINDOW.enemies.x + 6, y, false);
-      this.text(WINDOW.enemies.x + PAD + CURSOR_W, y, fit(enemy.name, WINDOW.enemies.w - 2 * PAD - CURSOR_W), enemy.defeated ? PANEL_STYLE.disabled : PANEL_STYLE.text);
+      const y = L.enemies.y + i.top + index * ROW;
+      if (enemy.id === view.target) this.cursor(L.enemies.x + i.left - 4, y, false);
+      this.text(L.enemies.x + i.left + CURSOR_W, y, fit(enemy.name, L.enemies.w - i.left - i.right - CURSOR_W), enemy.defeated ? PANEL_STYLE.disabled : PANEL_STYLE.text);
     });
 
-    this.panel(WINDOW.party);
+    this.panel(L.party);
     view.party.forEach((member, index) => {
-      const y = WINDOW.party.y + PAD + index * ROW;
-      if (member.active || member.id === view.target) this.cursor(WINDOW.party.x + 6, y, member.id !== view.target && view.target !== null);
+      const y = L.party.y + i.top + index * ROW;
+      if (member.active || member.id === view.target) this.cursor(L.party.x + i.left - 4, y, member.id !== view.target && view.target !== null);
       const low = member.hp * 4 <= member.maxHp;
       const color = member.hp <= 0 ? PANEL_STYLE.disabled : low ? PANEL_STYLE.danger : PANEL_STYLE.text;
-      this.text(WINDOW.party.x + PAD + CURSOR_W, y, fit(member.name, 120), color);
+      this.text(L.party.x + i.left + CURSOR_W, y, fit(member.name, 120), color);
       const hp = `${String(member.hp).padStart(3)}/${String(member.maxHp).padStart(3)}`;
-      this.text(WINDOW.party.x + WINDOW.party.w - PAD - hp.length * 8, y, hp, color);
+      this.text(L.party.x + L.party.w - i.right - hp.length * 8, y, hp, color);
     });
 
     // The command window stays as an empty panel while actions play, so the band never shows a hole.
-    this.panel(WINDOW.commands);
+    this.panel(L.commands);
     if (view.showCommands) {
       view.commands.forEach((entry, index) => {
-        const rect = entryRect('root', index);
+        const rect = entryRect(L, 'root', index);
         this.text(rect.x + 4 + CURSOR_W, rect.y + 2, fit(entry.label, rect.w - CURSOR_W - 8), entry.enabled ? PANEL_STYLE.text : PANEL_STYLE.disabled);
       });
-      const at = entryRect('root', view.commandCursor);
+      const at = entryRect(L, 'root', view.commandCursor);
       if (view.commands.length) this.cursor(at.x + 2, at.y + 2, view.commandInactive);
     }
 
     if (view.list) {
-      this.panel(WINDOW.list);
+      this.panel(L.list);
       view.list.entries.forEach((entry, index) => {
-        const rect = entryRect('item', index);
+        const rect = entryRect(L, 'item', index);
         const color = entry.enabled ? PANEL_STYLE.text : PANEL_STYLE.disabled;
         const detail = entry.detail ?? '';
         this.text(rect.x + 4 + CURSOR_W, rect.y + 2, fit(entry.label, rect.w - CURSOR_W - 16 - detail.length * 8), color);
         if (detail) this.text(rect.x + rect.w - 6 - detail.length * 8, rect.y + 2, detail, color);
       });
-      if (view.list.entries.length) { const at = entryRect('item', view.list.cursor); this.cursor(at.x + 2, at.y + 2, false); }
+      if (view.list.entries.length) { const at = entryRect(L, 'item', view.list.cursor); this.cursor(at.x + 2, at.y + 2, false); }
     }
   }
 
-  destroy(): void { this.clear(); }
+  destroy(): void {
+    this.clear();
+    for (const key of this.textures.values()) if (this.scene.textures.exists(key)) this.scene.textures.remove(key);
+    this.textures.clear();
+  }
 
   private clear(): void {
     for (const object of this.objects) object.destroy();
@@ -131,8 +130,32 @@ export class BattleWindows {
     this.add(this.label(Math.round(x), Math.round(y), text, color));
   }
 
-  /** A blue panel: dark outline, light border, inner bevel line and a banded vertical gradient. */
   private panel(rect: Rect): void {
+    if (this.skin) this.add(this.scene.add.image(rect.x, rect.y, this.frameTexture(rect.w, rect.h)).setOrigin(0));
+    else this.fallbackPanel(rect);
+  }
+
+  /** The skin's frame for this size, composed once by the shared W1 painter and copied into a battle-owned texture. */
+  private frameTexture(w: number, h: number): string {
+    const size = `${w}x${h}`;
+    const existing = this.textures.get(size);
+    if (existing) return existing;
+    const painter = this.skin as SkinPainter;
+    painter.frame(w, h); // Battle windows show frames only, no titles (decision 0011 D7).
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas 2D is unavailable for battle windows');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(painter.canvas, 0, 0);
+    const key = `${this.prefix}-${size}`;
+    this.scene.textures.addCanvas(key, canvas);
+    this.textures.set(size, key);
+    return key;
+  }
+
+  /** A blue panel: dark outline, light border, inner bevel line and a banded vertical gradient (M5.3c). */
+  private fallbackPanel(rect: Rect): void {
     const g = this.add(this.scene.add.graphics());
     const { x, y, w, h } = rect;
     const bands = Math.ceil((h - 6) / PANEL_STYLE.bandHeight);

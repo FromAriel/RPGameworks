@@ -205,6 +205,12 @@ Rules:
 - **Six surfaces:** `dialogue`, `inventory` (the window the Menu button opens), `saves`, `settings` (the Settings panel and its section divider), `confirmation`, `battle` (validated now, used from W3.5). A future menu screen adds its own surface name.
 - **Per-window skin:** a map message or a dialogue graph may name a skin (`"skin": "<skin id>"`); the dialogue window uses it while showing that message or dialogue, then returns to its surface default. An unknown skin ID fails the content build.
 
+### Decided for W3.5 (Ariel, November 9, 2026)
+
+- **Help line grows to fit the skin:** the help window is as tall as one text line inside the battle skin's insets (52 px with Ariel's skin: 20 + 16 + 16; Claude first misstated this as 40), never less than 24, and the turn timeline moves down with it.
+- **Bottom band grows to fit:** it keeps 136 px when the skin leaves room for five 20-pixel rows (Ariel's does exactly), and grows upward for a thicker skin.
+- **Fallback:** if the battle skin cannot load, M5.3c's blue panels and exact layout are drawn instead, and the battle stays playable.
+
 ## 7. Future directions (recorded, not scheduled)
 
 - **Richer fills in W1:** a stencil or texture pattern repeated across the interior; a two-point gradient (point 1 and point 2 with their colours), so a blend can run at any angle, corner to corner or corner to the middle of the bottom.

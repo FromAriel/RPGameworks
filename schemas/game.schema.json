@@ -19,6 +19,7 @@
     "factsFile": {"type": "string", "pattern": "^facts(\\.[a-f0-9]{12})?\\.json$"},
     "questsFile": {"type": "string", "pattern": "^quests(\\.[a-f0-9]{12})?\\.json$"},
     "encountersFile": {"type": "string", "pattern": "^encounters(\\.[a-f0-9]{12})?\\.json$"},
+    "uiThemeFile": {"type": "string", "pattern": "^ui-theme(\\.[a-f0-9]{12})?\\.json$"},
     "stateIndexFile": {"type": "string", "pattern": "^state-index(\\.[a-f0-9]{12})?\\.json$"},
     "saveCompatibilityVersion": {"type": "integer", "minimum": 1, "maximum": 65535},
     "start": {

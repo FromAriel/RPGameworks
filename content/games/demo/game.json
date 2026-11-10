@@ -29,5 +29,6 @@
   "itemsFile": "items.json",
   "factsFile": "facts.json",
   "questsFile": "quests.json",
-  "encountersFile": "encounters.json"
+  "encountersFile": "encounters.json",
+  "uiThemeFile": "ui-theme.json"
 }

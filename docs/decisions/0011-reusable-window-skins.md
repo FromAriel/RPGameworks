@@ -145,6 +145,8 @@ Rules:
 
 ### W3.6 — The Final Fantasy-like skin (art)
 
+> **Changed (November 9, 2026, [decision 0013](0013-skin-recipes-and-bake-tool.md), approved by Ariel):** make this skin as a recipe baked by a skin bake tool (packets B1–B3, optionally a studio page B4) instead of a hand-written drawing script. The output is still an ordinary v2 skin, Claude still drafts, Ariel still edits, and the acceptance below is unchanged.
+
 - A new atlas and manifest for this system, in Ariel's design style with a Final Fantasy-like feel: a thin pale bevel over a blue interior.
 - **Claude drafts it with a small Node drawing script** (using `pngjs`, already a dev dependency, so no new toolchain): 16-pixel corner pieces and notches, longer bands for the bigger parts, composited into one sprite sheet in the v2 format. **Ariel edits the result.** The script and the edited PNG are both kept, and the edited PNG becomes canonical, as with the current skin.
 - Fill: a repeating banded tile to start (D4). Richer fills are a later W1 addition (§7).
@@ -196,6 +198,12 @@ Rules:
 - **Padding = the skin's inset + each window's own spacing.** Side and bottom padding is `--skin-inset-*` plus the extra each window already had over Ariel's insets (dialogue +8, or +8 sides and +4 bottom at 2×; confirmation and gallery +16; compact layouts +2; inventory, Save/Load and the Settings panel +0, with +4 at the Settings bottom). Ariel's windows look exactly as before; a thicker skin pushes content in and a thinner one lets it out.
 - **Fixture skins in the browser** use a skin parameter on `mountWindowskin(root, skin)`; the game passes Ariel's skin, and the test-only UI gallery mounts each fixture skin through it. No test hook enters the game.
 - **Implementation notes** (no new decision): the top padding still places the title on the frame's top edge, so with the title in the gap the loader measures where content would start and publishes `--skin-title-clearance`, which each window heading adds below itself (0 for Ariel's skin); insets are measured in whole skin pixels from the element's edges, because the bitmap stops less than one scale step short of the right and bottom edges.
+
+### Decided for W3.4 (Ariel, November 9, 2026)
+
+- **Theme entry:** `game.json` gains `uiThemeFile` (like `itemsFile`). That versioned file lists skins by ID (`<game>:skin.<name>`) with the path to each skin's manifest, relative to `assets/source/ui/` and never leaving it, and names a default skin for each surface. The content build validates every skin (the v2 reader and the atlas size), copies each atlas and manifest into the generated content under hashed names, and the game loads only the skins in use, once each. A game without `uiThemeFile` uses Ariel's skin everywhere.
+- **Six surfaces:** `dialogue`, `inventory` (the window the Menu button opens), `saves`, `settings` (the Settings panel and its section divider), `confirmation`, `battle` (validated now, used from W3.5). A future menu screen adds its own surface name.
+- **Per-window skin:** a map message or a dialogue graph may name a skin (`"skin": "<skin id>"`); the dialogue window uses it while showing that message or dialogue, then returns to its surface default. An unknown skin ID fails the content build.
 
 ## 7. Future directions (recorded, not scheduled)
 

@@ -28,7 +28,7 @@
       </div>
       <noscript><p class="game-notice">JavaScript is required to enter this world.</p></noscript>
     </main>
-    <aside data-window-skin="frame" id="tools-panel" tabindex="-1" aria-label="Settings and developer tools" hidden>
+    <aside data-window-skin="frame" data-skin-surface="settings" id="tools-panel" tabindex="-1" aria-label="Settings and developer tools" hidden>
       <header class="panel-heading skin-heading"><h2 id="tools-title" data-skin-title>Settings</h2></header>
       <div class="panel-toolbar">
       <div class="panel-tabs ui-tabs" id="tools-tabs" role="tablist" aria-label="Menu sections">
@@ -38,7 +38,7 @@
       <button id="tools-close" type="button" class="ui-action-button" data-intent="secondary" aria-label="Close settings and tools">×</button></div>
       <div class="tools-scroll">
       <section id="options-panel" role="tabpanel" aria-labelledby="options-tab">
-        <h3 class="skin-divider" data-window-skin="divider"><span data-skin-title>Display &amp; controls</span></h3>
+        <h3 class="skin-divider" data-window-skin="divider" data-skin-surface="settings"><span data-skin-title>Display &amp; controls</span></h3>
         <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
         <p class="hint">Respects reduced motion. Effects never change game rules.</p>
         <label class="setting"><input id="touch-enabled" type="checkbox" /> On-screen controls</label>
@@ -102,7 +102,7 @@
       <button id="tools-resume" class="resume-button ui-action-button" data-intent="primary" type="button">Return to game</button>
       </div>
     </aside>
-    <dialog data-window-skin="frame" id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
+    <dialog data-window-skin="frame" data-skin-surface="dialogue" id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
       <header class="skin-heading"><h2 id="dialog-title" data-skin-title></h2></header>
       <div id="dialog-scroll-above" hidden></div>
       <div class="dialog-scroll">
@@ -116,7 +116,7 @@
         <button id="dialog-cancel" data-action="cancel" type="button" class="ui-action-button" data-intent="secondary">Close</button>
       </div>
     </dialog>
-    <dialog data-window-skin="frame" id="inventory-dialog" aria-labelledby="inventory-title">
+    <dialog data-window-skin="frame" data-skin-surface="inventory" id="inventory-dialog" aria-labelledby="inventory-title">
       <header class="skin-heading"><h2 id="inventory-title" data-skin-title>Inventory</h2></header>
       <div id="inventory-body-above" hidden></div>
       <div class="inventory-body">
@@ -150,7 +150,7 @@
         <button id="inventory-close" type="button" class="ui-action-button" data-intent="primary">Return to game</button>
       </div>
     </dialog>
-    <dialog data-window-skin="frame" id="save-dialog" aria-labelledby="save-title">
+    <dialog data-window-skin="frame" data-skin-surface="saves" id="save-dialog" aria-labelledby="save-title">
       <header class="skin-heading"><h2 id="save-title" data-skin-title>Save / Load</h2></header>
       <div class="save-body">
         <p id="save-status" role="status" aria-live="polite">Reading local save slots…</p>

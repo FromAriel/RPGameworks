@@ -4,10 +4,19 @@ import { SkinPainter } from '../skin/paint';
 import type { TitleBox } from '../skin/layout';
 
 interface Surface { element: HTMLElement; title: HTMLElement; divider: boolean; key: string; paints: number }
-/** A skin to mount: its atlas image URL and its manifest (version 1 or 2). */
-export interface WindowSkinSource { atlasUrl: string; manifest: unknown }
-/** Ariel's canonical skin. */
+/** A skin to mount: its atlas image URL and its manifest (version 1 or 2), given inline or as a URL to fetch. */
+export interface WindowSkinSource { atlasUrl: string; manifest?: unknown; manifestUrl?: string }
+/** Ariel's canonical skin: the default for games without a UI theme, the test gallery, and early startup. */
 export const BASE_SKIN: WindowSkinSource = { atlasUrl: skinUrl, manifest };
+const BASE_SKIN_ID = 'base';
+
+/**
+ * Which skin each window uses (decision 0011 W3.4). A window's skin is, in order: the skin it asks for itself
+ * (`data-skin-id`, set for example by the dialogue window for a message that names a skin), its surface's default
+ * (`data-skin-surface`), or the fallback skin.
+ */
+export interface SkinChoice { readonly skins: ReadonlyMap<string, WindowSkinSource>; readonly surfaces: Readonly<Record<string, string>>; readonly fallback: string }
+export interface WindowskinHandle { dispose(): void; useTheme(choice: SkinChoice): void }
 
 /**
  * Fitting published on each skinned element, in CSS pixels including --skin-scale (decision 0011 W3.3). Window CSS
@@ -16,10 +25,17 @@ export const BASE_SKIN: WindowSkinSource = { atlasUrl: skinUrl, manifest };
  */
 const FIT_PROPERTIES = ['--skin-inset-left', '--skin-inset-right', '--skin-inset-bottom', '--skin-content-top', '--skin-title-max', '--skin-title-clearance'] as const;
 
-/** Decoration only. One lazy image, one scratch bitmap, one scheduled invalidation.
+interface SkinRecord {
+  readonly id: string; readonly source: WindowSkinSource | undefined;
+  state: 'idle' | 'loading' | 'ready' | 'failed';
+  image: HTMLImageElement | null; painter: SkinPainter | null; timeout: ReturnType<typeof setTimeout> | null;
+  fetch: AbortController | null; name: string;
+}
+
+/** Decoration only. Lazy images (one per skin in use), one scratch bitmap per skin, one scheduled invalidation.
  * No listeners for gameplay inputs, no recurring frame loop, no per-tile DOM nodes.
  */
-export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSource = BASE_SKIN): { dispose(): void } {
+export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSource | SkinChoice = BASE_SKIN): WindowskinHandle {
   const surfaces: Surface[] = Array.from(root.querySelectorAll<HTMLElement>('[data-window-skin]')).map(element => {
     const title = element.querySelector<HTMLElement>('[data-skin-title]');
     if (!title) throw new Error('Windowskin surface has no semantic title');
@@ -28,47 +44,83 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   const notice = root.querySelector<HTMLElement>('#skin-status');
   const lifetime = new AbortController();
   const dirty = new Set(surfaces);
-  let pending: number | null = null, timeout: ReturnType<typeof setTimeout> | null = null;
-  let image: HTMLImageElement | null = null, painter: SkinPainter | null = null;
-  let disposed = false, loading = false, failed = false;
+  const records = new Map<string, SkinRecord>();
+  let choice: SkinChoice = 'atlasUrl' in skin ? { skins: new Map([[BASE_SKIN_ID, skin]]), surfaces: {}, fallback: BASE_SKIN_ID } : skin;
+  let pending: number | null = null;
+  let disposed = false;
 
   function report(text: string): void { if (notice) notice.textContent = text; }
-  function fallback(reason: string): void {
-    failed = true; loading = false;
-    if (timeout !== null) clearTimeout(timeout);
-    timeout = null;
-    if (image) { image.onload = null; image.onerror = null; }
-    painter?.dispose(); painter = null;
-    for (const { element } of surfaces) {
-      element.dataset.skinState = 'fallback';
-      element.style.removeProperty('background-image');
-      for (const property of FIT_PROPERTIES) element.style.removeProperty(property);
+  function record(id: string): SkinRecord {
+    let entry = records.get(id);
+    if (!entry) {
+      entry = { id, source: choice.skins.get(id), state: 'idle', image: null, painter: null, timeout: null, fetch: null, name: id };
+      records.set(id, entry);
     }
-    report(`Window skin unavailable: ${reason}. Plain accessible windows remain usable.`);
-    console.warn('[RPGameworks] Window skin fallback:', reason);
+    return entry;
   }
-  function ensureImage(): void {
-    if (loading || painter || failed || disposed) return;
-    loading = true; report('Loading the base window skin…');
-    image = new Image();
-    image.onload = () => {
-      if (disposed || failed || !image) return;
-      if (timeout !== null) clearTimeout(timeout);
-      timeout = null; image.onload = null; image.onerror = null; loading = false;
+  function release(entry: SkinRecord): void {
+    if (entry.timeout !== null) clearTimeout(entry.timeout);
+    entry.timeout = null; entry.fetch?.abort(); entry.fetch = null;
+    if (entry.image) { entry.image.onload = null; entry.image.onerror = null; }
+  }
+  function fallback(entry: SkinRecord, reason: string): void {
+    if (entry.state === 'failed') return;
+    entry.state = 'failed'; release(entry);
+    entry.painter?.dispose(); entry.painter = null;
+    report(`Window skin unavailable: ${reason}. Plain accessible windows remain usable.`);
+    console.warn('[RPGameworks] Window skin fallback:', entry.id, reason);
+    invalidate();
+  }
+  function plain(surface: Surface): void {
+    const { element } = surface;
+    element.dataset.skinState = 'fallback';
+    element.style.removeProperty('background-image');
+    for (const property of FIT_PROPERTIES) element.style.removeProperty(property);
+    delete element.dataset.skinActive;
+    surface.key = '';
+  }
+  function load(entry: SkinRecord): void {
+    if (entry.state !== 'idle' || disposed) return;
+    const source = entry.source;
+    if (!source) { fallback(entry, `Unknown window skin ${entry.id}`); return; }
+    entry.state = 'loading'; report('Loading the window skin…');
+    let manifestData: unknown = source.manifest, image: HTMLImageElement | null = null;
+    const finish = (): void => {
+      if (entry.state !== 'loading' || manifestData === undefined || !image?.complete || !image.naturalWidth) return;
+      release(entry);
       try {
-        painter = new SkinPainter(image, skin.manifest); // Reads and validates the manifest; checks the atlas size it declares.
-        report('Base skin: Ariel’s edited Midnight Silver. Source preserved; connector audit in docs/WINDOW-SKIN.md.');
+        entry.painter = new SkinPainter(image, manifestData); // Reads and validates the manifest; checks the atlas size.
+        entry.state = 'ready';
+        const theme = (manifestData as { theme?: unknown }).theme;
+        entry.name = typeof theme === 'string' ? theme : entry.id;
+        report(`Window skin: ${[...records.values()].filter(r => r.state === 'ready').map(r => r.name).join(', ')}.`);
         invalidate();
-      } catch (cause) { fallback(cause instanceof Error ? cause.message : String(cause)); }
+      } catch (cause) { fallback(entry, cause instanceof Error ? cause.message : String(cause)); }
     };
-    image.onerror = () => { if (!disposed) fallback('The atlas could not be loaded'); };
-    timeout = setTimeout(() => { if (!disposed) fallback('Atlas loading timed out'); }, 5000);
-    image.src = skin.atlasUrl;
+    entry.timeout = setTimeout(() => { if (!disposed) fallback(entry, 'Atlas loading timed out'); }, 5000);
+    if (manifestData === undefined) {
+      if (!source.manifestUrl) { fallback(entry, `Window skin ${entry.id} has no manifest`); return; }
+      const controller = new AbortController(); entry.fetch = controller;
+      fetch(source.manifestUrl, { signal: controller.signal })
+        .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json() as Promise<unknown>; })
+        .then(json => { manifestData = json; finish(); })
+        .catch(() => { if (!disposed && !controller.signal.aborted) fallback(entry, 'The skin manifest could not be loaded'); });
+    }
+    image = new Image(); entry.image = image;
+    image.onload = () => { if (!disposed) finish(); };
+    image.onerror = () => { if (!disposed) fallback(entry, 'The atlas could not be loaded'); };
+    image.src = source.atlasUrl;
+  }
+  function skinFor(element: HTMLElement): string {
+    return element.dataset.skinId ?? choice.surfaces[element.dataset.skinSurface ?? ''] ?? choice.fallback;
   }
   function paint(surface: Surface): void {
     const { element, title, divider } = surface;
     if (!element.getClientRects().length || !title.getClientRects().length) return;
-    if (!painter) { ensureImage(); return; }
+    const entry = record(skinFor(element));
+    if (entry.state === 'failed') { if (element.dataset.skinState !== 'fallback') plain(surface); return; }
+    if (entry.state !== 'ready' || !entry.painter) { load(entry); return; }
+    const painter = entry.painter;
     const bounds = element.getBoundingClientRect(), label = title.getBoundingClientRect();
     const scale = Number.parseInt(getComputedStyle(element).getPropertyValue('--skin-scale'), 10) === 2 ? 2 : 1;
     const width = Math.floor(bounds.width / scale), height = Math.floor(bounds.height / scale);
@@ -77,7 +129,7 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
     const lineHeight = Number.parseFloat(labelStyle.lineHeight) || Number.parseFloat(labelStyle.fontSize) * 1.4;
     const text: TitleBox = { left: (label.left - bounds.left - left) / scale, right: (label.right - bounds.left - left) / scale,
       centerY: (label.top + label.height / 2 - bounds.top - top) / scale, height: label.height / scale, lineHeight: lineHeight / scale };
-    const key = JSON.stringify([width, height, scale, text, title.textContent]);
+    const key = JSON.stringify([entry.id, width, height, scale, text, title.textContent]);
     if (key === surface.key) return;
     try {
       const result = divider ? painter.divider(width, text) : painter.frame(width, height, text);
@@ -111,19 +163,19 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
           if (needed !== current) element.style.setProperty('--skin-title-clearance', px(needed));
         } else if (current) element.style.removeProperty('--skin-title-clearance');
       }
-      element.dataset.skinState = 'ready'; element.dataset.skinTitleMode = result.titleMode;
+      element.dataset.skinState = 'ready'; element.dataset.skinTitleMode = result.titleMode; element.dataset.skinActive = entry.id;
       element.dataset.skinPaints = String(++surface.paints);
       surface.key = key;
-    } catch (cause) { fallback(cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) { fallback(entry, cause instanceof Error ? cause.message : String(cause)); }
   }
   function flush(): void {
     pending = null;
-    if (disposed || failed || document.hidden) return;
+    if (disposed || document.hidden) return;
     const batch = [...dirty]; dirty.clear();
-    for (const surface of batch) { if (!failed) paint(surface); }
+    for (const surface of batch) paint(surface);
   }
   function invalidate(): void {
-    if (disposed || failed) return;
+    if (disposed) return;
     for (const surface of surfaces) dirty.add(surface);
     if (pending === null && !document.hidden) pending = requestAnimationFrame(flush);
   }
@@ -132,8 +184,9 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   const titles = new MutationObserver(invalidate);
   for (const { element, title } of surfaces) {
     resize.observe(element); resize.observe(title);
-    // Never observe our own style/data attributes, or the changing live Debug table.
-    attributes.observe(element, { attributes: true, attributeFilter: ['hidden', 'open'] });
+    // Never observe our own style/data attributes, or the changing live Debug table. A window asking for another
+    // skin (data-skin-id) repaints with it.
+    attributes.observe(element, { attributes: true, attributeFilter: ['hidden', 'open', 'data-skin-id'] });
     titles.observe(title, { childList: true, characterData: true, subtree: true });
   }
   window.addEventListener('resize', invalidate, { signal: lifetime.signal });
@@ -141,18 +194,31 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   document.fonts.addEventListener('loadingdone', invalidate, { signal: lifetime.signal });
   void document.fonts.ready.then(() => { if (!disposed) invalidate(); });
   invalidate();
-  return { dispose(): void {
-    if (disposed) return;
-    disposed = true; lifetime.abort(); resize.disconnect(); attributes.disconnect(); titles.disconnect(); dirty.clear();
-    if (pending !== null) cancelAnimationFrame(pending);
-    if (timeout !== null) clearTimeout(timeout);
-    pending = null; timeout = null;
-    if (image) { image.onload = null; image.onerror = null; image.removeAttribute('src'); }
-    image = null; painter?.dispose(); painter = null;
-    for (const { element } of surfaces) {
-      element.style.removeProperty('background-image'); element.style.removeProperty('background-size'); element.style.removeProperty('background-position');
-      for (const property of FIT_PROPERTIES) element.style.removeProperty(property);
-      delete element.dataset.skinState; delete element.dataset.skinTitleMode; delete element.dataset.skinPaints;
-    }
-  } };
+  return {
+    useTheme(next: SkinChoice): void {
+      if (disposed) return;
+      choice = next;
+      // A skin already loaded under the same ID is kept; others load when a window first needs them. A skin that was
+      // unknown before this theme (and so fell back) gets a fresh record.
+      for (const [id, entry] of records) if (entry.state === 'idle' || (!entry.source && next.skins.has(id))) records.delete(id);
+      invalidate();
+    },
+    dispose(): void {
+      if (disposed) return;
+      disposed = true; lifetime.abort(); resize.disconnect(); attributes.disconnect(); titles.disconnect(); dirty.clear();
+      if (pending !== null) cancelAnimationFrame(pending);
+      pending = null;
+      for (const entry of records.values()) {
+        release(entry);
+        if (entry.image) entry.image.removeAttribute('src');
+        entry.image = null; entry.painter?.dispose(); entry.painter = null;
+      }
+      records.clear();
+      for (const { element } of surfaces) {
+        element.style.removeProperty('background-image'); element.style.removeProperty('background-size'); element.style.removeProperty('background-position');
+        for (const property of FIT_PROPERTIES) element.style.removeProperty(property);
+        delete element.dataset.skinState; delete element.dataset.skinTitleMode; delete element.dataset.skinPaints; delete element.dataset.skinActive;
+      }
+    },
+  };
 }

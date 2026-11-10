@@ -58,7 +58,7 @@ export class InteractionDialog {
    * button when the advance button already does the same thing (a message's last page), so only one Close shows.
    */
   show(title: string, text: string, page: string, advanceLabel: string | null, cancelLabel: string,
-    options: { readonly layout?: 'battle'; readonly details?: string; readonly soleAction?: boolean } = {}): void {
+    options: { readonly layout?: 'battle'; readonly details?: string; readonly soleAction?: boolean; readonly skin?: string } = {}): void {
     this.ensureAffordance();
     const focusWasChoice = this.choices.contains(document.activeElement);
     this.navigation?.dispose();this.navigation=null;
@@ -67,6 +67,8 @@ export class InteractionDialog {
     this.title.textContent = title; this.text.textContent = text; this.page.textContent = page;
     this.details.textContent = options.details ?? '';
     if (options.layout) this.element.dataset.layout = options.layout; else delete this.element.dataset.layout;
+    // A message or dialogue may name its own window skin (decision 0011 W3.4); otherwise the dialogue default applies.
+    if (options.skin) this.element.dataset.skinId = options.skin; else delete this.element.dataset.skinId;
     this.scroll.scrollTop = 0; // A new page starts at its beginning, not the last page's scroll position.
     this.advance.hidden = advanceLabel === null;
     this.cancel.hidden = !!options.soleAction && advanceLabel !== null;
@@ -115,7 +117,7 @@ export class InteractionDialog {
     (buttons[options.cursor]??buttons[0])?.focus({preventScroll:true});
   }
   sampleChoices(pad:Readonly<PadInput>,deltaMs:number):void{this.navigation?.sample(pad,deltaMs);}
-  close(): void { this.navigation?.dispose();this.navigation=null;delete this.element.dataset.layout;if (this.element.open) this.element.close(); }
+  close(): void { this.navigation?.dispose();this.navigation=null;delete this.element.dataset.layout;delete this.element.dataset.skinId;if (this.element.open) this.element.close(); }
   dispose(): void {
     this.close();
     this.affordance?.dispose(); // A restarted scene remounts on the next show; observers never accumulate.

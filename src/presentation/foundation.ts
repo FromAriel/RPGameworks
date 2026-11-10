@@ -397,12 +397,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private showMessage(): void {
       const message = this.message!;
       this.dialog.show(message.speaker, message.text, `${message.page} / ${message.total}`,
-        message.page === message.total ? 'Close' : 'Next page', 'Close', { soleAction: message.page === message.total });
+        message.page === message.total ? 'Close' : 'Next page', 'Close', { soleAction: message.page === message.total, ...(message.message.skin ? { skin: message.message.skin } : {}) });
     }
     private showDialogue():void{
       const dialogue=this.dialogue!;
       this.setMode(dialogue.atChoices?'dialogue':'message');
-      this.dialog.show(dialogue.speaker,dialogue.text,`${dialogue.page} / ${dialogue.total}`,dialogue.atChoices?null:dialogue.page===dialogue.total?'Close':'Next page','Close',{soleAction:!dialogue.atChoices&&dialogue.page===dialogue.total});
+      this.dialog.show(dialogue.speaker,dialogue.text,`${dialogue.page} / ${dialogue.total}`,dialogue.atChoices?null:dialogue.page===dialogue.total?'Close':'Next page','Close',{soleAction:!dialogue.atChoices&&dialogue.page===dialogue.total,...(dialogue.graph.skin?{skin:dialogue.graph.skin}:{})});
       if(dialogue.atChoices)this.dialog.showChoices(dialogue.choices(),id=>this.chooseDialogue(id));
     }
     private chooseDialogue(id:string):void{

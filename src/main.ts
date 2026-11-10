@@ -16,6 +16,7 @@ import { createConfirmationDialog, type ConfirmationDialogParts } from './presen
 import './presentation/skin/windowskin.css';
 import './presentation/ui/battle-window.css';
 import { mountWindowskin } from './presentation/ui/windowskin';
+import { loadUiTheme } from './platform/ui-theme-loader';
 import { mountPlayerShell } from './presentation/ui/player-shell';
 import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
@@ -204,6 +205,9 @@ async function start(): Promise<void> {
     }, { signal: appLifetime.signal });
     required<HTMLElement>('#map-title').textContent = content.map.name;
     const base=new URL(import.meta.env.BASE_URL,document.baseURI);
+    // Window skins are cosmetic: a theme that cannot load leaves Ariel's skin in place instead of stopping the game.
+    try { const theme = await loadUiTheme(base, content.game, appLifetime.signal); if (theme && !disposed) windowSkin.useTheme(theme); }
+    catch (cause) { if (!appLifetime.signal.aborted) console.warn('[RPGameworks] UI theme unavailable; keeping the base window skin:', cause); }
     const [catalog,facts,quests,stateIndex]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal)]);
     if(JSON.stringify(quests.map(quest=>quest.id))!==JSON.stringify(stateIndex.questIds??[]))throw new Error('Quest catalog does not match the save state index');
     const session = new SessionController(new SessionState({items:catalog,facts,quests}));

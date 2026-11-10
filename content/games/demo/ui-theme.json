@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "skins": [
+    { "id": "demo:skin.midnight-silver", "manifest": "base/Window.manifest.json" }
+  ],
+  "surfaces": {
+    "dialogue": "demo:skin.midnight-silver",
+    "inventory": "demo:skin.midnight-silver",
+    "saves": "demo:skin.midnight-silver",
+    "settings": "demo:skin.midnight-silver",
+    "confirmation": "demo:skin.midnight-silver",
+    "battle": "demo:skin.midnight-silver"
+  }
+}

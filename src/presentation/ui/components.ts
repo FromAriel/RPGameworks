@@ -450,6 +450,7 @@ export function createConfirmationDialog(id: string): ConfirmationDialogParts {
   dialog.id = id;
   dialog.className = 'ui-confirmation';
   dialog.dataset.windowSkin = 'frame';
+  dialog.dataset.skinSurface = 'confirmation';
   dialog.setAttribute('aria-labelledby', `${id}-title`);
   dialog.setAttribute('aria-describedby', `${id}-body`);
   const heading = document.createElement('header');

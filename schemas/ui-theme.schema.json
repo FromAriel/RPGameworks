@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UiTheme",
+  "description": "Which window skins a game uses (decision 0011 W3.4). Skins are v2 (or v1) window skin manifests under assets/source/ui/; each surface names its default skin. Cross-file rules (manifests exist and are valid, IDs are unique and known) are checked by tools/build-content.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "skins", "surfaces"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "skins": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "manifest"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:skin\\.[a-z][a-z0-9.-]{0,95}$"},
+          "manifest": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}(/[a-z0-9A-Z][A-Za-z0-9._-]{0,63}){0,3}\\.json$", "description": "Path of the skin's manifest, relative to assets/source/ui/."}
+        }
+      }
+    },
+    "surfaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dialogue", "inventory", "saves", "settings", "confirmation", "battle"],
+      "description": "The default skin for each window surface. inventory is the window the Menu button opens; settings covers the Settings panel and its section divider; battle is used from W3.5.",
+      "properties": {
+        "dialogue": {"$ref": "#/definitions/skinId"},
+        "inventory": {"$ref": "#/definitions/skinId"},
+        "saves": {"$ref": "#/definitions/skinId"},
+        "settings": {"$ref": "#/definitions/skinId"},
+        "confirmation": {"$ref": "#/definitions/skinId"},
+        "battle": {"$ref": "#/definitions/skinId"}
+      }
+    }
+  },
+  "definitions": {
+    "skinId": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}:skin\\.[a-z][a-z0-9.-]{0,95}$"}
+  }
+}

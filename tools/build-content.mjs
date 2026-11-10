@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
 import { createAuthoringReport } from './authoring-report.mjs';
+import { readUiTheme, emitUiTheme, checkMapSkins } from './ui-theme.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -55,9 +56,18 @@ try {
   for(const [id,map] of maps){validateMapFacts(map,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   for(const [id,map] of maps){validateMapDialogues(map,quests.quests,catalog,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   validateWorld(game, maps, catalog, encounters);
+  // Window skins (decision 0011 W3.4): the theme, each skin it lists, and every skin a message or dialogue names.
+  const mapFiles = new Map(game.maps.map(entry => [entry.id, entry.file]));
+  let uiTheme;
+  if (game.uiThemeFile) {
+    const file = realpathSync(join(source, game.uiThemeFile)); const rel = relative(source, file);
+    if (rel === '..' || rel.startsWith('..' + sep)) throw new Error(`${game.uiThemeFile}: file escapes the content root`);
+    uiTheme = readUiTheme({ themeFile: game.uiThemeFile, themeJson: readJSON(file), skinRoot: join(repo, 'assets/source/ui'), maps, mapFiles });
+  } else checkMapSkins(maps, mapFiles, new Set(), undefined);
   let tileCount = 0;
   for (const map of maps.values()) tileCount += map.width * map.height;
   console.log(`Validated ${maps.size} maps, ${tileCount} cells, ${[...maps.values()].reduce((n, m) => n + m.exits.length, 0)} exits. All spawn, frame and cross-map references resolve.`);
+  if (uiTheme) console.log(`Validated UI theme ${game.uiThemeFile}: ${uiTheme.skins.length} window skin(s) for ${Object.keys(uiTheme.theme.surfaces).length} surfaces.`);
   if (args.includes('--check')) {
     const report = createAuthoringReport(game, maps, catalog, facts, quests, encounters);
     console.log(`Authoring report: ${report.summary.definitions} definitions, ${report.summary.references} references, ${report.summary.warnings} advisory findings. Structural paths do not prove gameplay solvability.`);
@@ -96,11 +106,12 @@ try {
       if(game.questsFile){const text=JSON.stringify(quests)+'\n';questsFile=`quests.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,questsFile),text);}
       let encountersFile;
       if(game.encountersFile){const text=JSON.stringify(encounters)+'\n';encountersFile=`encounters.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,encountersFile),text);}
+      const uiThemeFile = uiTheme ? emitUiTheme(staging, uiTheme) : undefined;
       const stateIndex={schemaVersion:game.questsFile?2:1,gameId:game.id,saveCompatibilityVersion:game.saveCompatibilityVersion??1,
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
         itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile?{questIds:quests.quests.map(quest=>quest.id)}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),stateIndexFile,maps:entries}) + '\n');
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

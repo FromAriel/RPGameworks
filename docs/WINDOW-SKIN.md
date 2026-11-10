@@ -2,8 +2,6 @@
 
 **September 18, 2026. W1 is implemented; M1.6 performance closeout remains next.**
 
-> **November 9, 2026:** the game no longer mounts this compositor. Page windows use baked Pixel Frame frames (W2.3, [decision 0010](decisions/0010-baked-pixel-frame-windows.md)); only the UI gallery fixture still uses W1, until W2.4 retires it. The rest of this page describes W1 as it was.
-
 Mara's actual conversation window, the Settings/Debug drawer, and the Display & controls divider now use Ariel's edited silver-and-midnight sheet. Text and controls remain semantic HTML, and the dialogue remains a native modal. This is a bounded decorative compositor, not a theme editor, a replacement input engine, or new RPG state.
 
 ## 1. Canonical files and provenance

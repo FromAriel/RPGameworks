@@ -58,7 +58,6 @@ test('classic battle windows play resolved turns and restore exploration focus',
   const opening = (await snapshot(page)).battle!;
   expect(opening).toMatchObject({ phase: 'command', turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 } });
   expect(opening.timeline.slice(0, 3)).toEqual(['hero', 'sigil', 'shard']);
-  expect(opening.frames).toBe('baked'); // Windows come from the UI theme's baked frames (decision 0010).
   // On a loaded machine the opening hit can finish playing before this check; while it plays, Skip has focus and
   // the menu waits.
   if (opening.playing) {
@@ -198,24 +197,6 @@ test('a carried tonic is spent atomically in battle and stays spent after runnin
   await button(page, 'Leave').click();
   await expect(page.locator('#stage')).toBeFocused();
   expect((await snapshot(page)).session.inventory[TONIC]).toBe(1);
-});
-
-test('missing baked frames fall back to plain windows and release every texture', { tag: ['@battle'] }, async ({ page }) => {
-  await page.route('**/generated/frames/manifest.json', route => route.fulfill({ status: 404, body: 'missing' }));
-  await approach(page);
-  const before = await snapshot(page);
-  await enter(page);
-  await skip(page);
-  expect((await snapshot(page)).battle?.frames).toBe('fallback');
-  await expect(button(page, 'Attack')).toBeFocused(); // Still fully playable.
-  await button(page, 'Run').click();
-  await expect.poll(async () => (await snapshot(page)).battle?.phase, { timeout: 5000 }).toBe('escaped');
-  await skip(page);
-  await button(page, 'Leave').click();
-  await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
-  const after = await snapshot(page);
-  expect(after.displayObjects).toBe(before.displayObjects);
-  expect(after.textureCount).toBe(before.textureCount);
 });
 
 test('failed catalog load leaves the room playable', { tag: ['@battle', '@smoke'] }, async ({ page }) => {

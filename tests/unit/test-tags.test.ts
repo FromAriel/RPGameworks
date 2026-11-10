@@ -25,9 +25,10 @@ describe('browser test area tags (decision 0012 T1.1)', () => {
     ]);
   });
 
-  it('exempts only the listed W2 spec', () => {
-    expect(UNTAGGED_SPECS).toEqual(['window-frames.spec.ts']);
-    expect(findTagProblems([{ file: 'tests/browser/window-frames.spec.ts', title: 'x', tags: [] }])).toEqual([]);
+  it('exempts no spec since W3.0 removed the W2 window-frames spec', () => {
+    expect(UNTAGGED_SPECS).toEqual([]);
+    expect(findTagProblems([{ file: 'tests/browser/window-frames.spec.ts', title: 'x', tags: [] }]))
+      .toEqual(['tests/browser/window-frames.spec.ts: "x" has no area tag']);
   });
 
   it('reads nested suites and normalizes tags from a Playwright JSON list', () => {

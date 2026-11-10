@@ -140,8 +140,8 @@ test('confirmation dialog guards destructive slot actions with safe focus and he
   await page.emulateMedia({forcedColors:null});
 });
 
-test('confirmation dialog remains usable when the window frames fail',{ tag: ['@saves', '@windows'] }, async({page})=>{
-  await page.route('**/generated/frames/manifest.json',route=>route.abort());
+test('confirmation dialog remains usable when the windowskin fails',{ tag: ['@saves', '@windows'] }, async({page})=>{
+  await page.route('**/Window-*.png',route=>route.abort());
   await openRoom(page);await openSaves(page);
   await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(slot(page,0)).toContainText('revision 1');
   await slot(page,0).getByRole('button',{name:'Save'}).click();

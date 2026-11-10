@@ -320,6 +320,6 @@ Every implemented UI packet should select the applicable rows rather than claimi
 
 ## Deliberate non-goals
 
-This plan does not authorize a skin replacement, theme editor, custom font purchase, icon pack, title-screen implementation, dead menu destinations, canvas-only text UI (except the battle windows, which draw UNSCII text on the canvas with a complete DOM layer of real focusable buttons and screen-reader text, per [decision 0010 §6](decisions/0010-baked-pixel-frame-windows.md)), virtual controller cursor, arbitrary animation system, battle mock disconnected from M5 rules, or redesign of Debug into a player-facing screen.
+This plan does not authorize a skin replacement, theme editor, custom font purchase, icon pack, title-screen implementation, dead menu destinations, canvas-only text UI, virtual controller cursor, arbitrary animation system, battle mock disconnected from M5 rules, or redesign of Debug into a player-facing screen.
 
 The next gate is **U1.3 existing-screen normalization**. Migrate existing screens onto the accepted components one at a time without redesigning them all at once, retaining matched references and behavioral checks for each surface. During the current GitHub Actions quota exhaustion, any authorized publication uses the agreed CI-skip marker; deferred exact-commit CI is recorded as a boundary rather than silently implied.

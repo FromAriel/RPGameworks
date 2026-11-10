@@ -22,8 +22,12 @@ export const TEST_AREAS = Object.freeze([
  */
 export const TEST_TIERS = Object.freeze(['@smoke']);
 
-/** Spec files allowed to stay untagged. window-frames is W2-only and is deleted by W3.0 (decision 0011). */
-export const UNTAGGED_SPECS = Object.freeze(['window-frames.spec.ts']);
+/**
+ * Spec files allowed to stay untagged. Empty since W3.0 removed the W2-only window-frames spec (decision 0011);
+ * kept so a future temporary exemption is explicit and reviewed.
+ */
+/** @type {readonly string[]} */
+export const UNTAGGED_SPECS = Object.freeze(/** @type {string[]} */ ([]));
 
 /**
  * @param {readonly {file: string, title: string, tags: readonly string[]}[]} tests

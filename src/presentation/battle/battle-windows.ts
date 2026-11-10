@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import type { MenuLevel, MenuEntry } from '../../domain/battle-menu';
-import type { BattleColors, BattleSkin } from './battle-frames';
 
 /**
  * Final Fantasy-style battle windows drawn on the stage (decision 0009): a help/action line at the top, and enemy
@@ -20,6 +19,13 @@ export const WINDOW = {
 const PAD = 10;
 const ROW = 20;
 const CURSOR_W = 12;
+
+/** FF-style blue panel: authored colours, tuned in play review. The fill steps in bands like a 16-bit gradient. */
+export const PANEL_STYLE = {
+  top: 0x3050b8, bottom: 0x0c1854, bandHeight: 4,
+  outline: 0x05070e, border: 0xe8ecf6, bevel: 0x8fa2d8,
+  text: 0xffffff, disabled: 0x8a93b0, muted: 0xc2cbe6, danger: 0xff9c8a, cursor: 0xffffff,
+} as const;
 
 /** Where entry `index` of a menu at `level` is drawn, for the cursor and for the mirror's button. */
 export function entryRect(level: MenuLevel, index: number): Rect {
@@ -55,24 +61,21 @@ export type LabelFactory = (x: number, y: number, text: string, color: number) =
 
 export class BattleWindows {
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
-  /** Window frames and text colours come from the skin, which reads the game's UI theme (decision 0010). */
-  constructor(private readonly scene: Phaser.Scene, private readonly skin: BattleSkin, private readonly label: LabelFactory, private readonly depth: number) {}
-
-  private get c(): BattleColors { return this.skin.colors; }
+  constructor(private readonly scene: Phaser.Scene, private readonly label: LabelFactory, private readonly depth: number) {}
 
   get objectCount(): number { return this.objects.length; }
 
   render(view: WindowsView): void {
     this.clear();
     this.panel(WINDOW.help);
-    this.text(WINDOW.help.x + 8, WINDOW.help.y + 4, fit(view.help, WINDOW.help.w - 24 - view.hint.length * 8), this.c.text);
-    if (view.hint) this.text(WINDOW.help.x + WINDOW.help.w - 8 - view.hint.length * 8, WINDOW.help.y + 4, view.hint, this.c.muted);
+    this.text(WINDOW.help.x + 8, WINDOW.help.y + 4, fit(view.help, WINDOW.help.w - 24 - view.hint.length * 8), PANEL_STYLE.text);
+    if (view.hint) this.text(WINDOW.help.x + WINDOW.help.w - 8 - view.hint.length * 8, WINDOW.help.y + 4, view.hint, PANEL_STYLE.muted);
 
     this.panel(WINDOW.enemies);
     view.enemies.forEach((enemy, index) => {
       const y = WINDOW.enemies.y + PAD + index * ROW;
       if (enemy.id === view.target) this.cursor(WINDOW.enemies.x + 6, y, false);
-      this.text(WINDOW.enemies.x + PAD + CURSOR_W, y, fit(enemy.name, WINDOW.enemies.w - 2 * PAD - CURSOR_W), enemy.defeated ? this.c.disabled : this.c.text);
+      this.text(WINDOW.enemies.x + PAD + CURSOR_W, y, fit(enemy.name, WINDOW.enemies.w - 2 * PAD - CURSOR_W), enemy.defeated ? PANEL_STYLE.disabled : PANEL_STYLE.text);
     });
 
     this.panel(WINDOW.party);
@@ -80,7 +83,7 @@ export class BattleWindows {
       const y = WINDOW.party.y + PAD + index * ROW;
       if (member.active || member.id === view.target) this.cursor(WINDOW.party.x + 6, y, member.id !== view.target && view.target !== null);
       const low = member.hp * 4 <= member.maxHp;
-      const color = member.hp <= 0 ? this.c.disabled : low ? this.c.danger : this.c.text;
+      const color = member.hp <= 0 ? PANEL_STYLE.disabled : low ? PANEL_STYLE.danger : PANEL_STYLE.text;
       this.text(WINDOW.party.x + PAD + CURSOR_W, y, fit(member.name, 120), color);
       const hp = `${String(member.hp).padStart(3)}/${String(member.maxHp).padStart(3)}`;
       this.text(WINDOW.party.x + WINDOW.party.w - PAD - hp.length * 8, y, hp, color);
@@ -91,7 +94,7 @@ export class BattleWindows {
     if (view.showCommands) {
       view.commands.forEach((entry, index) => {
         const rect = entryRect('root', index);
-        this.text(rect.x + 4 + CURSOR_W, rect.y + 2, fit(entry.label, rect.w - CURSOR_W - 8), entry.enabled ? this.c.text : this.c.disabled);
+        this.text(rect.x + 4 + CURSOR_W, rect.y + 2, fit(entry.label, rect.w - CURSOR_W - 8), entry.enabled ? PANEL_STYLE.text : PANEL_STYLE.disabled);
       });
       const at = entryRect('root', view.commandCursor);
       if (view.commands.length) this.cursor(at.x + 2, at.y + 2, view.commandInactive);
@@ -101,7 +104,7 @@ export class BattleWindows {
       this.panel(WINDOW.list);
       view.list.entries.forEach((entry, index) => {
         const rect = entryRect('item', index);
-        const color = entry.enabled ? this.c.text : this.c.disabled;
+        const color = entry.enabled ? PANEL_STYLE.text : PANEL_STYLE.disabled;
         const detail = entry.detail ?? '';
         this.text(rect.x + 4 + CURSOR_W, rect.y + 2, fit(entry.label, rect.w - CURSOR_W - 16 - detail.length * 8), color);
         if (detail) this.text(rect.x + rect.w - 6 - detail.length * 8, rect.y + 2, detail, color);
@@ -128,20 +131,34 @@ export class BattleWindows {
     this.add(this.label(Math.round(x), Math.round(y), text, color));
   }
 
-  /** One window from the skin's baked frame and fill. */
+  /** A blue panel: dark outline, light border, inner bevel line and a banded vertical gradient. */
   private panel(rect: Rect): void {
-    for (const object of this.skin.panel(rect)) this.add(object);
+    const g = this.add(this.scene.add.graphics());
+    const { x, y, w, h } = rect;
+    const bands = Math.ceil((h - 6) / PANEL_STYLE.bandHeight);
+    for (let band = 0; band < bands; band += 1) {
+      const t = bands > 1 ? band / (bands - 1) : 0;
+      const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+        Phaser.Display.Color.ValueToColor(PANEL_STYLE.top), Phaser.Display.Color.ValueToColor(PANEL_STYLE.bottom), 100, Math.round(t * 100));
+      const top = y + 3 + band * PANEL_STYLE.bandHeight;
+      g.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), 1)
+        .fillRect(x + 3, top, w - 6, Math.min(PANEL_STYLE.bandHeight, y + h - 3 - top));
+    }
+    g.fillStyle(PANEL_STYLE.outline, 1).fillRect(x, y, w, 1).fillRect(x, y + h - 1, w, 1).fillRect(x, y, 1, h).fillRect(x + w - 1, y, 1, h);
+    g.fillStyle(PANEL_STYLE.border, 1).fillRect(x + 1, y + 1, w - 2, 1).fillRect(x + 1, y + h - 2, w - 2, 1)
+      .fillRect(x + 1, y + 1, 1, h - 2).fillRect(x + w - 2, y + 1, 1, h - 2);
+    g.fillStyle(PANEL_STYLE.bevel, 1).fillRect(x + 2, y + 2, w - 4, 1).fillRect(x + 2, y + 2, 1, h - 4);
   }
 
   /** The ▶ pointer, drawn in whole pixels (7 × 11). An inactive cursor marks the parent entry of an open sub-menu. */
   private cursor(x: number, y: number, inactive: boolean): void {
     const g = this.add(this.scene.add.graphics());
-    g.fillStyle(this.c.outline, 1);
+    g.fillStyle(PANEL_STYLE.outline, 1);
     for (let row = 0; row < 11; row += 1) {
       const width = 6 - Math.abs(5 - row);
       g.fillRect(x + 1, y + 3 + row, width + 1, 1);
     }
-    g.fillStyle(inactive ? this.c.disabled : this.c.cursor, 1);
+    g.fillStyle(inactive ? PANEL_STYLE.disabled : PANEL_STYLE.cursor, 1);
     for (let row = 0; row < 11; row += 1) {
       const width = 6 - Math.abs(5 - row);
       if (width > 0) g.fillRect(x, y + 2 + row, width, 1);

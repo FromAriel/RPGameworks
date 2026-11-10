@@ -8,10 +8,6 @@
 
 These are placeholders, not a final art-direction decision. No license is assigned by this file; the project owner has not selected a project/asset license.
 
-## Baked window frames (W2.1)
-
-Window frames are generated, not stored: `npm run assets` also runs `tools/bake-frames.ts`, which renders the presets in `src/presentation/pixel-frame/presets.ts` into `public/generated/frames/` (ignored by Git). The generating code is a TypeScript port of Ariel's own Pixel Frame demonstrator (pixelstudio, reviewed November 9, 2026), under the same licence as RPGameworks, which is not yet selected ([decision 0010](../../docs/decisions/0010-baked-pixel-frame-windows.md)). The frames contain no external art.
-
 ## Imported UI skin
 
 The selected user-edited base skin is preserved separately under [ui/base](ui/base/README.md). The foundation-atlas generator does not regenerate or overwrite it. See [WINDOW-SKIN](../../docs/WINDOW-SKIN.md) for its format and explicit connector audit.

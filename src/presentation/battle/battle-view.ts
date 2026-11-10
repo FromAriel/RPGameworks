@@ -3,9 +3,7 @@ import type { BattleEvent, BattleSnapshot, CombatantSnapshot } from '../../domai
 import type { MenuEntry } from '../../domain/battle-menu';
 import { battlerPosition, hpBefore, stepDuration } from './playback';
 import type { PlaybackSpeed } from './playback';
-import { BattleWindows } from './battle-windows';
-import { BattleSkin } from './battle-frames';
-import type { BattleFrames } from './battle-frames';
+import { BattleWindows, PANEL_STYLE } from './battle-windows';
 import type { Rect } from './battle-windows';
 import { PIXEL_FONT_BITMAP_SIZE, addPixelFont, releasePixelFont } from '../pixel-font';
 
@@ -51,8 +49,6 @@ export interface BattleViewOptions {
   readonly impact: (screen: { x: number; y: number }, seed: number) => void;
   /** Display name for an item id, for the action line during playback. */
   readonly itemName: (itemId: string) => string;
-  /** Baked window frames from the UI theme, or null to draw the plain fallback windows. */
-  readonly frames: BattleFrames | null;
 }
 
 export class BattleView {
@@ -65,7 +61,6 @@ export class BattleView {
   private readonly timeline: Phaser.GameObjects.Image[] = [];
   private readonly timelineMarker: Phaser.GameObjects.Rectangle;
   private readonly windows: BattleWindows;
-  private readonly skin: BattleSkin;
   private readonly targetCursor: Phaser.GameObjects.Graphics;
   private readonly blink: Phaser.Tweens.Tween;
   private pending: { target: BattleSnapshot; events: readonly BattleEvent[]; index: number; done: () => void } | null = null;
@@ -79,7 +74,6 @@ export class BattleView {
   constructor(private readonly scene: Phaser.Scene, initial: BattleSnapshot, private readonly options: BattleViewOptions) {
     const { width, height } = scene.scale;
     this.font = addPixelFont(scene);
-    this.skin = new BattleSkin(scene, options.frames);
     this.own(scene.add.rectangle(0, 0, width, height, 0x0b111b).setOrigin(0).setDepth(DEPTH.backdrop));
     this.own(scene.add.rectangle(0, 112, width, 104, 0x18243a).setOrigin(0).setDepth(DEPTH.floor));
     this.own(scene.add.rectangle(0, 112, width, 2, 0x2e4a66).setOrigin(0).setDepth(DEPTH.floor));
@@ -101,15 +95,13 @@ export class BattleView {
     this.targetCursor = this.own(this.downPointer()).setDepth(DEPTH.windows).setVisible(false);
     for (const object of this.owned) (object as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
     this.blink = scene.tweens.add({ targets: this.targetCursor, alpha: { from: 1, to: 0.55 }, duration: 360, yoyo: true, repeat: -1 });
-    this.windows = new BattleWindows(scene, this.skin, (x, y, text, color) => this.label(x, y, text, color), DEPTH.windows);
+    this.windows = new BattleWindows(scene, (x, y, text, color) => this.label(x, y, text, color), DEPTH.windows);
     this.render(initial);
   }
 
   get playing(): boolean { return this.pending !== null; }
   get objectCount(): number { return this.owned.length + this.transient.size + this.windows.objectCount; }
   get speed(): PlaybackSpeed { return this.currentSpeed; }
-  /** Whether the windows use the theme's baked frames or the fallback drawing. */
-  get frameSource(): 'baked' | 'fallback' { return this.skin.source; }
   set speed(value: PlaybackSpeed) { this.currentSpeed = value; this.refreshWindows(); }
 
   /** Show `snapshot` immediately: HP, defeated state and the upcoming turns. */
@@ -173,7 +165,6 @@ export class BattleView {
     this.clearMotion();
     this.blink.remove();
     this.windows.destroy();
-    this.skin.destroy();
     for (const object of this.owned) object.destroy();
     this.owned.length = 0;
     this.battlers.clear();
@@ -288,11 +279,11 @@ export class BattleView {
     const g = this.scene.add.graphics();
     for (let row = 0; row < 6; row += 1) {
       const half = 5 - row;
-      g.fillStyle(this.skin.colors.outline, 1).fillRect((-half - 1) * 2, (row - 1) * 2, (half * 2 + 3) * 2, 4);
+      g.fillStyle(PANEL_STYLE.outline, 1).fillRect((-half - 1) * 2, (row - 1) * 2, (half * 2 + 3) * 2, 4);
     }
     for (let row = 0; row < 6; row += 1) {
       const half = 5 - row;
-      g.fillStyle(this.skin.colors.cursor, 1).fillRect(-half * 2, row * 2, (half * 2 + 1) * 2, 2);
+      g.fillStyle(PANEL_STYLE.cursor, 1).fillRect(-half * 2, row * 2, (half * 2 + 1) * 2, 2);
     }
     return g;
   }

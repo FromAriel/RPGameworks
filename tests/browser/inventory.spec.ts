@@ -135,7 +135,7 @@ test('invalid chest item in destination fails safely and leaves current room and
 
 test('inventory stays usable at narrow sizes, with skin failure, and with literal Unicode text',{ tag: ['@inventory', '@windows'] }, async({page},info)=>{
   await page.setViewportSize({width:390,height:650});
-  await page.route('**/generated/frames/manifest.json',route=>route.abort());
+  await page.route('**/Window-*.png',route=>route.abort());
   await page.route('**/generated/content/items.*.json',async route=>{
     const response=await route.fetch(), data=await response.json();data.strings.en['lens.name']='<img onerror=alert(1)> 世界';await route.fulfill({json:data});
   });
@@ -146,8 +146,8 @@ test('inventory stays usable at narrow sizes, with skin failure, and with litera
   await page.screenshot({path:info.outputPath('m2-inventory-narrow-fallback.png')});await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();
 });
 
-test('repeated inventory opens preserve state, scene counts and single frame manifest loading',{ tag: ['@inventory'] }, async({page})=>{
-  const requests:string[]=[];page.on('request',r=>{if(r.url().endsWith('/generated/frames/manifest.json'))requests.push(r.url());});
+test('repeated inventory opens preserve state, scene counts and single atlas loading',{ tag: ['@inventory'] }, async({page})=>{
+  const requests:string[]=[];page.on('request',r=>{if(/Window-.*png/.test(r.url()))requests.push(r.url());});
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);const before=await snapshot(page);
   for(let i=0;i<12;i++) {await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#stage')).toBeFocused();}
   const after=await snapshot(page);expect(after.session).toEqual(before.session);expect(after.starts).toBe(before.starts);expect(after.displayObjects).toBe(before.displayObjects);

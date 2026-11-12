@@ -1,14 +1,14 @@
 {
   "format": "rpgameworks.windowskin.audit",
   "version": 2,
-  "sourceSha256": "da7eeaa32f2e3c5ad2965622a97b0ecd7637bd9d88a621a0f7461d94bb02549a",
-  "manifestSha256": "0c39b4e193c5aa27cf01cd7a5e2db5ac5e4af63f3bd21a68b88eab9e8f3a5b9f",
-  "bytes": 1420,
+  "sourceSha256": "577e13a36ff914ac96229e75caaacfce87e5f66a84a5be18cc7197775cf6a721",
+  "manifestSha256": "9a2a892e7633e5f731d34f8e106db689187446def312ca22bff59574d0789960",
+  "bytes": 951,
   "width": 256,
   "height": 18,
   "tiles": 30,
   "resolvedTiles": 30,
-  "gutterPixels": 2972,
+  "gutterPixels": 3757,
   "gutterNontransparent": 0,
   "partialAlphaPixels": 0,
   "frameReach": {

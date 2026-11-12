@@ -9,13 +9,13 @@
   },
   "geometry": {
     "band": {
-      "top": 8,
-      "right": 8,
-      "bottom": 8,
-      "left": 8
+      "top": 3,
+      "right": 3,
+      "bottom": 3,
+      "left": 3
     },
     "title": {
-      "textCenter": 4,
+      "textCenter": 1,
       "textGap": 4
     },
     "rails": {
@@ -89,7 +89,7 @@
         "x": 49,
         "y": 1,
         "w": 16,
-        "h": 8
+        "h": 3
       }
     },
     {
@@ -98,7 +98,7 @@
         "x": 66,
         "y": 1,
         "w": 16,
-        "h": 8
+        "h": 3
       }
     },
     {
@@ -106,95 +106,95 @@
       "rect": {
         "x": 83,
         "y": 1,
-        "w": 8,
+        "w": 3,
         "h": 16
       }
     },
     {
       "id": "edge.right.rail",
       "rect": {
-        "x": 92,
+        "x": 87,
         "y": 1,
-        "w": 8,
+        "w": 3,
         "h": 16
       }
     },
     {
       "id": "title.open",
       "rect": {
-        "x": 101,
+        "x": 91,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "title.close",
       "rect": {
-        "x": 110,
+        "x": 95,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "title.fill",
       "rect": {
-        "x": 119,
+        "x": 99,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "divider.cap.left",
       "rect": {
-        "x": 128,
+        "x": 103,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "divider.cap.right",
       "rect": {
-        "x": 137,
+        "x": 107,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "divider.h.repeat",
       "rect": {
-        "x": 146,
+        "x": 111,
         "y": 1,
         "w": 16,
-        "h": 8
+        "h": 3
       }
     },
     {
       "id": "divider.label.open",
       "rect": {
-        "x": 163,
+        "x": 128,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "divider.label.close",
       "rect": {
-        "x": 172,
+        "x": 132,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 3,
+        "h": 3
       }
     },
     {
       "id": "fill.plain",
       "rect": {
-        "x": 181,
+        "x": 136,
         "y": 1,
         "w": 8,
         "h": 8

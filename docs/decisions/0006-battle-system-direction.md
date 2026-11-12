@@ -54,7 +54,7 @@ Players should be able to summarize it as "exploit weaknesses, build momentum, c
 - **Not punishing:** a threat-triggered fight starts neutral (no back attack), draws from easier groups for the area, and escape still works.
 - A Settings toggle offers classic random encounters, visible-only, or the hybrid default.
 - Encounter rolls use their **own seeded stream**, separate from battle rules and from PixelFX.
-- **Proposed default (not yet confirmed by Ariel):** the threat level resets on load instead of being saved.
+- **Decided (Ariel, November 12, 2026):** the threat level is not saved; it starts at zero every time a game is loaded. A player picking the game up today is never penalized for what happened in an earlier session.
 
 ### Modern conveniences
 
@@ -79,8 +79,13 @@ Players should be able to summarize it as "exploit weaknesses, build momentum, c
 
 The uncommitted candidate's seeded kernel, encounter catalog, loader, failure handling and lifecycle tests are a usable base. Its dialogue-window presentation is superseded by the battle screen. Ariel chose to commit it as a stepping stone (`b7b3d70`, November 8) and rebuild the presentation; it is a starting demo, not a design to preserve.
 
+## Answers (Ariel, November 12, 2026)
+
+- **Threat on load:** not saved; every loaded game starts with zero threat (see Encounters above).
+- **What break does:** a successful break unlocks **extra damage** against the broken enemy, on top of the stun and timeline push-back. An enemy may **regenerate its shield ("armor") pieces** after a while, so breaks are windows rather than permanent states. Timings and amounts start as sensible defaults chosen in M5.5 and are tuned by play feel, without a long design pass first.
+- **Story:** Ariel has a storyline idea for break; it is deliberately left for later. The battle system is built as a general system first.
+
 ## Open questions
 
-- How break ties into the story, and whether weakness or shield changes mid-fight are needed in the first chapter.
-- Whether the threat level is saved or reset on load (proposed: reset).
+- Whether weakness or shield changes mid-fight are needed in the first chapter.
 - Exact numeric rules: timeline speed formula, row damage factors, area falloff, momentum gains and MP per pip. These are settled with tests and play review in their packets, not here.

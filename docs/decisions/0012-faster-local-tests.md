@@ -87,6 +87,7 @@
 
 - **T1.5 skipped.** The browser scenarios that check rules (bad maps, rejected save imports, a missing item catalog, an invalid chest item, a failed battle catalog) take about 6.5 s of 381 s, and each checks what the player sees: the message, a usable room, an untouched session. The rules themselves are already unit-tested (`maps`, `save` and `session` tests). The slow battle scenario "playback speed and skipping never change the resolved battle" checks that presentation cannot change outcomes, which needs the real browser. Nothing moved.
 - **Next:** fix the two test timing races that 4 workers exposed (T1.6), so the suite holds up on slower machines; then the optional T1.7.
+- **T1.7 dropped (Ariel, November 12, 2026):** the fake-clock trial would save at most about 16 seconds; the test work is considered complete.
 
 ## 5. Which tier to run when (proposed)
 

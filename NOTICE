@@ -1,0 +1,21 @@
+RPGameworks
+Copyright 2026 RPGameworks
+
+This project is licensed under the Apache License, Version 2.0 (see LICENSE),
+except for the third-party material listed below, which keeps its own terms.
+
+Third-party material in this repository
+---------------------------------------
+
+public/character/starter-hero.rpgpack
+  A game-use selection derived from the premium Cute Fantasy character pack,
+  used under its purchased licence (commercial use and modification allowed;
+  no redistribution or resale). It is NOT covered by the Apache License and
+  may not be extracted or reused outside this game. Provenance and terms:
+  docs/asset-analysis/README.md and docs/CHARACTER-ASSET-INTEGRATION.md.
+
+public/fonts/unscii/
+  UNSCII by Viznut, public domain. See public/fonts/CREDITS.md.
+
+Third-party art fetched locally (LPC, Dungeon Crawl Stone Soup and others) lives
+under ignored folders and is never committed (docs/decisions/0007).

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Browser-native JRPG framework: first rendering foundation",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=22.16.0 <23 || >=24.15.0 <25"
   },

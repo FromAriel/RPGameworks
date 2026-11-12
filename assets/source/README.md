@@ -6,7 +6,7 @@
 
 `npm run assets` uses the original source and Node's built-in zlib to generate a PNG atlas and Phaser atlas JSON under `public/generated/`. Generated files are ignored by Git and rebuilt for development, production, and browser tests. The generator validates symbols, frame sizes, and bounds. It has no third-party image-processing dependency.
 
-These are placeholders, not a final art-direction decision. No license is assigned by this file; the project owner has not selected a project/asset license.
+These are placeholders, not a final art-direction decision. They are original project art and are covered, like the rest of the repository, by the [Apache License 2.0](../../LICENSE); see [NOTICE](../../NOTICE) for the third-party exceptions.
 
 ## Imported UI skin
 

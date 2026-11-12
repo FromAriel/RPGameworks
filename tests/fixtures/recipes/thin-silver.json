@@ -1,0 +1,12 @@
+{
+  "format": "rpgameworks.skin-recipe",
+  "formatVersion": 1,
+  "name": "Thin Silver (example)",
+  "band": { "top": 6, "right": 6, "bottom": 6, "left": 6 },
+  "profile": [1, 2, 2, 1],
+  "corner": { "art": { "library": "notch" } },
+  "title": { "openWidth": 6, "fillWidth": 6, "closeWidth": 6 },
+  "colors": { "theme": "silver" },
+  "light": { "azimuth": 225, "elevation": 45 },
+  "fill": { "type": "flat", "color": "#111a29" }
+}

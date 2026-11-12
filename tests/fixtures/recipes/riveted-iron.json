@@ -1,0 +1,16 @@
+{
+  "format": "rpgameworks.skin-recipe",
+  "formatVersion": 1,
+  "name": "Riveted Iron (example)",
+  "band": { "top": 10, "right": 10, "bottom": 10, "left": 10 },
+  "profile": [1, 2, 2, 2, 2, 2, 1],
+  "corner": { "art": { "library": "rivet-boss" }, "size": "large" },
+  "motif": { "art": { "library": "rivet" }, "period": 14, "spacing": "even" },
+  "medallions": { "bottom": { "art": { "library": "medal" } } },
+  "title": { "openWidth": 10, "fillWidth": 8, "closeWidth": 10, "textGap": 6 },
+  "colors": { "theme": "iron" },
+  "light": { "azimuth": 200, "elevation": 40, "steps": 6, "shadow": true },
+  "fill": { "type": "bands", "top": "#3050b8", "bottom": "#0c1854", "bandHeight": 4, "tileHeight": 32 },
+  "divider": { "band": 8, "profile": [1, 2, 1] },
+  "contentMargin": 6
+}

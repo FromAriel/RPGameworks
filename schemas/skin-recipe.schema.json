@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SkinRecipe",
+  "description": "A window skin described as settings, not pixels (decision 0013 B1). The bake tool (B2-B3) turns a recipe into an ordinary v2 window skin: an atlas PNG plus its manifest. Ranges follow Ariel's Pixel Frame demonstrator. Cross-field rules (art exists, profile fits the band, PNG art size) are checked by tools/skin-bake/recipe.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "formatVersion", "name", "band", "profile", "corner", "title", "colors", "light", "fill"],
+  "properties": {
+    "format": {"const": "rpgameworks.skin-recipe"},
+    "formatVersion": {"const": 1},
+    "name": {"type": "string", "pattern": "^[^\\u0000-\\u001f]{1,120}$", "description": "Display name; becomes the skin manifest's theme."},
+    "band": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top", "right", "bottom", "left"],
+      "description": "Frame thickness per side in source pixels.",
+      "properties": {
+        "top": {"$ref": "#/definitions/bandSide"},
+        "right": {"$ref": "#/definitions/bandSide"},
+        "bottom": {"$ref": "#/definitions/bandSide"},
+        "left": {"$ref": "#/definitions/bandSide"}
+      }
+    },
+    "profile": {"$ref": "#/definitions/profile", "description": "Bevel heights from the outer edge inward (0-9), swept around the frame; no longer than the thinnest band."},
+    "corner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["art"],
+      "properties": {
+        "art": {"$ref": "#/definitions/art"},
+        "size": {"$ref": "#/definitions/ornamentSize"}
+      }
+    },
+    "motif": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["art", "period"],
+      "description": "Optional pattern along the rails.",
+      "properties": {
+        "art": {"$ref": "#/definitions/art"},
+        "size": {"$ref": "#/definitions/ornamentSize"},
+        "period": {"type": "integer", "minimum": 4, "maximum": 64, "description": "Rail tile length: one motif per period."},
+        "spacing": {"enum": ["mirrored-end", "even"]}
+      }
+    },
+    "medallions": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional medallions at the middle of each side; the top one shows only on windows without a title.",
+      "properties": {
+        "top": {"$ref": "#/definitions/medallion"},
+        "right": {"$ref": "#/definitions/medallion"},
+        "bottom": {"$ref": "#/definitions/medallion"},
+        "left": {"$ref": "#/definitions/medallion"}
+      }
+    },
+    "title": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["openWidth", "fillWidth", "closeWidth"],
+      "description": "Widths of the title pieces set into the top edge; their height is the top band.",
+      "properties": {
+        "openWidth": {"type": "integer", "minimum": 1, "maximum": 64},
+        "fillWidth": {"type": "integer", "minimum": 1, "maximum": 64},
+        "closeWidth": {"type": "integer", "minimum": 1, "maximum": 64},
+        "textGap": {"type": "integer", "minimum": 0, "maximum": 32, "description": "Space between the title text and each bracket. Default 4."}
+      }
+    },
+    "colors": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A named Pixel Frame theme, or one base colour that generates hue-shifted ramps (exactly one).",
+      "properties": {
+        "theme": {"enum": ["iron", "brass", "silver", "obsidian"]},
+        "base": {"$ref": "#/definitions/hex"}
+      }
+    },
+    "light": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["azimuth", "elevation"],
+      "properties": {
+        "azimuth": {"type": "integer", "minimum": 0, "maximum": 359, "description": "Direction the light comes from, in degrees."},
+        "elevation": {"type": "integer", "minimum": 10, "maximum": 90},
+        "steps": {"type": "integer", "minimum": 3, "maximum": 6, "description": "Palette steps per ramp. Default 5."},
+        "outline": {"type": "boolean", "description": "Dark outer outline. Default true."},
+        "shadow": {"type": "boolean", "description": "Drop shadow inside the frame. Default false."}
+      }
+    },
+    "fill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "description": "The window interior: one flat colour, or a repeating tile of horizontal bands blending from top to bottom.",
+      "properties": {
+        "type": {"enum": ["flat", "bands"]},
+        "color": {"$ref": "#/definitions/hex"},
+        "top": {"$ref": "#/definitions/hex"},
+        "bottom": {"$ref": "#/definitions/hex"},
+        "bandHeight": {"type": "integer", "minimum": 1, "maximum": 16},
+        "tileHeight": {"type": "integer", "minimum": 2, "maximum": 64}
+      }
+    },
+    "divider": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Section dividers. Defaults: the top band's thickness and the frame profile.",
+      "properties": {
+        "band": {"$ref": "#/definitions/bandSide"},
+        "profile": {"$ref": "#/definitions/profile"}
+      }
+    },
+    "contentMargin": {"type": "integer", "minimum": 0, "maximum": 32, "description": "Space between the deepest frame piece and the content. Default 4."}
+  },
+  "definitions": {
+    "bandSide": {"type": "integer", "minimum": 1, "maximum": 32},
+    "profile": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"type": "integer", "minimum": 0, "maximum": 9}},
+    "hex": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+    "ornamentSize": {"enum": ["small", "medium", "large"]},
+    "art": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A piece from the built-in library, or a PNG beside the recipe using Pixel Frame's colour conventions (exactly one).",
+      "properties": {
+        "library": {"type": "string", "pattern": "^[a-z][a-z-]{0,31}$"},
+        "png": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}\\.png$"}
+      }
+    },
+    "medallion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["art"],
+      "properties": {
+        "art": {"$ref": "#/definitions/art"},
+        "size": {"$ref": "#/definitions/ornamentSize"},
+        "minEdge": {"type": "integer", "minimum": 1, "maximum": 4096, "description": "Shown only on edges at least this long. Default: both corners, the medallion and 8 pixels."}
+      }
+    }
+  }
+}

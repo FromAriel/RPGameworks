@@ -141,7 +141,7 @@ test('confirmation dialog guards destructive slot actions with safe focus and he
 });
 
 test('confirmation dialog remains usable when the windowskin fails',{ tag: ['@saves', '@windows'] }, async({page})=>{
-  await page.route('**/skins/midnight-silver.*.png',route=>route.abort());
+  await page.route('**/skins/white-silver.*.png',route=>route.abort());
   await openRoom(page);await openSaves(page);
   await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(slot(page,0)).toContainText('revision 1');
   await slot(page,0).getByRole('button',{name:'Save'}).click();

@@ -26,11 +26,13 @@ writeFileSync(path.join(root, 'thin/skin.json'), JSON.stringify(thin.skin));
 const two = { schemaVersion: 1, skins: [{ id: BASE, manifest: 'base/Window.manifest.json' }, { id: 'demo:skin.thin', manifest: 'thin/skin.json' }], surfaces: { ...surfaces(), inventory: 'demo:skin.thin' } };
 
 describe('UI theme (decision 0011 W3.4)', () => {
-  it('accepts the demo theme: Ariel’s skin on all six surfaces', () => {
+  it('accepts the demo theme: the baked White and Silver skin on all six surfaces, Ariel’s skin still available', () => {
     const theme = read(demoTheme);
-    expect(theme.skins.map((s) => s.id)).toEqual([BASE]);
-    expect(theme.skins[0]!.atlas.equals(readFileSync('assets/source/ui/base/Window.png'))).toBe(true);
+    expect(theme.skins.map((s) => s.id)).toEqual(['demo:skin.white-silver', BASE]);
+    expect(theme.skins[0]!.atlas.equals(readFileSync('assets/source/ui/skins/white-silver/Window.png'))).toBe(true);
+    expect(theme.skins[1]!.atlas.equals(readFileSync('assets/source/ui/base/Window.png'))).toBe(true);
     expect(Object.keys(theme.theme.surfaces)).toEqual([...SURFACES]);
+    expect(new Set(Object.values(theme.theme.surfaces))).toEqual(new Set(['demo:skin.white-silver']));
   });
 
   it('accepts a second skin on one surface and emits hashed atlases, normalized manifests and a generated theme', () => {

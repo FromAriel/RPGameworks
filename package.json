@@ -28,6 +28,7 @@
     "check:external-art": "node tools/check-external-art.mjs",
     "check": "npm run typecheck && npm test && npm run check:external-art && npm run build",
     "schemas": "node tools/generate-schemas.mjs",
+    "skins": "node tools/skin-bake/skins.ts",
     "content": "npm run schemas && node tools/build-content.mjs",
     "validate": "npm run schemas && node tools/build-content.mjs --check",
     "pretest": "npm run schemas"

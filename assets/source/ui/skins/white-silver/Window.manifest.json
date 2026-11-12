@@ -1,0 +1,256 @@
+{
+  "format": "rpgameworks.windowskin",
+  "formatVersion": 2,
+  "theme": "White and Silver",
+  "image": "Window.png",
+  "size": {
+    "width": 256,
+    "height": 18
+  },
+  "geometry": {
+    "band": {
+      "top": 8,
+      "right": 8,
+      "bottom": 8,
+      "left": 8
+    },
+    "title": {
+      "textCenter": 4,
+      "textGap": 4
+    },
+    "rails": {
+      "top": {
+        "spacing": "mirrored-end",
+        "gapFill": {
+          "tile": "edge.top.plain"
+        }
+      },
+      "right": {
+        "spacing": "mirrored-end",
+        "gapFill": {
+          "tile": "edge.right.plain"
+        }
+      },
+      "bottom": {
+        "spacing": "mirrored-end",
+        "gapFill": {
+          "tile": "edge.bottom.plain"
+        }
+      },
+      "left": {
+        "spacing": "mirrored-end",
+        "gapFill": {
+          "tile": "edge.left.plain"
+        }
+      }
+    },
+    "contentMargin": 4
+  },
+  "tiles": [
+    {
+      "id": "corner.tl",
+      "rect": {
+        "x": 1,
+        "y": 1,
+        "w": 11,
+        "h": 11
+      }
+    },
+    {
+      "id": "corner.tr",
+      "rect": {
+        "x": 13,
+        "y": 1,
+        "w": 11,
+        "h": 11
+      }
+    },
+    {
+      "id": "corner.bl",
+      "rect": {
+        "x": 25,
+        "y": 1,
+        "w": 11,
+        "h": 11
+      }
+    },
+    {
+      "id": "corner.br",
+      "rect": {
+        "x": 37,
+        "y": 1,
+        "w": 11,
+        "h": 11
+      }
+    },
+    {
+      "id": "edge.top.rail",
+      "rect": {
+        "x": 49,
+        "y": 1,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "edge.bottom.rail",
+      "rect": {
+        "x": 66,
+        "y": 1,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "edge.left.rail",
+      "rect": {
+        "x": 83,
+        "y": 1,
+        "w": 8,
+        "h": 16
+      }
+    },
+    {
+      "id": "edge.right.rail",
+      "rect": {
+        "x": 92,
+        "y": 1,
+        "w": 8,
+        "h": 16
+      }
+    },
+    {
+      "id": "title.open",
+      "rect": {
+        "x": 101,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "title.close",
+      "rect": {
+        "x": 110,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "title.fill",
+      "rect": {
+        "x": 119,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "divider.cap.left",
+      "rect": {
+        "x": 128,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "divider.cap.right",
+      "rect": {
+        "x": 137,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "divider.h.repeat",
+      "rect": {
+        "x": 146,
+        "y": 1,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "divider.label.open",
+      "rect": {
+        "x": 163,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "divider.label.close",
+      "rect": {
+        "x": 172,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "fill.plain",
+      "rect": {
+        "x": 181,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": "edge.top.plain",
+      "same": "edge.top.rail"
+    },
+    {
+      "id": "edge.right.plain",
+      "same": "edge.right.rail"
+    },
+    {
+      "id": "edge.bottom.plain",
+      "same": "edge.bottom.rail"
+    },
+    {
+      "id": "edge.left.plain",
+      "same": "edge.left.rail"
+    },
+    {
+      "id": "edge.top.left",
+      "same": "edge.top.rail"
+    },
+    {
+      "id": "edge.top.right",
+      "same": "edge.top.rail"
+    },
+    {
+      "id": "edge.bottom.left",
+      "same": "edge.bottom.rail"
+    },
+    {
+      "id": "edge.bottom.right",
+      "same": "edge.bottom.rail"
+    },
+    {
+      "id": "edge.left.upper",
+      "same": "edge.left.rail"
+    },
+    {
+      "id": "edge.left.lower",
+      "same": "edge.left.rail"
+    },
+    {
+      "id": "edge.right.upper",
+      "same": "edge.right.rail"
+    },
+    {
+      "id": "edge.right.lower",
+      "same": "edge.right.rail"
+    },
+    {
+      "id": "divider.h.plain",
+      "same": "divider.h.repeat"
+    }
+  ]
+}

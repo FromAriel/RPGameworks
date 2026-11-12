@@ -6,7 +6,7 @@ import { SKIN_SPECS, atlasDataUrl, buildSkin } from '../fixtures/skin-fixtures';
  * Decision 0011 W3.4: the game's UI theme chooses each surface's skin, and a message or dialogue may ask for its own.
  * These tests change only content (the generated theme and map, served through routes) and never the code.
  */
-const BASE = 'demo:skin.midnight-silver', THIN = 'demo:skin.thin';
+const BASE = 'demo:skin.white-silver', THIN = 'demo:skin.thin';
 const thin = buildSkin(SKIN_SPECS[0]!);
 const thinPng = Buffer.from(atlasDataUrl(thin).split(',')[1]!, 'base64');
 

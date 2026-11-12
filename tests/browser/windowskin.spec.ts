@@ -11,15 +11,15 @@ async function talk(page: Page): Promise<void> {
 }
 const paintings = (page: Page) => page.locator('[data-window-skin]').evaluateAll(elements => elements.map(e => (e as HTMLElement).dataset.skinPaints ?? '0'));
 
-test('exact edited atlas loads lazily once, while the clean launch keeps only the game canvas', { tag: ['@windows', '@boot'] }, async ({page}) => {
+test('the theme’s exact baked atlas loads lazily once, while the clean launch keeps only the game canvas', { tag: ['@windows', '@boot'] }, async ({page}) => {
   // The game loads the atlas named by its UI theme (generated content), never the base import as well.
   const images:string[]=[], base:string[]=[];
-  page.on('request',r=>{if(/\/skins\/midnight-silver\.[^/]+\.png/.test(r.url()))images.push(r.url());if(/\/Window-[^/]+\.png/.test(r.url()))base.push(r.url());});
+  page.on('request',r=>{if(/\/skins\/white-silver\.[^/]+\.png/.test(r.url()))images.push(r.url());if(/\/Window-[^/]+\.png/.test(r.url()))base.push(r.url());});
   await openRoom(page); await expect(page.locator('canvas')).toHaveCount(1); expect(images).toHaveLength(0);
-  const response = page.waitForResponse(r=>/\/skins\/midnight-silver\.[^/]+\.png/.test(r.url()));
+  const response = page.waitForResponse(r=>/\/skins\/white-silver\.[^/]+\.png/.test(r.url()));
   await openTools(page); await expect(page.locator('#tools-panel')).toHaveAttribute('data-skin-state','ready');
   const bytes=await (await response).body();
-  expect(createHash('sha256').update(bytes).digest('hex')).toBe('758fb5bf370a5c7c2cee950c861245491cd127a8a48d036a7f3d0030c79007e6');
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe(createHash('sha256').update(readFileSync('assets/source/ui/skins/white-silver/Window.png')).digest('hex'));
   await closeTools(page); await talk(page);
   await expect(page.locator(dialog)).toHaveAttribute('data-skin-state','ready');
   expect(images).toHaveLength(1); expect(base).toHaveLength(0); await expect(page.locator('canvas')).toHaveCount(1);
@@ -35,7 +35,7 @@ test('real Settings has a live bracketed title and a composed section divider', 
   expect((await snapshot(page)).effectsEnabled).toBe(false);expect((await snapshot(page)).actorTile).toEqual(initial.actorTile);
   await page.screenshot({path:info.outputPath('w1-settings-wide.png')});
   await page.locator('#debug-tab').click();await expect(page.locator('#tools-title')).toHaveText('Debug');
-  await expect(page.locator('#skin-status')).toContainText('Ariel');await closeTools(page);
+  await expect(page.locator('#skin-status')).toContainText('White and Silver');await closeTools(page);
   await expect(page.locator('#stage')).toBeFocused();
 });
 
@@ -108,10 +108,10 @@ test('repeated menu and dialogue use keeps decoration and input ownership bounde
 
 for(const fault of ['missing','wrong-size','timeout'] as const) {
  test(`skin ${fault} falls back without blocking dialogue, focus, or map travel`, { tag: ['@windows', '@world'] }, async ({page}) => {
-   await page.route('**/skins/midnight-silver.*.png',async route=>{
+   await page.route('**/skins/white-silver.*.png',async route=>{
      if(fault==='missing')await route.abort();
      else if(fault==='wrong-size')await route.fulfill({contentType:'image/png',body:readFileSync('public/generated/foundation.png')});
-     else {await new Promise(r=>setTimeout(r,5500));try{await route.fulfill({contentType:'image/png',body:readFileSync('assets/source/ui/base/Window.png')});}catch{/* page may be closing */}}
+     else {await new Promise(r=>setTimeout(r,5500));try{await route.fulfill({contentType:'image/png',body:readFileSync('assets/source/ui/skins/white-silver/Window.png')});}catch{/* page may be closing */}}
    });
    await openRoom(page);await talk(page);await expect(page.locator(dialog)).toHaveAttribute('data-skin-state','fallback');
    await expect(page.locator('#dialog-text')).not.toBeEmpty();await page.keyboard.press('Escape');

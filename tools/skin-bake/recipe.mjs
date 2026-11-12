@@ -40,6 +40,11 @@ export function readRecipe(json, { dir, file = 'recipe' } = {}) {
   const at = (/** @type {string} */ where, /** @type {string} */ message) => errors.push(`${file} ${where}: ${message}`);
 
   if ((r.colors.theme === undefined) === (r.colors.base === undefined)) at('/colors', 'needs exactly one of "theme" or "base"');
+  for (const key of /** @type {const} */ (['frame', 'accent'])) {
+    const ramp = r.colors[key];
+    const out = ramp?.findIndex((hex, i) => i > 0 && luminance(hex) < luminance(/** @type {string} */ (ramp[i - 1])));
+    if (ramp && out !== undefined && out > 0) at(`/colors/${key}/${out}`, `${ramp[out]} is darker than ${ramp[out - 1]}; list the shades darkest first`);
+  }
   if (r.fill.type === 'flat') {
     if (!r.fill.color) at('/fill', 'a flat fill needs "color"');
     for (const key of /** @type {const} */ (['top', 'bottom', 'bandHeight', 'tileHeight'])) if (r.fill[key] !== undefined) at(`/fill/${key}`, 'is only used by a banded fill');
@@ -82,14 +87,20 @@ export function readRecipe(json, { dir, file = 'recipe' } = {}) {
     ok: true,
     recipe: {
       ...r,
-      corner: { size: 'medium', ...r.corner },
-      ...(r.motif ? { motif: { size: 'medium', spacing: 'mirrored-end', ...r.motif } } : {}),
+      corner: { size: 'medium', material: 'as-drawn', ...r.corner },
+      ...(r.motif ? { motif: { size: 'medium', material: 'as-drawn', spacing: 'mirrored-end', ...r.motif } } : {}),
       title: { textGap: 4, ...r.title },
       light: { steps: 5, outline: true, shadow: false, ...r.light },
       divider: { band: dividerBand, profile: dividerProfile },
       contentMargin: r.contentMargin ?? 4,
     },
   };
+}
+
+/** Relative brightness (Rec. 709 weights) of a #rrggbb colour, for checking ramp order. @param {string} hex */
+function luminance(hex) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return 0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
 }
 
 /** @param {Buffer} bytes @returns {{ width: number, height: number } | null} */
@@ -107,7 +118,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const result = readRecipe(json, { dir: path.dirname(file), file });
     if (result.ok) {
       const r = result.recipe;
-      console.log(`${file}: ok — "${r.name}", band ${r.band.top}/${r.band.right}/${r.band.bottom}/${r.band.left}, profile ${r.profile.join(' ')}, ${r.colors.theme ?? r.colors.base}, ${r.fill.type} fill`);
+      console.log(`${file}: ok — "${r.name}", band ${r.band.top}/${r.band.right}/${r.band.bottom}/${r.band.left}, profile ${r.profile.join(' ')}, ${r.colors.theme ?? r.colors.base}${r.colors.frame ? ' + frame ramp' : ''}${r.colors.accent ? ' + accent ramp' : ''}, ${r.fill.type} fill`);
     } else { failed = true; for (const error of result.errors) console.error(error); }
   }
   process.exitCode = failed ? 1 : 0;

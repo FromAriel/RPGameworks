@@ -11,20 +11,21 @@ const errorsOf = (json: unknown, where: { dir?: string } = { dir }) => { const r
 
 describe('skin recipes (decision 0013 B1)', () => {
   it('accepts the example recipes and fills in every default', () => {
-    for (const [file, folder] of [['thin-silver.json', dir], ['riveted-iron.json', dir], ['carved-corner/recipe.json', path.join(dir, 'carved-corner')]] as const) {
+    for (const [file, folder] of [['thin-silver.json', dir], ['riveted-iron.json', dir], ['carved-corner/recipe.json', path.join(dir, 'carved-corner')], ['white-silver/recipe.json', path.join(dir, 'white-silver')]] as const) {
       const result = readRecipe(load(file), { dir: folder, file });
       expect(result.ok ? [] : result.errors, file).toEqual([]);
     }
     const thin = readRecipe(load('thin-silver.json'), { dir });
     if (!thin.ok) throw new Error('unreachable');
     expect(thin.recipe.corner.size).toBe('medium');
+    expect(thin.recipe.corner.material).toBe('as-drawn');
     expect(thin.recipe.title.textGap).toBe(4);
     expect(thin.recipe.light).toEqual({ azimuth: 225, elevation: 45, steps: 5, outline: true, shadow: false });
     expect(thin.recipe.divider).toEqual({ band: 6, profile: [1, 2, 2, 1] }); // Defaults to the top band and the frame profile.
     expect(thin.recipe.contentMargin).toBe(4);
     const iron = readRecipe(load('riveted-iron.json'), { dir });
     if (!iron.ok) throw new Error('unreachable');
-    expect(iron.recipe.motif).toEqual({ art: { library: 'rivet' }, period: 14, spacing: 'even', size: 'medium' });
+    expect(iron.recipe.motif).toEqual({ art: { library: 'rivet' }, period: 14, spacing: 'even', size: 'medium', material: 'as-drawn' });
     expect(iron.recipe.divider).toEqual({ band: 8, profile: [1, 2, 1] });
   });
 
@@ -43,6 +44,9 @@ describe('skin recipes (decision 0013 B1)', () => {
       ['two colour sources', { ...base, colors: { theme: 'iron', base: '#336699' } }, 'r /colors: needs exactly one of "theme" or "base"'],
       ['no colour source', { ...base, colors: {} }, 'r /colors: needs exactly one of "theme" or "base"'],
       ['impossible colour', { ...base, colors: { base: '#12345g' } }, 'r /colors/base: must match pattern'],
+      ['frame shades out of order', { ...base, colors: { theme: 'silver', frame: ['#202020', '#ffffff', '#808080'] } }, 'r /colors/frame/2: #808080 is darker than #ffffff; list the shades darkest first'],
+      ['accent ramp of one shade', { ...base, colors: { theme: 'silver', accent: ['#808080'] } }, 'r /colors/accent: must NOT have fewer than 2 items'],
+      ['unknown piece material', { ...base, corner: { art: { library: 'notch' }, material: 'gold' } }, 'r /corner/material: must be equal to one of the allowed values'],
       ['flat fill without a colour', { ...base, fill: { type: 'flat' } }, 'r /fill: a flat fill needs "color"'],
       ['banded fill missing a part', { ...base, fill: { type: 'bands', top: '#3050b8', bottom: '#0c1854', bandHeight: 4 } }, 'r /fill: a banded fill needs "tileHeight"'],
       ['bands taller than the tile', { ...base, fill: { type: 'bands', top: '#3050b8', bottom: '#0c1854', bandHeight: 8, tileHeight: 4 } }, 'r /fill: bandHeight (8) is taller than tileHeight (4)'],

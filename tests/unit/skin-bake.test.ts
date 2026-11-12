@@ -19,6 +19,7 @@ const RECIPES = [
   ['thin-silver', 'tests/fixtures/recipes/thin-silver.json'],
   ['riveted-iron', 'tests/fixtures/recipes/riveted-iron.json'],
   ['carved-corner', 'tests/fixtures/recipes/carved-corner/recipe.json'],
+  ['white-silver', 'tests/fixtures/recipes/white-silver/recipe.json'],
 ] as const;
 const out = mkdtempSync(path.join(tmpdir(), 'rpg-bake-'));
 afterAll(() => rmSync(out, { recursive: true, force: true }));
@@ -88,6 +89,26 @@ describe('skin bake (decision 0013 B2)', () => {
       writeFileSync(path.join(process.env.BAKE_PREVIEW_DIR, 'four-medals.manifest.json'), JSON.stringify(manifest, null, 2));
     }
     await expectCleanComposition(skin, { naturalWidth: atlas.width, naturalHeight: atlas.height, pixels: Buffer.from(atlas.data) });
+  });
+
+  it('paints the frame in the recipe frame ramp and accent pieces in the accent ramp', () => {
+    const file = RECIPES[3][1], dir = path.dirname(file);
+    const white = load(file);
+    // Mean brightness of a tile's opaque pixels.
+    const brightness = (recipe: FilledRecipe, id: string) => {
+      const { manifest, atlas } = bakeSkin(recipe, { dir });
+      const r = (manifest as unknown as WindowSkinManifestV2).tiles.find((t) => t.id === id)!.rect!;
+      let sum = 0, n = 0;
+      for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) {
+        const i = ((r.y + y) * atlas.width + r.x + x) * 4;
+        if (atlas.data[i + 3]! < 128) continue;
+        sum += 0.2126 * atlas.data[i]! + 0.7152 * atlas.data[i + 1]! + 0.0722 * atlas.data[i + 2]!; n += 1;
+      }
+      return sum / n;
+    };
+    const { frame: _frame, ...plainColors } = white.colors;
+    expect(brightness(white, 'edge.top.rail')).toBeGreaterThan(brightness({ ...white, colors: plainColors }, 'edge.top.rail') + 20);
+    expect(brightness(white, 'corner.tl')).toBeLessThan(brightness({ ...white, corner: { ...white.corner, material: 'as-drawn' } }, 'corner.tl') - 20);
   });
 
   it('refuses a band with no room for the outline and the profile', () => {

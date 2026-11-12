@@ -4,6 +4,17 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## Recipe frame and accent colours — November 12, 2026, local
+
+At Ariel's request, after previews of a white window with silver corners: a recipe can now colour the frame and the accent pieces separately, and make a whole ornament accent ([decision 0013](decisions/0013-skin-recipes-and-bake-tool.md) B1 addendum). Tool code only; no game code changed.
+
+- **Format** (`schemas/skin-recipe.schema.json`): `colors` keeps exactly one starting point (`theme` or `base`) and gains optional `frame` and `accent` ramps, 2–8 hex colours darkest first, which replace the starting point's colours for those two materials (the bake resamples them to `light.steps`; gem colours and tarnish still come from the starting point). `corner`, `motif` and each medallion gain `material`: `as-drawn` (default) or `accent`, which draws the piece's frame-material pixels in the accent colours (gem and dark pixels keep theirs), for library art and PNG art alike.
+- **Reader** (`tools/skin-bake/recipe.mjs`): rejects a ramp listed out of order (`/colors/frame/2: #808080 is darker than #ffffff; list the shades darkest first`); fills `material: 'as-drawn'` for the corner and motif; the command-line summary names the extra ramps.
+- **Bake** (`tools/skin-bake/bake.ts`): the shade theme is the starting theme with the recipe's ramps put in. `defineAccentVariant` (new in `tools/skin-bake/pixel-frame/art.ts`) registers `<art>#accent` at every ornament size.
+- **Example** `tests/fixtures/recipes/white-silver/`: the carved-corner shape with a white frame ramp, a darker cool silver accent ramp and `material: "accent"` corners, matching the third preview Ariel approved (the corner PNG is a copy of the carved-corner test art).
+- **Tests:** `skin-recipe.test.ts` accepts the new example, checks the material default, and adds three broken recipes (ramp out of order, a one-shade ramp, an unknown material). `skin-bake.test.ts` bakes, audits and composes the white-silver example like the others, and checks that the frame ramp brightens the top rail and that `material: "accent"` darkens the corner against the as-drawn bake (mean brightness of opaque pixels, by more than 20). Local results: `npm run typecheck` passed; unit tests **474/474**; `check:external-art` and `check:test-tags` passed. Browser tests were not run (no game code changed).
+- Migration: none; existing recipes need no change and get the same theme colours as before (not compared byte for byte against B2's output; their tests pass apart from the newly filled default). Next: still **B3 `npm run skins`**.
+
 ## B2 skin bake core — November 12, 2026, local
 
 A recipe now bakes into an ordinary v2 window skin ([decision 0013](decisions/0013-skin-recipes-and-bake-tool.md) B2). Tool code only: the game build contains no bake or Pixel Frame code (checked in `dist/`), and no game code changed.

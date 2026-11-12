@@ -13,10 +13,11 @@ import { composeFrame } from './pixel-frame/frame.ts';
 import type { ComposedFrame } from './pixel-frame/frame.ts';
 import { shade } from './pixel-frame/shade.ts';
 import type { RgbaImage, ShadeOptions } from './pixel-frame/shade.ts';
-import { ORNAMENT_SIZES, defineArt, getArt } from './pixel-frame/art.ts';
+import { ORNAMENT_SIZES, defineAccentVariant, defineArt, getArt } from './pixel-frame/art.ts';
 import type { OrnamentSize } from './pixel-frame/art.ts';
 import { artFromImage } from './pixel-frame/art-io.ts';
-import { hexToRgb, mix, themeFromBase } from './pixel-frame/palettes.ts';
+import { hexToRgb, mix, resolveTheme, themeFromBase } from './pixel-frame/palettes.ts';
+import type { Theme } from './pixel-frame/palettes.ts';
 import type { FrameStyle } from './pixel-frame/styles.ts';
 import type { Profile } from './pixel-frame/profile.ts';
 import { readFileSync } from 'node:fs';
@@ -30,16 +31,17 @@ const PLAIN_PERIOD = 16;
 const ATLAS_WIDTH = 256;
 
 interface ArtRef { readonly library?: string; readonly png?: string }
+type ArtMaterial = 'as-drawn' | 'accent';
 /** A recipe after readRecipe (tools/skin-bake/recipe.mjs): every default filled in. */
 export interface FilledRecipe {
   readonly name: string;
   readonly band: Readonly<Record<Side, number>>;
   readonly profile: readonly number[];
-  readonly corner: { readonly art: ArtRef; readonly size: OrnamentSize };
-  readonly motif?: { readonly art: ArtRef; readonly size: OrnamentSize; readonly period: number; readonly spacing: 'mirrored-end' | 'even' };
-  readonly medallions?: Partial<Record<Side, { readonly art: ArtRef; readonly size?: OrnamentSize; readonly minEdge?: number }>>;
+  readonly corner: { readonly art: ArtRef; readonly size: OrnamentSize; readonly material: ArtMaterial };
+  readonly motif?: { readonly art: ArtRef; readonly size: OrnamentSize; readonly material: ArtMaterial; readonly period: number; readonly spacing: 'mirrored-end' | 'even' };
+  readonly medallions?: Partial<Record<Side, { readonly art: ArtRef; readonly size?: OrnamentSize; readonly material?: ArtMaterial; readonly minEdge?: number }>>;
   readonly title: { readonly openWidth: number; readonly fillWidth: number; readonly closeWidth: number; readonly textGap: number };
-  readonly colors: { readonly theme?: 'iron' | 'brass' | 'silver' | 'obsidian'; readonly base?: string };
+  readonly colors: { readonly theme?: 'iron' | 'brass' | 'silver' | 'obsidian'; readonly base?: string; readonly frame?: readonly string[]; readonly accent?: readonly string[] };
   readonly light: { readonly azimuth: number; readonly elevation: number; readonly steps: number; readonly outline: boolean; readonly shadow: boolean };
   readonly fill: { readonly type: 'flat' | 'bands'; readonly color?: string; readonly top?: string; readonly bottom?: string; readonly bandHeight?: number; readonly tileHeight?: number };
   readonly divider: { readonly band: number; readonly profile: readonly number[] };
@@ -69,7 +71,7 @@ export function bakeSkin(recipe: FilledRecipe, { dir, image = 'Window.png' }: { 
   }
   const shadeOptions: ShadeOptions = {
     az: recipe.light.azimuth, el: recipe.light.elevation, steps: recipe.light.steps, outline: recipe.light.outline, shadow: recipe.light.shadow,
-    theme: recipe.colors.theme ?? themeFromBase(recipe.colors.base as string), dither: false, brushed: false,
+    theme: recipeTheme(recipe), dither: false, brushed: false,
   };
   const backdrop = fillColor(recipe);
   const lit = (style: FrameStyle, W: number, H: number, size: OrnamentSize, transpose = false): Lit =>
@@ -83,7 +85,7 @@ export function bakeSkin(recipe: FilledRecipe, { dir, image = 'Window.png' }: { 
   const alias = (id: string, same: string): void => { entries.push({ id, same }); };
 
   // Corners: each lit on its own side of the light, so all four are separate tiles.
-  const cornerArt = artName(recipe.corner.art, dir);
+  const cornerArt = artName(recipe.corner.art, dir, recipe.corner.material);
   const art = getArt(cornerArt, recipe.corner.size);
   const reachX = art ? Math.max(0, art.w - art.ox) : 0, reachY = art ? Math.max(0, art.h - art.oy) : 0;
   const cw = (side: 'left' | 'right') => Math.max(recipe.band[side], o + Math.max(p, reachX));
@@ -110,7 +112,7 @@ export function bakeSkin(recipe: FilledRecipe, { dir, image = 'Window.png' }: { 
     add(frame.cut(`edge.right.${suffix}`, frame.outerW - recipe.band.right, o + middle, recipe.band.right, P));
   };
   if (motif) {
-    cutRails(lit(style({ motif: { art: artName(motif.art, dir), period: motif.period } }), railBox, railBox, motif.size), 'rail');
+    cutRails(lit(style({ motif: { art: artName(motif.art, dir, motif.material), period: motif.period } }), railBox, railBox, motif.size), 'rail');
     cutRails(lit(style(), railBox, railBox, 'medium'), 'plain');
   } else {
     cutRails(lit(style(), railBox, railBox, 'medium'), 'rail');
@@ -128,7 +130,7 @@ export function bakeSkin(recipe: FilledRecipe, { dir, image = 'Window.png' }: { 
     const spec = recipe.medallions?.[side];
     if (!spec) continue;
     const size = spec.size ?? 'medium';
-    const name = artName(spec.art, dir);
+    const name = artName(spec.art, dir, spec.material);
     const medal = getArt(name, size);
     if (!medal) throw new Error(`Medallion art for the ${side} side could not be loaded`);
     const vertical = side === 'left' || side === 'right';
@@ -254,8 +256,22 @@ function clampProfile(profile: readonly number[], w: number, h: number, o: numbe
   return (profile.length > room ? profile.slice(0, room) : profile) as Profile;
 }
 
-/** Library art by its kebab-case recipe name, or a recipe's PNG registered under a private name. */
-function artName(ref: ArtRef, dir: string): string {
+/** The starting theme (named or from a base colour) with the recipe's own frame and accent ramps put in. */
+function recipeTheme(recipe: FilledRecipe): Theme {
+  const start = recipe.colors.theme ? resolveTheme(recipe.colors.theme) : themeFromBase(recipe.colors.base as string);
+  return { ...start, metal: recipe.colors.frame ?? start.metal, accent: recipe.colors.accent ?? start.accent };
+}
+
+/**
+ * Library art by its kebab-case recipe name, or a recipe's PNG registered under a private name. Material "accent"
+ * gives the variant whose metal pixels are accent.
+ */
+function artName(ref: ArtRef, dir: string, material: ArtMaterial = 'as-drawn'): string {
+  const name = baseArtName(ref, dir);
+  return material === 'accent' ? defineAccentVariant(name) : name;
+}
+
+function baseArtName(ref: ArtRef, dir: string): string {
   if (ref.library) return ref.library.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
   const file = path.join(dir, ref.png as string);
   const png = PNG.sync.read(readFileSync(file));

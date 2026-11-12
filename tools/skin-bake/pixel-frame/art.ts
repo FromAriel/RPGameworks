@@ -311,6 +311,28 @@ export function defineArt(name: string, def: ArtDef): void {
   for (const key of [...cache.keys()]) if (key.startsWith(`${name}@`)) cache.delete(key);
 }
 
+/**
+ * Register `<name>#accent`: the same piece at every size with its metal pixels turned to accent (RPGameworks skin
+ * bake, a recipe piece with material "accent"). Gem, dark and neutral pixels keep their material. Returns the new name.
+ */
+export function defineAccentVariant(name: string): string {
+  const make = makers[name];
+  if (!make) throw new Error(`Unknown art "${name}"`);
+  const variant = `${name}#accent`;
+  makers[variant] = (f) => {
+    const def = make(f);
+    const fallback = def.defaultMat ?? 'a';
+    const mat = def.height.map((row, y) => [...row].map((_, x) => {
+      const m = def.mat?.[y]?.[x];
+      const resolved = m !== undefined && m !== '.' ? m : fallback;
+      return resolved === 'm' ? 'a' : resolved;
+    }).join(''));
+    return { ...def, mat, defaultMat: 'a' };
+  };
+  for (const key of [...cache.keys()]) if (key.startsWith(`${variant}@`)) cache.delete(key);
+  return variant;
+}
+
 /** The parsed art piece, cached per size. Unknown names return null. */
 export function getArt(name: string, size: OrnamentSize = 'medium'): Art | null {
   const key = `${name}@${size}`;

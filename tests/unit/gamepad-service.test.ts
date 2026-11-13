@@ -36,8 +36,8 @@ describe('app-owned native sampler', () => {
   it('updates fresh native snapshots and consumes each action only once', () => {
     raw = [device()]; tick(); service.poll(true);
     raw = [{ ...device(), axes:[0.85,0], buttons:[1] }]; tick();
-    expect(service.poll(true)).toEqual({ direction:'right', burst:true, interact:false, cancel:false, menu:false });
-    expect(service.poll(true)).toEqual({ direction:'right', burst:false, interact:false, cancel:false, menu:false });
+    expect(service.poll(true)).toEqual({ direction:'right', burst:true, interact:false, cancel:false, menu:false, tab:0 });
+    expect(service.poll(true)).toEqual({ direction:'right', burst:false, interact:false, cancel:false, menu:false, tab:0 });
   });
   it('routes the same sampled controller to menus while reporting gameplay paused', () => {
     raw = [device()]; tick(); service.poll(true, 'menu');

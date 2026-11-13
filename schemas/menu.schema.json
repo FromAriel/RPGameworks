@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MenuDefinition",
+  "description": "The game's main menu (decision 0016): the hub's entries in order, the screen each opens, optional unlock conditions, the info windows, and the layout. Built-in screens use the builtin: namespace; a game's own code registers other screens and lists them here like any other entry. Conditions use the map condition vocabulary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "layout": {
+      "enum": [
+        "command-right",
+        "command-left"
+      ],
+      "description": "Where the command column sits on the hub. Default command-right."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+        "$ref": "#/definitions/entry"
+      }
+    },
+    "info": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "enum": [
+          "location",
+          "play-time",
+          "money"
+        ]
+      },
+      "description": "Small info windows under the command column, in order. A slot whose system does not exist yet is not shown. Each at most once."
+    }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "screen"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}$"
+        },
+        "label": {
+          "type": "string",
+          "pattern": "^[^\\u0000-\\u001f]{1,16}$",
+          "description": "Shown in the command column (16 characters at most)."
+        },
+        "screen": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}:[a-z][a-z0-9.-]{0,63}$",
+          "description": "The screen it opens, for example builtin:items or mygame:crafting."
+        },
+        "help": {
+          "type": "string",
+          "pattern": "^[^\\u0000-\\u001f]{1,120}$",
+          "description": "Shown in the help line while the entry is highlighted."
+        },
+        "when": {
+          "$ref": "#/definitions/condition",
+          "description": "Shown only while this holds (for example after a story fact)."
+        }
+      }
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "all"
+            },
+            "conditions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/definitions/condition"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "conditions"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "any"
+            },
+            "conditions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/definitions/condition"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "conditions"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "not"
+            },
+            "condition": {
+              "$ref": "#/definitions/condition"
+            }
+          },
+          "required": [
+            "type",
+            "condition"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "factEquals"
+            },
+            "factId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}:fact\\.[a-z][a-z0-9.-]{0,95}$"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "factId",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "itemAtLeast"
+            },
+            "itemId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}:item\\.[a-z][a-z0-9.-]{0,95}$"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            }
+          },
+          "required": [
+            "type",
+            "itemId",
+            "quantity"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "placementOpened"
+            },
+            "placementId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}:object\\.[a-z][a-z0-9.-]{0,95}$"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "placementId",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "questStateEquals"
+            },
+            "questId": {
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "inactive",
+                "active",
+                "completed"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "questId",
+            "value"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -115,6 +115,16 @@ The game's menus look and play like a classic Final Fantasy-style JRPG menu, and
 
 **Then M5.4d** (decision 0014) builds the party roster, the **Formation** screen and the **Status** screen on these blocks, with save version 3.
 
+**Execution answers (Ariel, November 13, before U2.0):**
+- **Touch:** small touch screens keep the pixel-scaled menus for now, with whole rows tappable (full width). A later mobile pass may revisit this.
+- **W1:** the window painter measures windows by their layout size inside the scaled menu layer, so skins are not enlarged twice. Existing windows paint identically (golden and browser tests).
+- **Small windows (Ariel, during U2.0):** a window too small for its skin draws plain on its own instead of failing the skin for every window; a failed skin load still fails it everywhere.
+
+**Execution notes (U2.0):**
+- **Controller v4:** tab switching needed two new controller actions (*Menu: previous tab*, *Menu: next tab*, buttons 4 and 5 by default), so controller settings are now version 4, migrated from v1–v3.
+- **Grid block:** deferred to M5.4d's formation screen, the first screen that needs it.
+- **Help line:** not a live region, because each row's help is already its description; the detail window is the live region.
+
 ## 7. Not in U2
 
 - Equip and Skills screens, which arrive with equipment and skills (M5.9–M5.10).

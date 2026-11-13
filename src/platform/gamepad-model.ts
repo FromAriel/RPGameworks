@@ -2,11 +2,13 @@ import type { Direction } from '../domain/movement';
 
 export const LEGACY_CONTROLLER_KEY = 'rpgameworks.controller.v1';
 export const PREVIOUS_CONTROLLER_KEY = 'rpgameworks.controller.v2';
-export const CONTROLLER_KEY = 'rpgameworks.controller.v3';
-export const ACTIONS = ['up', 'down', 'left', 'right', 'burst', 'interact', 'cancel', 'menu'] as const;
+export const V3_CONTROLLER_KEY = 'rpgameworks.controller.v3';
+/** Version 4 (decision 0016 U2.0) adds previous/next tab for the menus; older settings are upgraded on load. */
+export const CONTROLLER_KEY = 'rpgameworks.controller.v4';
+export const ACTIONS = ['up', 'down', 'left', 'right', 'burst', 'interact', 'cancel', 'menu', 'tabPrev', 'tabNext'] as const;
 export type PadAction = typeof ACTIONS[number];
 export interface ControllerConfig {
-  version: 3;
+  version: 4;
   enabled: boolean;
   allowUnmapped: boolean;
   deadzone: number;
@@ -24,13 +26,17 @@ export interface PadState {
   readonly axes: readonly number[];
   readonly buttons: readonly (number | { readonly pressed: boolean; readonly value: number })[];
 }
-export interface PadInput { direction: Direction | null; burst: boolean; interact: boolean; cancel: boolean; menu: boolean }
+export interface PadInput {
+  direction: Direction | null; burst: boolean; interact: boolean; cancel: boolean; menu: boolean;
+  /** A shoulder press this frame: -1 previous tab, 1 next tab (menus, decision 0016). Absent or 0 when none. */
+  tab?: -1 | 0 | 1;
+}
 export const NO_PAD_INPUT: Readonly<PadInput> = Object.freeze({ direction: null, burst: false, interact: false, cancel: false, menu: false });
 
 export function defaultControllerConfig(): ControllerConfig {
-  return { version: 3, enabled: true, allowUnmapped: false, deadzone: 0.25,
+  return { version: 4, enabled: true, allowUnmapped: false, deadzone: 0.25,
     axisX: 0, axisY: 1, invertX: false, invertY: false,
-    buttons: { up: 12, down: 13, left: 14, right: 15, burst: 0, interact: 2, cancel: 1, menu: 9 } };
+    buttons: { up: 12, down: 13, left: 14, right: 15, burst: 0, interact: 2, cancel: 1, menu: 9, tabPrev: 4, tabNext: 5 } };
 }
 
 /** Stored preferences are untrusted; never coerce invalid values into live bindings. */
@@ -38,27 +44,30 @@ export function parseControllerConfig(value: unknown): ControllerConfig | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const v = value as Record<string, unknown>;
   const keys = ['version', 'enabled', 'allowUnmapped', 'deadzone', 'axisX', 'axisY', 'invertX', 'invertY', 'buttons'];
-  if (Object.keys(v).some((key) => !keys.includes(key)) || (v.version !== 1 && v.version !== 2 && v.version !== 3)) return null;
+  if (Object.keys(v).some((key) => !keys.includes(key)) || ![1, 2, 3, 4].includes(v.version as number)) return null;
   for (const key of ['enabled', 'allowUnmapped', 'invertX', 'invertY']) if (typeof v[key] !== 'boolean') return null;
   if (typeof v.deadzone !== 'number' || !Number.isFinite(v.deadzone) || v.deadzone < 0.05 || v.deadzone > 0.9) return null;
   const index = (n: unknown, max: number): boolean => typeof n === 'number' && Number.isInteger(n) && n >= -1 && n <= max;
   if (!index(v.axisX, 15) || !index(v.axisY, 15) || (v.axisX !== -1 && v.axisX === v.axisY)) return null;
   if (!v.buttons || typeof v.buttons !== 'object' || Array.isArray(v.buttons)) return null;
   const bindings = v.buttons as Record<string, unknown>;
-  const actions = v.version === 1 ? ACTIONS.slice(0, 5) : v.version === 2 ? ACTIONS.slice(0, 7) : ACTIONS;
+  const actions = v.version === 1 ? ACTIONS.slice(0, 5) : v.version === 2 ? ACTIONS.slice(0, 7) : v.version === 3 ? ACTIONS.slice(0, 8) : ACTIONS;
   if (Object.keys(bindings).length !== actions.length || actions.some((a) => !index(bindings[a], 63))) return null;
   const assigned = actions.map((a) => bindings[a]).filter((n) => n !== -1);
   if (new Set(assigned).size !== assigned.length) return null;
   const migrated = { ...bindings } as Record<PadAction, number>;
-  if (v.version !== 3) {
+  if (v.version !== 4) {
+    // Each upgrade adds the actions its version lacked, on the standard button when it is free, else the first free one.
     const used = new Set(assigned);
-    for (const [action, preferred] of (v.version === 1 ? [['interact', 2], ['cancel', 1], ['menu', 9]] : [['menu', 9]]) as [PadAction, number][]) {
+    const added: [PadAction, number][] = [...(v.version === 1 ? [['interact', 2], ['cancel', 1]] as [PadAction, number][] : []),
+      ...(v.version !== 3 ? [['menu', 9]] as [PadAction, number][] : []), ['tabPrev', 4], ['tabNext', 5]];
+    for (const [action, preferred] of added) {
       const free = [preferred, ...Array.from({ length: 64 }, (_, i) => i)].find((button) => !used.has(button));
       migrated[action] = free ?? -1;
       if (free !== undefined) used.add(free);
     }
   }
-  return { version: 3, enabled: v.enabled as boolean, allowUnmapped: v.allowUnmapped as boolean,
+  return { version: 4, enabled: v.enabled as boolean, allowUnmapped: v.allowUnmapped as boolean,
     deadzone: v.deadzone, axisX: v.axisX as number, axisY: v.axisY as number,
     invertX: v.invertX as boolean, invertY: v.invertY as boolean,
     buttons: migrated };
@@ -103,11 +112,13 @@ export class PadLatch {
   private wasInteract = false;
   private wasCancel = false;
   private wasMenu = false;
+  private wasTabPrev = false;
+  private wasTabNext = false;
   private previous: Direction | null = null;
-  private readonly result: PadInput = { direction: null, burst: false, interact: false, cancel: false, menu: false };
+  private readonly result: PadInput = { direction: null, burst: false, interact: false, cancel: false, menu: false, tab: 0 };
 
   get waitingForNeutral(): boolean { return !this.armed; }
-  reset(): void { this.identity = ''; this.armed = false; this.wasBurst = false; this.wasInteract = false; this.wasCancel = false; this.wasMenu = false; this.previous = null; }
+  reset(): void { this.identity = ''; this.armed = false; this.wasBurst = false; this.wasInteract = false; this.wasCancel = false; this.wasMenu = false; this.wasTabPrev = false; this.wasTabNext = false; this.previous = null; }
 
   sample(pad: PadState | null, config: ControllerConfig, active: boolean): Readonly<PadInput> {
     if (!active || !config.enabled || !pad?.connected || (pad.mapping !== 'standard' && !config.allowUnmapped)) {
@@ -119,12 +130,14 @@ export class PadLatch {
     const interact = buttonPressed(pad, config.buttons.interact);
     const cancel = buttonPressed(pad, config.buttons.cancel);
     const menu = buttonPressed(pad, config.buttons.menu);
+    const tabPrev = buttonPressed(pad, config.buttons.tabPrev), tabNext = buttonPressed(pad, config.buttons.tabNext);
     if (!this.armed) {
       const neutral = Math.abs(axisValue(pad, config.axisX)) <= config.deadzone &&
         Math.abs(axisValue(pad, config.axisY)) <= config.deadzone &&
         ACTIONS.every((action) => !buttonPressed(pad, config.buttons[action]));
       if (neutral) this.armed = true;
       this.wasBurst = burst; this.wasInteract = interact; this.wasCancel = cancel; this.wasMenu = menu;
+      this.wasTabPrev = tabPrev; this.wasTabNext = tabNext;
       return NO_PAD_INPUT;
     }
     this.previous = padDirection(pad, config, this.previous);
@@ -133,7 +146,9 @@ export class PadLatch {
     this.result.interact = interact && !this.wasInteract;
     this.result.cancel = cancel && !this.wasCancel;
     this.result.menu = menu && !this.wasMenu;
+    this.result.tab = tabPrev && !this.wasTabPrev ? -1 : tabNext && !this.wasTabNext ? 1 : 0;
     this.wasBurst = burst; this.wasInteract = interact; this.wasCancel = cancel; this.wasMenu = menu;
+    this.wasTabPrev = tabPrev; this.wasTabNext = tabNext;
     return this.result;
   }
 }

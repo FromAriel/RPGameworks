@@ -20,6 +20,7 @@
     "questsFile": {"type": "string", "pattern": "^quests(\\.[a-f0-9]{12})?\\.json$"},
     "encountersFile": {"type": "string", "pattern": "^encounters(\\.[a-f0-9]{12})?\\.json$"},
     "uiThemeFile": {"type": "string", "pattern": "^ui-theme(\\.[a-f0-9]{12})?\\.json$"},
+    "menuFile": {"type": "string", "pattern": "^menu(\\.[a-f0-9]{12})?\\.json$", "description": "The main menu definition (decision 0016)."},
     "creaturesFile": {"type": "string", "pattern": "^creatures(\\.[a-f0-9]{12})?\\.json$", "description": "Generated: the baked creature atlas frame table (decision 0015 C3)."},
     "stateIndexFile": {"type": "string", "pattern": "^state-index(\\.[a-f0-9]{12})?\\.json$"},
     "saveCompatibilityVersion": {"type": "integer", "minimum": 1, "maximum": 65535},

@@ -12,7 +12,7 @@ describe('controller configuration', () => {
     const config = defaultControllerConfig(); const parsed = parseControllerConfig(JSON.parse(JSON.stringify(config)));
     expect(parsed).toEqual(config); expect(parsed?.buttons).not.toBe(config.buttons);
   });
-  it.each([null, [], {}, 'config', { ...defaultControllerConfig(), version: 4 },
+  it.each([null, [], {}, 'config', { ...defaultControllerConfig(), version: 5 },
     { ...defaultControllerConfig(), enabled: 'true' }, { ...defaultControllerConfig(), extra: 1 },
     { ...defaultControllerConfig(), deadzone: NaN }, { ...defaultControllerConfig(), deadzone: 0 },
     { ...defaultControllerConfig(), deadzone: 1 }, { ...defaultControllerConfig(), axisX: 20 },
@@ -21,6 +21,13 @@ describe('controller configuration', () => {
     { ...defaultControllerConfig(), buttons: { ...defaultControllerConfig().buttons, burst: 12 } },
     { ...defaultControllerConfig(), buttons: { ...defaultControllerConfig().buttons, burst: 64 } },
   ])('rejects malformed or conflicting settings: %j', (value) => expect(parseControllerConfig(value)).toBeNull());
+  it('upgrades version 3 settings to version 4: bindings kept, menu tabs on the shoulder buttons when free (decision 0016)', () => {
+    const v3 = { version: 3, enabled: true, allowUnmapped: false, deadzone: 0.3, axisX: 0, axisY: 1, invertX: false, invertY: false,
+      buttons: { up: 12, down: 13, left: 14, right: 15, burst: 0, interact: 2, cancel: 1, menu: 9 } };
+    expect(parseControllerConfig(v3)).toEqual({ ...v3, version: 4, buttons: { ...v3.buttons, tabPrev: 4, tabNext: 5 } });
+    const taken = { ...v3, buttons: { ...v3.buttons, burst: 4 } }; // LB already used: the first free button instead (0).
+    expect(parseControllerConfig(taken)?.buttons).toMatchObject({ burst: 4, tabPrev: 0, tabNext: 5 });
+  });
   it('allows both axes off and multiple unassigned buttons', () => {
     const config = defaultControllerConfig(); config.axisX = config.axisY = -1;
     for (const action of ACTIONS) config.buttons[action] = -1;
@@ -56,9 +63,17 @@ describe('controller input ownership', () => {
     const latch = new PadLatch(), config = defaultControllerConfig();
     expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: null, burst: false, interact: false, cancel: false, menu: false });
     latch.sample(pad(), config, true);
-    expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: 'right', burst: true, interact: false, cancel: false, menu: false });
+    expect(latch.sample(pad([1, 0], [0]), config, true)).toEqual({ direction: 'right', burst: true, interact: false, cancel: false, menu: false, tab: 0 });
     expect(latch.sample(pad([1, 0], [0]), config, true).burst).toBe(false);
     latch.sample(pad(), config, true); expect(latch.sample(pad([0, 0], [0]), config, true).burst).toBe(true);
+  });
+  it('reports a shoulder press once as a menu tab step: LB previous, RB next (decision 0016)', () => {
+    const latch = new PadLatch(), config = defaultControllerConfig();
+    latch.sample(pad(), config, true);
+    expect(latch.sample(pad([0, 0], [5]), config, true).tab).toBe(1);
+    expect(latch.sample(pad([0, 0], [5]), config, true).tab).toBe(0); // Held: no repeat.
+    latch.sample(pad(), config, true);
+    expect(latch.sample(pad([0, 0], [4]), config, true).tab).toBe(-1);
   });
   it('requires a new neutral state after focus loss, even with a held button', () => {
     const latch = new PadLatch(), config = defaultControllerConfig();

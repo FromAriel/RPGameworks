@@ -3,7 +3,7 @@ import { readFileSync, statSync, realpathSync, mkdirSync, mkdtempSync, writeFile
 import { dirname, resolve, relative, sep, join, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
+import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, readMenu, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
 import { createAuthoringReport } from './authoring-report.mjs';
 import { readUiTheme, emitUiTheme, checkMapSkins } from './ui-theme.mjs';
 import pngjs from 'pngjs';
@@ -64,6 +64,14 @@ try {
   if (motionProblems.length) throw new Error(`Creature motion data:\n  ${motionProblems.slice(0, 10).join('\n  ')}`);
   const creatureIds = new Set(Object.keys(motionAssignments.assignments));
   const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds):encountersData;
+  // The main menu (decision 0016): its unlock conditions may name facts, items, quests and placements from this game.
+  let menu;
+  if (game.menuFile) {
+    const file = realpathSync(join(source, game.menuFile)); const rel = relative(source, file);
+    if (rel === '..' || rel.startsWith('..' + sep)) throw new Error(`${game.menuFile}: file escapes the content root`);
+    menu = readMenu(readJSON(file), game.menuFile, { facts: new Set(facts.facts.map(f => f.id)), items: new Set(catalog.items.map(i => i.id)),
+      quests: new Set(quests.quests.map(q => q.id)), placements: new Set([...maps.values()].flatMap(m => m.objects.map(o => o.id))) });
+  }
   for(const [id,map] of maps){validateMapFacts(map,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   for(const [id,map] of maps){validateMapDialogues(map,quests.quests,catalog,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   validateWorld(game, maps, catalog, encounters);
@@ -118,6 +126,8 @@ try {
       let encountersFile;
       if(game.encountersFile){const text=JSON.stringify(encounters)+'\n';encountersFile=`encounters.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,encountersFile),text);}
       const uiThemeFile = uiTheme ? emitUiTheme(staging, uiTheme) : undefined;
+      let menuFile;
+      if (menu) { const text = JSON.stringify(menu) + '\n'; menuFile = `menu.${createHash('sha256').update(text).digest('hex').slice(0, 12)}.json`; writeFileSync(join(staging, menuFile), text); }
       // Decision 0015 C3: bake the creatures the encounters use into one hashed atlas and frame table.
       let creaturesFile;
       const wanted = encounters.encounters.flatMap(e => e.enemies.flatMap(c => (c.creature ? [{ id: c.creature, faces: c.faces ?? 'left' }] : [])));
@@ -138,7 +148,7 @@ try {
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
         itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile?{questIds:quests.quests.map(quest=>quest.id)}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(menuFile?{menuFile}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

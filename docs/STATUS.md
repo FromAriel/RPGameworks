@@ -4,6 +4,59 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## U2.0 menu layer, blocks and data — November 13, 2026, local
+
+[Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.0: the foundation for the JRPG menu screens. Nothing in the game uses it yet; U2.1 builds the hub on it.
+
+- **Menu layer** (`src/presentation/menu/menu.css`, `screens.ts`):
+  - **Scale:** a full-screen modal dialog that lays menus out in a 640 × 360 box and enlarges it in whole steps with the game (`--game-scale`), like battle, so UNSCII and the skins stay pixel-crisp. A 2× capture confirmed crisp text.
+  - **Screens:** `ScreenRegistry` holds namespaced screen ids (`namespace:name`). `MenuController` keeps the screen stack:
+    - push and back, and close returns focus to whatever opened the menu;
+    - Cancel goes to the screen first (for example to close a picker), then back one screen;
+    - Q and E, or the controller's shoulder buttons, step a screen's tabs;
+    - controller movement and confirm go through the existing `MenuNavigation`.
+- **Blocks** (`src/presentation/menu/blocks.ts`), each a W1 skin window or its content:
+  - **Window:** titled or untitled.
+  - **List:** whole-width rows (Ariel's touch answer), a ▶ cursor, and help per row as `aria-description`. Disabled rows stay focusable and readable.
+  - **Help line:** follows the focused row.
+  - **Detail:** a polite live region.
+  - **Tabs:** a tablist.
+  - **Party cards:** read-only, or chosen as a picker.
+  - **Others:** info rows, a confirmation and a number picker.
+  - The Grid block is deferred to the screen that first needs it (M5.4d's formation).
+- **W1 changes** (`windowskin.ts`):
+  - **Scaled layer:** inside an enlarged layer, windows are measured by their layout size, so a skin is not enlarged twice. Outside, the two sizes agree and nothing changes.
+  - **Untitled windows:** `data-skin-untitled` marks a window with no title.
+  - **New windows:** `adopt(root)` picks up windows added later.
+  - **Small windows (Ariel's choice):** a window too small for its skin (for example a 50-pixel help line under a 32-pixel-corner skin) now draws plain **on its own**. Before, it marked the whole skin failed for every window on the page. Failed loads still fail the skin everywhere, as before.
+- **Controller config v4** (`gamepad-model.ts`): new actions *Menu: previous tab* and *Menu: next tab* on buttons 4 and 5. Configs v1–v3 migrate, putting each new action on its standard button or on the first free one; existing bindings are kept. The v3 key stays readable.
+- **Menu data:**
+  - `schemas/menu.schema.json` and `menuFile` in `game.json`.
+  - Each entry has an id, label, screen, help and an optional unlock condition. The info slots are location, play time and money.
+  - Validation rejects duplicate ids, unknown built-in screens, duplicate info slots, and conditions that name unknown facts, items, quests or placements.
+  - The demo's `menu.json` lists Items, Status, Formation, Journal, Codex, Config, Help and Save.
+- **UI gallery:** the blocks composed like the hub (help line, party cards with placeholder portraits, command column, info window) at 1× and 2×. An **Open test menu** button runs a real controller with a hub and an items-style screen (tabs, list, detail, "use on whom?").
+- **Tests:**
+  - **Unit (`menu-screens.test.ts`):** registry rules; the demo's menu accepted; validation errors.
+  - **Unit (`gamepad.test.ts`):** the v3→v4 upgrade and shoulder edges.
+  - **Existing migration tests:** updated for v4. Their "old" fixtures no longer carry the new tab actions.
+  - **Browser (`menu-blocks.spec.ts`, 5):**
+    - skin windows at layout size at 1× and 2×;
+    - keyboard: moving, a disabled entry, opening Items, the picker and Cancel order, Q/E tabs, closing with focus restored;
+    - controller: confirm, shoulder tabs, cancel; the pointer chooses a party member;
+    - screen readers: dialog, groups, tablist, descriptions, disabled state, the live detail;
+    - per-window skin fallback.
+  - **Existing browser tests:** two migration tests read the v4 key.
+
+  Local results:
+  - typecheck and `npm run validate` passed;
+  - `npm run skins -- --check` and the production build passed;
+  - unit tests **523/523**;
+  - `check:test-tags` (185 tagged) and `check:external-art` passed;
+  - full browser suite **185/185**.
+- **Not yet:** the game still opens the old Inventory dialog; U2.1 replaces it with the hub. Ariel has not reviewed the blocks visually beyond the screenshots.
+- Migration: controller settings move to `rpgameworks.controller.v4`, migrated automatically from v1–v3, with old keys left in place. No save change. Next: **U2.1, the hub**.
+
 ## M5.4c Move in battle — November 13, 2026, local
 
 [Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4c: the Move command on the battle screen. The kernel's Move (any empty cell, or a swap with an ally, at Guard's light weight) has existed since M5.4a.

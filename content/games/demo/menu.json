@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "layout": "command-right",
+  "entries": [
+    {"id": "items", "label": "Items", "screen": "builtin:items", "help": "Use and inspect what you carry."},
+    {"id": "status", "label": "Status", "screen": "builtin:status", "help": "Each member's strength and condition."},
+    {"id": "formation", "label": "Formation", "screen": "builtin:formation", "help": "Arrange the party on the battle grid."},
+    {"id": "journal", "label": "Journal", "screen": "builtin:journal", "help": "Your quests."},
+    {"id": "codex", "label": "Codex", "screen": "builtin:codex", "help": "What you have learned about this world."},
+    {"id": "config", "label": "Config", "screen": "builtin:config", "help": "Effects, controls and display."},
+    {"id": "help", "label": "Help", "screen": "builtin:help", "help": "How to play."},
+    {"id": "save", "label": "Save", "screen": "builtin:save", "help": "Save or load your progress."}
+  ],
+  "info": ["location", "play-time", "money"]
+}

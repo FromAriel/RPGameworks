@@ -110,9 +110,9 @@ describe('item and chest authoring validation',()=>{
 
 describe('direct menu input and migration',()=>{
   it('migrates v2 bindings without taking an already used Menu button',()=>{
-    const config=defaultControllerConfig();const {menu:_menu,...buttons}=config.buttons;
+    const config=defaultControllerConfig();const {menu:_menu,tabPrev:_tabPrev,tabNext:_tabNext,...buttons}=config.buttons;
     buttons.burst=9;const old={...config,version:2,buttons};const migrated=parseControllerConfig(old)!;
-    expect(migrated.version).toBe(3); expect(migrated.buttons.burst).toBe(9); expect(migrated.buttons.menu).not.toBe(9);
+    expect(migrated.version).toBe(4); expect(migrated.buttons.burst).toBe(9); expect(migrated.buttons.menu).not.toBe(9);
     for(const [action,value] of Object.entries(buttons))expect(migrated.buttons[action as keyof typeof buttons]).toBe(value);
     expect(old.buttons).not.toHaveProperty('menu');
   });

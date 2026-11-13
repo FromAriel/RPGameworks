@@ -98,14 +98,14 @@ test('controller Menu opens inventory, keeps held inputs isolated, and cancel re
   await tapPad(page,0);await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
 });
 
-test('v2 custom bindings survive v3 migration and use an unoccupied menu button',{ tag: ['@inventory', '@input'] }, async({page})=>{
+test('v2 custom bindings survive migration to v4 and use an unoccupied menu button',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('rpgameworks.controller.v2',JSON.stringify({version:2,enabled:true,allowUnmapped:false,
     deadzone:.4,axisX:2,axisY:3,invertX:true,invertY:false,buttons:{up:12,down:13,left:14,right:15,burst:9,interact:4,cancel:5}})));
   await openRoom(page);await openTools(page);await page.locator('#controller-settings summary').click();
   await expect(page.locator('#controller-button-burst')).toHaveValue('9');await expect(page.locator('#controller-button-interact')).toHaveValue('4');
   await expect(page.locator('#controller-button-menu')).not.toHaveValue('9');await expect(page.locator('#controller-deadzone')).toHaveValue('40');
-  const stored=await page.evaluate(()=>({old:JSON.parse(localStorage.getItem('rpgameworks.controller.v2')!),current:JSON.parse(localStorage.getItem('rpgameworks.controller.v3')!)}));
-  expect(stored.old.version).toBe(2);expect(stored.current.version).toBe(3);
+  const stored=await page.evaluate(()=>({old:JSON.parse(localStorage.getItem('rpgameworks.controller.v2')!),current:JSON.parse(localStorage.getItem('rpgameworks.controller.v4')!)}));
+  expect(stored.old.version).toBe(2);expect(stored.current.version).toBe(4);
   for(const [key,value] of Object.entries(stored.old.buttons))expect(stored.current.buttons[key]).toBe(value);
   await closeTools(page);await page.keyboard.press('KeyI');await expect(page.locator('#inventory-prompt')).toContainText('button 4');
 });

@@ -1,0 +1,87 @@
+/*
+ * JRPG menu layer (decision 0016 U2.0). Menus are laid out in a 640 × 360 logical box and enlarged in whole steps with
+ * the game (--game-scale), so the UNSCII font and the window skins stay pixel-crisp, as in battle. Windows inside are
+ * W1 skin windows at skin scale 1: the layer's enlargement does the rest.
+ */
+.menu-layer { position: fixed; inset: 0; z-index: 40; overflow: hidden; background: var(--ui-world); }
+.menu-layer[hidden] { display: none; }
+.menu-surface {
+  position: absolute; left: var(--game-left, 0px); top: var(--game-top, 0px);
+  width: 640px; height: 360px; transform: scale(var(--game-scale, 1)); transform-origin: 0 0;
+  font-family: var(--ui-font-body); font-size: 16px; line-height: 18px; color: var(--ui-text-primary);
+  -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed;
+}
+.menu-surface *, .menu-surface *::before, .menu-surface *::after { box-sizing: border-box; }
+.menu-surface [data-window-skin] { --skin-scale: 1; }
+.menu-screen { position: absolute; inset: 0; }
+.menu-screen[hidden] { display: none; }
+
+/* A W1 window. Padding follows the skin's published insets, like every other window. */
+.menu-window {
+  position: absolute; display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  padding: 2px calc(var(--skin-inset-right, 12px) + 2px) calc(var(--skin-inset-bottom, 12px) + 1px) calc(var(--skin-inset-left, 12px) + 2px);
+  background-color: var(--ui-surface); box-shadow: inset 0 0 0 1px var(--ui-line-strong);
+}
+.menu-window[data-skin-state="ready"] { background-color: transparent; box-shadow: none; }
+/* An untitled window has no title band: its top padding mirrors the bottom inset. A one-line window is 50 px tall. */
+.menu-window[data-skin-untitled] { padding-top: calc(var(--skin-inset-bottom, 12px) + 1px); }
+.menu-window-heading { display: flex; justify-content: center; min-height: 18px; margin-bottom: var(--skin-title-clearance, 0px); }
+.menu-window-heading h2 { margin: 0; max-width: var(--skin-title-max, calc(100% - 32px)); font: inherit; color: var(--ui-text-title); overflow: hidden; white-space: nowrap; text-overflow: clip; }
+.menu-window-body { flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; }
+.menu-window-body::-webkit-scrollbar { display: none; }
+
+/* Lists: whole rows are buttons (full-width touch targets), the ▶ cursor marks the focused row. */
+.menu-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.menu-row {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; min-height: 18px; padding: 0 0 0 12px; margin: 0;
+  border: 0; background: none; color: inherit; font: inherit; line-height: 18px; text-align: left; cursor: pointer; position: relative;
+}
+.menu-row > .menu-row-label { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+.menu-row > .menu-row-detail { flex: none; color: var(--ui-text-muted); }
+.menu-row[aria-disabled="true"] { color: var(--ui-text-muted); }
+.menu-row:focus { outline: none; }
+.menu-row:focus::before, .menu-row[aria-current="true"]::before { content: "▶"; position: absolute; left: 0; color: var(--ui-text-title); }
+.menu-row:focus-visible { background: rgba(255, 255, 255, 0.06); }
+
+/* Detail, help line and info windows. */
+.menu-detail h3 { margin: 0 0 4px; font: inherit; color: var(--ui-text-title); }
+.menu-detail p { margin: 0 0 2px; }
+.menu-window p { margin: 0; }
+.menu-help p, .menu-info-window p { white-space: nowrap; overflow: hidden; }
+.menu-info { flex-direction: row; justify-content: space-between; }
+.menu-info .menu-info-label { color: var(--ui-text-muted); }
+
+/* Tabs: categories along the top of a list; Q/E or the shoulder buttons step through them. */
+.menu-tabs { display: flex; gap: 16px; }
+.menu-tab { padding: 0 0 0 12px; border: 0; background: none; color: var(--ui-text-muted); font: inherit; line-height: 18px; cursor: pointer; position: relative; }
+.menu-tab[aria-selected="true"] { color: var(--ui-text-title); }
+.menu-tab[aria-selected="true"]::before { content: "▶"; position: absolute; left: 0; }
+.menu-tab:focus { outline: none; }
+
+/* Party cards: portrait, name, level, HP and MP. Selectable cards are buttons (the party picker). */
+.menu-party { display: flex; flex-direction: column; gap: 4px; }
+.menu-card { display: grid; grid-template-columns: 40px 1fr; column-gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 2px 0 2px 12px;
+  border: 0; background: none; color: inherit; font: inherit; line-height: 18px; text-align: left; position: relative; }
+button.menu-card { cursor: pointer; }
+button.menu-card:focus { outline: none; }
+button.menu-card:focus::before { content: "▶"; position: absolute; left: 0; top: 12px; color: var(--ui-text-title); }
+.menu-card-portrait { width: 40px; height: 40px; image-rendering: pixelated; background: var(--ui-surface-raised); }
+.menu-card-portrait img, .menu-card-portrait canvas { width: 40px; height: 40px; image-rendering: pixelated; display: block; }
+.menu-card-lines { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; min-width: 0; }
+.menu-card-name { overflow: hidden; white-space: nowrap; }
+.menu-card-stat { display: grid; grid-template-columns: 24px 64px 1fr; column-gap: 4px; align-items: center; grid-column: 1 / -1; }
+.menu-card-stat .menu-card-key { color: var(--ui-text-muted); }
+.menu-meter { height: 4px; background: #0b111b; box-shadow: 0 0 0 1px #080c14; }
+.menu-meter > span { display: block; height: 100%; background: var(--ui-success); }
+.menu-meter[data-tone="magic"] > span { background: var(--ui-magic); }
+.menu-meter[data-low] > span { background: var(--ui-danger); }
+
+/* Number picker: a range drawn as a value between arrows; left and right change it. */
+.menu-number { display: flex; align-items: center; gap: 8px; }
+.menu-number input { width: 120px; accent-color: var(--ui-text-title); }
+.menu-number output { min-width: 32px; text-align: right; }
+
+@media (forced-colors: active) {
+  .menu-window { background-color: Canvas; outline: 1px solid CanvasText; }
+  .menu-row:focus::before, .menu-tab[aria-selected="true"]::before, button.menu-card:focus::before { color: Highlight; }
+}

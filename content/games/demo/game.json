@@ -30,5 +30,6 @@
   "factsFile": "facts.json",
   "questsFile": "quests.json",
   "encountersFile": "encounters.json",
-  "uiThemeFile": "ui-theme.json"
+  "uiThemeFile": "ui-theme.json",
+  "menuFile": "menu.json"
 }

@@ -19,6 +19,8 @@ import {
 } from '../../src/presentation/ui/components';
 import { MenuNavigation } from '../../src/presentation/ui/menu-navigation';
 import { mountWindowskin } from '../../src/presentation/ui/windowskin';
+import { buildMenuShowcase, createGalleryMenu } from './menu-gallery';
+import type { GalleryMenu } from './menu-gallery';
 
 interface Disposable { dispose(): void }
 
@@ -44,6 +46,8 @@ declare global {
       tryOverlap(): Promise<string>;
       /** Test-only (decision 0011 W3.3): remount the window skin from another atlas and manifest. */
       useSkin(atlasUrl: string, manifest: unknown): void;
+      /** Test-only (decision 0016 U2.0): the menu layer, blocks and screen stack. */
+      menu: GalleryMenu;
       dispose(): void;
     };
   }
@@ -279,7 +283,15 @@ let boundaryClears = 0;
 const confirmation = own(mountConfirmation(confirmationParts, { clearHeldInputs: () => { boundaryClears += 1; } }));
 const mainNavigation = own(new MenuNavigation(interactiveControls, () => interactionStatus.set('information', 'Back requested.')));
 const confirmationNavigation = own(new MenuNavigation(confirmationParts.dialog, () => confirmationParts.cancel.click()));
+// Decision 0016 U2.0: the menu blocks at 1× and 2×, built before the skins mount so they are skinned too.
+const menuBlocks = required('menu-blocks');
+buildMenuShowcase(menuBlocks);
+const openMenu = document.createElement('button');
+openMenu.type = 'button'; openMenu.id = 'gallery-open-menu'; openMenu.textContent = 'Open test menu';
+menuBlocks.prepend(openMenu);
 let windowSkin = own(mountWindowskin());
+const galleryMenu = createGalleryMenu(() => windowSkin, () => openMenu.focus());
+openMenu.addEventListener('click', () => galleryMenu.open());
 let lifecycleCycles = 0;
 
 function updateLifecycle(): void {
@@ -336,6 +348,7 @@ window.__UI_GALLERY__ = {
       return cause instanceof Error ? cause.message : String(cause);
     }
   },
+  menu: galleryMenu,
   useSkin(atlasUrl, manifest): void {
     disposeOwned(windowSkin);
     windowSkin = own(mountWindowskin(document, { atlasUrl, manifest }));
@@ -343,6 +356,7 @@ window.__UI_GALLERY__ = {
   dispose(): void {
     if (disposed) return;
     disposed = true;
+    galleryMenu.dispose();
     for (const owner of [...owned].reverse()) disposeOwned(owner);
     delete window.__UI_GALLERY__;
   },

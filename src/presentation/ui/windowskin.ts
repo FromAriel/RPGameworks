@@ -3,7 +3,8 @@ import manifest from '../../../assets/source/ui/base/Window.manifest.json';
 import { SkinPainter } from '../skin/paint';
 import type { TitleBox } from '../skin/layout';
 
-interface Surface { element: HTMLElement; title: HTMLElement; divider: boolean; key: string; paints: number }
+/** A skinned element. Untitled windows (`data-skin-untitled`, decision 0016: party cards, info windows) have no title. */
+interface Surface { element: HTMLElement; title: HTMLElement | null; divider: boolean; key: string; paints: number }
 /** A skin to mount: its atlas image URL and its manifest (version 1 or 2), given inline or as a URL to fetch. */
 export interface WindowSkinSource { atlasUrl: string; manifest?: unknown; manifestUrl?: string }
 /** Ariel's canonical skin: the default for games without a UI theme, the test gallery, and early startup. */
@@ -19,6 +20,11 @@ export interface SkinChoice { readonly skins: ReadonlyMap<string, WindowSkinSour
 export interface WindowskinHandle {
   dispose(): void;
   useTheme(choice: SkinChoice): void;
+  /**
+   * Start skinning windows added under `root` since mounting, and stop tracking any that left the document (decision
+   * 0016: menu screens create and remove their windows as they open and close).
+   */
+  adopt(root: ParentNode): void;
   /**
    * The loaded painter for a surface's skin (decision 0011 W3.5: the battle stage composes its windows with it), or null
    * if that skin cannot load. Loads the skin once if no window has needed it yet; shared with the page windows.
@@ -45,11 +51,12 @@ interface SkinRecord {
  * No listeners for gameplay inputs, no recurring frame loop, no per-tile DOM nodes.
  */
 export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSource | SkinChoice = BASE_SKIN): WindowskinHandle {
-  const surfaces: Surface[] = Array.from(root.querySelectorAll<HTMLElement>('[data-window-skin]')).map(element => {
+  const surfaceOf = (element: HTMLElement): Surface => {
     const title = element.querySelector<HTMLElement>('[data-skin-title]');
-    if (!title) throw new Error('Windowskin surface has no semantic title');
+    if (!title && !element.hasAttribute('data-skin-untitled')) throw new Error('Windowskin surface has no semantic title');
     return { element, title, divider: element.dataset.windowSkin === 'divider', key: '', paints: 0 };
-  });
+  };
+  const surfaces: Surface[] = Array.from(root.querySelectorAll<HTMLElement>('[data-window-skin]')).map(surfaceOf);
   const notice = root.querySelector<HTMLElement>('#skin-status');
   const lifetime = new AbortController();
   const dirty = new Set(surfaces);
@@ -131,26 +138,35 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   }
   function paint(surface: Surface): void {
     const { element, title, divider } = surface;
-    if (!element.getClientRects().length || !title.getClientRects().length) return;
+    if (!element.getClientRects().length || (title && !title.getClientRects().length)) return;
     const entry = record(skinFor(element));
     if (entry.state === 'failed') { if (element.dataset.skinState !== 'fallback') plain(surface); return; }
     if (entry.state !== 'ready' || !entry.painter) { load(entry); return; }
     const painter = entry.painter;
-    const bounds = element.getBoundingClientRect(), label = title.getBoundingClientRect();
+    const bounds = element.getBoundingClientRect(), label = title?.getBoundingClientRect() ?? null;
+    // Inside an enlarged layer (the pixel-scaled menu, decision 0016) the on-screen box is the layout box times the
+    // layer's whole-step enlargement. Measure in layout pixels there, so the skin is not enlarged twice. Elsewhere the
+    // two agree and nothing changes.
+    const zoom = element.offsetWidth > 0 ? bounds.width / element.offsetWidth : 1;
+    const zoomed = Math.abs(zoom - 1) > 0.01, k = zoomed ? zoom : 1;
+    const boxWidth = zoomed ? element.offsetWidth : bounds.width, boxHeight = zoomed ? element.offsetHeight : bounds.height;
     const scale = Number.parseInt(getComputedStyle(element).getPropertyValue('--skin-scale'), 10) === 2 ? 2 : 1;
-    const width = Math.floor(bounds.width / scale), height = Math.floor(bounds.height / scale);
-    const left = Math.floor((bounds.width - width * scale) / 2), top = Math.floor((bounds.height - height * scale) / 2);
-    const labelStyle = getComputedStyle(title);
-    const lineHeight = Number.parseFloat(labelStyle.lineHeight) || Number.parseFloat(labelStyle.fontSize) * 1.4;
-    const text: TitleBox = { left: (label.left - bounds.left - left) / scale, right: (label.right - bounds.left - left) / scale,
-      centerY: (label.top + label.height / 2 - bounds.top - top) / scale, height: label.height / scale, lineHeight: lineHeight / scale };
-    const key = JSON.stringify([entry.id, width, height, scale, text, title.textContent]);
+    const width = Math.floor(boxWidth / scale), height = Math.floor(boxHeight / scale);
+    const left = Math.floor((boxWidth - width * scale) / 2), top = Math.floor((boxHeight - height * scale) / 2);
+    let text: TitleBox | undefined;
+    if (title && label) {
+      const labelStyle = getComputedStyle(title);
+      const lineHeight = Number.parseFloat(labelStyle.lineHeight) || Number.parseFloat(labelStyle.fontSize) * 1.4;
+      text = { left: ((label.left - bounds.left) / k - left) / scale, right: ((label.right - bounds.left) / k - left) / scale,
+        centerY: ((label.top + label.height / 2 - bounds.top) / k - top) / scale, height: label.height / k / scale, lineHeight: lineHeight / scale };
+    }
+    const key = JSON.stringify([entry.id, width, height, scale, text ?? null, title?.textContent ?? null]);
     if (key === surface.key) return;
     try {
       const result = divider ? painter.divider(width, text) : painter.frame(width, height, text);
       // A titled divider centres its band on the title text; otherwise it sits at the bottom of its element.
       const band = painter.geometry.divider.height, half = Math.floor(band / 2);
-      const y = divider ? (result.titleMode === 'gap' ? Math.max(0, Math.round(text.centerY - half) * scale) : Math.max(0, height - band) * scale) : top;
+      const y = divider ? (result.titleMode === 'gap' && text ? Math.max(0, Math.round(text.centerY - half) * scale) : Math.max(0, height - band) * scale) : top;
       element.style.backgroundImage = `url("${result.url}")`;
       element.style.backgroundSize = `${width * scale}px ${divider ? band * scale : height * scale}px`;
       element.style.backgroundPosition = `${left}px ${y}px`;
@@ -168,12 +184,12 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
         element.style.setProperty('--skin-content-top', px(contentTop));
         // With the title in the frame's top edge, content below it must still start at the content top. The title's
         // own position never depends on this, so the extra space below the heading is exact in one step.
-        const heading = Array.from(element.children).find(child => child.contains(title));
+        const heading = title ? Array.from(element.children).find(child => child.contains(title)) : undefined;
         const blocks = Array.from(element.children).filter(child => child !== heading && child.getClientRects().length > 0
           && !['absolute', 'fixed'].includes(getComputedStyle(child).position));
         const current = Number.parseFloat(element.style.getPropertyValue('--skin-title-clearance')) || 0;
         if (result.titleMode === 'gap' && blocks.length) {
-          const natural = Math.min(...blocks.map(block => block.getBoundingClientRect().top)) - bounds.top - current;
+          const natural = (Math.min(...blocks.map(block => block.getBoundingClientRect().top)) - bounds.top) / k - current;
           const needed = Math.max(0, Math.ceil(contentTop - natural));
           if (needed !== current) element.style.setProperty('--skin-title-clearance', px(needed));
         } else if (current) element.style.removeProperty('--skin-title-clearance');
@@ -181,7 +197,13 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
       element.dataset.skinState = 'ready'; element.dataset.skinTitleMode = result.titleMode; element.dataset.skinActive = entry.id;
       element.dataset.skinPaints = String(++surface.paints);
       surface.key = key;
-    } catch (cause) { fallback(entry, cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) {
+      // This window cannot take the skin at its size (smaller than the skin's minimum, or past the bitmap budget). Only
+      // this window draws plain; the skin stays ready for every other window, and this one retries when its size changes.
+      plain(surface);
+      surface.key = key;
+      console.warn('[RPGameworks] Window skin does not fit this window:', entry.id, width, height, cause instanceof Error ? cause.message : String(cause));
+    }
   }
   function flush(): void {
     pending = null;
@@ -197,19 +219,36 @@ export function mountWindowskin(root: ParentNode = document, skin: WindowSkinSou
   const resize = new ResizeObserver(invalidate);
   const attributes = new MutationObserver(invalidate);
   const titles = new MutationObserver(invalidate);
-  for (const { element, title } of surfaces) {
-    resize.observe(element); resize.observe(title);
+  function observe({ element, title }: Surface): void {
+    resize.observe(element); if (title) resize.observe(title);
     // Never observe our own style/data attributes, or the changing live Debug table. A window asking for another
     // skin (data-skin-id) repaints with it.
     attributes.observe(element, { attributes: true, attributeFilter: ['hidden', 'open', 'data-skin-id'] });
-    titles.observe(title, { childList: true, characterData: true, subtree: true });
+    if (title) titles.observe(title, { childList: true, characterData: true, subtree: true });
   }
+  for (const surface of surfaces) observe(surface);
   window.addEventListener('resize', invalidate, { signal: lifetime.signal });
   document.addEventListener('visibilitychange', invalidate, { signal: lifetime.signal });
   document.fonts.addEventListener('loadingdone', invalidate, { signal: lifetime.signal });
   void document.fonts.ready.then(() => { if (!disposed) invalidate(); });
   invalidate();
   return {
+    adopt(container: ParentNode): void {
+      if (disposed) return;
+      for (let i = surfaces.length - 1; i >= 0; i--) {
+        const gone = surfaces[i]!;
+        if (gone.element.isConnected) continue;
+        resize.unobserve(gone.element); if (gone.title) resize.unobserve(gone.title);
+        dirty.delete(gone); surfaces.splice(i, 1);
+      }
+      const known = new Set(surfaces.map(surface => surface.element));
+      for (const element of container.querySelectorAll<HTMLElement>('[data-window-skin]')) {
+        if (known.has(element)) continue;
+        const surface = surfaceOf(element);
+        surfaces.push(surface); observe(surface);
+      }
+      invalidate();
+    },
     painterFor(surface: string): Promise<SkinPainter | null> {
       if (disposed) return Promise.resolve(null);
       const entry = record(choice.surfaces[surface] ?? choice.fallback);

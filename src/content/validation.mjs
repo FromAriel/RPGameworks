@@ -4,6 +4,7 @@ import validateGame from './generated/game-validator.mjs';
 import validateItems from './generated/items-validator.mjs';
 import validateFacts from './generated/facts-validator.mjs';
 import validateEncounters from './generated/encounters-validator.mjs';
+import validateMenu from './generated/menu-validator.mjs';
 import { createCollision } from '../domain/map.mjs';
 
 /** @typedef {import('./generated/map.js').MapDefinition} MapDefinition */
@@ -158,6 +159,43 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
   });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
+}
+
+/** Screens RPGameworks provides (decision 0016). A game's own screens use another namespace and are registered in code. */
+export const BUILTIN_MENU_SCREENS = Object.freeze(['items', 'status', 'formation', 'journal', 'codex', 'config', 'help', 'save', 'credits']);
+
+/**
+ * The main menu (decision 0016): entry IDs unique, built-in screens known, info slots at most once, and every unlock
+ * condition naming facts, items, quests and placements that exist.
+ * @param {unknown} value @param {string} file
+ * @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string> }} [known]
+ */
+export function readMenu(value, file = 'menu.json', known = {}) {
+  if (!validateMenu(value)) schemaFailure(value, file, validateMenu.errors);
+  const menu = /** @type {import('./generated/menu.js').MenuDefinition} */ (value);
+  /** @type {ContentIssue[]} */ const issues = [];
+  const at = (/** @type {string} */ path, /** @type {string} */ message, /** @type {unknown} */ actual) => issues.push({ file, id: 'menu', path, message, value: actual });
+  const ids = new Set();
+  menu.entries.forEach((entry, index) => {
+    if (ids.has(entry.id)) at(`/entries/${index}/id`, 'Duplicate menu entry ID', entry.id);
+    ids.add(entry.id);
+    const [space, name] = entry.screen.split(':');
+    if (space === 'builtin' && !BUILTIN_MENU_SCREENS.includes(/** @type {string} */ (name))) at(`/entries/${index}/screen`, `Unknown built-in screen (known: ${BUILTIN_MENU_SCREENS.join(', ')})`, entry.screen);
+    if (entry.when) checkConditionRefs(entry.when, `/entries/${index}/when`);
+  });
+  const seen = new Set();
+  (menu.info ?? []).forEach((slot, index) => { if (seen.has(slot)) at(`/info/${index}`, 'Each info window may appear once', slot); seen.add(slot); });
+  /** @param {any} c @param {string} path */
+  function checkConditionRefs(c, path) {
+    if (c.type === 'all' || c.type === 'any') c.conditions.forEach((/** @type {any} */ child, /** @type {number} */ i) => checkConditionRefs(child, `${path}/conditions/${i}`));
+    else if (c.type === 'not') checkConditionRefs(c.condition, `${path}/condition`);
+    else if (c.type === 'factEquals' && known.facts && !known.facts.has(c.factId)) at(`${path}/factId`, 'Unknown fact', c.factId);
+    else if (c.type === 'itemAtLeast' && known.items && !known.items.has(c.itemId)) at(`${path}/itemId`, 'Unknown item', c.itemId);
+    else if (c.type === 'questStateEquals' && known.quests && !known.quests.has(c.questId)) at(`${path}/questId`, 'Unknown quest', c.questId);
+    else if (c.type === 'placementOpened' && known.placements && !known.placements.has(c.placementId)) at(`${path}/placementId`, 'Unknown placement', c.placementId);
+  }
+  if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
+  return freezeCopy(menu);
 }
 
 /** @param {any} value @param {string=} file */

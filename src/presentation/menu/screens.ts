@@ -38,6 +38,11 @@ export interface MenuScreen {
   step?(delta: -1 | 1): void;
   /** The controller's Burst button: a screen's secondary action, such as changing the Items sort. */
   secondary?(): void;
+  /**
+   * Controller input before the menu's own handling: return true when the screen used it (Save's pending
+   * confirmation owns the controller until it closes).
+   */
+  sample?(pad: Readonly<PadInput>, deltaMs: number): boolean;
   /** Cancel: return true when the screen handled it itself (for example closing a picker); otherwise the menu goes back. */
   cancel?(): boolean;
   /** Release everything the screen owns. */
@@ -158,6 +163,11 @@ export class MenuController {
   close(): void {
     while (this.stack.length) { const entry = this.stack.pop()!; entry.screen.dispose(); entry.wrapper.remove(); }
     this.finish();
+  }
+
+  /** Give the top screen first refusal of controller input (see MenuScreen.sample). */
+  screenSample(pad: Readonly<PadInput>, deltaMs: number): boolean {
+    return this.open ? this.top?.screen.sample?.(pad, deltaMs) ?? false : false;
   }
 
   /** Controller input: movement and confirm through MenuNavigation, the shoulder buttons step tabs. */

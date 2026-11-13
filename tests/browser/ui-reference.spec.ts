@@ -1,5 +1,5 @@
 import type { Locator, Page, TestInfo } from '@playwright/test';
-import { expect, openRoom, openTools, tapDirection, test, type DirectionKey } from './helpers';
+import { expect, openRoom, openTools, tapDirection, test, type DirectionKey, saveScreen, slotAction, slotCommand, slotRow } from './helpers';
 
 const gallery = 'demo:map.gallery';
 
@@ -19,11 +19,11 @@ async function openInventory(page: Page): Promise<void> {
   await page.keyboard.press('Enter');
   await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
 }
-/** From the Items screen, back to the menu and on to Save / Load. */
+/** From the Items screen, back to the menu and on to Save / Load (a menu screen since decision 0016 U2.3c). */
 async function itemsToSaves(page: Page): Promise<void> {
   await page.keyboard.press('Escape');
   await page.locator('#game-menu .menu-row[data-id="save"]').click();
-  await expect(page.locator('#save-dialog')).toBeVisible();
+  await expect(saveScreen(page)).toBeVisible();
 }
 
 async function collectLens(page: Page): Promise<void> {
@@ -143,12 +143,14 @@ test.describe('U1.1 real-screen references', () => {
     await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row-detail')).toHaveText(['×1']);
     await capture(page.locator('#game-menu .menu-surface'), 'u2-items-lens-1100x850.png', info);
     await itemsToSaves(page);
-    await expect(page.getByText('Empty — Load and Export are unavailable.')).toHaveCount(3);
-    await capture(page.locator('#save-dialog'), 'u1-save-empty-1100x850.png', info);
-    await page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' }).click();
+    await expect(saveScreen(page).locator('.menu-save-slots .menu-row-detail')).toHaveText(['Empty', 'Empty', 'Empty']);
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-save-empty-1100x850.png', info);
+    await slotAction(page, 0, 'save');
     await expect(page.locator('#save-status')).toContainText('Progress saved');
-    await capture(page.locator('#save-dialog'), 'u1-save-populated-1100x850.png', info);
-    await page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' }).click();
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-save-populated-1100x850.png', info);
+    await slotRow(page, 0).click();
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-save-commands-1100x850.png', info);
+    await slotCommand(page, 'save').click();
     const confirmation = page.locator('#save-confirmation');
     await expect(confirmation).toBeVisible();
     await expect(confirmation).toContainText('Replace Slot 1?');
@@ -168,7 +170,7 @@ test.describe('U1.1 real-screen references', () => {
     await openInventory(page);
     await itemsToSaves(page);
     await expect(page.locator('#save-status')).toContainText('Local saves unavailable');
-    await capture(page.locator('#save-dialog'), 'u1-save-storage-unavailable-1100x850.png', info);
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-save-storage-unavailable-1100x850.png', info);
   });
 
   test('captures narrow dialogue Inventory and Save Load', { tag: ['@windows'] }, async ({ page }, info) => {
@@ -181,7 +183,7 @@ test.describe('U1.1 real-screen references', () => {
     await openInventory(page);
     await capture(page.locator('#game-menu .menu-surface'), 'u2-items-390x844.png', info);
     await itemsToSaves(page);
-    await capture(page.locator('#save-dialog'), 'u1-save-empty-390x844.png', info);
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-save-empty-390x844.png', info);
   });
 
   test.describe('touch-first', () => {
@@ -208,9 +210,11 @@ test.describe('U1.1 real-screen references', () => {
       await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row')).toBeFocused(); // "Nothing here", focusable and greyed.
       await capture(page.locator('#game-menu .menu-surface'), 'u2-items-forced-colors.png', info);
       await itemsToSaves(page);
-      await expect(page.getByText('Empty — Load and Export are unavailable.')).toHaveCount(3);
-      await expect(page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' })).toBeFocused();
-      await capture(page.locator('#save-dialog'), 'u1-save-forced-colors.png', info);
+      await expect(saveScreen(page).locator('.menu-save-slots .menu-row-detail')).toHaveText(['Empty', 'Empty', 'Empty']);
+      await page.keyboard.press('Enter');
+      await expect(slotCommand(page, 'load')).toHaveAttribute('aria-disabled', 'true'); // Shown, greyed: the slot is empty.
+      await expect(slotCommand(page, 'save')).toBeFocused();
+      await capture(page.locator('#game-menu .menu-surface'), 'u2-save-forced-colors.png', info);
     });
   });
 });

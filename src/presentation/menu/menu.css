@@ -68,6 +68,12 @@
 .menu-sort-button:focus { outline: none; }
 .menu-items-detail .menu-detail p { margin: 0 0 6px; }
 
+/* Save/Load (U2.3c): the Files commands in two columns; the status line may wrap to a second line. */
+.menu-save-files .menu-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+/* The status line reads like the help line; it keeps only the coloured bar that marks success, warning or failure. */
+.menu-help.menu-save-status .ui-status { min-height: 0; padding: 0 0 0 6px; border-top: 0; border-right: 0; border-bottom: 0; background: none; font: inherit; line-height: 16px; white-space: normal; overflow: visible; }
+.menu-save-detail .menu-detail p { margin: 0 0 6px; overflow-wrap: anywhere; }
+
 /* Party cards: portrait, name, level, HP and MP. Selectable cards are buttons (the party picker). */
 .menu-party { display: flex; flex-direction: column; gap: 4px; }
 .menu-card { display: grid; grid-template-columns: 40px 1fr; column-gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 2px 0 2px 12px;

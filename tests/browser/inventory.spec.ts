@@ -167,7 +167,7 @@ test('repeated inventory opens preserve state, scene counts and single atlas loa
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);const before=await snapshot(page);
   for(let i=0;i<12;i++) {await openInventory(page);await closeInventory(page);}
   const after=await snapshot(page);expect(after.session).toEqual(before.session);expect(after.starts).toBe(before.starts);expect(after.displayObjects).toBe(before.displayObjects);
-  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(5); // Menu screens remove their windows on close.
+  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(4); // Menu screens remove their windows on close (Save/Load is one since U2.3c).
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false})));
   await expect(page.locator('#game-menu')).toHaveCount(0);expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
 });

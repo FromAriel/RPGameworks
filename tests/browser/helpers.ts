@@ -147,12 +147,28 @@ export async function openJournal(page: Page): Promise<void> {
   await page.locator('#game-menu .menu-row[data-id="journal"]').click();
   await expect(journalScreen(page)).toBeVisible();
 }
-/** Menu, then Save: the Save/Load dialog (until U2.3c rebuilds it in the menu). */
+/** The menu's Save/Load screen (decision 0016 U2.3c). */
+export const saveScreen = (page: Page) => page.locator('#game-menu .menu-screen[data-screen="builtin:save"]');
+export const slotRow = (page: Page, index: number) => saveScreen(page).locator('.menu-save-slots .menu-row').nth(index);
+export const slotCommand = (page: Page, action: string) => saveScreen(page).locator(`.menu-save-commands .menu-row[data-id="${action}"]`);
+export const filesRow = (page: Page, id: string) => saveScreen(page).locator(`.menu-save-files .menu-row[data-id="${id}"]`);
+/** Menu, then Save. */
 export async function openSaves(page: Page): Promise<void> {
   await page.keyboard.press('KeyI');
   await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeVisible();
   await page.locator('#game-menu .menu-row[data-id="save"]').click();
-  await expect(page.locator('#save-dialog')).toBeVisible();
+  await expect(saveScreen(page)).toBeVisible();
+}
+/** Choose a slot, then one of its commands (save, load, export, recover, import). */
+export async function slotAction(page: Page, index: number, action: string): Promise<void> {
+  await slotRow(page, index).click();
+  await expect(slotCommand(page, action)).toBeVisible();
+  await slotCommand(page, action).click();
+}
+/** The detail window for a slot (place, time saved, revision), after highlighting it. */
+export async function slotInfo(page: Page, index: number) {
+  await slotRow(page, index).focus();
+  return saveScreen(page).locator('.menu-save-detail');
 }
 /** The Items screen's rows (labels), in order. */
 export const itemRows = (page: Page) => page.locator('#game-menu .menu-screen[data-screen="builtin:items"] .menu-row .menu-row-label');

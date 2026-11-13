@@ -5,7 +5,7 @@ const directionKeys: Record<string, Direction> = {
   ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
 };
-export type InputMode = 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'save' | 'menu';
+export type InputMode = 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'menu';
 type Action = 'burst' | 'interact' | 'cancel' | 'menu';
 
 /** Focus once at readiness, without stealing focus from a control used during loading. */
@@ -49,7 +49,6 @@ export class InputController {
     private readonly gamepad: GamepadSource | null = null,
     private readonly canPlay: () => boolean = () => true,
     private readonly modal?: HTMLDialogElement,
-    private readonly saveModal?: HTMLDialogElement,
     /** The menu layer (decision 0016): a role="dialog" section, not a <dialog>. */
     private readonly menuModal?: HTMLElement,
   ) {
@@ -70,7 +69,6 @@ export class InputController {
     stage.addEventListener('keydown', keyboard, options);
     modal?.addEventListener('keydown', keyboard, options);
     modal?.addEventListener('cancel', (event) => { event.preventDefault(); this.queue('cancel'); }, options);
-    saveModal?.addEventListener('keydown', keyboard, options);
     window.addEventListener('keyup', (event) => this.held.delete(event.code), options);
     stage.addEventListener('focusout', () => this.clearLocal(), options);
     window.addEventListener('blur', () => this.clear(), options);
@@ -121,8 +119,8 @@ export class InputController {
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const owned=this.mode==='save'?this.saveModal:this.mode==='menu'?this.menuModal:this.mode==='exploration'?undefined:this.modal;
-    const menuLike = this.mode==='save'||this.mode==='dialogue'||this.mode==='battle'||this.mode==='menu';
+    const owned=this.mode==='menu'?this.menuModal:this.mode==='exploration'?undefined:this.modal;
+    const menuLike = this.mode==='dialogue'||this.mode==='battle'||this.mode==='menu';
     const pad = this.gamepad?.poll(active && gamepadFocusAllowed(owned), menuLike ? 'menu' : 'gameplay');
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.queue('burst');

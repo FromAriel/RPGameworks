@@ -107,21 +107,6 @@
         <button id="dialog-cancel" data-action="cancel" type="button" class="ui-action-button" data-intent="secondary">Close</button>
       </div>
     </dialog>
-    <dialog data-window-skin="frame" data-skin-surface="saves" id="save-dialog" aria-labelledby="save-title">
-      <header class="skin-heading"><h2 id="save-title" data-skin-title>Save / Load</h2></header>
-      <div class="save-body">
-        <p id="save-status" role="status" aria-live="polite">Reading local save slots…</p>
-        <div id="save-slots" aria-label="Manual save slots"></div>
-        <div class="save-toolbar">
-          <label class="button-label">Import save<input id="save-import" type="file" accept="application/json,.json" /></label>
-          <button id="save-load-import" type="button" class="ui-action-button" data-intent="danger" hidden>Load validated import for this session</button>
-          <button id="save-export-current" type="button" class="ui-action-button" data-intent="secondary">Export current session</button>
-          <button id="save-refresh" type="button" class="ui-action-button" data-intent="secondary">Refresh slots</button>
-        </div>
-        <p class="hint">Saving is available only at a stationary exploration checkpoint. Import and Load replace the current unsaved session only after confirmation. Save files are plain local JSON.</p>
-      </div>
-      <div class="dialog-actions"><button id="save-close" type="button" class="ui-action-button" data-intent="primary">Return to Menu</button></div>
-    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

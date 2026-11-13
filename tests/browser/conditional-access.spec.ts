@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { test, expect, openRoom, openSaves as openSaveDialog, snapshot, tapDirection, holdToExit } from './helpers';
+import { test, expect, openRoom, openSaves as openSaveDialog, snapshot, tapDirection, holdToExit, saveScreen, slotAction } from './helpers';
 
 const GALLERY = 'demo:map.gallery';
 const STOREROOM = 'demo:map.storeroom';
@@ -32,11 +32,10 @@ async function interact(page: Page): Promise<string> {
 }
 async function openSaves(page: Page): Promise<void> {
   await openSaveDialog(page);
-  await expect(page.locator('#save-slots .save-slot')).toHaveCount(3);
+  await expect(saveScreen(page).locator('.menu-save-slots .menu-row')).toHaveCount(3);
 }
-const slot = (page: Page, index: number) => page.locator('#save-slots .save-slot').nth(index);
 async function confirmLoad(page: Page, index: number): Promise<void> {
-  await slot(page, index).getByRole('button', { name: 'Load', exact: true }).click();
+  await slotAction(page, index, 'load');
   const confirmation = page.locator('#save-confirmation');
   await expect(confirmation).toBeVisible();
   await expect(confirmation.getByRole('button', { name: 'Cancel' })).toBeFocused();
@@ -117,7 +116,7 @@ test('the brass key unlocks storeroom travel, survives return and save reload', 
   expect((await snapshot(page)).mapId).toBe(GALLERY);
   expect((await snapshot(page)).session.placements['demo:object.gallery.storeroom-door']?.opened).toBe(true);
   await openSaves(page);
-  await slot(page, 0).getByRole('button', { name: 'Save', exact: true }).click();
+  await slotAction(page, 0, 'save');
   await expect(page.locator('#save-status')).toContainText('Progress saved');
   await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
   await page.reload();
@@ -181,10 +180,10 @@ test('a walkable denied exit shows one reason and makes zero destination request
   await interact(page);
   expect((await snapshot(page)).session.facts['demo:fact.gallery.gate-open']).toBe(false); // Close deferred (occupied).
   await openSaves(page);
-  await slot(page, 0).getByRole('button', { name: 'Save', exact: true }).click();
+  await slotAction(page, 0, 'save');
   await expect(page.locator('#save-status')).toContainText('Cannot save here'); // Unrestorable checkpoint is refused.
-  await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); // Save/Load, then the menu.
-  await expect(page.locator('#save-dialog')).toBeHidden(); await expect(page.locator('#game-menu')).toBeHidden();
+  await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); // The slot's commands, Save/Load, then the menu.
+  await expect(page.locator('#game-menu')).toBeHidden();
   expect((await snapshot(page)).pendingSaveOperations).toBe(0); // Nothing was written.
   await step(page, 'ArrowLeft'); // Walk off west; the arrival releases the deferral and the gate closes.
   expect((await snapshot(page)).actorTile).toEqual({ x: 11, y: 6 });
@@ -192,14 +191,14 @@ test('a walkable denied exit shows one reason and makes zero destination request
   expect((await snapshot(page)).actorTile).toEqual({ x: 11, y: 6 });
   // Now saving from the neighbour tile is legitimate, and the checkpoint restores exactly.
   await openSaves(page);
-  await slot(page, 0).getByRole('button', { name: 'Save', exact: true }).click();
+  await slotAction(page, 0, 'save');
   await expect(page.locator('#save-status')).toContainText('Progress saved');
   const tile = (await snapshot(page)).actorTile;
   await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await expect(page.locator('#game-menu')).toBeHidden(); // Save/Load, then the menu.
   expect((await snapshot(page)).session.facts['demo:fact.gallery.gate-open']).toBe(false);
   await openSaves(page);
   await confirmLoad(page, 0);
-  await expect(page.locator('#save-dialog')).toBeHidden();
+  await expect(page.locator('#game-menu')).toBeHidden();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   const after = await snapshot(page);
   expect(after.actorTile).toEqual(tile); // Exact-tile restoration.

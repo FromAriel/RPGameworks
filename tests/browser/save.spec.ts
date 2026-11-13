@@ -1,56 +1,64 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, openSaves as openSaveDialog, snapshot, tapDirection, type DirectionKey } from './helpers';
+import { test, expect, openRoom, openSaves as openSaveScreen, saveScreen, slotRow, slotCommand, slotAction, slotInfo, filesRow, snapshot, tapDirection, type DirectionKey } from './helpers';
 
+/** Save/Load is a menu screen since decision 0016 U2.3c; its save rules and recovery are unchanged. */
 const gallery='demo:map.gallery';
 // Shared tap: releases the key inside the page, so a loaded machine cannot add a step.
 async function step(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).toBe('walked');}
-async function openSaves(page:Page):Promise<void>{await openSaveDialog(page);await expect(page.locator('#save-slots .save-slot')).toHaveCount(3);}
-const slot=(page:Page,index:number)=>page.locator('#save-slots .save-slot').nth(index);
-async function confirm(page:Page,index:number,action:'Load'|'Save'|'Import here'|'Recover previous'):Promise<void>{
+async function openSaves(page:Page):Promise<void>{await openSaveScreen(page);await expect(slotRow(page,0)).toHaveCount(1);await expect(saveScreen(page).locator('.menu-save-slots .menu-row')).toHaveCount(3);}
+async function confirm(page:Page,index:number,action:'load'|'save'|'import'|'recover'):Promise<void>{
   const n=index+1;
-  const label=action==='Save'?`Save to Slot ${n}`:action==='Load'?`Load Slot ${n}`:action==='Import here'?`Import to Slot ${n}`:`Recover Slot ${n}`;
-  const button=slot(page,index).getByRole('button',{name:action,exact:true});
-  await button.click();
+  const label=action==='save'?`Save to Slot ${n}`:action==='load'?`Load Slot ${n}`:action==='import'?`Import to Slot ${n}`:`Recover Slot ${n}`;
+  await slotAction(page,index,action);
   const dialog=page.locator('#save-confirmation');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button',{name:'Cancel'})).toBeFocused();
   await dialog.getByRole('button',{name:label,exact:true}).click();
   await expect(dialog).toBeHidden();
 }
+/** Leave Save/Load and the menu with Escape, back to the map. */
+async function leave(page:Page):Promise<void>{await page.keyboard.press('Escape');await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();}
 async function syntheticPad(page:Page):Promise<void>{await page.addInitScript(()=>{const pad={id:'Save fixture',index:0,connected:true,mapping:'standard',axes:[0,0],buttons:Array.from({length:20},()=>({pressed:false,value:0}))};Object.defineProperty(navigator,'getGamepads',{value:()=>[pad]});});}
 async function padButton(page:Page,index:number,pressed:boolean):Promise<void>{await page.evaluate(({index,pressed})=>Object.assign(navigator.getGamepads()[0]!.buttons[index]!,{pressed,value:pressed?1:0}),{index,pressed});}
 async function tapPad(page:Page,index:number):Promise<void>{await padButton(page,index,true);await page.waitForTimeout(70);await padButton(page,index,false);await page.waitForTimeout(70);}
 
-test('three-slot UI exposes real disabled Load controls and saves/loads a session in place',{ tag: ['@saves'] }, async({page})=>{
+test('three-slot UI exposes real unavailable Load commands and saves/loads a session in place',{ tag: ['@saves'] }, async({page},info)=>{
   await openRoom(page,'?map='+gallery);await step(page,'ArrowUp');await page.keyboard.press('KeyE');await expect(page.locator('#dialog-text')).toContainText('hidden line glows');await page.keyboard.press('Escape');
   expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);const savedTile=(await snapshot(page)).actorTile;
-  await openSaves(page);for(let index=0;index<3;index++){await expect(slot(page,index)).toContainText('Empty');await expect(slot(page,index).getByRole('button',{name:'Load'})).toBeDisabled();}
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slot(page,0)).toContainText('The Pillar Gallery');
-  await page.locator('#save-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await step(page,'ArrowDown');expect((await snapshot(page)).actorTile).not.toEqual(savedTile);
-  await openSaves(page);await confirm(page,0,'Load');await expect(page.locator('#save-dialog')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
+  await openSaves(page);
+  for(let index=0;index<3;index++){await expect(slotRow(page,index)).toContainText('Empty');await slotRow(page,index).click();await expect(slotCommand(page,'load')).toHaveAttribute('aria-disabled','true');await page.keyboard.press('Escape');}
+  await slotAction(page,0,'save');await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slotRow(page,0)).toContainText('The Pillar Gallery');
+  await expect(slotRow(page,0)).toBeFocused(); // After an action the command window closes, back on its slot.
+  await expect(saveScreen(page).locator('[data-skin-state="ready"]')).toHaveCount(5); // Status, slots, detail, files, and the hidden command window, painted ahead.
+  await page.screenshot({path:info.outputPath('save-screen.png')});
+  await leave(page);await step(page,'ArrowDown');expect((await snapshot(page)).actorTile).not.toEqual(savedTile);
+  await openSaves(page);await confirm(page,0,'load');await expect(page.locator('#game-menu')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
   const after=await snapshot(page);expect(after.actorTile).toEqual(savedTile);expect(after.session.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(after.activeScenes).toBe(1);expect(after.sessionSubscribers).toBe(1);expect(after.heroArt).toBe('layered');await expect(page.locator('#stage')).toBeFocused();
 });
 
 test('a deliberate load restores IndexedDB progress after a full browser reload',{ tag: ['@saves', '@smoke'] }, async({page})=>{
-  await openRoom(page,'?map='+gallery);await step(page,'ArrowUp');await page.keyboard.press('KeyE');await expect(page.locator('#interaction-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#interaction-dialog')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');await page.locator('#tools-toggle').click();await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(page.locator('#save-dialog')).toBeVisible();await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(page.locator('#save-status')).toContainText('Progress saved');
+  await openRoom(page,'?map='+gallery);await step(page,'ArrowUp');await page.keyboard.press('KeyE');await expect(page.locator('#interaction-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#interaction-dialog')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');await page.locator('#tools-toggle').click();await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(saveScreen(page)).toBeVisible();await slotAction(page,0,'save');await expect(page.locator('#save-status')).toContainText('Progress saved');
   await page.reload();await expect.poll(()=>page.evaluate(()=>window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');await page.locator('#stage').focus();expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(false);
-  await page.locator('#tools-toggle').click();await expect(page.locator('#game-menu')).toBeVisible();await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0)).toContainText('The Pillar Gallery');await confirm(page,0,'Load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe(gallery);expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
+  await page.locator('#tools-toggle').click();await expect(page.locator('#game-menu')).toBeVisible();await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(saveScreen(page)).toBeVisible();await expect(slotRow(page,0)).toContainText('The Pillar Gallery');await confirm(page,0,'load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe(gallery);expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
 });
 
 test('exports a deterministic JSON filename and imports a validated fixture into another slot',{ tag: ['@saves'] }, async({page})=>{
-  await openRoom(page);await openSaves(page);await slot(page,0).getByRole('button',{name:'Save'}).click();
-  const download=page.waitForEvent('download');await slot(page,0).getByRole('button',{name:'Export'}).click();expect((await download).suggestedFilename()).toBe('demo-game.foundation-slot-1-r1.json');
+  await openRoom(page);await openSaves(page);await slotAction(page,0,'save');await expect(page.locator('#save-status')).toContainText('Progress saved');
+  const download=page.waitForEvent('download');await slotAction(page,0,'export');expect((await download).suggestedFilename()).toBe('demo-game.foundation-slot-1-r1.json');
   await page.locator('#save-import').setInputFiles({name:'progress.json',mimeType:'application/json',buffer:readFileSync('tests/fixtures/saves/v1-lens-collected.json')});await expect(page.locator('#save-status')).toContainText('Import validated');
-  await confirm(page,1,'Import here');await expect(slot(page,1)).toContainText('The Pillar Gallery');await confirm(page,1,'Load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe(gallery);
+  await confirm(page,1,'import');await expect(slotRow(page,1)).toContainText('The Pillar Gallery');await confirm(page,1,'load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe(gallery);
   const state=await snapshot(page);expect(state.mapId).toBe(gallery);expect(state.session.inventory['demo:item.lens']).toBe(1);expect(state.session.placements['demo:object.gallery.lens-chest']?.opened).toBe(true);
 });
 
 test('keyboard and controller navigate Save without a virtual pointer and isolate held input',{ tag: ['@saves', '@input'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();for(let i=0;i<7;i++)await tapPad(page,13);await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();
-  await tapPad(page,2);await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
-  await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await tapPad(page,1);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,1);await expect(page.locator('#stage')).toBeFocused();expect((await snapshot(page)).pendingSaveOperations).toBe(0);
-  await page.keyboard.press('KeyI');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();for(let i=0;i<7;i++)await page.keyboard.press('ArrowDown');await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#save-dialog')).toBeVisible();
+  await tapPad(page,2);await expect(saveScreen(page)).toBeVisible();await expect(slotRow(page,0)).toBeFocused();
+  await tapPad(page,2);await expect(slotCommand(page,'save')).toBeFocused(); // Choosing a slot opens its commands.
+  await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slotRow(page,0)).toBeFocused();
+  await tapPad(page,1);await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await tapPad(page,1);await expect(page.locator('#stage')).toBeFocused();expect((await snapshot(page)).pendingSaveOperations).toBe(0);
+  await page.keyboard.press('KeyI');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();for(let i=0;i<7;i++)await page.keyboard.press('ArrowDown');await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await page.keyboard.press('Enter');await expect(saveScreen(page)).toBeVisible();
+  await page.keyboard.press('Enter');await expect(slotCommand(page,'save')).toBeFocused();await page.keyboard.press('Escape');await expect(slotRow(page,0)).toBeFocused(); // Escape closes the commands first.
 });
 
 test('rejects malformed and incompatible imports without changing the running session',{ tag: ['@saves'] }, async({page})=>{
@@ -58,83 +66,86 @@ test('rejects malformed and incompatible imports without changing the running se
   await page.locator('#save-import').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{')});await expect(page.locator('#save-status')).toContainText('not valid JSON');
   const incompatible=JSON.parse(readFileSync('tests/fixtures/saves/v1-empty.json','utf8'));incompatible.saveCompatibilityVersion=99;
   await page.locator('#save-import').setInputFiles({name:'future.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(incompatible))});await expect(page.locator('#save-status')).toContainText('not compatible');
+  await expect(filesRow(page,'load-import')).toHaveAttribute('aria-disabled','true');
   expect((await snapshot(page)).session).toEqual(before.session);expect((await snapshot(page)).mapId).toBe(before.mapId);
 });
 
 test('failed destination preparation leaves the running room and session untouched',{ tag: ['@saves'] }, async({page})=>{
-  await openRoom(page);await openSaves(page);await page.locator('#save-import').setInputFiles({name:'progress.json',mimeType:'application/json',buffer:readFileSync('tests/fixtures/saves/v1-plaque-read.json')});await confirm(page,0,'Import here');
-  const before=await snapshot(page);await page.route('**/generated/content/maps/gallery.*.json',route=>route.abort());await confirm(page,0,'Load');await expect(page.locator('#dialog-title')).toHaveText('Save could not load');
+  await openRoom(page);await openSaves(page);await page.locator('#save-import').setInputFiles({name:'progress.json',mimeType:'application/json',buffer:readFileSync('tests/fixtures/saves/v1-plaque-read.json')});await confirm(page,0,'import');
+  const before=await snapshot(page);await page.route('**/generated/content/maps/gallery.*.json',route=>route.abort());await confirm(page,0,'load');await expect(page.locator('#dialog-title')).toHaveText('Save could not load');
   const after=await snapshot(page);expect(after.mapId).toBe(before.mapId);expect(after.actorTile).toEqual(before.actorTile);expect(after.session).toEqual(before.session);expect(after.activeScenes).toBe(1);
 });
 
 test('two-page optimistic concurrency preserves the newer save and refreshes the stale tab',{ tag: ['@saves'] }, async({page,context})=>{
-  await openRoom(page);await openSaves(page);await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(slot(page,0)).toContainText('revision 1');
-  const stale=await context.newPage();await openRoom(stale);await openSaves(stale);await expect(slot(stale,0)).toContainText('revision 1');
-  await confirm(page,0,'Save');await expect(slot(page,0)).toContainText('revision 2');
-  await confirm(stale,0,'Save');await expect(stale.locator('#save-status')).toContainText('Another tab changed this slot');await expect(slot(stale,0)).toContainText('revision 2');
+  await openRoom(page);await openSaves(page);await slotAction(page,0,'save');await expect(await slotInfo(page,0)).toContainText('Revision 1');
+  const stale=await context.newPage();await openRoom(stale);await openSaves(stale);await expect(await slotInfo(stale,0)).toContainText('Revision 1');
+  await confirm(page,0,'save');await expect(await slotInfo(page,0)).toContainText('Revision 2');
+  await confirm(stale,0,'save');await expect(stale.locator('#save-status')).toContainText('Another tab changed this slot');await expect(await slotInfo(stale,0)).toContainText('Revision 2');
   await stale.close();
 });
 
-test('repeated save-window openings and in-place loads retain bounded ownership',{ tag: ['@saves'] }, async({page})=>{
+test('repeated Save/Load openings and in-place loads retain bounded ownership',{ tag: ['@saves'] }, async({page})=>{
   test.setTimeout(60000);await openRoom(page);const baseline=await snapshot(page);
   for(let cycle=0;cycle<6;cycle++){
-    await openSaves(page);if(cycle===0)await slot(page,0).getByRole('button',{name:'Save'}).click();else await confirm(page,0,'Save');
-    await page.locator('#save-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await step(page,'ArrowLeft');
-    await openSaves(page);await confirm(page,0,'Load');await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
+    await openSaves(page);if(cycle===0)await slotAction(page,0,'save');else await confirm(page,0,'save');
+    await expect(page.locator('#save-status')).toContainText('Progress saved');
+    await leave(page);await step(page,'ArrowLeft');
+    await openSaves(page);await confirm(page,0,'load');await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
     const state=await snapshot(page);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);expect(state.sessionSubscribers).toBe(baseline.sessionSubscribers);expect(state.pendingSaveOperations).toBe(0);expect(state.displayObjects).toBe(baseline.displayObjects);expect(state.textureCount).toBe(baseline.textureCount);
   }
 });
 
 test('unavailable IndexedDB keeps gameplay and current-session export usable',{ tag: ['@saves'] }, async({page})=>{
-  await page.addInitScript(()=>Object.defineProperty(globalThis,'indexedDB',{value:undefined,configurable:true}));await openRoom(page);await page.keyboard.press('KeyI');await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(page.locator('#save-dialog')).toBeVisible();await expect(page.locator('#save-status')).toContainText('Local saves unavailable');
-  const download=page.waitForEvent('download');await page.locator('#save-export-current').click();expect((await download).suggestedFilename()).toBe('demo-game.foundation-slot-1-r1.json');expect((await snapshot(page)).phase).toBe('ready');
+  await page.addInitScript(()=>Object.defineProperty(globalThis,'indexedDB',{value:undefined,configurable:true}));await openRoom(page);await page.keyboard.press('KeyI');await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(saveScreen(page)).toBeVisible();await expect(page.locator('#save-status')).toContainText('Local saves unavailable');
+  await expect(filesRow(page,'export-current')).toBeFocused(); // With no slots, focus goes to what still works.
+  const download=page.waitForEvent('download');await filesRow(page,'export-current').click();expect((await download).suggestedFilename()).toBe('demo-game.foundation-slot-1-r1.json');expect((await snapshot(page)).phase).toBe('ready');
 });
 
 test('confirmation dialog guards destructive slot actions with safe focus and held-input isolation',{ tag: ['@saves'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page);await openSaves(page);
-  await slot(page,0).getByRole('button',{name:'Save'}).click(); // Empty slot: one action, no dialog.
-  await expect(page.locator('#save-confirmation')).toBeHidden();await expect(slot(page,0)).toContainText('revision 1');
+  await slotAction(page,0,'save'); // Empty slot: one action, no dialog.
+  await expect(page.locator('#save-confirmation')).toBeHidden();await expect(await slotInfo(page,0)).toContainText('Revision 1');
   // Held X across the modal boundary re-edges after the reset but can neither re-confirm nor act underneath.
-  await slot(page,0).getByRole('button',{name:'Save'}).focus();
+  await slotRow(page,0).click();await expect(slotCommand(page,'save')).toBeFocused();
   await padButton(page,2,true);await page.waitForTimeout(300); // X activates the focused Save once; held beyond the edge it must do nothing more.
   const dialog=page.locator('#save-confirmation');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Replace Slot 1?');await expect(dialog).toContainText('replaces the stored record in Slot 1');
   await expect(dialog).toHaveAttribute('data-skin-state','ready'); // Registered before compositor mount, so it is painted.
-  await page.waitForTimeout(250);await expect(slot(page,0)).toContainText('revision 1'); // Held X confirms nothing.
+  await page.waitForTimeout(250);await expect(saveScreen(page).locator('.menu-save-detail')).toContainText('Revision 1'); // Held X confirms nothing.
   await padButton(page,2,false);await page.waitForTimeout(150);
   // While pending, sampled controller input reaches only the dialog navigation.
   await tapPad(page,13);await tapPad(page,13);
   expect(await dialog.evaluate(element=>element.contains(document.activeElement))).toBe(true);
-  // B held across the close boundary cancels once; the held remainder cannot close the save menu underneath.
+  // B held across the close boundary cancels once; the held remainder cannot close the commands or the screen underneath.
   await padButton(page,1,true);await page.waitForTimeout(300);
   await expect(dialog).toBeHidden();
-  await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
-  await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0)).toContainText('revision 1');
-  await padButton(page,1,false);await page.waitForTimeout(150);await expect(page.locator('#save-dialog')).toBeVisible();
-  // Controller X after release/rearm confirms the exact action; focus lands on the new control after the write.
+  await expect(slotCommand(page,'save')).toBeFocused();
+  await expect(saveScreen(page)).toBeVisible();await expect(saveScreen(page).locator('.menu-save-detail')).toContainText('Revision 1');
+  await padButton(page,1,false);await page.waitForTimeout(150);await expect(slotCommand(page,'save')).toBeVisible();
+  // Controller X after release/rearm confirms the exact action; focus returns to the slot after the write.
   await tapPad(page,2);await expect(dialog).toBeVisible();await expect(dialog.getByRole('button',{name:'Cancel'})).toBeFocused();
   await tapPad(page,13);await expect(dialog.getByRole('button',{name:'Save to Slot 1'})).toBeFocused();
   await tapPad(page,2);await expect(dialog).toBeHidden();
-  await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slot(page,0)).toContainText('revision 2');
-  await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
-  // Keyboard/pointer confirmation path behaves the same, including post-write focus restoration.
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(dialog).toBeVisible();
+  await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slotRow(page,0)).toBeFocused();
+  await expect(saveScreen(page).locator('.menu-save-detail')).toContainText('Revision 2');
+  // Keyboard/pointer confirmation path behaves the same.
+  await slotAction(page,0,'save');await expect(dialog).toBeVisible();
   await dialog.getByRole('button',{name:'Save to Slot 1',exact:true}).click();await expect(dialog).toBeHidden();
-  await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slot(page,0)).toContainText('revision 3');
-  await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
+  await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(await slotInfo(page,0)).toContainText('Revision 3');
   // Keyboard: Escape cancels, restores opener focus, and changes nothing.
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(dialog).toBeVisible();
+  await slotAction(page,0,'save');await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
-  await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();await expect(slot(page,0)).toContainText('revision 3');
+  await expect(slotCommand(page,'save')).toBeFocused();await expect(saveScreen(page).locator('.menu-save-detail')).toContainText('Revision 3');
+  await page.keyboard.press('Escape');await expect(slotRow(page,0)).toBeFocused();
   // Compact viewport keeps the dialog inside bounds.
   await page.setViewportSize({width:390,height:844});
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(dialog).toBeVisible();
+  await slotAction(page,0,'save');await expect(dialog).toBeVisible();
   const box=(await dialog.boundingBox())!;expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
   // Forced colors retain structure and the safe initial focus.
   await page.emulateMedia({forcedColors:'active'});
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(dialog).toBeVisible();
+  await page.keyboard.press('Enter');await expect(dialog).toBeVisible(); // Save is still the focused command.
   await expect(dialog.getByRole('button',{name:'Cancel'})).toBeFocused();
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
   await page.emulateMedia({forcedColors:null});
@@ -143,13 +154,13 @@ test('confirmation dialog guards destructive slot actions with safe focus and he
 test('confirmation dialog remains usable when the windowskin fails',{ tag: ['@saves', '@windows'] }, async({page})=>{
   await page.route('**/skins/white-silver.*.png',route=>route.abort());
   await openRoom(page);await openSaves(page);
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(slot(page,0)).toContainText('revision 1');
-  await slot(page,0).getByRole('button',{name:'Save'}).click();
+  await slotAction(page,0,'save');await expect(await slotInfo(page,0)).toContainText('Revision 1');
+  await slotAction(page,0,'save');
   const dialog=page.locator('#save-confirmation');
   await expect(dialog).toBeVisible();await expect(dialog).toHaveAttribute('data-skin-state','fallback');
   await expect(dialog.getByRole('button',{name:'Cancel'})).toBeFocused();
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
-  await expect(slot(page,0)).toContainText('revision 1');
+  await expect(saveScreen(page).locator('.menu-save-detail')).toContainText('Revision 1');
 });
 
 test('a delayed import read cannot change the payload a confirmation will store',{ tag: ['@saves'] }, async({page})=>{
@@ -166,15 +177,15 @@ test('a delayed import read cannot change the payload a confirmation will store'
   await page.locator('#save-import').setInputFiles(files.first); // Previewed payload: lens envelope, revision 3.
   await expect(page.locator('#save-status')).toContainText('Import validated');
   await page.locator('#save-import').setInputFiles(files.second); // Slow plaque read (revision 1) is now in flight.
-  await slot(page,1).getByRole('button',{name:'Import here'}).click();
+  await slotAction(page,1,'import');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('revision 3'); // The dialog binds the previewed envelope identity.
   await expect(page.locator('#save-status')).toContainText('Import validated'); // The late read lands and validates while the dialog is open.
   await expect(dialog).toContainText('revision 3'); // The confirmation still names the previewed payload, not the late one.
   await dialog.getByRole('button',{name:'Import to Slot 2',exact:true}).click();await expect(dialog).toBeHidden();
-  await expect(slot(page,1)).toContainText('The Pillar Gallery');
+  await expect(slotRow(page,1)).toContainText('The Pillar Gallery');
   // The stored record must be the previewed lens envelope (revision 3), not the late plaque envelope.
-  await confirm(page,1,'Load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe('demo:map.gallery');
+  await confirm(page,1,'load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe('demo:map.gallery');
   const state=await snapshot(page);
   expect(state.session.inventory['demo:item.lens']).toBe(1);
   expect(state.session.placements['demo:object.gallery.lens-chest']?.opened).toBe(true);
@@ -184,7 +195,7 @@ test('load validated import confirms with the exact action and replaces the runn
   await openRoom(page);await openSaves(page);
   await page.locator('#save-import').setInputFiles({name:'plaque.json',mimeType:'application/json',buffer:readFileSync('tests/fixtures/saves/v1-plaque-read.json')});
   await expect(page.locator('#save-status')).toContainText('Import validated');
-  await page.locator('#save-load-import').click();
+  await filesRow(page,'load-import').click();
   const dialog=page.locator('#save-confirmation');
   await expect(dialog).toBeVisible();await expect(dialog).toContainText('Replace the running session?');
   await expect(dialog.getByRole('button',{name:'Cancel'})).toBeFocused();
@@ -208,10 +219,10 @@ test('a late import read after disposal mutates nothing',{ tag: ['@saves'] }, as
   await page.waitForTimeout(700); // The read lands after disposal.
   await expect(page.locator('#page-error-notice')).toBeHidden();
   expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
-  expect(await page.locator('#save-slots button').count()).toBe(0); // Rows stay cleared; no late render or status write.
+  expect(await page.locator('.menu-save .menu-row').count()).toBe(0); // The screen is gone; no late render or status write.
 });
 
-test('the confirmation gate exception is scoped to its owning Save/Load dialog',{ tag: ['@saves'] }, async({page})=>{
+test('the confirmation gate exception is scoped to its owning menu',{ tag: ['@saves'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page);
   // An unrelated confirmation open over exploration must not unlock gamepad polling.
   await page.evaluate(()=>{const unrelated=document.createElement('dialog');unrelated.id='unrelated-confirmation';unrelated.className='ui-confirmation';unrelated.setAttribute('open','');unrelated.append('Unrelated confirmation');document.body.append(unrelated);});
@@ -219,16 +230,19 @@ test('the confirmation gate exception is scoped to its owning Save/Load dialog',
   expect((await snapshot(page)).burstRequests).toBe(0);
   expect((await snapshot(page)).inputMode).toBe('exploration');
   await page.evaluate(()=>document.getElementById('unrelated-confirmation')!.remove());
-  // The Save/Load confirmation keeps polling alive for its owner while pending.
-  await openSaves(page);await expect(page.locator('#save-slots [role="group"]')).toHaveCount(3);
-  await expect(slot(page,0)).toHaveAttribute('aria-labelledby','slot-1-title');
-  await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(slot(page,0)).toContainText('revision 1'); // Empty slot: one action.
-  await slot(page,0).getByRole('button',{name:'Save'}).focus();
+  // The Save/Load confirmation keeps polling alive for its owner (the menu) while pending.
+  await openSaves(page);
+  await expect(page.locator('#save-confirmation')).toHaveAttribute('data-owner-modal','game-menu');
+  await slotAction(page,0,'save');await expect(await slotInfo(page,0)).toContainText('Revision 1'); // Empty slot: one action.
+  await slotRow(page,0).click();await expect(slotCommand(page,'save')).toBeFocused();
   await padButton(page,2,true);await page.waitForTimeout(300); // X opens the owner's confirmation for the occupied slot.
   const dialog=page.locator('#save-confirmation');
   await expect(dialog).toBeVisible();
   await padButton(page,2,false);await page.waitForTimeout(150);
   await tapPad(page,13);await expect(dialog.getByRole('button',{name:'Save to Slot 1'})).toBeFocused(); // Polling alive for the owner.
   await padButton(page,1,true);await page.waitForTimeout(300);await expect(dialog).toBeHidden(); // B held across the boundary cancels once.
-  await padButton(page,1,false);await page.waitForTimeout(150);await expect(page.locator('#save-dialog')).toBeVisible();
+  await padButton(page,1,false);await page.waitForTimeout(150);await expect(saveScreen(page)).toBeVisible();
+  // The Menu button during a pending confirmation answers the confirmation, never closing the menu under it.
+  await page.keyboard.press('Enter');await expect(dialog).toBeVisible();
+  await tapPad(page,9);await expect(dialog).toBeHidden();await expect(saveScreen(page)).toBeVisible();
 });

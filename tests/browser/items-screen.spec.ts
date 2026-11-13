@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { expect, openRoom, snapshot, test } from './helpers';
+import { expect, openRoom, snapshot, test, filesRow } from './helpers';
 
 /**
  * Decision 0016 U2.2: the Items screen. Category tabs (All first) and a sort bar (Type, A-Z, Qty) along the top, the
@@ -21,7 +21,7 @@ async function carry(page: Page, inventory: Record<string, number>): Promise<voi
   await page.locator('#game-menu .menu-row[data-id="save"]').click();
   await page.locator('#save-import').setInputFiles({ name: 'items.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(save)) });
   await expect(page.locator('#save-status')).toContainText('Import validated');
-  await page.locator('#save-load-import').click();
+  await filesRow(page, 'load-import').click();
   await page.locator('#save-confirmation').getByRole('button', { name: 'Load import', exact: true }).click();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   expect((await snapshot(page)).session.inventory).toEqual(inventory);

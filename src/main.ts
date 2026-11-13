@@ -116,7 +116,7 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = artWarning || (snapshot.inputMode === 'menu' ? 'Menu open. Choose a command, or press Escape to return.' : snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to the menu.': snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
+    const message = artWarning || (snapshot.inputMode === 'menu' ? 'Menu open. Choose a command, or press Escape to return.' : snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
@@ -226,7 +226,6 @@ async function start(): Promise<void> {
     if (disposed) {saveService.close();saveService=null;return;}
     handle = createFoundation({
       session,
-      saveDialog:required<HTMLDialogElement>('#save-dialog'),
       saveConfirmation,
       saves:saveService,
       base,

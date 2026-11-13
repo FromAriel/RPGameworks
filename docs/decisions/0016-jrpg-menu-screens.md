@@ -145,6 +145,8 @@ The game's menus look and play like a classic Final Fantasy-style JRPG menu, and
 - **Config rows (U2.3b):** existing settings only (Cosmetic particles, On-screen controls, Controller), plus Controller setup. Text scale waits until there is a player text-size setting.
 - **Side panel (U2.3b):** one panel, two modes, no tabs: Controller setup (from Config) or Debug (F2).
 - **Activate controller (U2.3b):** it and the detection status sit at the top of Controller setup. Config's detail window shows the status.
+- **Save/Load layout (U2.3c):** slot rows, then a command window for the chosen slot. File commands are in a Files window.
+- **Confirmations (U2.3c):** the existing confirmation window, unchanged. A screen may take controller input first (`MenuScreen.sample`), so the confirmation owns the controller while it is open.
 
 ## 7. Not in U2
 

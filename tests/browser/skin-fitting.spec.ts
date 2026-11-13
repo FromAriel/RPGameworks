@@ -21,7 +21,9 @@ interface Fit {
 async function measure(page: Page, selector: string): Promise<Fit> {
   return page.evaluate((selector) => {
     const element = document.querySelector<HTMLElement>(selector)!;
-    const box = (r: DOMRect) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+    // Menu windows sit in a scaled layer (decision 0016); the skin publishes insets in layout pixels, so measure in those.
+    const zoom = element.offsetWidth > 0 ? element.getBoundingClientRect().width / element.offsetWidth : 1;
+    const box = (r: DOMRect) => ({ left: r.left / zoom, top: r.top / zoom, right: r.right / zoom, bottom: r.bottom / zoom });
     const value = (name: string) => Number.parseFloat(element.style.getPropertyValue(name));
     const title = element.querySelector<HTMLElement>('[data-skin-title]')!;
     const content = [...element.children].filter((child) => !child.contains(title) && child.getClientRects().length && !child.classList.contains('sr-only'))
@@ -86,8 +88,10 @@ test('Ariel’s skin: dialogue and Save / Load content stay inside the published
     await expect(page.locator('#interaction-dialog')).toBeHidden();
     await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
     await openSaves(page);
-    await painted(page, '#save-dialog');
-    const saves = await measure(page, '#save-dialog');
+    // Save/Load is a menu screen (decision 0016 U2.3c); its slot window carries the title.
+    const slots = '#game-menu .menu-save-slots';
+    await painted(page, slots);
+    const saves = await measure(page, slots);
     expectContentInside(saves, `saves ${viewport.width}`);
     expectTitleFits(saves, `saves ${viewport.width}`);
     await page.keyboard.press('Escape'); await page.keyboard.press('Escape');

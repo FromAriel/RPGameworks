@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import type { SessionController } from '../runtime/session-controller';
-import { SaveMenu } from './ui/save-menu';
 import type { SaveCheckpoint,SaveEnvelopeV1 } from '../domain/save';
 import { SessionState } from '../domain/session';
 import type { SaveService } from '../runtime/save-service';
@@ -39,6 +38,7 @@ import { ITEMS_SCREEN, itemsScreen } from './menu/items-screen';
 import { JOURNAL_SCREEN, journalScreen } from './menu/journal-screen';
 import type { JournalQuest } from './menu/journal-screen';
 import { HELP_SCREEN, helpScreen } from './menu/help-screen';
+import { SAVE_SCREEN, saveScreen } from './menu/save-screen';
 import { CONFIG_SCREEN, CONTROLLER_SETUP, configScreen, type ConfigParams, type PlayerSetting } from './menu/config-screen';
 import type { PadAction } from '../platform/gamepad-model';
 import type { ItemDetail, ItemsMemory } from './menu/items-screen';
@@ -62,7 +62,6 @@ const SCENE = 'rpgameworks:map';
 
 export interface FoundationElements {
   session: SessionController;
-  saveDialog: HTMLDialogElement;
   saveConfirmation: ConfirmationDialogParts;
   saves: SaveService;
   base: URL;
@@ -132,7 +131,6 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private generation = 0;
     private lastExit: MapExit | null = null;
     private readonly dialog = new InteractionDialog(elements.dialog,()=>this.cancelModal());
-    private saveMenu: SaveMenu | null = null;
     private menuPending = false;
     /** The hub (decision 0016 U2.1) and its layer; built with the scene, disposed with it. */
     private hub: MenuController | null = null;
@@ -155,15 +153,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
     /** Close the hub without returning to the map (going on to another window). */
     private leaveHub(): void { this.hubSilent = true; try { this.hub?.close(); } finally { this.hubSilent = false; } }
     private hubClosed(): void { if (!this.hubSilent) this.resume(); }
-    private backToHub(): void { this.saveMenu?.close(); this.openHub(); }
     private chooseEntry(entry: MenuEntry): void {
       if (this.mode !== 'menu' || !HUB_ROUTES.has(entry.screen)) return;
       this.hubEntry = entry.id;
-      const screen = { 'builtin:items': ITEMS_SCREEN, 'builtin:journal': JOURNAL_SCREEN, 'builtin:help': HELP_SCREEN, 'builtin:config': CONFIG_SCREEN }[entry.screen];
-      if (screen) { this.hub?.push(screen); return; }
-      if (entry.screen === 'builtin:save') {
-        this.leaveHub(); this.setMode('save'); void this.saveMenu?.open().catch(cause => this.fail(cause));
-      }
+      const screen = { 'builtin:items': ITEMS_SCREEN, 'builtin:journal': JOURNAL_SCREEN, 'builtin:help': HELP_SCREEN, 'builtin:config': CONFIG_SCREEN, 'builtin:save': SAVE_SCREEN }[entry.screen];
+      if (screen) this.hub?.push(screen);
     }
     /** Config's Controller setup: the side panel replaces the menu, and closing it comes back to Config on that row. */
     private openControllerSetup(): void {
@@ -257,13 +251,19 @@ export function createFoundation(elements: FoundationElements, onError: (message
           controllerStatus: elements.controllerStatus,
           openControllerSetup: () => this.openControllerSetup(),
         }, params as ConfigParams | undefined));
+        registry.register(SAVE_SCREEN, context => saveScreen(context, {
+          service: elements.saves, sessions: elements.session,
+          checkpoint: () => this.checkpoint(), load: envelope => this.loadSave(envelope),
+          confirmation: elements.saveConfirmation, clearInputs: () => this.inputOwner?.clear(),
+          checkpointReason: checkpoint => this.checkpointReason(checkpoint), ownerId: 'game-menu',
+        }));
         const layer = createMenuLayer(document.body, 'Game menu');
         layer.element.id = 'game-menu';
         // The menu key closes the menu from inside it too, like the controller's Menu button.
         layer.element.addEventListener('keydown', event => { if (event.code === 'KeyI' && !event.repeat) { event.preventDefault(); this.resume(); } }, { signal: this.sceneLifetime.signal });
         this.hub = new MenuController(layer, registry, { holds: condition => elements.session.evaluate(condition as Condition) }, elements.windowskin(), () => this.hubClosed());
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
-          elements.gamepad, elements.canPlay, elements.dialog, elements.saveDialog, layer.element);
+          elements.gamepad, elements.canPlay, elements.dialog, layer.element);
         starts += 1;
         current = this;
         this.room.setEffectsEnabled(elements.effects.checked);
@@ -275,7 +275,6 @@ export function createFoundation(elements: FoundationElements, onError: (message
           this.scene.restart();
         }, { signal: this.sceneLifetime.signal });
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
-        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnFromSaves(),elements.saveConfirmation,()=>this.inputOwner?.clear(),reason=>this.checkpointReason(reason));
         phase = 'ready';
         scheduleResize();
         const lifetime = this.sceneLifetime.signal;
@@ -319,9 +318,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
       }
       const direction = input.direction(); // One gameplay consumption of the sampled controller.
       const interact = input.consumeInteract(), cancel = input.consumeCancel(), burst = input.consumeBurst(), menu = input.consumeMenu();
-      if(this.mode==='save'){this.saveMenu?.sample({direction,interact,cancel,menu,burst:false},delta);return;}
       if (this.mode === 'menu') {
         const tab = input.consumeTab();
+        if (this.hub?.screenSample({ direction, interact, cancel, menu, burst, tab }, delta)) return; // Save's pending confirmation.
         if (menu) { this.resume(); return; } // The Menu button closes the menu, as it opened it.
         this.hub?.sample({ direction, interact, cancel, menu: false, burst, tab }, delta); // Burst: the screen's secondary action.
         return;
@@ -512,14 +511,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if(id==='skip')view.skip();
       else if(id==='speed'){view.speed=nextSpeed(view.speed);this.showBattle();}
     }
-    /** The Save/Load dialog's return button names where it goes back to. */
-    /** Save/Load is opened from the hub, and returns there. */
-    private returnFromSaves():void{if(this.mode!=='save')return;this.backToHub();}
     private checkpoint(){const room=this.room!;return{mapId:room.content.map.id,tile:{...room.actor.tile},facing:room.actor.facing};}
     /** Refuses a write whose checkpoint the saved session could not restore (standing on a deferral-closing gate); the player stays put with a visible reason. */
     private checkpointReason(checkpoint:SaveCheckpoint):string|null{return this.room&&this.room.checkpointBlocked(checkpoint.tile)?'Cannot save here: the gate beneath you is still closing. Step off it, then save or export again.':null;}
     private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
-      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.hubEntry=null;this.setMode('transition');
+      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.leaveHub();this.hubEntry=null;this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog,quests:elements.session.current.questCatalog},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
@@ -555,7 +551,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
     private resume(): void {
       this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null;
-      this.dialog.close(); this.saveMenu?.close(); this.message = null;this.dialogue=null;
+      this.dialog.close(); this.message = null;this.dialogue=null;
       this.leaveHub(); this.hubEntry = null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
@@ -641,7 +637,6 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null;
       this.generation += 1; this.transfer.dispose();
       this.dialog.dispose(); this.message = null;this.dialogue=null;
-      this.saveMenu?.dispose();this.saveMenu=null;
       this.hubSilent = true; this.hub?.dispose(); this.hub = null; this.hubSilent = false; this.hubEntry = null;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;

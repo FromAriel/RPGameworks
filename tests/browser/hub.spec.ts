@@ -71,10 +71,8 @@ test('hub entries open their screens or the existing windows, and Cancel there c
   await page.keyboard.press('Escape');
   await expect(row(page, 'journal')).toBeFocused();
   await row(page, 'save').click();
-  await expect(page.locator('#save-dialog')).toBeVisible();
-  await expect(page.locator('#save-close')).toHaveText('Return to Menu');
-  await page.locator('#save-close').click();
-  await expect(page.locator('#save-dialog')).toBeHidden();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:save"]')).toBeVisible(); // Save/Load: its own screen (U2.3c).
+  await page.keyboard.press('Escape');
   await expect(row(page, 'save')).toBeFocused();
   await row(page, 'config').click(); // Config: its own screen (U2.3b).
   await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:config"]')).toBeVisible();

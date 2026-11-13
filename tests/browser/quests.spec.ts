@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { openJournal, openSaves, closeInventory, journalScreen, test,expect,openRoom,snapshot,tapDirection,holdToExit,type DirectionKey } from './helpers';
+import { openJournal, openSaves, closeInventory, journalScreen, test,expect,openRoom,snapshot,tapDirection,holdToExit,type DirectionKey, filesRow, slotAction } from './helpers';
 
 // Walking uses the shared helpers, which release keys inside the page, so a loaded machine cannot add a step.
 async function step(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).toBe('walked');}
@@ -12,7 +12,7 @@ async function loadImport(page:Page,file:string):Promise<void>{
   await openSaves(page);
   await page.locator('#save-import').setInputFiles({name:'setup.json',mimeType:'application/json',buffer:readFileSync(file)});
   await expect(page.locator('#save-status')).toContainText('Import validated');
-  await page.locator('#save-load-import').click();
+  await filesRow(page, 'load-import').click();
   const dialog=page.locator('#save-confirmation');await expect(dialog).toBeVisible();
   await dialog.getByRole('button',{name:'Load import',exact:true}).click();await expect(dialog).toBeHidden();
   await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
@@ -100,9 +100,9 @@ test('the archive clerk uses the same item hand-in flow across the keyed Storero
   await page.locator('[data-dialogue-choice="hand-in"]').click();await expect(page.locator('#dialog-text')).toContainText('safe again');await close(page);
   let state=(await snapshot(page)).session;expect(state.quests['demo:quest.archive-ledger']).toBe('completed');expect(state.inventory['demo:item.archive-ledger']).toBeUndefined();expect(state.inventory['demo:item.brass-key']).toBe(1);
   await openJournal(page);await expect(journalScreen(page)).toContainText('ledger back');await page.keyboard.press('Escape');await page.locator('#game-menu .menu-row[data-id="save"]').click();
-  await page.locator('#save-slots .save-slot').first().getByRole('button',{name:'Save'}).click();await expect(page.locator('#save-status')).toContainText('Progress saved');
+  await slotAction(page,0,'save');await expect(page.locator('#save-status')).toContainText('Progress saved');
   await page.reload();await expect.poll(()=>page.evaluate(()=>(window as any).__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');
-  await page.locator('#tools-toggle').click();await page.locator('#game-menu .menu-row[data-id="save"]').click();await page.locator('#save-slots .save-slot').first().getByRole('button',{name:'Load'}).click();
+  await page.locator('#tools-toggle').click();await page.locator('#game-menu .menu-row[data-id="save"]').click();await slotAction(page,0,'load');
   await page.locator('#save-confirmation').getByRole('button',{name:'Load Slot 1'}).click();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
   state=(await snapshot(page)).session;expect(state.quests['demo:quest.archive-ledger']).toBe('completed');expect(state.inventory['demo:item.brass-key']).toBe(1);
 });

@@ -4,6 +4,45 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## U2.3c Save/Load on the menu blocks — November 13, 2026, local
+
+[Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.3, last of three sub-packets. Ariel chose the layout (slots, then a command) and to keep the existing confirmation window.
+
+- **Save/Load screen** (`src/presentation/menu/save-screen.ts`, replacing `ui/save-menu.ts` and the `#save-dialog` markup):
+  - **Windows:** a status line, three slot rows (place, or Empty or Invalid), a detail window (place, time saved, revision, recoverable), and a Files window (Import file…, Load import, Export current session, Refresh slots).
+  - **Commands:** choosing a slot opens a small command window: Save, Load, Export, plus Recover previous or Import here when they apply. Load and Export show greyed on an empty slot.
+  - **Cancel:** Escape or the controller's Cancel closes the command window first, then returns to the menu.
+  - **After an action:** the command window closes and focus returns to the slot, which shows the result.
+  - **Skin surface:** the windows use the theme's `saves` surface, as the dialog did.
+- **Rules unchanged:**
+  - Destructive actions ask in the shared confirmation window, with the same wording and Cancel focused first.
+  - A checkpoint on a closing gate is refused before and after confirming.
+  - Edits from another tab are detected and the slot refreshed.
+  - A confirmation stores exactly the previewed import.
+  - Nothing late runs after the screen closes.
+- **Input:**
+  - The `save` input mode is gone: Save/Load runs in the menu mode.
+  - **New hook:** a screen may take controller input before the menu (`MenuScreen.sample`). Save uses it so a pending confirmation owns the controller, including the Menu button, which now answers the confirmation instead of closing the menu under it.
+  - The confirmation's input gate names the menu layer (`game-menu`) as its owner.
+- **Import:** the Import row opens the browser's file picker with a click or Enter. Browsers do not open file pickers from a controller button.
+- **Tests:**
+  - **Unit:** `save-screen.test.ts` (5): the three checkpoint-refusal cases ported; command availability; Cancel closing the command window first.
+  - **Browser:** `save.spec.ts` rewritten for the screen with the same 15 scenarios, plus:
+    - Escape closing the commands first;
+    - focus on Export current when storage is unavailable;
+    - the Menu button answering a pending confirmation.
+  - **Updated:** other specs that saved or loaded imports (conditional access, quests, Items, Journal, hub), with helpers `saveScreen`, `slotRow`, `slotCommand`, `slotAction`, `slotInfo` and `filesRow`.
+  - **Window counts:** page window counts went from 5 to 4.
+  - **Skin fitting:** it now measures in layout pixels, so the scaled menu's slot window is checked at both sizes.
+  - **Reference captures:** the U1 Save captures are now `u2-save-*` captures of the menu (empty, populated, commands, storage unavailable, narrow, forced colours).
+
+  Local results:
+  - typecheck, `npm run validate`, the production build, `check:test-tags` (197 tagged) and `check:external-art` passed;
+  - unit tests **540/540**;
+  - full browser suite **197/197**: 193 in the full run, and the 4 failures were fixed and their specs rerun (29/29). Three of them counted the removed Save dialog; the fourth, the missing-spawn travel test, passed on rerun without changes.
+- **Not yet:** Ariel's review.
+- **Migration:** none. Saves, slots and their storage are unchanged. Next: **U2.4, the Codex, Credits and the extension guide.**
+
 ## U2.3b the Config screen; Debug split off — November 13, 2026, local
 
 [Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.3, second of three sub-packets.

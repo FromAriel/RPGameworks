@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { expect, journalScreen, openJournal, openRoom, openSaves, snapshot, test } from './helpers';
+import { expect, journalScreen, openJournal, openRoom, openSaves, snapshot, test, filesRow } from './helpers';
 
 /**
  * Decision 0016 U2.3a: the Journal and Help screens in the menu. The Journal lists known quests, active first, with the
@@ -17,7 +17,7 @@ async function withQuests(page: Page, quests: Record<string, 'active' | 'complet
   await openSaves(page);
   await page.locator('#save-import').setInputFiles({ name: 'quests.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(save)) });
   await expect(page.locator('#save-status')).toContainText('Import validated');
-  await page.locator('#save-load-import').click();
+  await filesRow(page, 'load-import').click();
   await page.locator('#save-confirmation').getByRole('button', { name: 'Load import', exact: true }).click();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   expect((await snapshot(page)).session.quests).toEqual(quests);

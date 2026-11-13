@@ -19,5 +19,5 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["src", "tests", "*.config.ts"]
+  "include": ["src", "tests", "tools/skin-studio", "*.config.ts"]
 }

@@ -77,3 +77,12 @@ Same as 0011 §5: each packet exactly as written; any undecided step stops for A
 | **Q2** | Studio page (B4) before W3.6, so you can tune the Final Fantasy-like skin interactively, or after it? | **Before W3.6.** Tuning colours and light by editing JSON is slow; the studio pays for itself on the first skin. |
 | **Q3** | How much of Pixel Frame's lighting comes in B2: the core lit path (profile, normals, shading, palettes, one-colour themes), or also wear and rust, gem glow and brushed metal? | **Core lit path first**, with wear and rust as the next small addition (they are what makes a weathered dungeon skin), and gem glow and brushed metal later. |
 | **Q4** | Recipe location: beside the canonical skins (`assets/source/ui/skins/<name>/recipe.json` with the baked `Window.png` and manifest), or a separate recipes folder? | **Beside each skin**, so a skin's recipe, atlas, manifest and audit sit together. |
+
+## 8. B4 execution answers (Ariel, November 12, 2026)
+
+| | Question | Answer |
+| --- | --- | --- |
+| **B4-Q1** | The studio's wear control needs a recipe setting; add wear to the format in B4? | **Yes.** Optional `light.wear` (0–1, default 0) and `light.tarnish` (default true), using the restored shading's existing wear pass. Existing skins are unchanged. |
+| **B4-Q2** | Pixel Frame's flair (full, subtle, off): a recipe field, or a studio shortcut? | **Studio shortcut only.** It edits the recipe's own corner, motif and medallion fields; the saved recipe stays explicit and the format gains no flair field. |
+| **B4-Q3** | Bake in the page, or through a local bake server? | **In the page.** File reading and PNG writing move out of the bake and reader into Node wrappers, so one bake core runs in `npm run skins` and in the studio; tests compare their pixels. |
+| **B4-Q4** | Where does the studio run? | **Locally only**, `npm run studio`, on its own port like the UI gallery. Never in the game build and never published. Saving downloads `recipe.json`; `npm run skins` bakes it. |

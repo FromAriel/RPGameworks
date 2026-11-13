@@ -5,7 +5,7 @@
  *   node tools/browser-fixtures.mjs --rebuild  always build
  *
  * After each build this writes a stamp (ignored `.tmp/browser-fixtures.stamp.json`) holding a hash of every build
- * input and a hash of each built entry page. The fixtures are reused only when the inputs hash and both entry pages
+ * input and a hash of each built entry page. The fixtures are reused only when the inputs hash and every entry page
  * still match the stamp, so a different build written over dist/ (for example `npm run build` with another base
  * path), a deleted output, or any input edit triggers a fresh build. `npm run test:browser` keeps building every time.
  */
@@ -22,13 +22,13 @@ export const STAMP_VERSION = 1;
 /** Version-controlled inputs (tracked or untracked-but-not-ignored files). Generated folders are ignored outputs. */
 export const INPUT_PATHS = Object.freeze([
   'src', 'content', 'assets', 'schemas', 'tools', 'tests/ui-gallery',
-  'index.html', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'vite.ui-gallery.config.ts',
+  'index.html', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'vite.ui-gallery.config.ts', 'vite.studio.config.ts',
 ]);
 /** Vite copies everything in public/ into the build, including ignored local files, so it is read from disk. */
 export const PUBLIC_DIR = 'public';
 export const PUBLIC_OUTPUT_DIRS = Object.freeze(['public/generated']);
 /** Built entry pages; their hashed asset names change whenever the bundle changes. */
-export const OUTPUT_PAGES = Object.freeze(['dist/index.html', '.tmp/ui-gallery-dist/index.html']);
+export const OUTPUT_PAGES = Object.freeze(['dist/index.html', '.tmp/ui-gallery-dist/index.html', '.tmp/skin-studio-dist/index.html']);
 
 /**
  * Decide whether the existing fixtures can be reused.

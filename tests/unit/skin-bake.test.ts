@@ -111,6 +111,17 @@ describe('skin bake (decision 0013 B2)', () => {
     expect(brightness(white, 'corner.tl')).toBeLessThan(brightness({ ...white, corner: { ...white.corner, material: 'as-drawn' } }, 'corner.tl') - 20);
   });
 
+  it('wears the frame when asked (decision 0013 B4-Q1): deterministic, still clean, and wear 0 changes nothing', async () => {
+    const file = RECIPES[1][1], dir = path.dirname(file);
+    const iron = load(file);
+    const worn = { ...iron, light: { ...iron.light, wear: 0.8 } };
+    const a = bakeSkin(worn, { dir }), b = bakeSkin(worn, { dir });
+    expect(a.png.equals(b.png), 'identical bytes twice').toBe(true);
+    expect(a.png.equals(bakeSkin(iron, { dir }).png), 'wear changes the pixels').toBe(false);
+    expect(bakeSkin({ ...iron, light: { ...iron.light, tarnish: false } }, { dir }).png.equals(bakeSkin(iron, { dir }).png), 'tarnish alone needs wear').toBe(true);
+    await expectCleanComposition(a.manifest as unknown as WindowSkinManifestV2, { naturalWidth: a.atlas.width, naturalHeight: a.atlas.height, pixels: Buffer.from(a.atlas.data) });
+  });
+
   it('refuses a band with no room for the outline and the profile', () => {
     const recipe = load(RECIPES[0][1]);
     expect(() => bakeSkin({ ...recipe, band: { ...recipe.band, left: 4 } }, { dir: '.' }))

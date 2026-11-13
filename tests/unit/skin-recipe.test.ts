@@ -20,7 +20,7 @@ describe('skin recipes (decision 0013 B1)', () => {
     expect(thin.recipe.corner.size).toBe('medium');
     expect(thin.recipe.corner.material).toBe('as-drawn');
     expect(thin.recipe.title.textGap).toBe(4);
-    expect(thin.recipe.light).toEqual({ azimuth: 225, elevation: 45, steps: 5, outline: true, shadow: false });
+    expect(thin.recipe.light).toEqual({ azimuth: 225, elevation: 45, steps: 5, outline: true, shadow: false, wear: 0, tarnish: true });
     expect(thin.recipe.divider).toEqual({ band: 6, profile: [1, 2, 2, 1] }); // Defaults to the top band and the frame profile.
     expect(thin.recipe.contentMargin).toBe(4);
     const iron = readRecipe(load('riveted-iron.json'), { dir });

@@ -1,0 +1,49 @@
+* { box-sizing: border-box; }
+html { color: var(--ui-text-primary); background: var(--ui-world); font-family: var(--ui-font-body); }
+body { margin: 0; min-height: 100vh; }
+code { font-size: .92em; }
+#studio { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 16px; padding: 16px; align-items: start; }
+@media (max-width: 860px) { #studio { grid-template-columns: minmax(0, 1fr); } }
+
+#controls { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; display: grid; gap: 10px; padding: 12px; border: 1px solid var(--ui-line-weak); background: var(--ui-surface); }
+#controls h1 { margin: 0; font-size: var(--ui-text-heading); color: var(--ui-text-title); }
+#controls .note { margin: 0; color: var(--ui-text-muted); font-size: .9em; line-height: 1.45; }
+#controls fieldset { display: grid; gap: 8px; margin: 0; padding: 8px 10px 10px; border: 1px solid var(--ui-line-weak); }
+#controls legend { padding: 0 4px; color: var(--ui-authored-text-bright); }
+#controls label { display: grid; gap: 4px; font-size: .92em; }
+#controls label.check { display: flex; align-items: center; gap: 6px; }
+#controls output { float: right; color: var(--ui-text-muted); }
+#controls input[type="text"], #controls input[type="number"], #controls select { width: 100%; padding: 4px 6px; color: inherit; background: var(--ui-surface-raised); border: 1px solid var(--ui-line-strong); font: inherit; }
+#controls input[type="color"] { width: 64px; height: 28px; padding: 0; border: 1px solid var(--ui-line-strong); background: none; }
+#controls :focus-visible { outline: var(--ui-focus-width) dashed var(--ui-focus-ring); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions button { padding: 6px 10px; color: inherit; background: var(--ui-surface-raised); border: 1px solid var(--ui-line-strong); font: inherit; cursor: pointer; }
+.actions button:disabled { opacity: .5; cursor: not-allowed; }
+#studio-status { margin: 0; color: var(--ui-text-muted); font-size: .9em; }
+#studio-errors { margin: 0; padding-left: 18px; color: var(--ui-danger, #ff8a8a); font-size: .9em; }
+#studio-errors:empty { display: none; }
+
+#preview { display: grid; gap: 16px; min-width: 0; }
+#preview h2 { margin: 0 0 8px; font-size: var(--ui-text-label); color: var(--ui-text-muted); }
+.preview-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+
+/* Real W1 windows (decision 0013 B4). Padding follows the skin's published insets like the game's windows. */
+.pw { --pw-gap: 6px; margin: 0; padding: var(--pw-gap) calc(var(--skin-inset-right, 16px) + var(--pw-gap)) calc(var(--skin-inset-bottom, 16px) + var(--pw-gap)) calc(var(--skin-inset-left, 16px) + var(--pw-gap)); background-color: var(--ui-surface); box-shadow: inset 0 0 0 2px var(--ui-line-strong); line-height: 1.45; }
+.pw[data-skin-state="ready"] { background-color: transparent; box-shadow: none; }
+.pw[data-skin-title-mode="header"] { padding-top: max(var(--pw-gap), var(--skin-content-top, 0px)); }
+.pw-heading { display: flex; justify-content: center; min-height: 24px; margin-bottom: var(--skin-title-clearance, 0px); }
+.pw h3 { max-width: min(100%, var(--skin-title-max, calc(100% - 48px))); margin: 0; color: var(--ui-text-title); font-size: 1em; font-weight: 600; text-align: center; }
+.pw p, .pw ul { margin: 4px 0; }
+.pw ul { padding-left: 16px; }
+.pw-divider { position: relative; display: flex; justify-content: center; min-height: 24px; margin: 6px 0; color: var(--ui-information-muted); font-weight: 400; font-size: 1em; }
+.pw-divider [data-skin-title] { max-width: min(100%, var(--skin-title-max, calc(100% - 48px))); }
+.pw-dialogue { width: 320px; }
+.pw-menu { width: 168px; }
+.pw-saves { width: 260px; }
+.pw-battle { width: 480px; }
+.scale-2 [data-window-skin] { --skin-scale: 2; }
+.scale-2 .pw { --pw-gap: 8px; }
+.scale-2 .pw-dialogue { width: 640px; }
+.scale-2 .pw-menu { width: 336px; }
+.scale-2 .pw-saves { width: 520px; }
+.scale-2 .pw-battle { width: 960px; max-width: 100%; }

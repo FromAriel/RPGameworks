@@ -33,5 +33,11 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
     },
+    {
+      command: 'npm run preview:studio',
+      url: 'http://127.0.0.1:4176/',
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
   ],
 });

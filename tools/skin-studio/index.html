@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="RPGameworks skin studio: tune a window skin recipe and preview it in real windows. Local authoring tool; not part of the game." />
+    <title>RPGameworks Skin Studio</title>
+  </head>
+  <body>
+    <main id="studio">
+      <form id="controls" aria-label="Recipe settings" autocomplete="off">
+        <h1>Skin studio</h1>
+        <p class="note">Local authoring tool (decision 0013 B4). Save downloads <code>recipe.json</code>; put it in <code>assets/source/ui/skins/&lt;name&gt;/</code> and run <code>npm run skins</code>.</p>
+
+        <fieldset>
+          <legend>Recipe</legend>
+          <label>Open <select id="recipe-pick"></select></label>
+          <label>Name <input id="name" type="text" maxlength="120" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Frame</legend>
+          <label>Thickness <output id="band-value"></output><input id="band" type="range" min="1" max="16" step="1" /></label>
+          <label>Bevel (heights, outer edge first) <input id="profile" type="text" inputmode="numeric" /></label>
+          <label>Title piece width <input id="title-width" type="number" min="1" max="64" /></label>
+          <label class="check"><input id="outline" type="checkbox" /> Dark outline</label>
+          <label class="check"><input id="shadow" type="checkbox" /> Drop shadow</label>
+          <label>Content margin <input id="content-margin" type="number" min="0" max="32" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Ornaments</legend>
+          <label>Flair <select id="flair"><option value="full">Full (the recipe's own)</option><option value="subtle">Subtle (corners only)</option><option value="off">Off (plain notch corners)</option></select></label>
+          <label>Corner art <select id="corner-art"></select></label>
+          <label>Ornament size <select id="corner-size"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+          <label>Corner colours <select id="corner-material"><option value="as-drawn">As drawn</option><option value="accent">Accent</option></select></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Colours</legend>
+          <label>Theme <select id="theme"><option value="iron">Iron</option><option value="brass">Brass</option><option value="silver">Silver</option><option value="obsidian">Obsidian</option><option value="base">From one base colour</option></select></label>
+          <label>Base colour <input id="base" type="color" /></label>
+          <label>Frame colours (darkest first, blank for the theme's) <input id="frame-ramp" type="text" spellcheck="false" /></label>
+          <label>Accent colours (darkest first, blank for the theme's) <input id="accent-ramp" type="text" spellcheck="false" /></label>
+          <label>Window fill <input id="fill" type="color" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Light and wear</legend>
+          <label>Light from <output id="azimuth-value"></output><input id="azimuth" type="range" min="0" max="359" step="1" /></label>
+          <label>Light height <output id="elevation-value"></output><input id="elevation" type="range" min="10" max="90" step="1" /></label>
+          <label>Shades per colour <input id="steps" type="number" min="3" max="6" /></label>
+          <label>Wear <output id="wear-value"></output><input id="wear" type="range" min="0" max="1" step="0.05" /></label>
+          <label class="check"><input id="tarnish" type="checkbox" /> Tarnish in recesses (with wear)</label>
+        </fieldset>
+
+        <div class="actions">
+          <button id="save" type="button">Save recipe.json</button>
+          <button id="reset" type="button">Reset to the opened recipe</button>
+        </div>
+        <p id="studio-status" role="status" aria-live="polite"></p>
+        <ul id="studio-errors" aria-live="polite"></ul>
+      </form>
+
+      <section id="preview" aria-label="Preview in real windows">
+        <div class="scale" data-scale="1">
+          <h2>1×</h2>
+          <div class="preview-grid"></div>
+        </div>
+        <div class="scale scale-2" data-scale="2">
+          <h2>2×</h2>
+          <div class="preview-grid"></div>
+        </div>
+      </section>
+    </main>
+    <template id="windows">
+      <section class="pw pw-dialogue" data-window-skin="frame" aria-label="Dialogue">
+        <div class="pw-heading"><h3 data-skin-title>Mara</h3></div>
+        <p>The gallery doors open at dusk. Bring the brass key, and mind the second step.</p>
+      </section>
+      <section class="pw pw-menu" data-window-skin="frame" aria-label="Menu">
+        <div class="pw-heading"><h3 data-skin-title>Menu</h3></div>
+        <ul><li>Items</li><li>Journal</li><li>Save / Load</li><li>Settings</li></ul>
+      </section>
+      <section class="pw pw-saves" data-window-skin="frame" aria-label="Save and load">
+        <div class="pw-heading"><h3 data-skin-title>Save / Load</h3></div>
+        <p>Slot 1 — Workshop, 0:42</p>
+        <h4 class="pw-divider" data-window-skin="divider"><span data-skin-title>Older saves</span></h4>
+        <p>Slot 2 — Pillar Gallery, 0:17</p>
+      </section>
+      <section class="pw pw-battle" data-window-skin="frame" aria-label="Battle panel">
+        <div class="pw-heading"><h3 data-skin-title>Battle</h3></div>
+        <p>Aria  HP 42/42 · Bren  HP 37/40 · Attack  Skill  Item  Guard</p>
+      </section>
+    </template>
+    <script type="module" src="./studio.ts"></script>
+  </body>
+</html>

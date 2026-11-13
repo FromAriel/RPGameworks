@@ -88,7 +88,9 @@
         "elevation": {"type": "integer", "minimum": 10, "maximum": 90},
         "steps": {"type": "integer", "minimum": 3, "maximum": 6, "description": "Palette steps per ramp. Default 5."},
         "outline": {"type": "boolean", "description": "Dark outer outline. Default true."},
-        "shadow": {"type": "boolean", "description": "Drop shadow inside the frame. Default false."}
+        "shadow": {"type": "boolean", "description": "Drop shadow inside the frame. Default false."},
+        "wear": {"type": "number", "minimum": 0, "maximum": 1, "description": "Grime in the recesses and worn bright edges, 0 (new) to 1 (battered). Default 0."},
+        "tarnish": {"type": "boolean", "description": "With wear, recesses tarnish in the theme's patina colours (rust on iron, verdigris on brass). Default true."}
       }
     },
     "fill": {

@@ -33,7 +33,7 @@ describe('browser fixture freshness (decision 0012 T1.3)', () => {
 
   it('keeps the stamp in an ignored folder and watches both entry pages', () => {
     expect(STAMP_FILE.startsWith('.tmp/')).toBe(true);
-    expect(OUTPUT_PAGES).toEqual(['dist/index.html', '.tmp/ui-gallery-dist/index.html']);
+    expect(OUTPUT_PAGES).toEqual(['dist/index.html', '.tmp/ui-gallery-dist/index.html', '.tmp/skin-studio-dist/index.html']);
     expect(PUBLIC_OUTPUT_DIRS).toEqual(['public/generated']);
   });
 });

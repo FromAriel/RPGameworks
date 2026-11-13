@@ -21,7 +21,7 @@
     "test:area": "node tools/test-area.mjs",
     "test:smoke": "node tools/test-area.mjs @smoke",
     "check:test-tags": "node tools/check-test-tags.mjs",
-    "build:browser-fixtures": "npm run build -- --base=/RPGameworks/ && npm run build:ui-gallery",
+    "build:browser-fixtures": "npm run build -- --base=/RPGameworks/ && npm run build:ui-gallery && npm run build:studio",
     "build:ui-gallery": "vite build --config vite.ui-gallery.config.ts",
     "preview:ui-gallery": "vite preview --config vite.ui-gallery.config.ts --host 127.0.0.1 --port 4174 --strictPort",
     "benchmark": "playwright test --config=benchmark.config.ts",
@@ -29,6 +29,9 @@
     "check": "npm run typecheck && npm test && npm run check:external-art && npm run build",
     "schemas": "node tools/generate-schemas.mjs",
     "skins": "node tools/skin-bake/skins.ts",
+    "studio": "vite --config vite.studio.config.ts",
+    "build:studio": "vite build --config vite.studio.config.ts",
+    "preview:studio": "vite preview --config vite.studio.config.ts --host 127.0.0.1 --port 4176 --strictPort",
     "content": "npm run schemas && node tools/build-content.mjs",
     "validate": "npm run schemas && node tools/build-content.mjs --check",
     "pretest": "npm run schemas"

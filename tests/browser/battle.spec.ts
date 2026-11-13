@@ -115,9 +115,9 @@ test('keyboard confirms in two presses, Cancel backs out without committing, and
   await page.keyboard.press('Escape'); // Back to the commands; nothing happened.
   expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, hp: start.hp, menu: { level: 'root', cursor: 0 } });
   await page.keyboard.press('Escape'); // At the top, Cancel only points at Run.
-  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, phase: 'command', menu: { level: 'root', cursor: 4 } });
+  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, phase: 'command', menu: { level: 'root', cursor: 5 } }); // Run is sixth since Move (M5.4c).
   await expect(button(page, 'Run')).toBeFocused();
-  await page.keyboard.press('ArrowUp'); await page.keyboard.press('ArrowUp'); await page.keyboard.press('ArrowUp');
+  for (let up = 0; up < 4; up++) await page.keyboard.press('ArrowUp'); // Run → Move → Guard → Item → Special.
   await expect(button(page, 'Special')).toBeFocused(); // Disabled entries can be highlighted to read why…
   await page.keyboard.press('Enter');
   expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, menu: { level: 'root', cursor: 1 } }); // …but do nothing.
@@ -234,7 +234,7 @@ test('narrow battle supports controller cancel, Run and pointer taps without own
       await pad([]); await pad([1]); await pad([]); // Cancel first skips the opening playback…
       await expect.poll(async () => (await snapshot(page)).battle?.playing).toBe(false);
       await pad([1]); await pad([]); // …then points at Run…
-      expect((await snapshot(page)).battle?.menu).toMatchObject({ level: 'root', cursor: 4 });
+      expect((await snapshot(page)).battle?.menu).toMatchObject({ level: 'root', cursor: 5 });
       await pad([2]); await pad([]); // …which Interact confirms; it always works in an ordinary battle.
       expect((await snapshot(page)).battle?.phase).toBe('escaped');
       for (let tries = 0; tries < 4 && (await snapshot(page)).inputMode !== 'exploration'; tries++) { await pad([1]); await pad([]); }

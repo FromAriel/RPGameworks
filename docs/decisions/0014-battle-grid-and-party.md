@@ -119,7 +119,7 @@ There are no special formulas: everything above asks "which allies stand between
 - **Party window and mirror:** the party window lists four members, and the hidden DOM mirror and screen-reader text follow.
 - **Acceptance:** browser tests play to victory and defeat, never offer an unreachable target, and keep keyboard, controller and pointer input working. Ariel plays it.
 
-**M5.4c — Move in battle.**
+**M5.4c — Move in battle.** *(Done locally November 13: Move sits between Guard and Run; menu rows are 18 pixels so six commands fit; the cell list is navigated like targets.)*
 - **Menu:** the command list gains **Move** (the bottom windows grow by one row if a skin needs it). Choose a cell or an ally on the party grid, with the same input and cancellation as targeting.
 - **Playback:** fighters slide to their new cells, and the timeline shows the light cost.
 - **Acceptance:** browser and kernel tests for move, swap, cancel and timing; Ariel plays it.

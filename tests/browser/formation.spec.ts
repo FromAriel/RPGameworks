@@ -35,7 +35,7 @@ test('the drill shows four party members and three creatures on the grid, with s
   expect(Object.keys(battle.hp).sort()).toEqual(['archer', 'bat', 'golem', 'hero', 'lancer', 'mage', 'ogre']);
   expect(battle.art.ogre!.source).toBe('creature');
   expect(battle.art.ogre!.frame).toMatch(/^dcss\/monster\/two_headed_ogre_new@left\//);
-  expect(battle.art.lancer).toEqual({ source: 'frame', frame: 'lancer-left', shields: 0 });
+  expect(battle.art.lancer).toMatchObject({ source: 'frame', frame: 'lancer-left', shields: 0 });
   // One living ally ahead in the lane: the archer behind the hero, the mage behind the lancer, the bat behind the golem.
   expect(Object.fromEntries(Object.entries(battle.art).map(([id, a]) => [id, a.shields]))).toEqual({ hero: 0, archer: 1, lancer: 0, mage: 1, ogre: 0, golem: 0, bat: 1 });
 });
@@ -56,6 +56,39 @@ test('a melee fighter is never offered the sheltered bat, and the help line says
   await expect(button(page, 'Bat')).toHaveCount(0);
   // The help line is drawn on the stage; screen readers get it as each button's description.
   await expect(button(page, 'Two-Headed Ogre')).toHaveAttribute('aria-description', 'Two-Headed Ogre  60/60 HP  Out of reach: Bat.');
+});
+
+test('Move: cancel costs nothing, a keyboard step slides the fighter to an empty cell, and a tap swaps two allies (M5.4c)', { tag: ['@battle'] }, async ({ page }) => {
+  await startDrill(page);
+  await settle(page);
+  const start = (await snapshot(page)).battle!;
+  expect(start.active).toBe('archer');
+  // Open Move and back out: nothing is spent.
+  await button(page, 'Move').click();
+  await expect.poll(async () => (await snapshot(page)).battle?.menu?.level).toBe('move');
+  await expect(button(page, 'Top lane, front')).toHaveAttribute('aria-description', 'Front-facing there.');
+  await page.keyboard.press('Escape');
+  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, active: 'archer', menu: { level: 'root', cursor: 4 } });
+  // Keyboard: Move, then the first cell (top lane, front).
+  await page.keyboard.press('Enter');
+  await expect.poll(async () => (await snapshot(page)).battle?.menu?.level).toBe('move');
+  await page.keyboard.press('Enter');
+  await settle(page);
+  const stepped = (await snapshot(page)).battle!;
+  expect(stepped.turn).toBeGreaterThan(start.turn);
+  expect(stepped.art.archer!.y).toBeLessThan(start.art.archer!.y); // Up from the middle lane to the top lane.
+  expect(stepped.art.archer!.x).toBeLessThan(start.art.archer!.x); // Forward, towards the enemies.
+  expect(stepped.art.archer!.shields).toBe(0); // Front-facing now.
+  // Pointer: the hero swaps places with the lancer.
+  for (let guard = 0; guard < 6 && (await snapshot(page)).battle!.active !== 'hero'; guard++) { await button(page, 'Guard').click(); await settle(page); }
+  const before = (await snapshot(page)).battle!;
+  expect(before.active).toBe('hero');
+  await button(page, 'Move').click();
+  await button(page, 'Swap with Lancer').click();
+  await settle(page);
+  const after = (await snapshot(page)).battle!.art;
+  expect([after.hero!.x, after.hero!.y]).toEqual([before.art.lancer!.x, before.art.lancer!.y]);
+  expect([after.lancer!.x, after.lancer!.y]).toEqual([before.art.hero!.x, before.art.hero!.y]);
 });
 
 test('the party can win the drill with the keyboard alone', { tag: ['@battle'] }, async ({ page }) => {

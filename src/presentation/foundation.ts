@@ -35,6 +35,8 @@ import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 
+/** A Move choice's cell, from its menu entry id (`cell:lane,depth`). */
+const cellOf=(id:string)=>{const [lane,depth]=id.slice('cell:'.length).split(',').map(Number);return{lane:lane!,depth:depth!};};
 const SCENE = 'rpgameworks:map';
 
 export interface FoundationElements {
@@ -305,7 +307,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const battle=this.battle!,state=battle.snapshot(),session=elements.session.current;
       const items:MenuItemInfo[]=session.catalog.items.filter(item=>item.battleUse?.type==='heal').map(item=>({id:item.id,name:this.battleItemName(item.id),
         count:session.count(item.id),help:`Restores ${item.battleUse!.amount} HP.`}));
-      return{phase:state.phase,active:state.active,combatants:state.combatants,items,validate:command=>battle.validate(command)};
+      return{phase:state.phase,active:state.active,combatants:state.combatants,items,opening:state.opening,validate:command=>battle.validate(command)};
     }
     /**
      * Classic battle windows (decision 0009): the stage draws them; the dialogue becomes an invisible layer whose
@@ -345,10 +347,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const menu=this.battleMenu,state=menu.state();
       const stage=():StageMenu=>{const now=menu.state(),column=menu.column();
         return{help:now.help,commands:column.entries,commandCursor:column.cursor,commandInactive:column.inactive,
-          list:now.level==='item'?{entries:now.entries,cursor:now.cursor}:null,target:now.target};};
+          list:now.level==='item'?{entries:now.entries,cursor:now.cursor}:null,target:now.target,cell:now.cell};};
       view.setMenu(stage());
       const choices:PlacedChoice[]=state.entries.map((entry,index)=>({id:entry.id,name:entry.name,enabled:entry.enabled,help:entry.help,
-        rect:state.level==='target'?view.targetRect(entry.id.slice('target:'.length))??entryRect(view.layout,'root',index):entryRect(view.layout,state.level,index)}));
+        rect:state.level==='target'?view.targetRect(entry.id.slice('target:'.length))??entryRect(view.layout,'root',index)
+          :state.level==='move'?view.cellRect(cellOf(entry.id)):entryRect(view.layout,state.level,index)}));
       // Tapping an enemy while choosing a command attacks it directly, as a shortcut for Attack, then the target.
       const overlays:PlacedOverlay[]=state.level!=='root'?[]:battle.snapshot().combatants
         .filter(c=>c.side==='enemy'&&battle.validate({type:'attack',target:c.id})===null)

@@ -22,12 +22,12 @@ function setup(items: MenuItemInfo[] = [], encounter: Encounter = practice) {
 }
 
 describe('battle menu', () => {
-  it('offers Attack, Special, Item, Guard and Run, with reasons for what is unavailable', () => {
+  it('offers Attack, Special, Item, Guard, Move and Run, with reasons for what is unavailable', () => {
     const { menu } = setup();
     const state = menu.state();
     expect(state).toMatchObject({ level: 'root', cursor: 0, help: 'Strike one enemy.', target: null });
     expect(state.entries.map(entry => [entry.label, entry.enabled])).toEqual([
-      ['Attack', true], ['Special', false], ['Item', false], ['Guard', true], ['Run', true]]);
+      ['Attack', true], ['Special', false], ['Item', false], ['Guard', true], ['Move', true], ['Run', true]]);
     expect(state.entries[1]!.help).toBe('No specials yet.');
     expect(state.entries[2]!.help).toBe('No usable items.');
   });
@@ -67,7 +67,7 @@ describe('battle menu', () => {
     menu.cancel();
     expect(menu.state()).toMatchObject({ level: 'root', cursor: 2 });
     menu.cancel();
-    expect(menu.state()).toMatchObject({ level: 'root', cursor: 4, help: 'Escape from this battle.' });
+    expect(menu.state()).toMatchObject({ level: 'root', cursor: 5, help: 'Escape from this battle.' });
   });
 
   it('uses an item on the most injured ally and builds exactly the kernel command', () => {
@@ -100,6 +100,31 @@ describe('battle menu', () => {
     melee.confirm();
     expect(melee.state().entries.map(entry => entry.name)).toEqual(['Two-Headed Ogre', 'Clay Golem']); // The bat is behind the golem.
     expect(melee.state().help).toBe('Two-Headed Ogre  60/60 HP  Out of reach: Bat.');
+  });
+
+  it('Move lists the other cells with what each would mean, builds a move or a swap, and cancels back to Move (M5.4c)', () => {
+    const drill = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[1]! as Encounter;
+    const { battle, menu } = setup([], drill);
+    expect(battle.snapshot().active).toBe('archer'); // At lane 1, depth 1 (middle lane, behind the hero).
+    menu.choose('move');
+    const state = menu.state();
+    expect(state.level).toBe('move');
+    expect(state.entries).toHaveLength(8); // Every cell but the archer's own.
+    expect(state.entries.map(e => e.name)).toEqual(['Top lane, front', 'Top lane, middle', 'Top lane, back', 'Swap with Hero', 'Middle lane, back',
+      'Swap with Lancer', 'Bottom lane, middle', 'Swap with Mage']);
+    expect(state.entries[0]!.help).toBe('Front-facing there.');
+    expect(state.entries[4]!.help).toBe('Shielded there by 1 ally (20% less damage).'); // Behind the hero.
+    expect(state.entries[3]!.help).toBe('Swap places with Hero. Front-facing there.');
+    expect(state.entries[6]!.help).toBe('Shielded there by 1 ally (20% less damage).'); // Behind the lancer, ahead of the mage.
+    expect(state).toMatchObject({ cursor: 0, cell: { lane: 0, depth: 0 } });
+    expect(menu.column()).toMatchObject({ inactive: true, cursor: 4 }); // The command column keeps Move marked.
+    menu.cancel();
+    expect(menu.state()).toMatchObject({ level: 'root', cursor: 4 });
+    menu.choose('move');
+    expect(menu.choose('cell:1,0')).toEqual({ kind: 'command', command: { type: 'move', to: { lane: 1, depth: 0 } } });
+    menu.begin({ phase: 'command', active: 'archer', combatants: battle.snapshot().combatants, items: [], validate: c => battle.validate(c) });
+    menu.choose('move');
+    expect(menu.choose('cell:0,2')).toEqual({ kind: 'command', command: { type: 'move', to: { lane: 0, depth: 2 } } });
   });
 
   it('offers the end-of-battle choices for each outcome', () => {

@@ -34,21 +34,37 @@ export const STAGE_GRID = Object.freeze({
   partyFrontX: 432, enemyFrontX: 208,
   /** Horizontal step per depth (away from the other side), vertical step per lane, and a slight slant per lane. */
   depthStep: 60, laneStep: 32, laneSlant: 14,
-  /** Centre y of the top lane. */
-  topY: 116,
+  /** Centre y of the top lane, for the default floor (no skin; M5.3c's windows). */
+  topY: 112,
 });
+
+/** The floor band the lanes must fit in: from below the turn timeline down to the top of the bottom windows. */
+export interface StageFloor { readonly top: number; readonly bottom: number }
+/** Room a 2× battler needs above its centre (sprite top) and below it (its HP bar and a margin). */
+const ABOVE = 34, BELOW = 46;
+
+/**
+ * Lane centres for a floor: the top lane as high as the floor allows (but no higher than the default), the lanes no
+ * further apart than the default step, and the bottom lane's HP bar clear of the windows whatever the battle skin's
+ * window size (decision 0014 M5.4c: six commands can make a thick skin's windows taller).
+ */
+export function laneLayout(floor?: StageFloor): { topY: number; laneStep: number } {
+  if (!floor) return { topY: STAGE_GRID.topY, laneStep: STAGE_GRID.laneStep };
+  const topY = Math.max(STAGE_GRID.topY, floor.top + ABOVE);
+  return { topY, laneStep: Math.max(16, Math.min(STAGE_GRID.laneStep, Math.floor((floor.bottom - BELOW - topY) / 2))) };
+}
 
 /**
  * Where a battler stands, and its draw scale: the centre of the grid cells it covers. Lanes stack downwards with a
  * slight slant, so the three lanes overlap a little and the stage stays compact. A big fighter is drawn larger: 2× for
  * one cell, 3× for two cells across, 4× for three.
  */
-export function battlerPosition(side: 'party' | 'enemy', p: { readonly lane: number; readonly depth: number; readonly lanes: number; readonly depths: number }): { x: number; y: number; scale: number } {
+export function battlerPosition(side: 'party' | 'enemy', p: { readonly lane: number; readonly depth: number; readonly lanes: number; readonly depths: number }, floor?: StageFloor): { x: number; y: number; scale: number } {
   const g = STAGE_GRID, lane = p.lane + (p.lanes - 1) / 2, depth = p.depth + (p.depths - 1) / 2;
-  const away = depth * g.depthStep + lane * g.laneSlant;
+  const away = depth * g.depthStep + lane * g.laneSlant, lanes = laneLayout(floor);
   return {
     x: Math.round(side === 'party' ? g.partyFrontX + away : g.enemyFrontX - away),
-    y: Math.round(g.topY + lane * g.laneStep),
+    y: Math.round(lanes.topY + lane * lanes.laneStep),
     scale: 1 + Math.min(3, Math.max(p.lanes, p.depths)),
   };
 }

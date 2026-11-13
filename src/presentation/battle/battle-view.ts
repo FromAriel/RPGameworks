@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import type { BattleEvent, BattleSnapshot, CombatantSnapshot } from '../../domain/battle';
+import type { BattleEvent, BattleSnapshot, Cell, CombatantSnapshot } from '../../domain/battle';
 import type { MenuEntry } from '../../domain/battle-menu';
 import { STAGE_GRID, battlerPosition, hpBefore, stepDuration } from './playback';
+import type { StageFloor } from './playback';
 import type { PlaybackSpeed } from './playback';
 import { BattleWindows, PANEL_STYLE } from './battle-windows';
 import type { BattleLayout, Rect } from './battle-windows';
@@ -31,11 +32,12 @@ const IDLE_TICK_MS = 50;
 const PHASE_STAGGER_MS = 97;
 
 interface Battler {
-  readonly combatant: CombatantSnapshot;
+  /** The latest snapshot of this fighter; its cell changes when it moves (decision 0014 M5.4c). */
+  combatant: CombatantSnapshot;
   readonly sprite: Phaser.GameObjects.Image;
   /** Enemy HP bar; party HP is shown in the party window. */
   readonly bar: Phaser.GameObjects.Rectangle | null;
-  readonly home: { x: number; y: number; scale: number };
+  home: { x: number; y: number; scale: number };
   readonly barWidth: number;
   /** Shield pips: how many living allies stand ahead of this battler in its lane (decision 0014). */
   readonly shields: Phaser.GameObjects.Graphics;
@@ -54,6 +56,8 @@ export interface StageMenu {
   readonly list: { readonly entries: readonly MenuEntry[]; readonly cursor: number } | null;
   /** The combatant under the on-stage target cursor. */
   readonly target: string | null;
+  /** While choosing where to Move: the party grid is shown and this cell is highlighted (decision 0014 M5.4c). */
+  readonly cell?: Cell | null;
 }
 
 export interface BattleViewOptions {
@@ -89,6 +93,10 @@ export class BattleView {
   private banner = '';
   private currentSpeed: PlaybackSpeed = 1;
   private idleLoop: Phaser.Time.TimerEvent | null = null;
+  /** The floor band the lanes fit into, from below the timeline to the bottom windows. */
+  private readonly floor: StageFloor;
+  /** The party's nine cells, drawn while choosing where to Move. */
+  private readonly cellGrid: Phaser.GameObjects.Graphics;
 
   constructor(private readonly scene: Phaser.Scene, initial: BattleSnapshot, private readonly options: BattleViewOptions) {
     const { width, height } = scene.scale;
@@ -99,6 +107,7 @@ export class BattleView {
     this.own(scene.add.rectangle(0, 0, width, height, 0x0b111b).setOrigin(0).setDepth(DEPTH.backdrop));
     // The floor runs from just below the turn timeline down to the bottom windows (thinner strip, M5.4b).
     const floorTop = TIMELINE_Y + 16, floorBottom = this.windows.layout.enemies.y;
+    this.floor = { top: floorTop, bottom: floorBottom };
     this.own(scene.add.rectangle(0, floorTop, width, floorBottom - floorTop, 0x18243a).setOrigin(0).setDepth(DEPTH.floor));
     this.own(scene.add.rectangle(0, floorTop, width, 2, 0x2e4a66).setOrigin(0).setDepth(DEPTH.floor));
     this.own(this.label(8, TIMELINE_Y - 8, 'Next', TEXT_COLOR).setDepth(DEPTH.ui));
@@ -107,7 +116,7 @@ export class BattleView {
       this.timeline.push(this.own(scene.add.image(56 + index * 30, TIMELINE_Y, options.atlas, 'spark').setDepth(DEPTH.ui).setVisible(false)));
     }
     for (const combatant of initial.combatants) {
-      const home = battlerPosition(combatant.side, combatant);
+      const home = battlerPosition(combatant.side, combatant, this.floor);
       const creature = this.creatureOf(combatant);
       const sprite = this.own(creature
         ? scene.add.image(home.x, home.y, options.creatures!.texture, creature.still).setFlipX(creature.faces === 'left')
@@ -126,6 +135,7 @@ export class BattleView {
       this.idleLoop = scene.time.addEvent({ delay: IDLE_TICK_MS, loop: true, callback: () => this.idle() });
     }
     this.targetCursor = this.own(this.downPointer()).setDepth(DEPTH.windows).setVisible(false);
+    this.cellGrid = this.own(scene.add.graphics().setDepth(DEPTH.floor + 0.001));
     for (const object of this.owned) (object as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
     this.blink = scene.tweens.add({ targets: this.targetCursor, alpha: { from: 1, to: 0.55 }, duration: 360, yoyo: true, repeat: -1 });
     this.render(initial);
@@ -148,7 +158,9 @@ export class BattleView {
       this.hp.set(combatant.id, combatant.hp);
       const battler = this.battlers.get(combatant.id);
       if (!battler) continue;
-      battler.sprite.setPosition(battler.home.x, battler.home.y).clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+      battler.combatant = combatant;
+      battler.home = battlerPosition(combatant.side, combatant, this.floor);
+      battler.sprite.setPosition(battler.home.x, battler.home.y).setDepth(DEPTH.battler + battler.home.y / 10000).clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
       battler.sprite.setAlpha(combatant.hp > 0 ? 1 : 0.25);
       this.drawHp(combatant.id);
     }
@@ -173,14 +185,41 @@ export class BattleView {
     if (this.disposed) return;
     this.menu = menu;
     const target = menu?.target ? this.battlers.get(menu.target) : undefined;
-    this.targetCursor.setVisible(!!target);
+    const cell = menu?.cell ?? null;
+    this.drawCellGrid(cell);
+    this.targetCursor.setVisible(!!target || !!cell);
     if (target) this.targetCursor.setPosition(target.home.x, target.home.y - 26 * target.home.scale);
+    else if (cell) { const at = this.cellCentre(cell); this.targetCursor.setPosition(at.x, at.y - 26); }
     this.refreshWindows();
   }
 
   /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
-  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number }> {
-    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount }]));
+  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y) }]));
+  }
+
+  /** Where a one-cell party fighter would stand in this cell. */
+  private cellCentre(cell: Cell): { x: number; y: number } {
+    const p = battlerPosition('party', { ...cell, lanes: 1, depths: 1 }, this.floor);
+    return { x: p.x, y: p.y };
+  }
+
+  /** The tap area of a party grid cell while choosing where to Move: one lane band by one depth column. */
+  cellRect(cell: Cell): Rect {
+    const at = this.cellCentre(cell), w = STAGE_GRID.depthStep, h = STAGE_GRID.laneStep;
+    return { x: Math.round(at.x - w / 2), y: Math.round(at.y - h / 2 + 4), w, h };
+  }
+
+  /** The party's nine cells as floor outlines, the chosen one bright; cleared when not choosing a cell. */
+  private drawCellGrid(selected: Cell | null): void {
+    const g = this.cellGrid.clear();
+    if (!selected) return;
+    for (let lane = 0; lane < 3; lane++) {
+      for (let depth = 0; depth < 3; depth++) {
+        const r = this.cellRect({ lane, depth }), on = lane === selected.lane && depth === selected.depth;
+        g.lineStyle(on ? 2 : 1, on ? 0xe6e3c6 : 0x2e4a66, 1).strokeRect(r.x + 3, r.y + r.h - 12, r.w - 6, 10);
+      }
+    }
   }
 
   /** The logical rectangle a tap on this combatant should cover. */
@@ -288,7 +327,19 @@ export class BattleView {
       this.float(actor, 'Guard', 0x88c2c3, duration);
       return;
     }
-    if (event.kind === 'move') return; // The battle screen draws grid positions and movement in M5.4b–c (decision 0014).
+    if (event.kind === 'move') {
+      // The fighter slides to its new cell; a swapped ally slides into the cell it left (decision 0014 M5.4c).
+      const slide = (battler: Battler, to: Cell): void => {
+        const at = this.cellCentre(to);
+        if (this.options.reducedMotion) battler.sprite.setPosition(at.x, at.y);
+        else this.tween({ targets: battler.sprite, x: at.x, y: at.y, duration: Math.round(duration * 0.8), ease: 'Quad.easeInOut' });
+        battler.sprite.setDepth(DEPTH.battler + at.y / 10000);
+      };
+      slide(actor, event.to);
+      const other = event.swapped ? this.battlers.get(event.swapped) : undefined;
+      if (other) slide(other, event.from);
+      return;
+    }
     const target = this.battlers.get(event.target);
     if (!target) return;
     if (event.kind === 'heal') {

@@ -1,4 +1,5 @@
-import type { BattleCommand, BattlePhase, CombatantSnapshot, RejectReason } from './battle';
+import type { BattleCommand, BattlePhase, Cell, CombatantSnapshot, Opening, RejectReason } from './battle';
+import { GRID, alliesAhead } from './battle-grid.mjs';
 
 /**
  * Classic battle command menu (decision 0009), independent of Phaser and the DOM. It only builds a command: nothing
@@ -12,8 +13,10 @@ export interface MenuContext {
   readonly combatants: readonly CombatantSnapshot[];
   readonly items: readonly MenuItemInfo[];
   readonly validate: (command: BattleCommand) => RejectReason | null;
+  /** How the battle opened; a back attack measures shields from the party's rear. Default normal. */
+  readonly opening?: Opening;
 }
-export type MenuLevel = 'root' | 'item' | 'target' | 'end';
+export type MenuLevel = 'root' | 'item' | 'target' | 'move' | 'end';
 export interface MenuEntry {
   readonly id: string;
   /** Text drawn in the window. */
@@ -32,6 +35,8 @@ export interface MenuState {
   readonly help: string;
   /** The combatant under the target cursor, in target selection. */
   readonly target: string | null;
+  /** The grid cell under the cursor while choosing where to Move (decision 0014 M5.4c). */
+  readonly cell: Cell | null;
 }
 export type EndChoice = 'finish' | 'retry' | 'leave';
 export type MenuOutcome =
@@ -47,6 +52,7 @@ const ROOT_HELP: Record<string, string> = {
   special: 'Skills, magic and combo techs.',
   item: 'Use an item.',
   guard: 'Halve damage taken until your next turn.',
+  move: 'Step to another cell, or swap places with an ally. A light action: your next turn comes sooner.',
   run: 'Escape from this battle.',
 };
 const NONE: MenuOutcome = { kind: 'none' };
@@ -74,7 +80,8 @@ export class BattleMenu {
     const entries = this.entries();
     const entry = entries[this.cursor];
     const target = this.level === 'target' ? entry?.id.slice('target:'.length) ?? null : null;
-    return { level: this.level, entries, cursor: this.cursor, help: entry?.help ?? '', target };
+    const cell = this.level === 'move' && entry ? parseCell(entry.id) : null;
+    return { level: this.level, entries, cursor: this.cursor, help: entry?.help ?? '', target, cell };
   }
 
   /**
@@ -84,7 +91,7 @@ export class BattleMenu {
   column(): { readonly entries: readonly MenuEntry[]; readonly cursor: number; readonly inactive: boolean } {
     if (this.level === 'root' || this.level === 'end') return { entries: this.entries(), cursor: this.cursor, inactive: false };
     const entries = this.entriesFor('root');
-    const parent = this.level === 'item' || this.pending?.type === 'item' ? 'item' : 'attack';
+    const parent = this.level === 'move' ? 'move' : this.level === 'item' || this.pending?.type === 'item' ? 'item' : 'attack';
     return { entries, cursor: Math.max(0, entries.findIndex(entry => entry.id === parent)), inactive: true };
   }
 
@@ -119,8 +126,10 @@ export class BattleMenu {
       if (entry.id === 'run') return { kind: 'command', command: { type: 'escape' } };
       if (entry.id === 'attack') { this.enterTarget({ type: 'attack' }); return NONE; }
       if (entry.id === 'item') { this.enterItems(); return NONE; }
+      if (entry.id === 'move') { this.level = 'move'; this.pending = null; this.cursor = Math.max(0, this.entries().findIndex(e => e.enabled)); return NONE; }
       return NONE;
     }
+    if (this.level === 'move') return { kind: 'command', command: { type: 'move', to: parseCell(entry.id) } };
     if (this.level === 'item') {
       const itemId = entry.id.slice('item:'.length);
       this.memo().item = itemId;
@@ -137,8 +146,8 @@ export class BattleMenu {
   /** Back out one level without committing anything. At the top level the cursor moves to Run instead. */
   cancel(): void {
     if (this.level === 'target' && this.pending?.type === 'item') { this.enterItems(); return; }
-    if (this.level === 'target' || this.level === 'item') {
-      const back = this.level === 'item' ? 'item' : 'attack';
+    if (this.level === 'target' || this.level === 'item' || this.level === 'move') {
+      const back = this.level === 'item' ? 'item' : this.level === 'move' ? 'move' : 'attack';
       this.level = 'root'; this.pending = null;
       this.cursor = Math.max(0, this.entries().findIndex(entry => entry.id === back));
       return;
@@ -203,6 +212,7 @@ export class BattleMenu {
         help: `${candidate.name}  ${candidate.hp}/${candidate.maxHp} HP${note}`,
       }));
     }
+    if (level === 'move') return this.moveEntries();
     const items = context.items.filter(item => item.count > 0);
     if (level === 'item') {
       return items.map(item => {
@@ -221,8 +231,38 @@ export class BattleMenu {
       entry('special', 'Special', false, 'No specials yet.'),
       entry('item', 'Item', usableItem, items.length ? this.itemReason(items[0]!.id) : 'No usable items.'),
       entry('guard', 'Guard', context.validate({ type: 'guard' }) === null, 'Cannot guard now.'),
+      entry('move', 'Move', this.moveEntries().some(e => e.enabled), 'There is nowhere to move.'),
       entry('run', 'Run', run, 'There is no escape from this battle.'),
     ];
+  }
+
+  /**
+   * Every other cell of the active fighter's grid, top lane first and front to back: an empty cell to step into, or an
+   * ally to swap places with. The help line says how exposed the fighter would be there (decision 0014).
+   */
+  private moveEntries(): MenuEntry[] {
+    const context = this.context!;
+    const actor = context.combatants.find(c => c.id === context.active);
+    if (!actor) return [];
+    const from = actor.side === 'party' && context.opening === 'back-attack' ? 'rear' : 'front';
+    const entries: MenuEntry[] = [];
+    for (let lane = 0; lane < GRID; lane++) {
+      for (let depth = 0; depth < GRID; depth++) {
+        if (lane === actor.lane && depth === actor.depth) continue;
+        const occupant = context.combatants.find(c => c.id !== actor.id && c.side === actor.side && c.flank === actor.flank
+          && lane >= c.lane && lane < c.lane + c.lanes && depth >= c.depth && depth < c.depth + c.depths);
+        const name = occupant ? `Swap with ${occupant.name}` : `${LANES[lane]} lane, ${DEPTHS[depth]}`;
+        const enabled = context.validate({ type: 'move', to: { lane, depth } }) === null;
+        // Who would stand ahead of the fighter there: everyone living on its side, with the swapped ally in its old cell.
+        const allies = context.combatants.filter(c => c.id !== actor.id && c.side === actor.side && c.flank === actor.flank && c.hp > 0)
+          .map(c => (c === occupant ? { ...c, lane: actor.lane, depth: actor.depth } : c));
+        const shields = Math.min(2, alliesAhead({ lane, depth, lanes: 1, depths: 1 }, allies, from));
+        const exposure = shields === 0 ? 'Front-facing there.' : `Shielded there by ${shields} ${shields === 1 ? 'ally (20%' : 'allies (35%'} less damage).`;
+        entries.push({ id: `cell:${lane},${depth}`, label: name, name, enabled,
+          help: enabled ? `${occupant ? `Swap places with ${occupant.name}. ` : ''}${exposure}` : 'That cell is taken.' });
+      }
+    }
+    return entries;
   }
 
   private itemReason(itemId: string): string {
@@ -238,4 +278,11 @@ function endEntries(phase: BattlePhase): MenuEntry[] {
   if (phase === 'victory') return [entry('finish', 'Finish', 'Victory! Return to the room.')];
   if (phase === 'defeat') return [entry('retry', 'Retry', 'Start this battle again from the beginning.'), entry('leave', 'Leave', 'Return to the room.')];
   return [entry('leave', 'Leave', 'Escaped. Return to the room.')];
+}
+
+const LANES = ['Top', 'Middle', 'Bottom'] as const;
+const DEPTHS = ['front', 'middle', 'back'] as const;
+function parseCell(id: string): Cell {
+  const [lane, depth] = id.slice('cell:'.length).split(',').map(Number);
+  return { lane: lane!, depth: depth! };
 }

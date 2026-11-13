@@ -9,8 +9,8 @@ export interface Rect { readonly x: number; readonly y: number; readonly w: numb
 interface Sides { readonly top: number; readonly right: number; readonly bottom: number; readonly left: number }
 
 const STAGE = { w: 640, h: 360 } as const;
-export const ROW = 20;
-const ROWS = 5; // Attack, Special, Item, Guard, Run must always fit.
+export const ROW = 18; // Six commands fit the 136-pixel bottom band (Move added in M5.4c, decision 0014).
+const ROWS = 6; // Attack, Special, Item, Guard, Move, Run must always fit.
 export const CURSOR_W = 12;
 const LINE = 16; // One UNSCII 16 text line.
 

@@ -4,6 +4,42 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4c Move in battle — November 13, 2026, local
+
+[Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4c: the Move command on the battle screen. The kernel's Move (any empty cell, or a swap with an ally, at Guard's light weight) has existed since M5.4a.
+
+- **Menu** (`battle-menu.ts`):
+  - **Command list:** Attack, Special, Item, Guard, **Move**, Run. Move is disabled with a reason when there is nowhere to go, and Cancel at the top still points at Run, now sixth.
+  - **Choosing a cell:** Move opens a cell list like target selection, covering every other cell of the fighter's grid, top lane first and front to back. Each entry is named "Top lane, front" or "Swap with Archer". Its help line says how exposed the fighter would be there: "Front-facing there." or "Shielded there by 1 ally (20% less damage)."; a swap is reckoned with the swapped ally in its new place, and a back attack is measured from the rear.
+  - **Confirm and cancel:** confirming builds the kernel's `move` command; Cancel goes back to Move with nothing spent.
+- **Windows** (`battle-layout.ts`): six commands fit by making rows 18 pixels instead of 20.
+  - The fallback panels and thin skins keep the 136-pixel bottom band.
+  - The default White and Silver band is 138 pixels.
+  - Ariel's Midnight Silver grows to 144 pixels, upward.
+- **Stage** (`playback.ts`, `battle-view.ts`):
+  - **Lanes fit the floor:** the lanes now fit between the timeline and the bottom windows of whichever skin is in use (`laneLayout`: the top lane at 112 at most, lanes up to 32 px apart, closing up when a thick skin's windows are taller), so the bottom lane's HP bars never overlap the windows.
+  - **Positions follow the fighters:** battlers follow their current cell on every snapshot. A move slides the fighter to its new cell and a swap slides both; with reduced motion they jump.
+  - **Choosing a cell:** the party's nine cells show as faint floor outlines, the chosen one bright with the ▼ cursor above it. Each cell is a placed button over its spot, so pointer, touch and screen readers work like target selection.
+  - **Snapshot:** `battle.art` now includes each battler's x and y.
+- **Tests:**
+  - **Unit (`battle-menu.test.ts`):** the six commands; the eight cell entries with names and exposure help; building a move and a swap; Cancel back to Move.
+  - **Unit (`battle-playback.test.ts`):** lanes close up for a thick skin's taller windows.
+  - **Pinned layouts:** row and band values updated in `battle-layout.test.ts`.
+  - **Browser (`formation.spec.ts`, +1):** cancelling Move spends nothing; a keyboard Move slides the archer up and forward to the top lane front and leaves it front-facing; tapping "Swap with Lancer" swaps the hero and the lancer exactly.
+  - **Existing browser tests:** `battle.spec.ts` points Cancel at Run's new place and walks four steps up to Special; art comparisons match on the fields they care about.
+
+  Local results:
+  - typecheck passed;
+  - unit tests **518/518**;
+  - `check:external-art`, `check:test-tags` (180 tagged) and `npm run validate` passed;
+  - full browser suite **180/180**.
+
+  A screenshot of the cell picker was sent to Ariel.
+- **Not yet:**
+  - Ariel's play review of M5.4b and M5.4c.
+  - Not committed.
+- Migration: none. Next: **the detailed U2 menu planning session** with Ariel (main menu, inventory, party, formation, journal and help screens), before M5.4d's formation screen.
+
 ## M5.4b the battle grid on screen: the Formation Drill — November 13, 2026, local
 
 [Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4b, at the current 640 × 360 view.
@@ -12,7 +48,7 @@
 - the big enemy is the **two-headed ogre**;
 - the four-member fight is a **new "Formation Drill" sigil**, so the one-hero practice fight and its tests stay as they are;
 - the turn-timeline strip should be thinner;
-- the bigger screen (the 640 × 360 view sits small in larger windows) is to be **discussed after M5.4b** (Ariel: "let's chat"; finish M5.4b first).
+- the bigger screen: Ariel first asked about using more of the window, then (November 13, after M5.4b) decided the view stays **640 × 360** as in decision 0008, since that is already the full logical screen.
 
 - **Party art** (`assets/source/foundation.json`): three original placeholder battlers, the hero recoloured with a spear (`lancer-left`), a bow (`archer-left`) and a staff (`mage-left`). The atlas grows from 17 to 20 frames. LPC party art comes later (S1.5).
 - **Formation Drill** (`demo:encounter.formation-drill`, reached from a second sigil at (2,1) in the Supply Room):
@@ -39,7 +75,6 @@
   The first full run had two failures from overlapping tap areas, which led to the one-lane, one-column tap areas, plus the asset frame count. A fixture build once failed because the dev server held `public/generated/content` (Windows lock); stopping it fixed that.
 - **Not yet:**
   - Ariel's play review.
-  - The bigger-screen conversation.
   - Not committed.
 - Migration: none (saves untouched). Next: **M5.4c, the Move command in battle**, then the U2 menu planning session Ariel asked for.
 
@@ -896,7 +931,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**M5.4c — Move in battle** ([decision 0014](decisions/0014-battle-grid-and-party.md); M5.4a, M5.4b and decision 0015's C1–C3 are done, see above), then a **detailed U2 menu planning session** with Ariel (Ariel, November 13), and a conversation about using the bigger screen. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**U2 — a detailed menu planning session with Ariel** (Ariel, November 13): decide the overall look of the main menu, inventory, party, formation, journal and help screens, then plan the packets. M5.4a–c and decision 0015's C1–C3 are done, see above; M5.4d (roster, formation screen, save version 3) follows U2 so the formation screen is built in the new style. The view stays 640 × 360. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

@@ -126,6 +126,6 @@ export function registerGameScreens(registry: ScreenRegistry): void {
 
 ### Rules for screens
 
-- **Keep game rules out of the screen.** A screen reads what it is given and reports choices. Changes to the game go through the session's transactions, as the Items screen will when using items arrives (M5.4d).
+- **Keep game rules out of the screen.** A screen reads what it is given and reports choices. Changes to the game go through the session's transactions, as the Items screen will when using items arrives (M5.6, with lasting HP).
 - **Clean up on `dispose()`.** Remove listeners, timers and pending work. The menu disposes a screen whenever it closes or the game unloads.
 - **Test both paths.** Add a unit test that registers the screen and opens it (see `tests/unit/catalog-screen.test.ts`) and, for real input, a browser test through the hub.

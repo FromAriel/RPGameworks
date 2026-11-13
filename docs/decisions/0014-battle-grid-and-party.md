@@ -127,6 +127,19 @@ There are no special formulas: everything above asks "which allies stand between
 **M5.4d — Party roster, formation screen, save version 3.** `party.json`, guests, the save migration with old-save fixtures, and the formation screen (in the new menu style if that track comes first, Q2).
 - **Acceptance:** a formation set on the screen is the formation the next battle uses, and it survives save and load. A version 2 save loads with the defaults. Transactions are atomic, and repeated opens add no listeners.
 
+**Execution answers (Ariel, November 13, before M5.4d):**
+- **Roster:** all four members (Hero, Archer, Lancer, Mage) start in the party, and every fight uses the roster, so the Practice Sigil becomes four against two. The old authored-party encounters stay as a kernel test fixture (`tests/fixtures/encounters/authored-party.json`), so the pinned one-hero traces still run.
+- **Item picker:** waits for lasting HP in M5.6. Items stay browse-only until then.
+- **Play time:** counts while the game is ready and the page visible, including menus and battles. It is saved per slot and shown as H:MM.
+- **Sub-packets:** M5.4d-1 is the roster, guests, save version 3 and play time; M5.4d-2 is the Formation and Status screens, the hub's four party cards and the grid block.
+
+**Execution notes (M5.4d-1):**
+- **Fixed parties stay possible:** an encounter may still author its own `party` (for a scripted fight); it then has no guests. An encounter without one takes the roster, and a game without `party.json` must give every encounter a party.
+- **Guests:** at most one per encounter, so a full party plus a guest fits the five-row party window. A guest's cell is preferred; if a member stands there, it takes the first free cell in the auto-placement order.
+- **Save version 3** adds `party` (the active members and each one's cell) and `playTime` (whole seconds) to the saved session, and the content's `saveCompatibilityVersion` becomes 3. The state index carries the roster's member IDs and default formation, so a version 1 or 2 save loads with the defaults and no play time. The general rule: a save of version N with compatibility N loads into content of version and compatibility M > N.
+- **Formation changes** are one `setFormation` session action holding every active member's cell, checked whole (inside the grid, no overlaps, nobody missing), so they commit with other actions or not at all.
+- **Play time is not a transaction:** the session counts it from the frame deltas the game gives it (at most a quarter second per frame), so it never changes the session revision.
+
 **M5.4e — Back attack and pincer on the screen.**
 - **Back attack:** the party turns to face enemies arriving from the left.
 - **Pincer:** enemy groups stand on both sides, and each party sprite faces the flank it last fought.

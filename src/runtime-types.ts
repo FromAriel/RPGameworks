@@ -2,6 +2,8 @@ import type { SessionSnapshot } from './domain/session';
 
 export interface RuntimeSnapshot {
   session: SessionSnapshot;
+  /** Whole seconds played (save version 3). */
+  playTime: number;
   phase: 'booting' | 'ready' | 'error' | 'stopped';
   /** Logical canvas size and world tile size from the game manifest. */
   view: { width: number; height: number; tileSize: number };

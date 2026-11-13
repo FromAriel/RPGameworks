@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "members": [
+    {"id": "hero", "name": "Hero", "frame": "hero-left", "cell": {"lane": 2, "depth": 1}, "hp": 30, "attack": 7, "defense": 2, "speed": 10},
+    {"id": "archer", "name": "Archer", "frame": "archer-left", "cell": {"lane": 2, "depth": 2}, "reach": "ranged", "hp": 22, "attack": 6, "defense": 1, "speed": 11},
+    {"id": "lancer", "name": "Lancer", "frame": "lancer-left", "cell": {"lane": 3, "depth": 1}, "reach": "reach", "hp": 26, "attack": 7, "defense": 2, "speed": 9},
+    {"id": "mage", "name": "Mage", "frame": "mage-left", "cell": {"lane": 3, "depth": 3}, "reach": "ranged", "hp": 20, "attack": 6, "defense": 1, "speed": 8}
+  ],
+  "active": ["hero", "archer", "lancer", "mage"]
+}

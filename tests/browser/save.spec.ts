@@ -52,7 +52,7 @@ test('exports a deterministic JSON filename and imports a validated fixture into
 });
 
 test('keyboard and controller navigate Save without a virtual pointer and isolate held input',{ tag: ['@saves', '@input'] }, async({page})=>{
-  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();for(let i=0;i<8;i++)await tapPad(page,13); // Down past Credits to Save.await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();
+  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();for(let i=0;i<8;i++)await tapPad(page,13);/* Down past Credits to Save. */await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();
   await tapPad(page,2);await expect(saveScreen(page)).toBeVisible();await expect(slotRow(page,0)).toBeFocused();
   await tapPad(page,2);await expect(slotCommand(page,'save')).toBeFocused(); // Choosing a slot opens its commands.
   await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slotRow(page,0)).toBeFocused();
@@ -245,4 +245,29 @@ test('the confirmation gate exception is scoped to its owning menu',{ tag: ['@sa
   // The Menu button during a pending confirmation answers the confirmation, never closing the menu under it.
   await page.keyboard.press('Enter');await expect(dialog).toBeVisible();
   await tapPad(page,9);await expect(dialog).toBeHidden();await expect(saveScreen(page)).toBeVisible();
+});
+
+test('save version 3 keeps the party formation and play time, which counts while the page is visible',{ tag: ['@saves'] }, async({page})=>{
+  await openRoom(page);
+  await expect.poll(async()=>(await snapshot(page)).playTime,{timeout:5000}).toBeGreaterThanOrEqual(1); // Counting while ready and visible.
+  await page.keyboard.press('KeyI');
+  await expect(page.locator('#game-menu .menu-info-window')).toContainText('Time');
+  await expect(page.locator('#game-menu .menu-info-window')).toContainText('0:00');
+  await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();
+  await openSaves(page);
+  await page.locator('#save-import').setInputFiles({name:'party.json',mimeType:'application/json',buffer:readFileSync('tests/fixtures/saves/v3-formation-moved.json')});await expect(page.locator('#save-status')).toContainText('Import validated');
+  await confirm(page,1,'import');
+  await expect(await slotInfo(page,1)).toContainText('Play time 1:23'); // 5,025 seconds.
+  await confirm(page,1,'load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe(gallery);
+  const loaded=await snapshot(page);
+  expect(loaded.session.party).toEqual({active:['hero','archer','lancer','mage'],cells:{hero:{lane:1,depth:1},archer:{lane:2,depth:2},lancer:{lane:3,depth:1},mage:{lane:2,depth:3}}});
+  expect(loaded.playTime).toBeGreaterThanOrEqual(5025);
+  await page.keyboard.press('KeyI');
+  await expect(page.locator('#game-menu .menu-info-window')).toContainText(/1:2[34]/);
+  // An older save (version 2) loads with the roster's default formation.
+  await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();
+  await openSaves(page);
+  await page.locator('#save-import').setInputFiles({name:'old.json',mimeType:'application/json',buffer:readFileSync('tests/fixtures/saves/v2-lens-held-beside-mara.json')});await expect(page.locator('#save-status')).toContainText('Import validated');
+  await confirm(page,2,'import');await confirm(page,2,'load');await expect.poll(async()=>(await snapshot(page)).mapId).toBe('demo:map.workshop');
+  expect((await snapshot(page)).session.party).toEqual({active:['hero','archer','lancer','mage'],cells:{hero:{lane:2,depth:1},archer:{lane:2,depth:2},lancer:{lane:3,depth:1},mage:{lane:3,depth:3}}});
 });

@@ -8,7 +8,7 @@
  * the confirmation stores exactly the previewed import, and nothing late runs after the screen is disposed.
  */
 import type { SaveCheckpoint, SaveEnvelopeV1, SaveSlotId } from '../../domain/save';
-import { createEnvelope } from '../../domain/save';
+import { createEnvelope, formatPlayTime } from '../../domain/save';
 import type { PadInput } from '../../platform/gamepad-model';
 import type { SessionController } from '../../runtime/session-controller';
 import type { SaveService, SlotView } from '../../runtime/save-service';
@@ -154,7 +154,8 @@ class SaveScreen implements MenuScreen {
     if (slot.error) { this.detail.set({ heading, lines: [`Invalid: ${slot.error}`, ...(slot.recoverable ? ['A previous revision can be recovered.'] : [])] }); return; }
     if (!slot.record) { this.detail.set({ heading, lines: ['Empty.', 'Load and Export are unavailable.'] }); return; }
     const record = slot.record.current;
-    this.detail.set({ heading, lines: [this.place(slot), `Saved ${new Date(record.savedAt).toLocaleString()}`, `Revision ${record.storageRevision}`, ...(slot.recoverable ? ['A previous revision can be recovered.'] : [])] });
+    const played = record.schemaVersion === 3 ? [`Play time ${formatPlayTime(record.session.playTime ?? 0)}`] : [];
+    this.detail.set({ heading, lines: [this.place(slot), ...played, `Saved ${new Date(record.savedAt).toLocaleString()}`, `Revision ${record.storageRevision}`, ...(slot.recoverable ? ['A previous revision can be recovered.'] : [])] });
   }
 
   private renderFiles(): void {

@@ -9,6 +9,7 @@ import { loadMenu } from './platform/menu-loader';
 import { loadCatalogs } from './platform/catalog-loader';
 import { SessionState } from './domain/session';
 import { SessionController } from './runtime/session-controller';
+import { loadParty } from './platform/party-loader';
 import { SaveService } from './runtime/save-service';
 import { IndexedDbSaveRepository } from './platform/save-repository';
 import { loadStateIndex } from './platform/state-index-loader';
@@ -221,7 +222,8 @@ async function start(): Promise<void> {
     catch (cause) { if (!appLifetime.signal.aborted) console.warn('[RPGameworks] UI theme unavailable; keeping the base window skin:', cause); }
     const [catalog,facts,quests,stateIndex,menu,catalogs]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal),loadMenu(base,content,appLifetime.signal),loadCatalogs(base,content,appLifetime.signal)]);
     if(JSON.stringify(quests.map(quest=>quest.id))!==JSON.stringify(stateIndex.questIds??[]))throw new Error('Quest catalog does not match the save state index');
-    const session = new SessionController(new SessionState({items:catalog,facts,quests}));
+    const party=await loadParty(base,content,stateIndex,appLifetime.signal);
+    const session = new SessionController(new SessionState({items:catalog,facts,quests,...(party?{party}:{})}));
     saveService=new SaveService({gameId:content.game.id,saveCompatibilityVersion:content.game.saveCompatibilityVersion??1,index:stateIndex},new IndexedDbSaveRepository());
     const { createFoundation } = await import('./presentation/foundation');
     if (disposed) {saveService.close();saveService=null;return;}

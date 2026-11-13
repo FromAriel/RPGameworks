@@ -6,6 +6,7 @@ import validateFacts from './generated/facts-validator.mjs';
 import validateEncounters from './generated/encounters-validator.mjs';
 import validateMenu from './generated/menu-validator.mjs';
 import validateCatalog from './generated/catalog-validator.mjs';
+import validateParty from './generated/party-validator.mjs';
 import { createCollision } from '../domain/map.mjs';
 
 /** @typedef {import('./generated/map.js').MapDefinition} MapDefinition */
@@ -142,7 +143,48 @@ export function readFacts(value, file = 'facts.json') {
  * @param {ReadonlySet<string>=} creatures Stone Soup monster IDs that have a motion assignment (decision 0015); the
  *   content build passes them, the runtime does not (the creature atlas was already baked from validated content)
  */
-export function readEncounters(value, file = 'encounters.json', frames, creatures) {
+/**
+ * The party roster (decision 0014 M5.4d): unique members with known frames, and a starting party of known, distinct
+ * members whose default cells do not overlap.
+ * @param {unknown} value @param {string} file @param {readonly string[]} [frames]
+ * @returns {import('./generated/party.js').PartyRoster}
+ */
+export function readParty(value, file = 'party.json', frames) {
+  if (!validateParty(value)) schemaFailure(value, file, validateParty.errors);
+  const data = /** @type {import('./generated/party.js').PartyRoster} */ (value);
+  const known = frames ? new Set(frames) : null;
+  /** @type {ContentIssue[]} */ const issues = [];
+  const ids = new Set();
+  data.members.forEach((member, index) => {
+    const path = `/members/${index}`;
+    if (ids.has(member.id)) issues.push({file, id:member.id, path:`${path}/id`, message:'Duplicate party member ID', value:member.id});
+    ids.add(member.id);
+    if (!member.name.trim()) issues.push({file, id:member.id, path:`${path}/name`, message:'Member names must contain visible text', value:member.name});
+    if (known && !known.has(member.frame)) issues.push({file, id:member.id, path:`${path}/frame`, message:'Unknown battler frame', value:member.frame});
+  });
+  const active = new Set();
+  data.active.forEach((id, index) => {
+    if (!ids.has(id)) issues.push({file, id, path:`/active/${index}`, message:'Unknown party member', value:id});
+    else if (active.has(id)) issues.push({file, id, path:`/active/${index}`, message:'A member is in the party once', value:id});
+    active.add(id);
+  });
+  if (!issues.length) {
+    const starting = data.active.map(id => /** @type {NonNullable<ReturnType<typeof data.members.find>>} */ (data.members.find(m => m.id === id)));
+    for (const problem of placeGrid(starting).issues) {
+      const member = starting[problem.index];
+      issues.push({file, id:member?.id ?? 'party', path:`/members/${data.members.indexOf(/** @type {any} */ (member))}/cell`, message:`Starting party: ${problem.message}`, value:member?.cell ?? null});
+    }
+  }
+  if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
+  return freezeCopy(data);
+}
+
+/**
+ * @param {unknown} value @param {string} file @param {readonly string[]} [frames] @param {ReadonlySet<string>} [creatures]
+ * @param {import('./generated/party.js').PartyRoster | null} [roster] The game's roster; null when the game has none
+ *   (every encounter then needs its own party). Leave it out to skip the cross-check.
+ */
+export function readEncounters(value, file = 'encounters.json', frames, creatures, roster) {
   if (!validateEncounters(value)) schemaFailure(value, file, validateEncounters.errors);
   const data = /** @type {import('./generated/encounters.js').EncounterCatalog} */ (value);
   const ids = new Set();
@@ -153,21 +195,26 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
     ids.add(encounter.id);
     if (!encounter.name.trim()) issues.push({file,id:encounter.id,path:`/encounters/${index}/name`,message:'Encounter name must contain visible text',value:encounter.name});
     const combatantIds = new Set();
-    for (const side of /** @type {const} */ (['party', 'enemies'])) encounter[side].forEach((combatant, slot) => {
+    if (encounter.party && encounter.guests) issues.push({file,id:encounter.id,path:`/encounters/${index}/guests`,message:'An encounter with its own party has no guests',value:encounter.guests.length});
+    if (roster === null && !encounter.party) issues.push({file,id:encounter.id,path:`/encounters/${index}`,message:'This game has no party roster (party.json): give the encounter a party',value:null});
+    const members = new Set(roster?.members.map(m => m.id) ?? []);
+    for (const side of /** @type {const} */ (['party', 'guests', 'enemies'])) (encounter[side] ?? []).forEach((combatant, slot) => {
       const path = `/encounters/${index}/${side}/${slot}`;
+      if (side === 'guests' && members.has(combatant.id)) issues.push({file,id:encounter.id,path:`${path}/id`,message:'A guest cannot share an ID with a party member',value:combatant.id});
       if (combatantIds.has(combatant.id)) issues.push({file,id:encounter.id,path:`${path}/id`,message:'Duplicate combatant ID in encounter',value:combatant.id});
       combatantIds.add(combatant.id);
       if (!combatant.name.trim()) issues.push({file,id:encounter.id,path:`${path}/name`,message:'Combatant names must contain visible text',value:combatant.name});
       if (known && !known.has(combatant.frame)) issues.push({file,id:encounter.id,path:`${path}/frame`,message:'Unknown battler frame',value:combatant.frame});
-      if (side === 'party' && (combatant.creature || combatant.faces)) issues.push({file,id:encounter.id,path:`${path}/${combatant.creature ? 'creature' : 'faces'}`,message:'Only enemies use Stone Soup creatures for now',value:combatant.creature ?? combatant.faces});
+      if (side !== 'enemies' && (combatant.creature || combatant.faces)) issues.push({file,id:encounter.id,path:`${path}/${combatant.creature ? 'creature' : 'faces'}`,message:'Only enemies use Stone Soup creatures for now',value:combatant.creature ?? combatant.faces});
       if (combatant.faces && !combatant.creature) issues.push({file,id:encounter.id,path:`${path}/faces`,message:'faces is only used with a creature',value:combatant.faces});
       if (creatures && combatant.creature && !creatures.has(combatant.creature)) issues.push({file,id:encounter.id,path:`${path}/creature`,message:'Unknown creature: not in the Stone Soup library or without a motion assignment',value:combatant.creature});
-      if (side === 'party' && combatant.size) issues.push({file,id:encounter.id,path:`${path}/size`,message:'Only enemies can cover several cells',value:combatant.size});
-      if (side === 'party' && combatant.flank) issues.push({file,id:encounter.id,path:`${path}/flank`,message:'Only enemies have a flank',value:combatant.flank});
+      if (side !== 'enemies' && combatant.size) issues.push({file,id:encounter.id,path:`${path}/size`,message:'Only enemies can cover several cells',value:combatant.size});
+      if (side !== 'enemies' && combatant.flank) issues.push({file,id:encounter.id,path:`${path}/flank`,message:'Only enemies have a flank',value:combatant.flank});
       if (side === 'enemies' && (encounter.opening === 'pincer') !== (combatant.flank !== undefined)) issues.push({file,id:encounter.id,path:`${path}/flank`,message:encounter.opening === 'pincer' ? 'Every enemy in a pincer needs a flank (front or rear)' : 'Only pincer encounters give enemies a flank',value:combatant.flank ?? null});
     });
     // Decision 0014: each grid (the party, and the enemies or each pincer flank) is placed on its own 3 × 3 grid.
-    const grids = [{ side: 'party', members: encounter.party.map((c, i) => ({ c, i })) }];
+    // The roster's party is placed by the player (and checked when saved); a guest takes a free cell if its own is taken.
+    const grids = encounter.party ? [{ side: 'party', members: encounter.party.map((c, i) => ({ c, i })) }] : [];
     if (encounter.opening === 'pincer') {
       for (const flank of /** @type {const} */ (['front', 'rear'])) {
         const members = encounter.enemies.map((c, i) => ({ c, i })).filter(({ c }) => c.flank === flank);

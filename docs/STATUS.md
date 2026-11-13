@@ -4,6 +4,43 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4d-1 the party roster, guests, save version 3 and play time — November 13, 2026, local
+
+[Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4d, first half. Ariel's answers: all four members start in the party and every fight uses the roster; the item picker waits for M5.6; play time counts while the page is visible; M5.4d is split in two.
+
+- **Party roster** (`content/games/demo/party.json`, `schemas/party.schema.json`, `game.json` `partyFile`):
+  - **Content:** each member's stats, reach, frame and default cell, and the starting party (up to four).
+  - **Demo:** Hero, Archer, Lancer and Mage, at the cells the Formation Drill used, all in the party.
+  - **Validation:** unique members, known frames, a starting party of known members without overlapping cells.
+- **Encounters** no longer author the party:
+  - **Roster:** an encounter without `party` takes the active members at their cells (`battleEncounter`, `src/domain/party.ts`); the kernel is unchanged.
+  - **Guests:** at most one per encounter, at its own cell if free, otherwise the first free cell. A guest cannot share an ID with a member.
+  - **Fixed parties:** an encounter may still author its own party (then without guests); a game without a roster must.
+  - **Demo:** the Practice Sigil is now four against two. The Formation Drill plays exactly as before (a unit test compares its trace with the old authored party).
+- **Session:** the party and its formation are session state, changed only by `setFormation` (every active member's cell, checked whole, atomic with other actions). Play time is counted from frame deltas while the game is ready and the page visible; it is not a transaction.
+- **Save version 3:**
+  - **Contents:** the saved session adds `party` and `playTime`; `saveCompatibilityVersion` is 3.
+  - **Older saves:** version 1 and 2 saves load with the default party and no play time, and are not rewritten until the player saves.
+  - **Shown:** play time in the hub's info window ("Time") and in the Save screen's slot detail.
+- **Tests:**
+  - **Unit:** `party.test.ts` (9):
+    - roster and encounter mistakes;
+    - the Drill unchanged and the practice fight with four members and a guest;
+    - formation transactions, including an atomic failure;
+    - play time;
+    - save version 3 round trip, the new fixture `v3-formation-moved.json` and damaged copies, and version 1 and 2 fixtures upgrading.
+  - **Kernel tests** read the old encounters from `tests/fixtures/encounters/authored-party.json`, so their pinned traces are unchanged.
+  - **Browser:** a new save test imports the version 3 fixture (formation and 1:23 play time restored, shown in the slot and the hub) and a version 2 save (default formation).
+  - **Updated:** three battle specs for the four-member practice fight (the Archer acts first; more turns to lose) and the content-only map fixture (no roster).
+  - **Fixed from U2.4:** in `save.spec.ts`, a `//` comment on a one-line loop had swallowed the next assertion (the Save row focused after eight controller steps). It runs again and passes.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build, `check:test-tags` (200 tagged) and `check:external-art` passed;
+  - unit tests **556/556**;
+  - browser: the full suite ran 195 passed and 4 failed, all expected from this packet (three battle specs, the map fixture). After the fixes, the affected specs (battle, maps, save, 33 tests including the new one) passed, so **200/200**.
+- **Not yet:** the Formation and Status screens and four hub cards (M5.4d-2). Ariel's play review.
+- **Migration:** save version 3. Old saves load with defaults; nothing is rewritten without a save. Next: **M5.4d-2**, the Formation and Status screens on the menu blocks, with the grid block and four party cards in the hub.
+
 ## U2.4 the Codex, Credits and the extension guide — November 13, 2026, local
 
 [Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.4. Ariel's answers: one generic catalog screen; optional unlocks shown as ???; credits generated from the libraries' credit files. Ariel also asked for placeholder content now, to be filled in later.

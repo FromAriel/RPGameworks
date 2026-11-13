@@ -5,7 +5,7 @@ import { battlerPosition, hpBefore, nextSpeed, stepDuration, PLAYBACK_SPEEDS } f
 import { readEncounters } from '../../src/content/validation.mjs';
 import type { BattleEvent, Encounter } from '../../src/domain/battle';
 
-const practice = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[0]! as Encounter;
+const practice = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounters/authored-party.json', 'utf8'))).encounters[0]! as Encounter;
 
 describe('battle playback timing', () => {
   it('shortens every step with speed and cycles 1×, 2×, 4×', () => {

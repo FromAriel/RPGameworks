@@ -4,7 +4,7 @@ import { ACTION_WEIGHT, BattleSession, TIMELINE_LENGTH, actionDelay } from '../.
 import { readEncounters, readItems } from '../../src/content/validation.mjs';
 import type { BattleCommand, Encounter } from '../../src/domain/battle';
 
-const catalog = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8')));
+const catalog = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounters/authored-party.json', 'utf8')));
 const practice = catalog.encounters[0]! as Encounter;
 const TONIC = 'demo:item.tonic';
 const uses = new Map([[TONIC, { heal: 12 }]]);

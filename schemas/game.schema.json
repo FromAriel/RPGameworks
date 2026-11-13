@@ -20,6 +20,7 @@
     "questsFile": {"type": "string", "pattern": "^quests(\\.[a-f0-9]{12})?\\.json$"},
     "encountersFile": {"type": "string", "pattern": "^encounters(\\.[a-f0-9]{12})?\\.json$"},
     "uiThemeFile": {"type": "string", "pattern": "^ui-theme(\\.[a-f0-9]{12})?\\.json$"},
+    "partyFile": {"type": "string", "pattern": "^party(\\.[a-f0-9]{12})?\\.json$", "description": "The party roster (decision 0014 M5.4d). Encounters without their own party use it."},
     "menuFile": {"type": "string", "pattern": "^menu(\\.[a-f0-9]{12})?\\.json$", "description": "The main menu definition (decision 0016)."},
     "catalogs": {"type": "array", "maxItems": 16, "items": {"type": "object", "additionalProperties": false, "required": ["id", "file"], "properties": {"id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"}, "file": {"type": "string", "pattern": "^catalogs/[a-z0-9-]+(\\.[a-f0-9]{12})?\\.json$"}}}, "description": "Data-only menu screens (decision 0016 U2.4): a menu entry on builtin:catalog names one by id."},
     "creaturesFile": {"type": "string", "pattern": "^creatures(\\.[a-f0-9]{12})?\\.json$", "description": "Generated: the baked creature atlas frame table (decision 0015 C3)."},

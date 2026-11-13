@@ -9,6 +9,8 @@ import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
 import { DialogueSession } from '../domain/dialogue';
 import { BattleSession } from '../domain/battle';
+import { battleEncounter } from '../domain/party';
+import { formatPlayTime } from '../domain/save';
 import type { BattleCommand, BattleItemUse, BattleSnapshot } from '../domain/battle';
 import { BattleView } from './battle/battle-view';
 import type { StageMenu } from './battle/battle-view';
@@ -240,7 +242,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         registry.register(HUB_SCREEN, context => hubScreen(context, {
           menu: elements.menu,
           party: () => this.partyCards(),
-          info: () => ({ location: content.map.name }),
+          info: () => ({ location: content.map.name, ...(elements.session.current.roster ? { 'play-time': formatPlayTime(elements.session.current.playTime()) } : {}) }),
           available: entry => this.entryReady(entry),
           choose: entry => this.chooseEntry(entry),
           focus: () => this.hubEntry,
@@ -302,6 +304,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
 
     update(_time: number, delta: number): void {
+      // Play time (decision 0016 Q3) counts while the game is ready and the page visible: exploring, menus and battles.
+      // A long frame after a stall counts at most a quarter second.
+      if (phase === 'ready' && !document.hidden) elements.session.current.advancePlayTime(Math.min(delta, 250));
       try { this.updateMap(delta); } catch (cause) { this.fail(cause); }
     }
 
@@ -412,7 +417,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
         const uses=new Map<string,BattleItemUse>();
         for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
-        this.battle=new BattleSession(encounter,uses);this.battleLoad=null;this.battleMenu=new BattleMenu();
+        const session=elements.session.current;
+        this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses);this.battleLoad=null;this.battleMenu=new BattleMenu();
         const opening=this.battle.snapshot();
         this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,creatures,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});
@@ -527,7 +533,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
       if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.leaveHub();this.hubEntry=null;this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
-      const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog,quests:elements.session.current.questCatalog},envelope.session);
+      const current=elements.session.current;
+      const candidate=new SessionState({items:current.catalog,facts:current.factCatalog,quests:current.questCatalog,...(current.roster?{party:current.roster}:{})},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
         const prepared=new MapView(this,next,candidate,characterArt??undefined);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
@@ -725,7 +732,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const actor = room?.actor ?? spawnActor();
       const position = actorPosition(actor, TILE);
       return {
-        phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
+        phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(), playTime: elements.session.current.playTime(),
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
         menu: current?.menuState() ?? null,

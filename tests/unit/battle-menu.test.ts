@@ -6,7 +6,7 @@ import type { MenuContext, MenuItemInfo } from '../../src/domain/battle-menu';
 import { readEncounters } from '../../src/content/validation.mjs';
 import type { Encounter } from '../../src/domain/battle';
 
-const practice = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[0]! as Encounter;
+const practice = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounters/authored-party.json', 'utf8'))).encounters[0]! as Encounter;
 const TONIC = 'demo:item.tonic';
 const tonic = (count: number): MenuItemInfo => ({ id: TONIC, name: 'Workshop tonic', count, help: 'Restores 12 HP.' });
 
@@ -89,7 +89,7 @@ describe('battle menu', () => {
   });
 
   it('offers only enemies the active fighter can reach, and the help line names the rest (decision 0014)', () => {
-    const drill = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[1]! as Encounter;
+    const drill = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounters/authored-party.json', 'utf8'))).encounters[1]! as Encounter;
     const { battle, menu } = setup([], drill);
     expect(battle.snapshot().active).toBe('archer'); // The fastest member: ranged, so it may target anyone.
     menu.confirm();
@@ -103,7 +103,7 @@ describe('battle menu', () => {
   });
 
   it('Move lists the other cells with what each would mean, builds a move or a swap, and cancels back to Move (M5.4c)', () => {
-    const drill = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[1]! as Encounter;
+    const drill = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounters/authored-party.json', 'utf8'))).encounters[1]! as Encounter;
     const { battle, menu } = setup([], drill);
     expect(battle.snapshot().active).toBe('archer'); // At lane 1, depth 1 (middle lane, behind the hero).
     menu.choose('move');

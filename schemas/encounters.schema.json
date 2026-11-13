@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "EncounterCatalog",
-  "description": "Version 2: a party and an enemy group on a visible turn timeline (decision 0006), placed on a 3 × 3 grid per side (decision 0014; all grid fields are optional).",
+  "description": "Version 2: an enemy group on a visible turn timeline (decision 0006), placed on a 3 × 3 grid per side (decision 0014; all grid fields are optional). The party comes from the game's roster (party.json, M5.4d) plus any guests; an encounter may instead author its own fixed party.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -12,10 +12,11 @@
         "id":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,31}:encounter\\.[a-z][a-z0-9.-]{0,95}$"},
         "name":{"type":"string","pattern":"^[^\\u0000-\\u001f]{1,80}$"},
         "seed":{"type":"integer","minimum":0,"maximum":4294967295},
-        "party":{"type":"array","minItems":1,"maxItems":4,"items":{"$ref":"#/definitions/combatant"}},
+        "party":{"type":"array","minItems":1,"maxItems":4,"items":{"$ref":"#/definitions/combatant"},"description":"A fixed party for this fight only, instead of the roster. Leave it out to use the game's party roster."},
+        "guests":{"type":"array","minItems":1,"maxItems":1,"items":{"$ref":"#/definitions/combatant"},"description":"Fighters who join the roster's party for this fight only (decision 0014 M5.4d). A guest's cell is preferred; if a member stands there, the guest takes the first free cell (front column top to bottom, then the middle, then the back)."},
         "enemies":{"type":"array","minItems":1,"maxItems":6,"items":{"$ref":"#/definitions/combatant"}},
         "opening":{"enum":["normal","back-attack","pincer"],"description":"How the fight opens (decision 0014). back-attack: the enemy attacks the party from its rear. pincer: enemies on both sides; each enemy then needs a flank. Default normal."}
-      },"required":["id","name","seed","party","enemies"]
+      },"required":["id","name","seed","enemies"]
     }}
   },
   "definitions":{"combatant":{"type":"object","additionalProperties":false,"properties":{

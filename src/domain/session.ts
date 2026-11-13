@@ -1,25 +1,32 @@
 import type { FactCatalog } from '../content/generated/facts';
 import type { ItemCatalog } from '../content/generated/items';
 import type { MapDefinition } from '../content/generated/map';
+import { defaultParty, partyProblem } from './party';
+import type { GridCell, PartyRoster, PartyState } from './party';
 
 export type Placement = MapDefinition['objects'][number];
 export type QuestState = 'active' | 'completed';
 export interface QuestDefinition { readonly id:string; readonly title:string; readonly objective:string; readonly completedText:string }
-export type DependencyKey = `fact:${string}` | `item:${string}` | `placement:${string}` | `quest:${string}`;
+export type DependencyKey = `fact:${string}` | `item:${string}` | `placement:${string}` | `quest:${string}` | 'party:formation';
 export interface SessionSnapshot {
   readonly revision: number;
   readonly inventory: Readonly<Record<string, number>>;
   readonly facts: Readonly<Record<string, boolean>>;
   readonly placements: Readonly<Record<string, { readonly opened: true }>>;
   readonly quests: Readonly<Record<string, QuestState>>;
+  /** The party and its formation (decision 0014 M5.4d), or null for a game without a party roster. */
+  readonly party: PartyState | null;
 }
 export interface SessionData {
   readonly inventory: Readonly<Record<string, number>>;
   readonly facts: Readonly<Record<string, boolean>>;
   readonly placements: Readonly<Record<string, { readonly opened: true }>>;
   readonly quests?: Readonly<Record<string, QuestState>>;
+  readonly party?: PartyState;
+  /** Whole seconds played (save version 3). */
+  readonly playTime?: number;
 }
-export interface SessionDefinitions { readonly items: ItemCatalog; readonly facts: FactCatalog; readonly quests?: readonly QuestDefinition[] }
+export interface SessionDefinitions { readonly items: ItemCatalog; readonly facts: FactCatalog; readonly quests?: readonly QuestDefinition[]; readonly party?: PartyRoster }
 export interface ItemChange { readonly itemId:string; readonly delta:number }
 export type Condition =
   | { readonly type: 'all'; readonly conditions: readonly Condition[] }
@@ -33,7 +40,9 @@ export type SessionAction =
   | { readonly type: 'setFact'; readonly factId: string; readonly value: boolean }
   | { readonly type: 'changeItem'; readonly itemId: string; readonly delta: number }
   | { readonly type: 'markPlacementOpened'; readonly placementId: string }
-  | { readonly type: 'setQuestState'; readonly questId: string; readonly value: QuestState };
+  | { readonly type: 'setQuestState'; readonly questId: string; readonly value: QuestState }
+  /** Every active member's cell at once (the formation screen commits one of these). */
+  | { readonly type: 'setFormation'; readonly cells: Readonly<Record<string, GridCell>> };
 export interface TransactionRequest {
   readonly prerequisites?: Condition;
   /** Compatibility alias for the original transaction draft. New callers use prerequisites. */
@@ -55,9 +64,17 @@ export const MAX_CONDITION_OPERANDS = 16;
 const placementIdPattern = /^[a-z][a-z0-9-]{0,31}:object\.[a-z][a-z0-9.-]{0,95}$/;
 const noChanges = Object.freeze(new Set<DependencyKey>()) as ReadonlySet<DependencyKey>;
 
-function freezeSnapshot(revision: number, inventory: Record<string, number>, facts: Record<string, boolean>, placements: Record<string, {readonly opened:true}>, quests: Record<string,QuestState>): SessionSnapshot {
+/** A frozen deep copy of a party state. */
+function freezeParty(party: PartyState): PartyState {
+  const cells: Record<string, GridCell> = {};
+  for (const id of party.active) cells[id] = Object.freeze({ lane: party.cells[id]!.lane, depth: party.cells[id]!.depth });
+  return Object.freeze({ active: Object.freeze([...party.active]), cells: Object.freeze(cells) });
+}
+const MAX_PLAY_SECONDS = 359_999_999;
+
+function freezeSnapshot(revision: number, inventory: Record<string, number>, facts: Record<string, boolean>, placements: Record<string, {readonly opened:true}>, quests: Record<string,QuestState>, party: PartyState | null): SessionSnapshot {
   for (const value of Object.values(placements)) Object.freeze(value);
-  return Object.freeze({revision, inventory:Object.freeze(inventory), facts:Object.freeze(facts), placements:Object.freeze(placements), quests:Object.freeze(quests)});
+  return Object.freeze({revision, inventory:Object.freeze(inventory), facts:Object.freeze(facts), placements:Object.freeze(placements), quests:Object.freeze(quests), party});
 }
 
 export function conditionDependencies(condition: Condition, selfId?: string): ReadonlySet<DependencyKey> {
@@ -104,6 +121,10 @@ export class SessionState {
   private readonly items: Map<string, ItemCatalog['items'][number]>;
   private readonly factDefaults: Readonly<Record<string, boolean>>;
   private readonly questIds: ReadonlySet<string>;
+  private readonly memberIds: ReadonlySet<string>;
+  /** Play time in milliseconds; advanced by the caller's frame deltas, never by a clock (not a transaction). */
+  private playMs = 0;
+  readonly roster: PartyRoster | null;
   readonly catalog: ItemCatalog;
   readonly factCatalog: FactCatalog;
   readonly questCatalog: readonly QuestDefinition[];
@@ -114,6 +135,8 @@ export class SessionState {
     this.factCatalog = structuredClone(normalized.facts);
     this.questCatalog=structuredClone(normalized.quests??[]);
     this.questIds=new Set(this.questCatalog.map(quest=>quest.id));
+    this.roster=normalized.party?structuredClone(normalized.party):null;
+    this.memberIds=new Set(this.roster?.members.map(member=>member.id)??[]);
     this.items = new Map(this.catalog.items.map(item => [item.id,item]));
     const factIds = new Set(this.factCatalog.facts.map(fact => fact.id));
     if (!Number.isSafeInteger(this.catalog.capacity) || this.catalog.capacity < 1 || this.catalog.capacity > 64 ||
@@ -121,7 +144,9 @@ export class SessionState {
         this.catalog.items.some(item => !Number.isSafeInteger(item.maxStack) || item.maxStack < 1 || item.maxStack > 9999)||this.questIds.size!==this.questCatalog.length) throw new Error('Invalid definitions for session state');
     this.factDefaults = Object.freeze(Object.fromEntries(this.factCatalog.facts.map(fact => [fact.id,fact.default])));
     const checked = this.validateData(data ?? {inventory:{},facts:this.factDefaults,placements:{}});
-    this.state = freezeSnapshot(0,checked.inventory,checked.facts,checked.placements,checked.quests);
+    this.state = freezeSnapshot(0,checked.inventory,checked.facts,checked.placements,checked.quests,checked.party);
+    this.playMs = checked.playTime * 1000;
+    if (this.roster) { for (const member of this.roster.members) { Object.freeze(member.cell); Object.freeze(member); } Object.freeze(this.roster.members); Object.freeze(this.roster.active); Object.freeze(this.roster); }
     for (const item of this.catalog.items) Object.freeze(item);
     Object.freeze(this.catalog.items); Object.freeze(this.catalog.strings.en); Object.freeze(this.catalog.strings); Object.freeze(this.catalog);
     for (const fact of this.factCatalog.facts) Object.freeze(fact);
@@ -129,7 +154,12 @@ export class SessionState {
     for(const quest of this.questCatalog)Object.freeze(quest);Object.freeze(this.questCatalog);
   }
   snapshot(): SessionSnapshot { return this.state; }
-  data(): SessionData { return Object.freeze({inventory:this.state.inventory,facts:this.state.facts,placements:this.state.placements,quests:this.state.quests}); }
+  data(): SessionData { return Object.freeze({inventory:this.state.inventory,facts:this.state.facts,placements:this.state.placements,quests:this.state.quests,...(this.state.party?{party:this.state.party}:{}),playTime:this.playTime()}); }
+  /** Whole seconds played. */
+  playTime(): number { return Math.min(MAX_PLAY_SECONDS, Math.floor(this.playMs / 1000)); }
+  /** Count `ms` more play time. The caller decides when time counts (decision 0016 Q3: while the page is visible). */
+  advancePlayTime(ms: number): void { if (Number.isFinite(ms) && ms > 0) this.playMs = Math.min(MAX_PLAY_SECONDS * 1000, this.playMs + ms); }
+  party(): PartyState | null { return this.state.party; }
   opened(id: string): boolean { return this.state.placements[id]?.opened === true; }
   count(id: string): number { return this.state.inventory[id] ?? 0; }
   fact(id: string): boolean { return this.state.facts[id] ?? false; }
@@ -169,6 +199,7 @@ export class SessionState {
     const facts: Record<string,boolean> = {...this.state.facts};
     const placements: Record<string,{readonly opened:true}> = {...this.state.placements};
     const quests:Record<string,QuestState>={...this.state.quests};
+    let party=this.state.party;
     if(marker)placements[marker]=Object.freeze({opened:true});
     const changed = new Set<DependencyKey>();
     for (const action of transaction.actions) {
@@ -191,6 +222,11 @@ export class SessionState {
         if(action.value==='active'&&currentQuestState!=='inactive')return reject('condition');
         if(action.value==='completed'&&currentQuestState!=='active')return reject('condition');
         quests[action.questId]=action.value;
+      } else if(action.type==='setFormation'){
+        if(!party)return reject('invalid');
+        const next={active:party.active,cells:action.cells};
+        if(partyProblem(next,this.memberIds))return reject('invalid');
+        party=freezeParty(next);
       } else return reject('invalid');
     }
     for (const [id,count] of Object.entries(inventory)) {
@@ -203,8 +239,10 @@ export class SessionState {
     for(const id of Object.keys(facts))if(this.state.facts[id]!==facts[id])changed.add(`fact:${id}`);
     for(const id of Object.keys(placements))if(!this.state.placements[id])changed.add(`placement:${id}`);
     for(const id of Object.keys(quests))if(this.state.quests[id]!==quests[id])changed.add(`quest:${id}`);
+    if(party&&this.state.party&&party.active.some(id=>party!.cells[id]!.lane!==this.state.party!.cells[id]!.lane||party!.cells[id]!.depth!==this.state.party!.cells[id]!.depth))changed.add('party:formation');
+    else party=this.state.party;
     if (changed.size === 0) return {kind:'unchanged',revision:this.state.revision,changed:noChanges};
-    this.state = freezeSnapshot(this.state.revision+1,inventory,facts,placements,quests);
+    this.state = freezeSnapshot(this.state.revision+1,inventory,facts,placements,quests,party);
     return {kind:'committed',revision:this.state.revision,changed:Object.freeze(changed) as ReadonlySet<DependencyKey>};
   }
   claim(placement: Placement): TransactionResult {
@@ -212,7 +250,7 @@ export class SessionState {
     if (!chest) return {kind:'rejected',reason:'invalid',revision:this.state.revision,changed:noChanges};
     return this.transact({actions:[{type:'changeItem',itemId:chest.itemId,delta:chest.quantity}],idempotencyMarker:'self'},placement.id);
   }
-  private validateData(data: SessionData): {inventory:Record<string,number>;facts:Record<string,boolean>;placements:Record<string,{readonly opened:true}>;quests:Record<string,QuestState>} {
+  private validateData(data: SessionData): {inventory:Record<string,number>;facts:Record<string,boolean>;placements:Record<string,{readonly opened:true}>;quests:Record<string,QuestState>;party:PartyState|null;playTime:number} {
     const inventory: Record<string,number> = {};
     for (const [id,count] of Object.entries(data.inventory)) { const item=this.items.get(id); if(!item||!Number.isSafeInteger(count)||count<1||count>item.maxStack)throw new Error(`Invalid saved inventory entry: ${id}`);inventory[id]=count; }
     if (Object.keys(inventory).length > this.catalog.capacity) throw new Error('Saved inventory exceeds capacity');
@@ -222,6 +260,12 @@ export class SessionState {
     for (const [id,value] of Object.entries(data.placements)) { if(!placementIdPattern.test(id)||value?.opened!==true||Object.keys(value).length!==1)throw new Error(`Invalid saved placement: ${id}`);placements[id]=Object.freeze({opened:true}); }
     const quests:Record<string,QuestState>={};
     for(const[id,value]of Object.entries(data.quests??{})){if(!this.questIds.has(id)||(value!=='active'&&value!=='completed'))throw new Error(`Invalid saved quest: ${id}`);quests[id]=value;}
-    return {inventory,facts,placements,quests};
+    if(data.party&&!this.roster)throw new Error('Saved party for a game without a party roster');
+    const party=this.roster?data.party??defaultParty(this.roster):null;
+    const partyError=party&&partyProblem(party,this.memberIds);
+    if(partyError)throw new Error(`Invalid saved party: ${partyError}`);
+    const playTime=data.playTime??0;
+    if(!Number.isSafeInteger(playTime)||playTime<0||playTime>MAX_PLAY_SECONDS)throw new Error('Invalid saved play time');
+    return {inventory,facts,placements,quests,party:party&&freezeParty(party),playTime};
   }
 }

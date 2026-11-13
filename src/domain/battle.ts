@@ -16,7 +16,9 @@ import type { Direction, Placement, Reach } from './battle-grid.mjs';
  * ranged attacks anyone. Allies ahead shield a target (20% or 35% less damage). Move takes a fighter to an empty cell
  * or swaps it with an ally. A back attack or a pincer only changes which side an attack comes from.
  */
-export type Encounter = EncounterCatalog['encounters'][number];
+type AuthoredEncounter = EncounterCatalog['encounters'][number];
+/** The encounter as played: its party resolved from the roster and guests (decision 0014 M5.4d, `battleEncounter`). */
+export type Encounter = Omit<AuthoredEncounter, 'party' | 'guests'> & { readonly party: NonNullable<AuthoredEncounter['party']> };
 export type Side = 'party' | 'enemy';
 export type BattlePhase = 'command' | 'victory' | 'defeat' | 'escaped';
 export type Opening = 'normal' | 'back-attack' | 'pincer';

@@ -170,7 +170,7 @@ describe('the battle kernel on the grid', () => {
   });
 
   it('keeps the demo encounter on the old rules: one fighter per lane at the front, nobody shielded', () => {
-    const demo = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[0] as Encounter;
+    const demo = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounters/authored-party.json', 'utf8'))).encounters[0] as Encounter;
     const snapshot = new BattleSession(demo).snapshot();
     expect(snapshot.combatants.map(c => [c.id, c.lane, c.depth, c.reach])).toEqual([['hero', 0, 0, 'melee'], ['sigil', 0, 0, 'melee'], ['shard', 1, 0, 'melee']]);
     expect(snapshot.opening).toBe('normal');

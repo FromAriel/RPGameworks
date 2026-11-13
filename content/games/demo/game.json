@@ -3,7 +3,7 @@
   "id": "demo:game.foundation",
   "tileSize": 32,
   "view": {"width": 640, "height": 360},
-  "saveCompatibilityVersion": 2,
+  "saveCompatibilityVersion": 3,
   "start": {
     "mapId": "demo:map.workshop",
     "spawnId": "start"
@@ -30,6 +30,7 @@
   "factsFile": "facts.json",
   "questsFile": "quests.json",
   "encountersFile": "encounters.json",
+  "partyFile": "party.json",
   "uiThemeFile": "ui-theme.json",
   "menuFile": "menu.json",
   "catalogs": [

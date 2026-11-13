@@ -55,10 +55,11 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await approach(page);
   const before = await snapshot(page);
   await enter(page);
-  // The faster Bat opens the battle; its hit plays on the stage before the first command.
+  // The whole roster fights (M5.4d). The faster Bat opens the battle; its hit plays on the stage before the first
+  // command, and the Archer, the fastest member, acts first.
   const opening = (await snapshot(page)).battle!;
-  expect(opening).toMatchObject({ phase: 'command', turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 } });
-  expect(opening.timeline.slice(0, 3)).toEqual(['hero', 'sigil', 'shard']);
+  expect(opening).toMatchObject({ phase: 'command', turn: 1, active: 'archer', hp: { hero: 29, archer: 22, lancer: 26, mage: 20, sigil: 20, shard: 10 } });
+  expect(opening.timeline.slice(0, 3)).toEqual(['archer', 'hero', 'lancer']);
   // On a loaded machine the opening hit can finish playing before this check; while it plays, Skip has focus and
   // the menu waits.
   if (opening.playing) {
@@ -71,7 +72,7 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await expect.poll(async () => (await snapshot(page)).battle?.playing, { timeout: 5000 }).toBe(false); // Plays out by itself.
   const dialog = page.locator('#interaction-dialog');
   await expect(dialog).toContainText('Bat hits Hero for 1.');
-  await expect(dialog).toContainText('Next: Hero → Clay Golem → Bat'); // Screen-reader details.
+  await expect(dialog).toContainText('Next: Archer → Hero → Lancer'); // Screen-reader details.
   expect((await snapshot(page)).battle?.menu).toEqual({ level: 'root', cursor: 0, target: null });
   await expect(button(page, 'Attack')).toBeFocused();
   await expect(button(page, 'Special')).toHaveAttribute('aria-disabled', 'true');
@@ -84,7 +85,7 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await page.screenshot({ path: info.outputPath('battle-target.png') });
   await button(page, 'Bat').click();
   await skip(page);
-  expect((await snapshot(page)).battle).toMatchObject({ hp: { hero: 25, shard: 4 } });
+  expect((await snapshot(page)).battle).toMatchObject({ active: 'hero', hp: { hero: 29, shard: 5 } });
   await command(page, 'Attack', 'Bat'); // The target is remembered, so a keyboard player would press Enter twice.
   await expect(dialog).toContainText('Bat is defeated.');
   await button(page, 'Attack').click();
@@ -189,7 +190,7 @@ test('a carried tonic is spent atomically in battle and stays spent after runnin
   await button(page, 'Workshop tonic (2)').click();
   expect((await snapshot(page)).battle?.menu?.target).toBe('hero'); // The most injured ally.
   await command(page, 'Hero');
-  await expect(page.locator('#interaction-dialog')).toContainText('Hero uses Workshop tonic: Hero recovers 1 HP.');
+  await expect(page.locator('#interaction-dialog')).toContainText('Archer uses Workshop tonic: Hero recovers 1 HP.'); // The Archer acts first.
   expect((await snapshot(page)).session.inventory[TONIC]).toBe(1);
   if ((await snapshot(page)).battle?.hp.hero === 30) await expect(button(page, 'Item')).toHaveAttribute('aria-description', 'HP is already full.');
   await button(page, 'Run').click();
@@ -268,7 +269,7 @@ test('authored defeat offers Retry with the identical opening and a safe Leave',
   const opening = (await snapshot(page)).battle;
   expect(opening).toMatchObject({ phase: 'command', playing: true });
   await skip(page);
-  for (let turns = 0; turns < 6 && (await snapshot(page)).battle?.phase === 'command'; turns++) await command(page, 'Guard');
+  for (let turns = 0; turns < 24 && (await snapshot(page)).battle?.phase === 'command'; turns++) await command(page, 'Guard'); // Four members to wear down.
   await expect.poll(async () => (await snapshot(page)).battle?.phase).toBe('defeat');
   expect((await snapshot(page)).battle?.menu).toEqual({ level: 'end', cursor: 0, target: null });
   await button(page, 'Retry').click();

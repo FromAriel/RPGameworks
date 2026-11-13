@@ -17,5 +17,11 @@ public/character/starter-hero.rpgpack
 public/fonts/unscii/
   UNSCII by Viznut, public domain. See public/fonts/CREDITS.md.
 
-Third-party art fetched locally (LPC, Dungeon Crawl Stone Soup and others) lives
-under ignored folders and is never committed (docs/decisions/0007).
+assets/source/creatures/stone-soup/
+  Dungeon Crawl Stone Soup 32x32 monster tiles, dedicated to the public domain
+  under CC0 1.0 by the Crawl and Crawl Stone Soup artists. Credits, sources and
+  the licence: assets/source/creatures/stone-soup/CREDITS.md and licences/.
+  Committed as the one exception to docs/decisions/0007 (docs/decisions/0015).
+
+Other third-party art fetched locally (LPC and others) lives under ignored
+folders and is never committed (docs/decisions/0007).

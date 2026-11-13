@@ -4,3 +4,5 @@ assets/source/ui/base/Window.manifest.json text eol=lf
 assets/source/ui/base/Window.audit.json text eol=lf
 assets/source/ui/skins/*/*.png binary
 assets/source/ui/skins/*/*.json text eol=lf
+assets/source/creatures/stone-soup/**/*.png binary
+assets/source/creatures/stone-soup/*.json text eol=lf

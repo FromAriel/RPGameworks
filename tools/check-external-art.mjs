@@ -1,6 +1,8 @@
 /**
  * Guard for decision 0007: third-party art is fetched locally and never committed.
  * Fails when a tracked or staged path lies under a local-only art root.
+ * Exception (decision 0015): the public-domain Stone Soup monster library is committed under
+ * assets/source/creatures/stone-soup/, outside these roots, and is verified by tools/import-stone-soup.mjs --check.
  *
  *   node tools/check-external-art.mjs
  *

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "EncounterCatalog",
-  "description": "Version 2: a party and an enemy group on a visible turn timeline (decision 0006).",
+  "description": "Version 2: a party and an enemy group on a visible turn timeline (decision 0006), placed on a 3 × 3 grid per side (decision 0014; all grid fields are optional).",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -13,7 +13,8 @@
         "name":{"type":"string","pattern":"^[^\\u0000-\\u001f]{1,80}$"},
         "seed":{"type":"integer","minimum":0,"maximum":4294967295},
         "party":{"type":"array","minItems":1,"maxItems":4,"items":{"$ref":"#/definitions/combatant"}},
-        "enemies":{"type":"array","minItems":1,"maxItems":6,"items":{"$ref":"#/definitions/combatant"}}
+        "enemies":{"type":"array","minItems":1,"maxItems":6,"items":{"$ref":"#/definitions/combatant"}},
+        "opening":{"enum":["normal","back-attack","pincer"],"description":"How the fight opens (decision 0014). back-attack: the enemy attacks the party from its rear. pincer: enemies on both sides; each enemy then needs a flank. Default normal."}
       },"required":["id","name","seed","party","enemies"]
     }}
   },
@@ -24,7 +25,11 @@
     "hp":{"type":"integer","minimum":1,"maximum":999},
     "attack":{"type":"integer","minimum":1,"maximum":999},
     "defense":{"type":"integer","minimum":0,"maximum":999},
-    "speed":{"type":"integer","minimum":1,"maximum":99}
+    "speed":{"type":"integer","minimum":1,"maximum":99},
+    "cell":{"type":"object","additionalProperties":false,"required":["lane","depth"],"description":"Grid cell (decision 0014). lane: 1 top to 3 bottom; depth: 1 front to 3 back. A side places all its fighters or none; unplaced sides fill the front column top to bottom, then the middle, then the back. A big enemy's cell is its top front corner.","properties":{"lane":{"type":"integer","minimum":1,"maximum":3},"depth":{"type":"integer","minimum":1,"maximum":3}}},
+    "size":{"type":"object","additionalProperties":false,"required":["lanes","depths"],"description":"Enemies only: how many lanes and depths a big enemy covers. Default 1 × 1.","properties":{"lanes":{"type":"integer","minimum":1,"maximum":3},"depths":{"type":"integer","minimum":1,"maximum":3}}},
+    "reach":{"enum":["melee","reach","ranged"],"description":"melee: front-facing targets only; reach (spears, whips, polearms): one layer deeper; ranged (bows, spells): anyone. Default melee."},
+    "flank":{"enum":["front","rear"],"description":"Pincer encounters only, and required there: which side of the party this enemy attacks from. Each flank has its own grid."}
   },"required":["id","name","frame","hp","attack","defense","speed"]}},
   "required":["schemaVersion","encounters"]
 }

@@ -7,7 +7,7 @@ import type { BattleEvent, BattleSnapshot } from '../../domain/battle';
 export const PLAYBACK_SPEEDS = [1, 2, 4] as const;
 export type PlaybackSpeed = typeof PLAYBACK_SPEEDS[number];
 
-const BASE_MS: Record<BattleEvent['kind'], number> = { attack: 560, guard: 380, heal: 460, escape: 520 };
+const BASE_MS: Record<BattleEvent['kind'], number> = { attack: 560, guard: 380, heal: 460, move: 420, escape: 520 };
 
 export function stepDuration(event: BattleEvent, speed: PlaybackSpeed): number {
   return Math.ceil(BASE_MS[event.kind] / speed);

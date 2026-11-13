@@ -1,4 +1,5 @@
 import validateMap from './generated/map-validator.mjs';
+import { placeGrid } from '../domain/battle-grid.mjs';
 import validateGame from './generated/game-validator.mjs';
 import validateItems from './generated/items-validator.mjs';
 import validateFacts from './generated/facts-validator.mjs';
@@ -130,7 +131,25 @@ export function readEncounters(value, file = 'encounters.json', frames) {
       combatantIds.add(combatant.id);
       if (!combatant.name.trim()) issues.push({file,id:encounter.id,path:`${path}/name`,message:'Combatant names must contain visible text',value:combatant.name});
       if (known && !known.has(combatant.frame)) issues.push({file,id:encounter.id,path:`${path}/frame`,message:'Unknown battler frame',value:combatant.frame});
+      if (side === 'party' && combatant.size) issues.push({file,id:encounter.id,path:`${path}/size`,message:'Only enemies can cover several cells',value:combatant.size});
+      if (side === 'party' && combatant.flank) issues.push({file,id:encounter.id,path:`${path}/flank`,message:'Only enemies have a flank',value:combatant.flank});
+      if (side === 'enemies' && (encounter.opening === 'pincer') !== (combatant.flank !== undefined)) issues.push({file,id:encounter.id,path:`${path}/flank`,message:encounter.opening === 'pincer' ? 'Every enemy in a pincer needs a flank (front or rear)' : 'Only pincer encounters give enemies a flank',value:combatant.flank ?? null});
     });
+    // Decision 0014: each grid (the party, and the enemies or each pincer flank) is placed on its own 3 × 3 grid.
+    const grids = [{ side: 'party', members: encounter.party.map((c, i) => ({ c, i })) }];
+    if (encounter.opening === 'pincer') {
+      for (const flank of /** @type {const} */ (['front', 'rear'])) {
+        const members = encounter.enemies.map((c, i) => ({ c, i })).filter(({ c }) => c.flank === flank);
+        if (!members.length) issues.push({file,id:encounter.id,path:`/encounters/${index}/enemies`,message:`A pincer needs enemies on both flanks; none on the ${flank}`,value:null});
+        grids.push({ side: 'enemies', members });
+      }
+    } else grids.push({ side: 'enemies', members: encounter.enemies.map((c, i) => ({ c, i })) });
+    for (const { side, members } of grids) {
+      for (const problem of placeGrid(members.map(({ c }) => c)).issues) {
+        const member = members[problem.index];
+        issues.push({file,id:encounter.id,path:`/encounters/${index}/${side}/${member?.i ?? 0}/${problem.field}`,message:problem.message,value:member?.c[/** @type {'cell'|'size'} */ (problem.field)] ?? null});
+      }
+    }
   });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);

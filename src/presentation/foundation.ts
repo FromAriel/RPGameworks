@@ -315,6 +315,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const feedback=state.events.map(event=>event.kind==='guard'?`${names.get(event.actor)} guards.`:
         event.kind==='heal'?`${names.get(event.actor)} uses ${this.battleItemName(event.itemId)}: ${names.get(event.target)} recovers ${event.amount} HP.`:
         event.kind==='escape'?`${names.get(event.actor)} gets away.`:
+        event.kind==='move'?`${names.get(event.actor)} moves${event.swapped?` and swaps places with ${names.get(event.swapped)}`:''}.`:
         `${names.get(event.actor)} hits ${names.get(event.target)} for ${event.damage}${event.guarded?' (guarded)':''}.${event.defeated?` ${names.get(event.target)} is defeated.`:''}`).join(' ');
       const hp=(side:'party'|'enemy')=>state.combatants.filter(c=>c.side===side).map(c=>c.hp>0?`${c.name} ${c.hp}/${c.maxHp} HP`:`${c.name} defeated`).join('  •  ');
       const timeline=state.timeline.slice(0,6).map(turn=>names.get(turn.actor)).join(' → ');

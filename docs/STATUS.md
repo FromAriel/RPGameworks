@@ -4,6 +4,47 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4a battle grid rules in the kernel — November 12, 2026, local
+
+The first packet of [decision 0014](decisions/0014-battle-grid-and-party.md) (Ariel's 3 × 3 grid). Rules and tests only: nothing changes on the battle screen yet. Ariel's three execution answers are recorded in 0014: a big enemy is exposed through any open lane, pincer flanks are named `front`/`rear` relative to the party, and unplaced sides fill the front column first.
+
+- **Grid rules** (`src/domain/battle-grid.mjs`, pure, shared by the content build and the kernel; a `.mjs` file so the content build still runs on Node 22 on the Pages runner):
+  - placement: all or none per side, otherwise automatic down the front column, then the middle, then the back;
+  - big fighters, overlaps and bounds;
+  - living allies between a fighter and an attacker from the front or the rear, through a big fighter's most open lane;
+  - reach (melee, reach, ranged);
+  - shields at 100%, 80% and 65%;
+  - area distance in steps (100, 80, 65, 50, 34%) and the line shapes lane, column and the two diagonals;
+  - damage scaling in whole-number arithmetic, rounded up once (20 × 65% is 13, not 14).
+- **Content** (`schemas/encounters.schema.json`, `readEncounters`): optional `cell` (1-based lane and depth), `size` (enemies only), `reach`, `flank` and encounter `opening`. All are additive, so encounters stay schema version 2. Exact errors for mixed placement, overlaps, out-of-grid fighters, a big party member, missing or misplaced flanks, and a pincer with an empty flank. Each pincer flank is its own grid.
+- **Kernel** (`src/domain/battle.ts`):
+  - every fighter has a grid position, size, reach and (in a pincer) flank;
+  - `validate` rejects `out-of-reach` targets, which the battle menu already drops from target selection, and `invalid-cell` moves;
+  - attacks apply shields, and attack events report `shields`;
+  - enemies pick the reachable party member with the fewest allies ahead, then the lowest lane, with no extra random numbers;
+  - Move goes to an empty cell or swaps with an ally (a `move` event) at Guard's weight of 60;
+  - back attacks and pincers change only which side an attack comes from;
+  - the snapshot reports each fighter's position and the opening.
+- **Presentation** (minimal): playback, the action line and the hidden text feedback name a `move` event. Drawing the grid and movement are M5.4b and M5.4c; the menu has no Move command yet.
+- **Tests:** new `tests/unit/battle-grid.test.ts` (15):
+  - placement and its errors;
+  - allies ahead from both sides and through big fighters;
+  - the reach table, shields, area distances including corner to corner, every shape and the rounding;
+  - six content errors with exact messages;
+  - in the kernel: reach and out-of-reach, 20% and 35% shields on the same random draw, exposure when a shield falls, enemy targeting, back attack, pincer, a big enemy exposed through its open lane, and Move with swap, timing and rejected cells;
+  - the demo encounter keeping one fighter per lane at the front;
+  - **pinned traces** for a party of four in formation with a 2 × 2 ogre, the same as a back attack, and a pincer.
+
+  **The existing seeded demo trace is unchanged**; only the attack event shape gained `shields: 0`, updated in two tests. Local results:
+  - typecheck passed;
+  - unit tests **501/501**;
+  - `npm run validate`, `check:external-art`, `check:test-tags` and `npm run skins -- --check` passed;
+  - fixture build passed;
+  - full browser suite **172/172**.
+
+  The first browser run could not start because Splurt's preview server held port 4173 again; Ariel allowed stopping it.
+- Migration: none (content fields optional; battles and saves unchanged). Next: **decision 0015 C1, import the Stone Soup library**.
+
 ## W3.6 soft blue gradient and W3.7 clean-up — November 12, 2026, local
 
 Ariel decided that White and Silver is W3.6's Final Fantasy-like skin, with a soft blue that bands smoothly across each window, settable, and baked in. Ariel's two answers: **top to bottom by default and settable**, and **add one W1 ability, a stretch fill**. This packet also covers W3.7.
@@ -730,7 +771,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**M5.4 — rows and party**, planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**Decision 0015 C1 — import the Stone Soup monster library** (M5.4a is done, see above), then C2–C3 and **M5.4b**. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

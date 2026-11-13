@@ -25,7 +25,7 @@ describe('turn timeline', () => {
     const tied: Encounter = { ...practice, party: [fighter('hero', 10)], enemies: [fighter('b', 10), fighter('a', 10)] };
     expect(session(tied).snapshot().timeline.slice(0, 3).map(turn => turn.actor)).toEqual(['hero', 'b', 'a']);
     const opening = session().snapshot();
-    expect(opening.events).toEqual([{ kind: 'attack', actor: 'shard', target: 'hero', damage: 1, guarded: false, defeated: false }]);
+    expect(opening.events).toEqual([{ kind: 'attack', actor: 'shard', target: 'hero', damage: 1, guarded: false, defeated: false, shields: 0 }]);
     expect(opening).toMatchObject({ phase: 'command', active: 'hero', turn: 1 });
     expect(opening.timeline).toHaveLength(TIMELINE_LENGTH);
     expect(opening.timeline.map(turn => `${turn.actor}@${turn.tick}`)).toEqual(

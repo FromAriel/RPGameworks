@@ -207,7 +207,7 @@ export class BattleView {
   private actionLine(event: BattleEvent): string {
     const actor = this.battlers.get(event.actor)?.combatant.name ?? '';
     const action = event.kind === 'attack' ? 'Attack' : event.kind === 'guard' ? 'Guard' : event.kind === 'escape' ? 'Run'
-      : this.options.itemName(event.itemId);
+      : event.kind === 'move' ? 'Move' : this.options.itemName(event.itemId);
     return `${actor}: ${action}`;
   }
 
@@ -242,6 +242,7 @@ export class BattleView {
       this.float(actor, 'Guard', 0x88c2c3, duration);
       return;
     }
+    if (event.kind === 'move') return; // The battle screen draws grid positions and movement in M5.4b–c (decision 0014).
     const target = this.battlers.get(event.target);
     if (!target) return;
     if (event.kind === 'heal') {

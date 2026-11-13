@@ -71,13 +71,18 @@ For a big enemy, distance is counted to its nearest cell.
 **Openings.** An encounter's `opening` is one of:
 - `normal` (default);
 - `back-attack`: the enemy comes from the party's back side, so the left column now faces them;
-- `pincer`: enemies stand on both sides, each enemy has a `flank`, and front-facing and shields are measured from that attacker's flank.
+- `pincer`: enemies stand on both sides, each enemy has a `flank` (`front` or `rear`, each flank with its own grid), and front-facing and shields are measured from that attacker's flank.
 
 There are no special formulas: everything above asks "which allies stand between this fighter and that attacker?". First strike (the party acting first) belongs to the timeline in M5.7.
 
 **Compatibility.**
 - An encounter that places no one on the grid puts each fighter in its own lane at the front. That makes everyone front-facing with no shields, so today's encounter and its pinned traces play exactly as before.
 - Every new content field is optional, so encounters stay schema version 2.
+
+**Execution answers (Ariel, November 12, before M5.4a).**
+- **Big enemies:** a big enemy is front-facing if **any** of its lanes is open. Its shield level is the weakest of its lanes.
+- **Pincer flanks:** named `front` or `rear`, relative to the party, not by screen side. The screen layout is settled in M5.4b and M5.4e.
+- **Auto-placement:** an encounter that does not place a side fills its front column top to bottom, then the middle, then the back. A side places all its fighters or none.
 
 ## 4. Party and saves
 

@@ -113,8 +113,10 @@ export function readFacts(value, file = 'facts.json') {
 /**
  * @param {unknown} value @param {string} file
  * @param {readonly string[]=} frames atlas frames available to battlers; omitted at runtime where the atlas already loaded
+ * @param {ReadonlySet<string>=} creatures Stone Soup monster IDs that have a motion assignment (decision 0015); the
+ *   content build passes them, the runtime does not (the creature atlas was already baked from validated content)
  */
-export function readEncounters(value, file = 'encounters.json', frames) {
+export function readEncounters(value, file = 'encounters.json', frames, creatures) {
   if (!validateEncounters(value)) schemaFailure(value, file, validateEncounters.errors);
   const data = /** @type {import('./generated/encounters.js').EncounterCatalog} */ (value);
   const ids = new Set();
@@ -131,6 +133,9 @@ export function readEncounters(value, file = 'encounters.json', frames) {
       combatantIds.add(combatant.id);
       if (!combatant.name.trim()) issues.push({file,id:encounter.id,path:`${path}/name`,message:'Combatant names must contain visible text',value:combatant.name});
       if (known && !known.has(combatant.frame)) issues.push({file,id:encounter.id,path:`${path}/frame`,message:'Unknown battler frame',value:combatant.frame});
+      if (side === 'party' && (combatant.creature || combatant.faces)) issues.push({file,id:encounter.id,path:`${path}/${combatant.creature ? 'creature' : 'faces'}`,message:'Only enemies use Stone Soup creatures for now',value:combatant.creature ?? combatant.faces});
+      if (combatant.faces && !combatant.creature) issues.push({file,id:encounter.id,path:`${path}/faces`,message:'faces is only used with a creature',value:combatant.faces});
+      if (creatures && combatant.creature && !creatures.has(combatant.creature)) issues.push({file,id:encounter.id,path:`${path}/creature`,message:'Unknown creature: not in the Stone Soup library or without a motion assignment',value:combatant.creature});
       if (side === 'party' && combatant.size) issues.push({file,id:encounter.id,path:`${path}/size`,message:'Only enemies can cover several cells',value:combatant.size});
       if (side === 'party' && combatant.flank) issues.push({file,id:encounter.id,path:`${path}/flank`,message:'Only enemies have a flank',value:combatant.flank});
       if (side === 'enemies' && (encounter.opening === 'pincer') !== (combatant.flank !== undefined)) issues.push({file,id:encounter.id,path:`${path}/flank`,message:encounter.opening === 'pincer' ? 'Every enemy in a pincer needs a flank (front or rear)' : 'Only pincer encounters give enemies a flank',value:combatant.flank ?? null});

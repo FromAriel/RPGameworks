@@ -91,7 +91,7 @@ describe('creature pixel motion (decision 0015 C2)', () => {
       }
     }
     expect(problems).toEqual([]);
-  });
+  }, 30_000); // 1,282 PNG decodes and about 11,000 poses: about 3.5 s alone, over 5 s when the whole suite runs in parallel.
 
   it('bakes the same pixels every time (pinned for one monster of each style)', () => {
     const digest = (id: string, styleName: string, faces: 'left' | 'right') => {

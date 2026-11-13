@@ -6,7 +6,7 @@ export interface RuntimeSnapshot {
   /** Logical canvas size and world tile size from the game manifest. */
   view: { width: number; height: number; tileSize: number };
   inputMode: 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'inventory' | 'save';
-  battle: { encounterId: string; phase: string; turn: number; active: string | null; playing: boolean; speed: number; windows: 'skin' | 'fallback'; menu: { level: string; cursor: number; target: string | null } | null; hp: Record<string, number>; timeline: string[] } | null;
+  battle: { encounterId: string; phase: string; turn: number; active: string | null; playing: boolean; speed: number; windows: 'skin' | 'fallback'; menu: { level: string; cursor: number; target: string | null } | null; hp: Record<string, number>; timeline: string[]; art: Record<string, { source: 'creature' | 'frame'; frame: string }> } | null;
   messageId: string | null;
   messagePage: number;
   interactionTarget: string | null;

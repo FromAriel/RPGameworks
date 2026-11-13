@@ -6,6 +6,9 @@ import { createHash } from 'node:crypto';
 import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
 import { createAuthoringReport } from './authoring-report.mjs';
 import { readUiTheme, emitUiTheme, checkMapSkins } from './ui-theme.mjs';
+import pngjs from 'pngjs';
+import { motionAssignmentProblems, motionStyleProblems } from '../src/content/creature-pose.mjs';
+import { bakeCreatureAtlas } from '../src/content/creature-atlas.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -52,7 +55,15 @@ try {
   const quests=readQuests(questsData);
   let encountersData={schemaVersion:2,encounters:[]};
   if(game.encountersFile){const file=realpathSync(join(source,game.encountersFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.encountersFile}: file escapes the content root`);encountersData=readJSON(file);}
-  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames):encountersData;
+  // Stone Soup creatures (decision 0015): the library, its motion styles and Ariel's assignments, checked together.
+  const creatureRoot = join(repo, 'assets/source/creatures');
+  const libraryIds = Object.keys(readJSON(join(creatureRoot, 'stone-soup/library.json')).files);
+  const motionStyles = readJSON(join(creatureRoot, 'motion-styles.json'));
+  const motionAssignments = readJSON(join(creatureRoot, 'motion-assignments.json'));
+  const motionProblems = [...motionStyleProblems(motionStyles), ...motionAssignmentProblems(motionAssignments, libraryIds, Object.keys(motionStyles.styles ?? {}))];
+  if (motionProblems.length) throw new Error(`Creature motion data:\n  ${motionProblems.slice(0, 10).join('\n  ')}`);
+  const creatureIds = new Set(Object.keys(motionAssignments.assignments));
+  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds):encountersData;
   for(const [id,map] of maps){validateMapFacts(map,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   for(const [id,map] of maps){validateMapDialogues(map,quests.quests,catalog,facts,game.maps.find(entry=>entry.id===id)?.file??id);}
   validateWorld(game, maps, catalog, encounters);
@@ -107,11 +118,27 @@ try {
       let encountersFile;
       if(game.encountersFile){const text=JSON.stringify(encounters)+'\n';encountersFile=`encounters.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,encountersFile),text);}
       const uiThemeFile = uiTheme ? emitUiTheme(staging, uiTheme) : undefined;
+      // Decision 0015 C3: bake the creatures the encounters use into one hashed atlas and frame table.
+      let creaturesFile;
+      const wanted = encounters.encounters.flatMap(e => e.enemies.flatMap(c => (c.creature ? [{ id: c.creature, faces: c.faces ?? 'left' }] : [])));
+      if (wanted.length) {
+        const tile = (/** @type {string} */ id) => { const png = pngjs.PNG.sync.read(readFileSync(join(creatureRoot, 'stone-soup', `${id}.png`))); return { width: png.width, height: png.height, data: new Uint8ClampedArray(png.data) }; };
+        const first = bakeCreatureAtlas(wanted, { tile, styles: motionStyles, assignments: motionAssignments.assignments, image: 'creatures.png' });
+        const png = new pngjs.PNG({ width: first.atlas.width, height: first.atlas.height });
+        png.data = Buffer.from(first.atlas.data.buffer, first.atlas.data.byteOffset, first.atlas.data.byteLength);
+        const pngBytes = pngjs.PNG.sync.write(png, { colorType: 6 });
+        const image = `creatures.${createHash('sha256').update(pngBytes).digest('hex').slice(0, 12)}.png`;
+        writeFileSync(join(staging, image), pngBytes);
+        const tableText = JSON.stringify({ ...first.table, image }) + '\n';
+        creaturesFile = `creatures.${createHash('sha256').update(tableText).digest('hex').slice(0, 12)}.json`;
+        writeFileSync(join(staging, creaturesFile), tableText);
+        console.log(`Baked ${Object.keys(first.table.creatures).length} creature(s) into ${image} (${Object.keys(first.table.frames).length} frames).`);
+      }
       const stateIndex={schemaVersion:game.questsFile?2:1,gameId:game.id,saveCompatibilityVersion:game.saveCompatibilityVersion??1,
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
         itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile?{questIds:quests.quests.map(quest=>quest.id)}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),stateIndexFile,maps:entries}) + '\n');
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

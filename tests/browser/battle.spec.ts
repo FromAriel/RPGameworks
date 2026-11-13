@@ -47,14 +47,15 @@ async function command(page: Page, ...names: string[]): Promise<void> {
   for (const name of names) await button(page, name).click();
   const resolved = (await snapshot(page)).battle!;
   await skip(page);
-  expect({ ...(await snapshot(page)).battle!, playing: true, menu: null }).toEqual({ ...resolved, playing: true, menu: null });
+  // Creature frames animate over time (decision 0015 C3); they are presentation, not battle state, so they are left out.
+  expect({ ...(await snapshot(page)).battle!, playing: true, menu: null, art: {} }).toEqual({ ...resolved, playing: true, menu: null, art: {} });
 }
 
 test('classic battle windows play resolved turns and restore exploration focus', { tag: ['@battle', '@smoke'] }, async ({ page }, info) => {
   await approach(page);
   const before = await snapshot(page);
   await enter(page);
-  // The faster Sigil Shard opens the battle; its hit plays on the stage before the first command.
+  // The faster Bat opens the battle; its hit plays on the stage before the first command.
   const opening = (await snapshot(page)).battle!;
   expect(opening).toMatchObject({ phase: 'command', turn: 1, active: 'hero', hp: { hero: 29, sigil: 20, shard: 10 } });
   expect(opening.timeline.slice(0, 3)).toEqual(['hero', 'sigil', 'shard']);
@@ -69,8 +70,8 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await page.screenshot({ path: info.outputPath('battle-opening-playback.png') });
   await expect.poll(async () => (await snapshot(page)).battle?.playing, { timeout: 5000 }).toBe(false); // Plays out by itself.
   const dialog = page.locator('#interaction-dialog');
-  await expect(dialog).toContainText('Sigil Shard hits Hero for 1.');
-  await expect(dialog).toContainText('Next: Hero → Practice Sigil → Sigil Shard'); // Screen-reader details.
+  await expect(dialog).toContainText('Bat hits Hero for 1.');
+  await expect(dialog).toContainText('Next: Hero → Clay Golem → Bat'); // Screen-reader details.
   expect((await snapshot(page)).battle?.menu).toEqual({ level: 'root', cursor: 0, target: null });
   await expect(button(page, 'Attack')).toBeFocused();
   await expect(button(page, 'Special')).toHaveAttribute('aria-disabled', 'true');
@@ -81,17 +82,17 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await button(page, 'Attack').click();
   expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil' });
   await page.screenshot({ path: info.outputPath('battle-target.png') });
-  await button(page, 'Sigil Shard').click();
+  await button(page, 'Bat').click();
   await skip(page);
   expect((await snapshot(page)).battle).toMatchObject({ hp: { hero: 25, shard: 4 } });
-  await command(page, 'Attack', 'Sigil Shard'); // The target is remembered, so a keyboard player would press Enter twice.
-  await expect(dialog).toContainText('Sigil Shard is defeated.');
+  await command(page, 'Attack', 'Bat'); // The target is remembered, so a keyboard player would press Enter twice.
+  await expect(dialog).toContainText('Bat is defeated.');
   await button(page, 'Attack').click();
-  await expect(button(page, 'Sigil Shard')).toHaveCount(0); // Defeated targets are not offered.
+  await expect(button(page, 'Bat')).toHaveCount(0); // Defeated targets are not offered.
   expect((await snapshot(page)).battle?.menu?.target).toBe('sigil');
-  await button(page, 'Practice Sigil').click();
+  await button(page, 'Clay Golem').click();
   await skip(page);
-  for (let turns = 0; turns < 8 && (await snapshot(page)).battle?.phase !== 'victory'; turns++) await command(page, 'Attack', 'Practice Sigil');
+  for (let turns = 0; turns < 8 && (await snapshot(page)).battle?.phase !== 'victory'; turns++) await command(page, 'Attack', 'Clay Golem');
   expect((await snapshot(page)).battle?.phase).toBe('victory');
   await button(page, 'Finish').click();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
@@ -123,7 +124,7 @@ test('keyboard confirms in two presses, Cancel backs out without committing, and
   // Tapping an enemy sprite while choosing a command attacks it directly.
   const box = (await page.locator('#stage canvas').boundingBox())!;
   const scale = box.width / 640;
-  await page.mouse.click(box.x + 200 * scale, box.y + 128 * scale); // Practice Sigil stands at (200, 128).
+  await page.mouse.click(box.x + 200 * scale, box.y + 128 * scale); // The Clay Golem stands at (200, 128).
   const tapped = (await snapshot(page)).battle!;
   expect(tapped.turn).toBeGreaterThan(start.turn);
   expect(tapped.hp.sigil).toBeLessThan(start.hp.sigil!);
@@ -154,12 +155,12 @@ test('playback speed and skipping never change the resolved battle', { tag: ['@b
         }
         await expect.poll(async () => (await snapshot(page)).battle?.playing, { timeout: 5000 }).toBe(false);
       }
-      states.push({ ...(await snapshot(page)).battle!, speed: 0 });
+      states.push({ ...(await snapshot(page)).battle!, speed: 0, art: {} }); // Animated creature frames are not battle state.
       if (turn % 2) await button(page, 'Guard').click();
-      else { await button(page, 'Attack').click(); await button(page, 'Practice Sigil').click(); }
+      else { await button(page, 'Attack').click(); await button(page, 'Clay Golem').click(); }
     }
     await skip(page);
-    states.push({ ...(await snapshot(page)).battle!, speed: 0 });
+    states.push({ ...(await snapshot(page)).battle!, speed: 0, art: {} });
     return states;
   };
   const watched = await run('watch');
@@ -271,7 +272,7 @@ test('authored defeat offers Retry with the identical opening and a safe Leave',
   await expect.poll(async () => (await snapshot(page)).battle?.phase).toBe('defeat');
   expect((await snapshot(page)).battle?.menu).toEqual({ level: 'end', cursor: 0, target: null });
   await button(page, 'Retry').click();
-  expect((await snapshot(page)).battle).toEqual(opening);
+  expect({ ...(await snapshot(page)).battle!, art: {} }).toEqual({ ...opening!, art: {} }); // Creature frames animate; the rest restarts exactly.
   await skip(page);
   await button(page, 'Run').click();
   await skip(page);

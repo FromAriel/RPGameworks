@@ -4,6 +4,44 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## C3 animated Stone Soup creatures in battle — November 12, 2026, local
+
+[Decision 0015](decisions/0015-stone-soup-creatures.md) C3. Ariel picked the **clay golem** and the **bat** (from ten candidates) for the Supply Room practice fight. Each creature uses its motion profile from Ariel's assignments: the golem walks and the bat floats.
+
+- **Content:**
+  - encounter enemies gain optional `creature` (a Stone Soup ID) and `faces` (which way the art faces, default left; the stage mirrors it to face the party);
+  - errors for a creature on the party, an unknown or unassigned creature (build time), and `faces` without a creature;
+  - the demo's `sigil` and `shard` keep their IDs, stats and fallback frames, but are now "Clay Golem" (`dcss/monster/nonliving/clay_golem`) and "Bat" (`dcss/monster/animals/bat`); the encounter and the map object are still the practice sigil.
+- **Bake** (`src/content/creature-atlas.mjs`, run by `tools/build-content.mjs`):
+  - the content build checks the library, the motion styles and the assignments together;
+  - for each creature and facing the encounters use, it bakes a still frame, the walk and idle loops and a body-only white flash into one hashed atlas;
+  - output: `creatures.<hash>.png`, a frame table `creatures.<hash>.json`, and `creaturesFile` in the generated `game.json` (schema updated);
+  - the demo bakes 2 creatures into 20 frames.
+- **Battle** (`src/platform/creature-loader.ts`, `battle-view.ts`):
+  - **Loading:** the frame table and image load once and are cached. The texture belongs to the battle and is removed when it ends, so a battle still leaves no texture behind.
+  - **On the stage:** creatures draw at 2×, mirrored to face the party, with idle loops on a shared 50 ms tick, each creature on its own loop time with a 97 ms phase offset per slot. Hits show the baked flash, so the shadow stays dark. The turn timeline shows creature icons. Reduced motion shows the still frame.
+  - **Failure:** if the art cannot load, every enemy uses its old frame and the battle goes on (a console warning only).
+  - **Snapshot:** the runtime snapshot reports each battler's art source and current frame (`battle.art`).
+- **Tests:**
+  - `tests/unit/creature-atlas.test.ts` (5): frames and loops per creature, duplicates merged, deterministic pixels, one entry per facing, the flash body-only and the still frame equal to the tile, an unassigned creature refused, and three content errors.
+  - `tests/browser/creatures.spec.ts` (3): the enemies are animated creatures and the bat's frame changes within a second; reduced motion keeps both on their still frames; an aborted creature atlas falls back to the frames and the battle plays.
+  - **Existing tests:** `battle.spec.ts` and `battle-menu.test.ts` name the new enemies. Four battle-snapshot comparisons leave out the animated `art` field, which is presentation, not battle state.
+  - The C2 test that poses all 1,282 monsters now has a 30-second limit: it took about 6 s with the whole suite running in parallel and hit the default 5 s.
+
+  Local results:
+  - typecheck passed;
+  - unit tests **516/516**;
+  - `check:external-art`, `check:test-tags` (175 tagged), the library check, `npm run skins -- --check` and `npm run validate` passed;
+  - fixture build passed;
+  - full browser suite **175/175**.
+
+  A screenshot of the fight was sent to Ariel.
+- **Not yet:**
+  - Ariel's play review of the animated fight.
+  - The golem and bat stand at the old slot positions and overlap slightly. M5.4b lays the grid out.
+  - Not committed or published.
+- Migration: none (saves untouched; encounter fields optional). Next: Ariel's play review, then **M5.4b**, the grid on the battle screen.
+
 ## C2 creature pixel motion and Ariel's motion assignments — November 12, 2026, local
 
 [Decision 0015](decisions/0015-stone-soup-creatures.md) C2. The game does not use it yet (C3 bakes poses in the content build and animates battlers).
@@ -817,7 +855,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**Decision 0015 C3 — animated Stone Soup creatures in battle** (M5.4a, C1 and C2 are done, see above), then **M5.4b**. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**M5.4b — the grid on the battle screen** ([decision 0014](decisions/0014-battle-grid-and-party.md); M5.4a and decision 0015's C1–C3 are done, see above; C3 waits on Ariel's play review). M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

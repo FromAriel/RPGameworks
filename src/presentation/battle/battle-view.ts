@@ -7,6 +7,9 @@ import { BattleWindows, PANEL_STYLE } from './battle-windows';
 import type { BattleLayout, Rect } from './battle-windows';
 import type { SkinPainter } from '../skin/paint';
 import { PIXEL_FONT_BITMAP_SIZE, addPixelFont, releasePixelFont } from '../pixel-font';
+import type { CreatureArt } from '../../platform/creature-loader';
+import type { CreatureFrames } from '../../content/creature-atlas.mjs';
+import { creatureKey } from '../../content/creature-atlas.mjs';
 
 /** Pixel labels use the UNSCII bitmap font; ordinary canvas text is only the fallback when that font is missing. */
 type Label = Phaser.GameObjects.BitmapText | Phaser.GameObjects.Text;
@@ -22,6 +25,9 @@ const FALLBACK_TEXT = { fontFamily: 'ui-monospace, monospace', fontSize: '12px',
 const DEPTH = { backdrop: 1.5, floor: 1.51, battler: 1.6, ui: 1.7, windows: 1.8, numbers: 3 } as const;
 const BAR_WIDTH = 48;
 const TIMELINE_ICONS = 8;
+/** Idle loops advance on this tick; each creature keeps its own loop time and a phase offset by slot (decision 0015). */
+const IDLE_TICK_MS = 50;
+const PHASE_STAGGER_MS = 97;
 
 interface Battler {
   readonly combatant: CombatantSnapshot;
@@ -29,6 +35,9 @@ interface Battler {
   /** Enemy HP bar; party HP is shown in the party window. */
   readonly bar: Phaser.GameObjects.Rectangle | null;
   readonly home: { x: number; y: number };
+  /** Stone Soup creature frames when this battler is drawn as a creature (decision 0015 C3). */
+  readonly creature: CreatureFrames | null;
+  flashing: boolean;
 }
 
 /** What the command windows should show; built by the scene from the battle-menu model. */
@@ -51,6 +60,8 @@ export interface BattleViewOptions {
   readonly itemName: (itemId: string) => string;
   /** The theme's battle skin (decision 0011 W3.5), or null for the fallback panels. */
   readonly skin?: SkinPainter | null;
+  /** Baked Stone Soup creature art (decision 0015 C3), or null to draw every battler from its frame. */
+  readonly creatures?: CreatureArt | null;
 }
 
 export class BattleView {
@@ -72,6 +83,7 @@ export class BattleView {
   private active: string | null = null;
   private banner = '';
   private currentSpeed: PlaybackSpeed = 1;
+  private idleLoop: Phaser.Time.TimerEvent | null = null;
 
   constructor(private readonly scene: Phaser.Scene, initial: BattleSnapshot, private readonly options: BattleViewOptions) {
     const { width, height } = scene.scale;
@@ -89,13 +101,20 @@ export class BattleView {
     }
     for (const combatant of initial.combatants) {
       const home = battlerPosition(combatant.side, combatant.slot);
-      const sprite = this.own(scene.add.image(home.x, home.y, options.atlas, combatant.frame).setScale(2).setDepth(DEPTH.battler + home.y / 10000));
+      const creature = this.creatureOf(combatant);
+      const sprite = this.own(creature
+        ? scene.add.image(home.x, home.y, options.creatures!.texture, creature.still).setFlipX(creature.faces === 'left')
+        : scene.add.image(home.x, home.y, options.atlas, combatant.frame)).setScale(2).setDepth(DEPTH.battler + home.y / 10000);
       let bar: Phaser.GameObjects.Rectangle | null = null;
       if (combatant.side === 'enemy') {
         this.own(scene.add.rectangle(home.x - BAR_WIDTH / 2, home.y + 38, BAR_WIDTH, 5, 0x080c14).setOrigin(0).setDepth(DEPTH.ui));
         bar = this.own(scene.add.rectangle(home.x - BAR_WIDTH / 2, home.y + 38, BAR_WIDTH, 5, 0x6fbf73).setOrigin(0).setDepth(DEPTH.ui));
       }
-      this.battlers.set(combatant.id, { combatant, sprite, bar, home });
+      this.battlers.set(combatant.id, { combatant, sprite, bar, home, creature, flashing: false });
+    }
+    // Creatures breathe on their own idle loops; reduced motion keeps each one still (decision 0015 C3).
+    if (!options.reducedMotion && [...this.battlers.values()].some(b => b.creature)) {
+      this.idleLoop = scene.time.addEvent({ delay: IDLE_TICK_MS, loop: true, callback: () => this.idle() });
     }
     this.targetCursor = this.own(this.downPointer()).setDepth(DEPTH.windows).setVisible(false);
     for (const object of this.owned) (object as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
@@ -127,7 +146,10 @@ export class BattleView {
     if (snapshot.phase === 'escaped') for (const battler of this.battlers.values()) if (battler.combatant.side === 'party') battler.sprite.setAlpha(0);
     snapshot.timeline.slice(0, TIMELINE_ICONS).forEach((turn, index) => {
       const icon = this.timeline[index]!;
-      icon.setFrame(this.battlers.get(turn.actor)?.combatant.frame ?? 'spark').setVisible(true);
+      const battler = this.battlers.get(turn.actor);
+      if (battler?.creature) icon.setTexture(this.options.creatures!.texture, battler.creature.still).setScale(0.8);
+      else icon.setTexture(this.options.atlas, battler?.combatant.frame ?? 'spark').setScale(1);
+      icon.setVisible(true);
     });
     for (let index = snapshot.timeline.length; index < TIMELINE_ICONS; index += 1) this.timeline[index]!.setVisible(false);
     const first = snapshot.timeline.length ? this.timeline[0]! : null;
@@ -144,6 +166,11 @@ export class BattleView {
     this.targetCursor.setVisible(!!target);
     if (target) this.targetCursor.setPosition(target.home.x, target.home.y - 52);
     this.refreshWindows();
+  }
+
+  /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
+  artState(): Record<string, { source: 'creature' | 'frame'; frame: string }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name }]));
   }
 
   /** The logical rectangle a tap on this combatant should cover. */
@@ -170,12 +197,17 @@ export class BattleView {
     if (this.disposed) return;
     this.disposed = true;
     this.pending = null;
+    this.idleLoop?.remove(false);
+    this.idleLoop = null;
     this.clearMotion();
     this.blink.remove();
     this.windows.destroy();
     for (const object of this.owned) object.destroy();
     this.owned.length = 0;
     this.battlers.clear();
+    // The creature texture belongs to this battle (decision 0015 C3); the next battle adds it again from the cache.
+    const creatures = this.options.creatures;
+    if (creatures && this.scene.textures.exists(creatures.texture)) this.scene.textures.remove(creatures.texture);
     if (this.font) releasePixelFont(this.scene);
   }
 
@@ -261,8 +293,16 @@ export class BattleView {
       this.hp.set(event.target, Math.max(0, (this.hp.get(event.target) ?? 0) - event.damage));
       this.drawHp(event.target);
       this.refreshWindows();
-      target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-      this.after(Math.max(40, Math.round(duration * 0.15)), () => target.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
+      const flashMs = Math.max(40, Math.round(duration * 0.15));
+      if (target.creature) {
+        // The baked flash lights the body only; the shadow stays on the floor.
+        target.flashing = true;
+        target.sprite.setFrame(target.creature.flash);
+        this.after(flashMs, () => { target.flashing = false; target.sprite.setFrame(this.restFrame(target)); });
+      } else {
+        target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        this.after(flashMs, () => target.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
+      }
       this.float(target, String(event.damage), event.guarded ? 0xb7c9d0 : 0xffffff, duration - lead);
       this.options.impact({ x: target.home.x, y: target.home.y }, seed);
       if (event.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
@@ -308,6 +348,29 @@ export class BattleView {
   private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): void {
     const tween = this.scene.tweens.add({ ...config, onComplete: (...args) => { this.tweens.delete(tween); (config.onComplete as ((...a: unknown[]) => void) | undefined)?.(...args); } });
     this.tweens.add(tween);
+  }
+
+  private creatureOf(combatant: CombatantSnapshot): CreatureFrames | null {
+    const art = this.options.creatures;
+    if (!art || !combatant.creature) return null;
+    return art.creatures.get(creatureKey(combatant.creature, combatant.faces)) ?? null;
+  }
+
+  /** The frame a creature shows when nothing else is happening: its idle loop, or its still pose with reduced motion. */
+  private restFrame(battler: Battler): string {
+    const c = battler.creature!;
+    if (this.options.reducedMotion) return c.still;
+    const step = Math.floor((this.scene.time.now + battler.combatant.slot * PHASE_STAGGER_MS) / c.idleMs);
+    return c.idle[step % c.idle.length]!;
+  }
+
+  private idle(): void {
+    if (this.disposed) return;
+    for (const battler of this.battlers.values()) {
+      if (!battler.creature || battler.flashing) continue;
+      const frame = this.restFrame(battler);
+      if (battler.sprite.frame.name !== frame) battler.sprite.setFrame(frame);
+    }
   }
 
   private after(delay: number, callback: () => void): void {

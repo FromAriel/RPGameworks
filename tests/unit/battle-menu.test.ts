@@ -36,7 +36,7 @@ describe('battle menu', () => {
     const { battle, menu, context } = setup();
     expect(menu.confirm()).toEqual({ kind: 'none' });
     expect(menu.state()).toMatchObject({ level: 'target', target: 'sigil' }); // First living enemy by slot.
-    expect(menu.state().entries.map(entry => entry.name)).toEqual(['Practice Sigil', 'Sigil Shard']); // Enemies only.
+    expect(menu.state().entries.map(entry => entry.name)).toEqual(['Clay Golem', 'Bat']); // Enemies only.
     menu.move(1);
     const outcome = menu.confirm();
     expect(outcome).toEqual({ kind: 'command', command: { type: 'attack', target: 'shard' } });
@@ -50,7 +50,7 @@ describe('battle menu', () => {
     menu.begin(context());
     menu.confirm();
     expect(menu.state()).toMatchObject({ target: 'sigil' });
-    expect(menu.state().entries.map(entry => entry.name)).toEqual(['Practice Sigil']);
+    expect(menu.state().entries.map(entry => entry.name)).toEqual(['Clay Golem']);
   });
 
   it('backs out one level at a time without committing; at the top Cancel only points at Run', () => {

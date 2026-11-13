@@ -8,8 +8,8 @@
       {"id": "hero", "name": "Hero", "frame": "hero-left", "hp": 30, "attack": 7, "defense": 2, "speed": 10}
     ],
     "enemies": [
-      {"id": "sigil", "name": "Practice Sigil", "frame": "sigil", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
-      {"id": "shard", "name": "Sigil Shard", "frame": "sigil-lit", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
+      {"id": "sigil", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
+      {"id": "shard", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
     ]
   }]
 }

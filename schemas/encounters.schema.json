@@ -29,6 +29,8 @@
     "cell":{"type":"object","additionalProperties":false,"required":["lane","depth"],"description":"Grid cell (decision 0014). lane: 1 top to 3 bottom; depth: 1 front to 3 back. A side places all its fighters or none; unplaced sides fill the front column top to bottom, then the middle, then the back. A big enemy's cell is its top front corner.","properties":{"lane":{"type":"integer","minimum":1,"maximum":3},"depth":{"type":"integer","minimum":1,"maximum":3}}},
     "size":{"type":"object","additionalProperties":false,"required":["lanes","depths"],"description":"Enemies only: how many lanes and depths a big enemy covers. Default 1 × 1.","properties":{"lanes":{"type":"integer","minimum":1,"maximum":3},"depths":{"type":"integer","minimum":1,"maximum":3}}},
     "reach":{"enum":["melee","reach","ranged"],"description":"melee: front-facing targets only; reach (spears, whips, polearms): one layer deeper; ranged (bows, spells): anyone. Default melee."},
+    "creature":{"type":"string","pattern":"^dcss/monster/[A-Za-z0-9_][A-Za-z0-9_/-]{0,120}$","description":"Enemies only: a Stone Soup monster ID from assets/source/creatures/stone-soup (decision 0015). The battle draws it animated with its assigned motion; frame stays the fallback if the creature art cannot load."},
+    "faces":{"enum":["left","right"],"description":"Which way the creature art faces. The battle mirrors it to face the party. Default left."},
     "flank":{"enum":["front","rear"],"description":"Pincer encounters only, and required there: which side of the party this enemy attacks from. Each flank has its own grid."}
   },"required":["id","name","frame","hp","attack","defense","speed"]}},
   "required":["schemaVersion","encounters"]

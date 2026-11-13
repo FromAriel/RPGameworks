@@ -63,7 +63,7 @@ Splurt's `tools/pose-sprite.mjs` (Ariel's code, adapted from DanJen Delver) and 
 - **Tests:** ported from Splurt and DanJen Delver (synthetic shadow, palette kept, feet move, presets valid), plus deterministic bakes against fixtures.
 - **Acceptance:** those tests pass, and the assignments cover every library ID with known styles.
 
-**C3 — Animated creatures in battle.**
+**C3 — Animated creatures in battle.** *(Ariel, November 12: the clay golem and the bat. The creature texture belongs to each battle and is removed when it ends; the decoded image is cached.)*
 - **Data:** encounter enemies gain an optional `creature`, and the content build bakes poses for the creatures in use.
 - **Stage:** it draws idle loops, the lunge and the hit flash, with the reduced-motion and fallback paths.
 - **Demo:** the sigils become two real creatures Ariel picks or approves.

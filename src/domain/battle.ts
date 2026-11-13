@@ -45,6 +45,8 @@ export interface CombatantSnapshot {
   readonly reach: Reach;
   /** Pincer enemies only: the side of the party they attack from; each flank has its own grid. */
   readonly flank: Direction | null;
+  /** Presentation only (decision 0015): the Stone Soup creature drawn for this enemy, and which way its art faces. */
+  readonly creature: string | null; readonly faces: 'left' | 'right';
 }
 export interface TurnPreview { readonly actor: string; readonly tick: number }
 export interface BattleSnapshot {
@@ -211,7 +213,7 @@ export class BattleSession {
       id: combatant.id, side, slot, name: combatant.name, frame: combatant.frame,
       hp: combatant.hp, maxHp: combatant.hp, attack: combatant.attack, defense: combatant.defense, speed: combatant.speed,
       nextTick: actionDelay(combatant.speed, ACTION_WEIGHT.attack), guarding: false,
-      ...placements[side][slot]!, reach: combatant.reach ?? 'melee', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
+      ...placements[side][slot]!, reach: combatant.reach ?? 'melee', creature: combatant.creature ?? null, faces: combatant.faces ?? 'left', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
     });
     this.fighters = [...this.encounter.party.map(build('party')), ...this.encounter.enemies.map(build('enemy'))];
     this.rng = this.encounter.seed >>> 0;

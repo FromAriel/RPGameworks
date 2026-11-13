@@ -68,6 +68,11 @@
 .menu-sort-button:focus { outline: none; }
 .menu-items-detail .menu-detail p { margin: 0 0 6px; }
 
+/* Catalog screens (U2.4): tabs on the left of the top window, the Found count on the right. */
+.menu-catalog-top .menu-window-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; overflow: hidden; }
+.menu-catalog-top .menu-info { gap: 8px; }
+.menu-catalog-detail .menu-detail p { margin: 0 0 6px; overflow-wrap: anywhere; }
+
 /* Save/Load (U2.3c): the Files commands in two columns; the status line may wrap to a second line. */
 .menu-save-files .menu-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
 /* The status line reads like the help line; it keeps only the coloured bar that marks success, warning or failure. */

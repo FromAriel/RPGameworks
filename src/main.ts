@@ -6,6 +6,7 @@ import { loadItemCatalog } from './platform/item-loader';
 import { loadFactCatalog } from './platform/fact-loader';
 import { loadQuestCatalog } from './platform/quest-loader';
 import { loadMenu } from './platform/menu-loader';
+import { loadCatalogs } from './platform/catalog-loader';
 import { SessionState } from './domain/session';
 import { SessionController } from './runtime/session-controller';
 import { SaveService } from './runtime/save-service';
@@ -218,7 +219,7 @@ async function start(): Promise<void> {
     // Window skins are cosmetic: a theme that cannot load leaves Ariel's skin in place instead of stopping the game.
     try { const theme = await loadUiTheme(base, content.game, appLifetime.signal); if (theme && !disposed) windowSkin.useTheme(theme); }
     catch (cause) { if (!appLifetime.signal.aborted) console.warn('[RPGameworks] UI theme unavailable; keeping the base window skin:', cause); }
-    const [catalog,facts,quests,stateIndex,menu]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal),loadMenu(base,content,appLifetime.signal)]);
+    const [catalog,facts,quests,stateIndex,menu,catalogs]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal),loadMenu(base,content,appLifetime.signal),loadCatalogs(base,content,appLifetime.signal)]);
     if(JSON.stringify(quests.map(quest=>quest.id))!==JSON.stringify(stateIndex.questIds??[]))throw new Error('Quest catalog does not match the save state index');
     const session = new SessionController(new SessionState({items:catalog,facts,quests}));
     saveService=new SaveService({gameId:content.game.id,saveCompatibilityVersion:content.game.saveCompatibilityVersion??1,index:stateIndex},new IndexedDbSaveRepository());
@@ -237,6 +238,7 @@ async function start(): Promise<void> {
       playerSettings,
       controllerStatus: () => controller.status,
       menu,
+      catalogs,
       windowskin: () => windowSkin,
       closeTools: () => shell.close(),
       toolsOwnInput: () => shell.ownsInput || controllerPanel.open,

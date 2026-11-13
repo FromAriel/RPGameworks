@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "title": "Credits",
+  "categories": [
+    {"id": "project", "label": "RPGameworks"}
+  ],
+  "entries": [
+    {"id": "demo:credits.rpgameworks", "category": "project", "title": "RPGameworks",
+      "text": ["An open browser JRPG framework, built with Phaser, TypeScript and Vite.", "Licensed under the Apache License 2.0, except the material listed in NOTICE."]},
+    {"id": "demo:credits.unscii", "category": "project", "title": "UNSCII font",
+      "text": ["UNSCII 16 by Viznut, public domain."]},
+    {"id": "demo:credits.window-skin", "category": "project", "title": "White and Silver skin",
+      "text": ["The window skin and its carved corner were made for this project.", "Licensed with the project (Apache-2.0)."]},
+    {"id": "demo:credits.starter-hero", "category": "project", "title": "Starter hero",
+      "text": ["Derived from the premium Cute Fantasy character pack, used under its purchased licence.", "It is not covered by the Apache License and may not be reused outside this game (see NOTICE)."]}
+  ],
+  "libraryCredits": ["stone-soup"]
+}

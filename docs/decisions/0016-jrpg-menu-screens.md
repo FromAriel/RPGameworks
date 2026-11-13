@@ -146,6 +146,10 @@ The game's menus look and play like a classic Final Fantasy-style JRPG menu, and
 - **Side panel (U2.3b):** one panel, two modes, no tabs: Controller setup (from Config) or Debug (F2).
 - **Activate controller (U2.3b):** it and the detection status sit at the top of Controller setup. Config's detail window shows the status.
 - **Save/Load layout (U2.3c):** slot rows, then a command window for the chosen slot. File commands are in a Files window.
+- **Catalogs (U2.4):** one generic `builtin:catalog` screen. `game.json` lists catalog files, and a menu entry names one with `catalog`.
+- **Unlocks (U2.4):** a catalog entry may have a `when` condition and shows as ??? until it holds.
+- **Credits (U2.4):** generated at build time from each art library's credit file (`libraryCredits`), plus hand-written project entries.
+- **Plug-ins (U2.4):** a game registers its own screens in `src/game-screens.ts`. A hub entry is available when its screen is registered.
 - **Confirmations (U2.3c):** the existing confirmation window, unchanged. A screen may take controller input first (`MenuScreen.sample`), so the confirmation owns the controller while it is open.
 
 ## 7. Not in U2

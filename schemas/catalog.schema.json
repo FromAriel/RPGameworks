@@ -1,0 +1,255 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CatalogDefinition",
+  "description": "A data-only menu screen (decision 0016 U2.4): a codex, bestiary, glossary or credits list. Optional categories become tabs; each entry has a title and paragraphs of text, and may stay hidden as ??? until its condition holds. libraryCredits adds generated credits for the named art libraries at content build time. Conditions use the map condition vocabulary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "title",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "title": {
+      "type": "string",
+      "pattern": "^[^\\u0000-\\u001f]{1,24}$",
+      "description": "The list window title, for example Codex."
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,31}$"
+          },
+          "label": {
+            "type": "string",
+            "pattern": "^[^\\u0000-\\u001f]{1,16}$"
+          }
+        }
+      },
+      "description": "Tabs, in order. Without categories the screen has one list."
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/definitions/entry"
+      }
+    },
+    "libraryCredits": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "enum": [
+          "stone-soup"
+        ]
+      },
+      "description": "Art libraries whose credit files the content build turns into a category of entries (the library, then each artist). Each library at most once."
+    }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}:[a-z][a-z0-9.-]{0,95}$"
+        },
+        "category": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}$",
+          "description": "One of the catalog's categories (required when it has categories)."
+        },
+        "title": {
+          "type": "string",
+          "pattern": "^[^\\u0000-\\u001f]{1,32}$"
+        },
+        "text": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "type": "string",
+            "pattern": "^[^\\u0000-\\u001f]{1,400}$"
+          },
+          "description": "Paragraphs shown in the detail window."
+        },
+        "when": {
+          "$ref": "#/definitions/condition",
+          "description": "Shown as ??? until this holds."
+        }
+      }
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "all"
+            },
+            "conditions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/definitions/condition"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "conditions"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "any"
+            },
+            "conditions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/definitions/condition"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "conditions"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "not"
+            },
+            "condition": {
+              "$ref": "#/definitions/condition"
+            }
+          },
+          "required": [
+            "type",
+            "condition"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "factEquals"
+            },
+            "factId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}:fact\\.[a-z][a-z0-9.-]{0,95}$"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "factId",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "itemAtLeast"
+            },
+            "itemId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}:item\\.[a-z][a-z0-9.-]{0,95}$"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            }
+          },
+          "required": [
+            "type",
+            "itemId",
+            "quantity"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "placementOpened"
+            },
+            "placementId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}:object\\.[a-z][a-z0-9.-]{0,95}$"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "placementId",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "questStateEquals"
+            },
+            "questId": {
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "inactive",
+                "active",
+                "completed"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "questId",
+            "value"
+          ]
+        }
+      ]
+    }
+  }
+}

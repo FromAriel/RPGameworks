@@ -34,9 +34,9 @@ describe('menu.json (decision 0016 U2.0)', () => {
     }
   };
 
-  it('accepts the demo menu: eight entries on built-in screens, three info slots', () => {
+  it('accepts the demo menu: nine entries on built-in screens, three info slots', () => {
     const menu = readMenu(demo, 'menu.json', known);
-    expect(menu.entries.map(e => e.label)).toEqual(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Config', 'Help', 'Save']);
+    expect(menu.entries.map(e => e.label)).toEqual(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Config', 'Help', 'Credits', 'Save']);
     expect(menu.entries.every(e => BUILTIN_MENU_SCREENS.includes(e.screen.split(':')[1]!))).toBe(true);
     expect(menu.info).toEqual(['location', 'play-time', 'money']);
   });

@@ -52,12 +52,12 @@ test('exports a deterministic JSON filename and imports a validated fixture into
 });
 
 test('keyboard and controller navigate Save without a virtual pointer and isolate held input',{ tag: ['@saves', '@input'] }, async({page})=>{
-  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();for(let i=0;i<7;i++)await tapPad(page,13);await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();
+  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();for(let i=0;i<8;i++)await tapPad(page,13); // Down past Credits to Save.await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();
   await tapPad(page,2);await expect(saveScreen(page)).toBeVisible();await expect(slotRow(page,0)).toBeFocused();
   await tapPad(page,2);await expect(slotCommand(page,'save')).toBeFocused(); // Choosing a slot opens its commands.
   await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slotRow(page,0)).toBeFocused();
   await tapPad(page,1);await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await tapPad(page,1);await expect(page.locator('#stage')).toBeFocused();expect((await snapshot(page)).pendingSaveOperations).toBe(0);
-  await page.keyboard.press('KeyI');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();for(let i=0;i<7;i++)await page.keyboard.press('ArrowDown');await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await page.keyboard.press('Enter');await expect(saveScreen(page)).toBeVisible();
+  await page.keyboard.press('KeyI');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();for(let i=0;i<8;i++)await page.keyboard.press('ArrowDown');await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await page.keyboard.press('Enter');await expect(saveScreen(page)).toBeVisible();
   await page.keyboard.press('Enter');await expect(slotCommand(page,'save')).toBeFocused();await page.keyboard.press('Escape');await expect(slotRow(page,0)).toBeFocused(); // Escape closes the commands first.
 });
 

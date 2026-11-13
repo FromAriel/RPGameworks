@@ -5,6 +5,7 @@ import validateItems from './generated/items-validator.mjs';
 import validateFacts from './generated/facts-validator.mjs';
 import validateEncounters from './generated/encounters-validator.mjs';
 import validateMenu from './generated/menu-validator.mjs';
+import validateCatalog from './generated/catalog-validator.mjs';
 import { createCollision } from '../domain/map.mjs';
 
 /** @typedef {import('./generated/map.js').MapDefinition} MapDefinition */
@@ -76,6 +77,12 @@ export function readGame(value, file = 'game.json') {
     ids.add(entry.id); files.add(entry.file);
   });
   if (!ids.has(data.start.mapId)) issues.push({file, id: data.id, path: '/start/mapId', message: 'Start map is not registered', value: data.start.mapId});
+  const catalogs = new Set(), catalogFiles = new Set();
+  (data.catalogs ?? []).forEach((entry, index) => {
+    if (catalogs.has(entry.id)) issues.push({file, id: data.id, path: `/catalogs/${index}/id`, message: 'Duplicate catalog ID', value: entry.id});
+    if (catalogFiles.has(entry.file)) issues.push({file, id: data.id, path: `/catalogs/${index}/file`, message: 'Duplicate catalog file', value: entry.file});
+    catalogs.add(entry.id); catalogFiles.add(entry.file);
+  });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
 }
@@ -180,13 +187,64 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
 }
 
 /** Screens RPGameworks provides (decision 0016). A game's own screens use another namespace and are registered in code. */
-export const BUILTIN_MENU_SCREENS = Object.freeze(['items', 'status', 'formation', 'journal', 'codex', 'config', 'help', 'save', 'credits']);
+export const BUILTIN_MENU_SCREENS = Object.freeze(['items', 'status', 'formation', 'journal', 'catalog', 'config', 'help', 'save']);
+
+/**
+ * Condition references (facts, items, quests, placements) checked against what the game defines.
+ * @param {any} c @param {string} path @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string> }} known
+ * @param {(path: string, message: string, value: unknown) => void} at
+ */
+function checkConditionRefs(c, path, known, at) {
+  if (c.type === 'all' || c.type === 'any') c.conditions.forEach((/** @type {any} */ child, /** @type {number} */ i) => checkConditionRefs(child, `${path}/conditions/${i}`, known, at));
+  else if (c.type === 'not') checkConditionRefs(c.condition, `${path}/condition`, known, at);
+  else if (c.type === 'factEquals' && known.facts && !known.facts.has(c.factId)) at(`${path}/factId`, 'Unknown fact', c.factId);
+  else if (c.type === 'itemAtLeast' && known.items && !known.items.has(c.itemId)) at(`${path}/itemId`, 'Unknown item', c.itemId);
+  else if (c.type === 'questStateEquals' && known.quests && !known.quests.has(c.questId)) at(`${path}/questId`, 'Unknown quest', c.questId);
+  else if (c.type === 'placementOpened' && known.placements && !known.placements.has(c.placementId)) at(`${path}/placementId`, 'Unknown placement', c.placementId);
+}
+
+/**
+ * A data-only menu screen (decision 0016 U2.4): entry IDs unique, categories declared and used consistently, art
+ * libraries named once, and unlock conditions naming things the game defines.
+ * @param {unknown} value @param {string} file
+ * @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string> }} [known]
+ * @returns {import('./generated/catalog.js').CatalogDefinition}
+ */
+export function readCatalog(value, file = 'catalog.json', known = {}) {
+  if (!validateCatalog(value)) schemaFailure(value, file, validateCatalog.errors);
+  const catalog = /** @type {import('./generated/catalog.js').CatalogDefinition} */ (value);
+  /** @type {ContentIssue[]} */ const issues = [];
+  const at = (/** @type {string} */ path, /** @type {string} */ message, /** @type {unknown} */ actual) => issues.push({ file, id: 'catalog', path, message, value: actual });
+  const categories = new Set();
+  (catalog.categories ?? []).forEach((category, index) => {
+    if (categories.has(category.id)) at(`/categories/${index}/id`, 'Duplicate category ID', category.id);
+    categories.add(category.id);
+  });
+  const ids = new Set();
+  catalog.entries.forEach((entry, index) => {
+    if (ids.has(entry.id)) at(`/entries/${index}/id`, 'Duplicate entry ID', entry.id);
+    ids.add(entry.id);
+    if (catalog.categories && !entry.category) at(`/entries/${index}/category`, 'This catalog has categories: name one', undefined);
+    if (entry.category && !categories.has(entry.category)) at(`/entries/${index}/category`, 'Unknown category', entry.category);
+    if (entry.when) checkConditionRefs(entry.when, `/entries/${index}/when`, known, at);
+  });
+  const libraries = new Set();
+  (catalog.libraryCredits ?? []).forEach((library, index) => {
+    if (libraries.has(library)) at(`/libraryCredits/${index}`, 'Each library may be listed once', library);
+    libraries.add(library);
+  });
+  if (catalog.libraryCredits && !catalog.categories) at('/libraryCredits', 'Library credits become their own category: give the catalog categories', catalog.libraryCredits);
+  if (!catalog.entries.length && !catalog.libraryCredits) at('/entries', 'A catalog needs at least one entry', catalog.entries);
+  if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
+  return freezeCopy(catalog);
+}
 
 /**
  * The main menu (decision 0016): entry IDs unique, built-in screens known, info slots at most once, and every unlock
  * condition naming facts, items, quests and placements that exist.
  * @param {unknown} value @param {string} file
- * @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string> }} [known]
+ * builtin:catalog entries name one of the game's catalogs (`known.catalogs`, when given).
+ * @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string>, catalogs?: ReadonlySet<string> }} [known]
  */
 export function readMenu(value, file = 'menu.json', known = {}) {
   if (!validateMenu(value)) schemaFailure(value, file, validateMenu.errors);
@@ -199,19 +257,14 @@ export function readMenu(value, file = 'menu.json', known = {}) {
     ids.add(entry.id);
     const [space, name] = entry.screen.split(':');
     if (space === 'builtin' && !BUILTIN_MENU_SCREENS.includes(/** @type {string} */ (name))) at(`/entries/${index}/screen`, `Unknown built-in screen (known: ${BUILTIN_MENU_SCREENS.join(', ')})`, entry.screen);
-    if (entry.when) checkConditionRefs(entry.when, `/entries/${index}/when`);
+    if (entry.screen === 'builtin:catalog') {
+      if (!entry.catalog) at(`/entries/${index}/catalog`, 'A catalog entry names its catalog', undefined);
+      else if (known.catalogs && !known.catalogs.has(entry.catalog)) at(`/entries/${index}/catalog`, 'Unknown catalog (game.json catalogs)', entry.catalog);
+    } else if (entry.catalog) at(`/entries/${index}/catalog`, 'Only builtin:catalog entries name a catalog', entry.catalog);
+    if (entry.when) checkConditionRefs(entry.when, `/entries/${index}/when`, known, at);
   });
   const seen = new Set();
   (menu.info ?? []).forEach((slot, index) => { if (seen.has(slot)) at(`/info/${index}`, 'Each info window may appear once', slot); seen.add(slot); });
-  /** @param {any} c @param {string} path */
-  function checkConditionRefs(c, path) {
-    if (c.type === 'all' || c.type === 'any') c.conditions.forEach((/** @type {any} */ child, /** @type {number} */ i) => checkConditionRefs(child, `${path}/conditions/${i}`));
-    else if (c.type === 'not') checkConditionRefs(c.condition, `${path}/condition`);
-    else if (c.type === 'factEquals' && known.facts && !known.facts.has(c.factId)) at(`${path}/factId`, 'Unknown fact', c.factId);
-    else if (c.type === 'itemAtLeast' && known.items && !known.items.has(c.itemId)) at(`${path}/itemId`, 'Unknown item', c.itemId);
-    else if (c.type === 'questStateEquals' && known.quests && !known.quests.has(c.questId)) at(`${path}/questId`, 'Unknown quest', c.questId);
-    else if (c.type === 'placementOpened' && known.placements && !known.placements.has(c.placementId)) at(`${path}/placementId`, 'Unknown placement', c.placementId);
-  }
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(menu);
 }

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "title": "Codex",
+  "categories": [
+    {"id": "creatures", "label": "Creatures"},
+    {"id": "lore", "label": "Lore"}
+  ],
+  "entries": [
+    {"id": "demo:codex.clay-golem", "category": "creatures", "title": "Clay Golem",
+      "text": ["A figure of fired clay, slow but sturdy.", "Fought in the Practice Sigil and the Formation Drill.", "Placeholder entry: fuller notes arrive as the bestiary grows."]},
+    {"id": "demo:codex.bat", "category": "creatures", "title": "Bat",
+      "text": ["Quick and frail, it strikes before slower foes can act.", "Fought in the Practice Sigil and the Formation Drill.", "Placeholder entry: fuller notes arrive as the bestiary grows."]},
+    {"id": "demo:codex.two-headed-ogre", "category": "creatures", "title": "Two-Headed Ogre",
+      "text": ["A huge brute that fills two lanes and two rows of the battle grid.", "Fought in the Formation Drill.", "Placeholder entry: fuller notes arrive as the bestiary grows."]},
+    {"id": "demo:codex.workshop", "category": "lore", "title": "The Workshop",
+      "text": ["Where the journey begins. Mara, the Workshop caretaker, keeps it in order.", "Placeholder entry."]},
+    {"id": "demo:codex.gallery-plaque", "category": "lore", "title": "The brass plaque",
+      "text": ["THE PILLAR GALLERY. A hidden line glows beneath the old lettering:", "A polished lens once focused the gallery's light."],
+      "when": {"type": "factEquals", "factId": "demo:fact.gallery.plaque-read", "value": true}},
+    {"id": "demo:codex.gallery-light", "category": "lore", "title": "The Gallery light",
+      "text": ["Mara fitted the polished lens, and the Gallery light shines again."],
+      "when": {"type": "questStateEquals", "questId": "demo:quest.gallery-light", "value": "completed"}},
+    {"id": "demo:codex.archive-ledger", "category": "lore", "title": "The archive ledger",
+      "text": ["The archive clerk in the Gallery east wing has the ledger back."],
+      "when": {"type": "questStateEquals", "questId": "demo:quest.archive-ledger", "value": "completed"}},
+    {"id": "demo:codex.brass-key", "category": "lore", "title": "The brass key",
+      "text": ["A small brass key stamped with a gate bolt. It opens the Gallery Storeroom door."],
+      "when": {"type": "itemAtLeast", "itemId": "demo:item.brass-key", "quantity": 1}}
+  ]
+}

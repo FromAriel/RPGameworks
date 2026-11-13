@@ -39,6 +39,9 @@ import { JOURNAL_SCREEN, journalScreen } from './menu/journal-screen';
 import type { JournalQuest } from './menu/journal-screen';
 import { HELP_SCREEN, helpScreen } from './menu/help-screen';
 import { SAVE_SCREEN, saveScreen } from './menu/save-screen';
+import { CATALOG_SCREEN, catalogScreen, type CatalogParams } from './menu/catalog-screen';
+import { registerGameScreens } from '../game-screens';
+import type { CatalogDefinition } from '../content/generated/catalog';
 import { CONFIG_SCREEN, CONTROLLER_SETUP, configScreen, type ConfigParams, type PlayerSetting } from './menu/config-screen';
 import type { PadAction } from '../platform/gamepad-model';
 import type { ItemDetail, ItemsMemory } from './menu/items-screen';
@@ -49,12 +52,6 @@ import type { Entry as MenuEntry, MenuDefinition } from '../content/generated/me
 import type { WindowskinHandle } from './ui/windowskin';
 import type { Condition } from '../domain/session';
 
-/**
- * The built-in hub entries that do something (decision 0016). Items, Journal and Help are menu screens; Config (the
- * settings panel) and Save (the Save/Load dialog) open the existing windows until U2.3b and U2.3c, and Cancel there
- * comes back to the hub. Entries for screens that do not exist yet (Status, Formation, Codex, Credits) are greyed.
- */
-const HUB_ROUTES = new Set(['builtin:items', 'builtin:journal', 'builtin:save', 'builtin:config', 'builtin:help']);
 
 /** A Move choice's cell, from its menu entry id (`cell:lane,depth`). */
 const cellOf=(id:string)=>{const [lane,depth]=id.slice('cell:'.length).split(',').map(Number);return{lane:lane!,depth:depth!};};
@@ -75,6 +72,8 @@ export interface FoundationElements {
   controllerStatus: () => string;
   /** The game's hub menu (menu.json). */
   menu: MenuDefinition;
+  /** The game's data-only menu screens by catalog ID (decision 0016 U2.4). */
+  catalogs: ReadonlyMap<string, CatalogDefinition>;
   /** The page's window skins, so menu windows are skinned as they open. */
   windowskin: () => WindowskinHandle | null;
   closeTools: () => void;
@@ -137,6 +136,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     /** The hub entry last chosen while the player is in a window opened from the hub; Cancel there returns to the hub. */
     private hubEntry: string | null = null;
     private hubSilent = false;
+    /** The menu's screens: the built-ins and the game's own (src/game-screens.ts). */
+    private screens: ScreenRegistry | null = null;
 
     openMenu(): void {
       if (phase !== 'ready' || this.mode !== 'exploration') return;
@@ -153,11 +154,17 @@ export function createFoundation(elements: FoundationElements, onError: (message
     /** Close the hub without returning to the map (going on to another window). */
     private leaveHub(): void { this.hubSilent = true; try { this.hub?.close(); } finally { this.hubSilent = false; } }
     private hubClosed(): void { if (!this.hubSilent) this.resume(); }
+    /**
+     * Whether a hub entry can open (decision 0016): its screen is registered, built in or the game's own, and a
+     * catalog entry's catalog exists. Entries for screens not built yet (Status, Formation) stay greyed.
+     */
+    private entryReady(entry: MenuEntry): boolean {
+      return !!this.screens?.has(entry.screen) && (entry.screen !== CATALOG_SCREEN || elements.catalogs.has(entry.catalog ?? ''));
+    }
     private chooseEntry(entry: MenuEntry): void {
-      if (this.mode !== 'menu' || !HUB_ROUTES.has(entry.screen)) return;
+      if (this.mode !== 'menu' || !this.entryReady(entry)) return;
       this.hubEntry = entry.id;
-      const screen = { 'builtin:items': ITEMS_SCREEN, 'builtin:journal': JOURNAL_SCREEN, 'builtin:help': HELP_SCREEN, 'builtin:config': CONFIG_SCREEN, 'builtin:save': SAVE_SCREEN }[entry.screen];
-      if (screen) this.hub?.push(screen);
+      this.hub?.push(entry.screen, entry.screen === CATALOG_SCREEN ? { catalog: entry.catalog! } satisfies CatalogParams : undefined);
     }
     /** Config's Controller setup: the side panel replaces the menu, and closing it comes back to Config on that row. */
     private openControllerSetup(): void {
@@ -229,11 +236,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.room.bind(elements.session);
         this.room.show();
         const registry = new ScreenRegistry();
+        this.screens = registry;
         registry.register(HUB_SCREEN, context => hubScreen(context, {
           menu: elements.menu,
           party: () => this.partyCards(),
           info: () => ({ location: content.map.name }),
-          available: entry => HUB_ROUTES.has(entry.screen),
+          available: entry => this.entryReady(entry),
           choose: entry => this.chooseEntry(entry),
           focus: () => this.hubEntry,
         }));
@@ -257,6 +265,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
           confirmation: elements.saveConfirmation, clearInputs: () => this.inputOwner?.clear(),
           checkpointReason: checkpoint => this.checkpointReason(checkpoint), ownerId: 'game-menu',
         }));
+        registry.register(CATALOG_SCREEN, (context, params) => catalogScreen(context, elements.catalogs, params as CatalogParams | undefined));
+        registerGameScreens(registry);
         const layer = createMenuLayer(document.body, 'Game menu');
         layer.element.id = 'game-menu';
         // The menu key closes the menu from inside it too, like the controller's Menu button.

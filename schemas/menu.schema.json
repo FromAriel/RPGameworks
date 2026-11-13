@@ -72,6 +72,11 @@
         "when": {
           "$ref": "#/definitions/condition",
           "description": "Shown only while this holds (for example after a story fact)."
+        },
+        "catalog": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}$",
+          "description": "For builtin:catalog: which of the game's catalogs it shows (game.json catalogs)."
         }
       }
     },

@@ -31,5 +31,9 @@
   "questsFile": "quests.json",
   "encountersFile": "encounters.json",
   "uiThemeFile": "ui-theme.json",
-  "menuFile": "menu.json"
+  "menuFile": "menu.json",
+  "catalogs": [
+    {"id": "codex", "file": "catalogs/codex.json"},
+    {"id": "credits", "file": "catalogs/credits.json"}
+  ]
 }

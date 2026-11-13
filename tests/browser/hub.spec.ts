@@ -26,8 +26,8 @@ test('the menu key opens the hub: party, commands from menu.json, location; grey
   await page.keyboard.press('KeyI');
   await expect(menu(page)).toBeVisible();
   expect(await snapshot(page)).toMatchObject({ inputMode: 'menu', menu: { screen: 'builtin:hub', focused: 'items' } });
-  await expect(page.locator('#game-menu .menu-row')).toHaveText(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Config', 'Help', 'Save']);
-  await expect(page.locator('#game-menu .menu-row[aria-disabled="true"]')).toHaveText(['Status', 'Formation', 'Codex']);
+  await expect(page.locator('#game-menu .menu-row')).toHaveText(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Config', 'Help', 'Credits', 'Save']);
+  await expect(page.locator('#game-menu .menu-row[aria-disabled="true"]')).toHaveText(['Status', 'Formation']); // Not built yet (M5.4d).
   await expect(page.locator('#game-menu .menu-card')).toHaveCount(1);
   await expect(page.locator('#game-menu .menu-card')).toHaveAttribute('aria-label', 'Hero');
   await expect(page.locator('#game-menu .menu-info-window')).toContainText('Location');
@@ -116,7 +116,7 @@ test('pointer and controller: the Menu button and the pad open the hub, move, ch
 test('an entry hidden by its unlock condition appears once the fact is set', { tag: ['@inventory', '@dialogue'] }, async ({ page }) => {
   await page.route('**/generated/content/menu.*.json', async route => {
     const data = await (await route.fetch()).json();
-    data.entries.splice(5, 0, { id: 'plaque-notes', label: 'Plaque notes', screen: 'builtin:codex', help: 'What the plaque said.',
+    data.entries.splice(5, 0, { id: 'plaque-notes', label: 'Plaque notes', screen: 'builtin:catalog', catalog: 'codex', help: 'What the plaque said.',
       when: { type: 'factEquals', factId: 'demo:fact.gallery.plaque-read', value: true } });
     await route.fulfill({ json: data });
   });
@@ -133,5 +133,5 @@ test('an entry hidden by its unlock condition appears once the fact is set', { t
   expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);
   await page.keyboard.press('KeyI');
   await expect(row(page, 'plaque-notes')).toHaveText('Plaque notes');
-  await expect(page.locator('#game-menu .menu-row')).toHaveText(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Plaque notes', 'Config', 'Help', 'Save']);
+  await expect(page.locator('#game-menu .menu-row')).toHaveText(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Plaque notes', 'Config', 'Help', 'Credits', 'Save']);
 });

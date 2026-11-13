@@ -5,7 +5,7 @@ const directionKeys: Record<string, Direction> = {
   ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
 };
-export type InputMode = 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'inventory' | 'save';
+export type InputMode = 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'inventory' | 'save' | 'menu';
 type Action = 'burst' | 'interact' | 'cancel' | 'menu';
 
 /** Focus once at readiness, without stealing focus from a control used during loading. */
@@ -23,7 +23,8 @@ export function focusGameWhenIdle(stage: HTMLElement): void {
 export function gamepadFocusAllowed(ownedModal?: HTMLElement): boolean {
   const confirmation = document.querySelector<HTMLDialogElement>('dialog[open].ui-confirmation');
   if (confirmation && ownedModal && confirmation.dataset.ownerModal === ownedModal.id) return true;
-  for (const modal of document.querySelectorAll('dialog[open], [aria-modal="true"]')) {
+  // A closed menu layer (decision 0016) keeps aria-modal while hidden; only shown modals count.
+  for (const modal of document.querySelectorAll('dialog[open], [aria-modal="true"]:not([hidden])')) {
     if (modal !== ownedModal) return false;
   }
   const focused = document.activeElement;
@@ -39,6 +40,7 @@ export class InputController {
   private readonly held = new Map<string, Direction>();
   private readonly queued = { burst: false, interact: false, cancel: false, menu: false };
   private mode: InputMode = 'exploration';
+  private queuedTab: -1 | 0 | 1 = 0;
 
   constructor(
     private readonly stage: HTMLElement,
@@ -49,6 +51,8 @@ export class InputController {
     private readonly modal?: HTMLDialogElement,
     private readonly inventoryModal?: HTMLDialogElement,
     private readonly saveModal?: HTMLDialogElement,
+    /** The menu layer (decision 0016): a role="dialog" section, not a <dialog>. */
+    private readonly menuModal?: HTMLElement,
   ) {
     const options = { signal: this.lifetime.signal };
     const keyboard = (event: KeyboardEvent): void => {
@@ -118,14 +122,16 @@ export class InputController {
 
   direction(): Direction | null {
     const active = !document.hidden && document.hasFocus() && this.canPlay();
-    const owned=this.mode==='inventory'?this.inventoryModal:this.mode==='save'?this.saveModal:this.mode==='exploration'?undefined:this.modal;
-    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(owned), this.mode === 'inventory'||this.mode==='save'||this.mode==='dialogue'||this.mode==='battle' ? 'menu' : 'gameplay');
+    const owned=this.mode==='inventory'?this.inventoryModal:this.mode==='save'?this.saveModal:this.mode==='menu'?this.menuModal:this.mode==='exploration'?undefined:this.modal;
+    const menuLike = this.mode === 'inventory'||this.mode==='save'||this.mode==='dialogue'||this.mode==='battle'||this.mode==='menu';
+    const pad = this.gamepad?.poll(active && gamepadFocusAllowed(owned), menuLike ? 'menu' : 'gameplay');
     if (!active) { this.clear(); return null; }
     if (pad?.burst) this.queue('burst');
     if (pad?.interact) this.queue('interact');
     if (pad?.cancel) this.queue('cancel');
     if (pad?.menu) this.queue('menu');
-    if (this.mode === 'inventory'||this.mode==='save'||this.mode==='dialogue'||this.mode==='battle') return pad?.direction ?? null;
+    if (pad?.tab) this.queuedTab = pad.tab;
+    if (menuLike) return pad?.direction ?? null;
     if (this.mode !== 'exploration') return null;
     let result: Direction | null = null;
     for (const direction of this.held.values()) result = direction;
@@ -137,6 +143,8 @@ export class InputController {
   consumeInteract(): boolean { return this.consume('interact'); }
   consumeCancel(): boolean { return this.consume('cancel'); }
   consumeMenu(): boolean { return this.consume('menu'); }
+  /** The shoulder buttons' tab step since the last call (decision 0016). */
+  consumeTab(): -1 | 0 | 1 { const value = this.queuedTab; this.queuedTab = 0; return value; }
   focus(): void { this.stage.focus({ preventScroll: true }); }
   private clearLocal(): void {
     this.held.clear(); this.queued.burst = false; this.queued.interact = false; this.queued.cancel = false; this.queued.menu = false;

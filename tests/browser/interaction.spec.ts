@@ -139,7 +139,7 @@ async function fakePad(page: Page): Promise<void> {
   await page.locator('[data-dialogue-choice="accept"]').click();
   expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('active');
   await page.keyboard.press('Escape');
-  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();
+  await page.keyboard.press('KeyI');await page.locator('#game-menu .menu-row[data-id="journal"]').click();
   await expect(page.locator('#journal-body')).toContainText('Restore the Gallery light');
  });
 

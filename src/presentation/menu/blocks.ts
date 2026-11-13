@@ -175,7 +175,8 @@ export function createTabs({ label, tabs, onChange, initial }: { label: string; 
 
 export interface PartyMember {
   readonly id: string; readonly name: string; readonly level?: number;
-  readonly hp: number; readonly maxHp: number; readonly mp?: number; readonly maxMp?: number;
+  /** HP and MP are optional: outside battle the party has no lasting stats until the roster (M5.4d). */
+  readonly hp?: number; readonly maxHp?: number; readonly mp?: number; readonly maxMp?: number;
   /** A portrait element (an image or canvas), or null for an empty frame. */
   readonly portrait?: HTMLElement | null;
   readonly enabled?: boolean; readonly help?: string;
@@ -204,9 +205,10 @@ export function createPartyCards({ members, onChoose, label = 'Party' }: { membe
     lines.className = 'menu-card-lines';
     const name = document.createElement('span'); name.className = 'menu-card-name'; name.textContent = m.name;
     const level = document.createElement('span'); level.textContent = m.level === undefined ? '' : `Lv ${m.level}`;
-    lines.append(name, level, stat('HP', m.hp, m.maxHp, 'life'));
+    lines.append(name, level);
+    if (m.maxHp !== undefined) lines.append(stat('HP', m.hp ?? 0, m.maxHp, 'life'));
     if (m.maxMp !== undefined) lines.append(stat('MP', m.mp ?? 0, m.maxMp, 'magic'));
-    card.setAttribute('aria-label', `${m.name}${m.level === undefined ? '' : `, level ${m.level}`}, HP ${m.hp} of ${m.maxHp}${m.maxMp === undefined ? '' : `, MP ${m.mp ?? 0} of ${m.maxMp}`}`);
+    card.setAttribute('aria-label', `${m.name}${m.level === undefined ? '' : `, level ${m.level}`}${m.maxHp === undefined ? '' : `, HP ${m.hp ?? 0} of ${m.maxHp}`}${m.maxMp === undefined ? '' : `, MP ${m.mp ?? 0} of ${m.maxMp}`}`);
     card.append(portrait, lines);
     element.append(card);
   }

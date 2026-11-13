@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test,expect,openRoom,snapshot,tapDirection,holdToExit,type DirectionKey } from './helpers';
+import { openInventory, closeInventory, test,expect,openRoom,snapshot,tapDirection,holdToExit,type DirectionKey } from './helpers';
 
 // Walking uses the shared helpers, which release keys inside the page, so a loaded machine cannot add a step.
 async function step(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).toBe('walked');}
@@ -9,7 +9,7 @@ async function exit(page:Page,key:DirectionKey,mapId:string):Promise<void>{await
 async function face(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).not.toBe('none');}
 async function interact(page:Page):Promise<void>{await page.keyboard.down('KeyE');try{await expect(page.locator('#interaction-dialog')).toBeVisible();}finally{await page.keyboard.up('KeyE');}}
 async function loadImport(page:Page,file:string):Promise<void>{
-  await page.keyboard.press('KeyI');await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await openInventory(page);
   await page.locator('#inventory-saves').click();await expect(page.locator('#save-dialog')).toBeVisible();
   await page.locator('#save-import').setInputFiles({name:'setup.json',mimeType:'application/json',buffer:readFileSync(file)});
   await expect(page.locator('#save-status')).toContainText('Import validated');
@@ -33,7 +33,7 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
   await expect(page.locator('[data-dialogue-choice="hand-in"]')).toHaveCount(0);
   await page.locator('[data-dialogue-choice="wrap-up"]').click();await expect(page.locator('#interaction-dialog')).toBeHidden();
   await interact(page);await expect(page.locator('[data-dialogue-choice="hand-in"]')).toHaveCount(0);await close(page);
-  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toContainText('Bring Mara the polished lens');await page.locator('#inventory-close').click();
+  await openInventory(page);await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toContainText('Bring Mara the polished lens');await page.locator('#inventory-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();
   await step(page,'ArrowUp');await exit(page,'ArrowRight','demo:map.gallery');
   await walk(page,'ArrowDown',2);await walk(page,'ArrowRight',4);await interact(page);await expect(page.locator('#dialog-text')).toContainText('polished lens');await close(page);
   expect((await snapshot(page)).session.inventory['demo:item.lens']).toBe(1);
@@ -48,13 +48,13 @@ test('accepting and completing Mara’s quest updates the Journal and Gallery li
   await expect(page.locator('#stage')).toBeFocused();
   await step(page,'ArrowUp'); // Keyboard movement resumes after the completion message.
   const state=(await snapshot(page)).session;expect(state.quests['demo:quest.gallery-light']).toBe('completed');expect(state.inventory['demo:item.lens']).toBeUndefined();
-  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();
+  await openInventory(page);await page.locator('#inventory-journal').click();
   await expect(page.locator('#journal-body')).toBeVisible();await expect(page.locator('#journal-body')).toContainText('shines again');
-  await page.locator('#inventory-close').click();await expect(page.locator('#inventory-dialog')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
-  await page.keyboard.press('KeyI');await expect(page.locator('#inventory-title')).toHaveText('Inventory');
+  await page.locator('#inventory-close').click();await expect(page.locator('#inventory-dialog')).toBeHidden();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
+  await openInventory(page);await expect(page.locator('#inventory-title')).toHaveText('Inventory');
   await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toBeVisible();
   await expect(page.locator('#journal-body')).toContainText('shines again');
-  await page.keyboard.press('Escape');await expect(page.locator('#inventory-dialog')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
+  await closeInventory(page);
   await exit(page,'ArrowRight','demo:map.gallery');
   await page.screenshot({path:info.outputPath('gallery-light-restored.png')});
   expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('completed');
@@ -101,10 +101,10 @@ test('the archive clerk uses the same item hand-in flow across the keyed Storero
   await step(page,'ArrowUp');await walk(page,'ArrowLeft',4);await step(page,'ArrowDown');await face(page,'ArrowLeft');await interact(page);
   await page.locator('[data-dialogue-choice="hand-in"]').click();await expect(page.locator('#dialog-text')).toContainText('safe again');await close(page);
   let state=(await snapshot(page)).session;expect(state.quests['demo:quest.archive-ledger']).toBe('completed');expect(state.inventory['demo:item.archive-ledger']).toBeUndefined();expect(state.inventory['demo:item.brass-key']).toBe(1);
-  await page.keyboard.press('KeyI');await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toContainText('ledger back');await page.locator('#inventory-saves').click();
+  await openInventory(page);await page.locator('#inventory-journal').click();await expect(page.locator('#journal-body')).toContainText('ledger back');await page.locator('#inventory-saves').click();
   await page.locator('#save-slots .save-slot').first().getByRole('button',{name:'Save'}).click();await expect(page.locator('#save-status')).toContainText('Progress saved');
   await page.reload();await expect.poll(()=>page.evaluate(()=>(window as any).__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');
-  await page.locator('#tools-toggle').click();await page.locator('#inventory-saves').click();await page.locator('#save-slots .save-slot').first().getByRole('button',{name:'Load'}).click();
+  await page.locator('#tools-toggle').click();await page.locator('#game-menu .menu-row[data-id="save"]').click();await page.locator('#save-slots .save-slot').first().getByRole('button',{name:'Load'}).click();
   await page.locator('#save-confirmation').getByRole('button',{name:'Load Slot 1'}).click();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
   state=(await snapshot(page)).session;expect(state.quests['demo:quest.archive-ledger']).toBe('completed');expect(state.inventory['demo:item.brass-key']).toBe(1);
 });

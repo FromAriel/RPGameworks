@@ -1,5 +1,5 @@
 import type { Page, TestInfo } from '@playwright/test';
-import { test, expect, openRoom, snapshot, tapDirection } from './helpers';
+import { test, expect, openRoom, openInventory, closeInventory, snapshot, tapDirection } from './helpers';
 import { SKIN_SPECS, atlasDataUrl, buildSkin } from '../fixtures/skin-fixtures';
 import { contentInsets, readSkinManifest } from '../../src/presentation/skin/skin-manifest.mjs';
 
@@ -85,12 +85,12 @@ test('Ariel’s skin: dialogue and inventory content stay inside the published i
     await page.keyboard.press('Escape');
     await expect(page.locator('#interaction-dialog')).toBeHidden();
     await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
-    await page.keyboard.press('KeyI');
+    await openInventory(page);
     await painted(page, '#inventory-dialog');
     const inventory = await measure(page, '#inventory-dialog');
     expectContentInside(inventory, `inventory ${viewport.width}`);
     expectTitleFits(inventory, `inventory ${viewport.width}`);
-    await page.keyboard.press('Escape');
+    await closeInventory(page);
   }
 });
 

@@ -125,6 +125,14 @@ The game's menus look and play like a classic Final Fantasy-style JRPG menu, and
 - **Grid block:** deferred to M5.4d's formation screen, the first screen that needs it.
 - **Help line:** not a live region, because each row's help is already its description; the detail window is the live region.
 
+**Execution notes (U2.1):**
+- **Interim entries (Ariel, before U2.1):**
+  - Items, Journal, Save, Config and Help open the existing windows until their screens exist, and come back to the hub.
+  - Status, Formation and Codex show greyed with "Arrives later."
+- **Party card:** the hero's card has a name and a portrait but no HP or MP bars. Outside battle there are no lasting party stats until M5.4d.
+- **Default menu:** a game without `menu.json` gets a built-in default (Items, Journal, Config, Help, Save; location).
+- **Test tag:** hub tests use the existing `@inventory` area rather than a new tag.
+
 ## 7. Not in U2
 
 - Equip and Skills screens, which arrive with equipment and skills (M5.9–M5.10).

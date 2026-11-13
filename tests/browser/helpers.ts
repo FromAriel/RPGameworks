@@ -123,11 +123,32 @@ export async function holdToExit(page: Page, key: DirectionKey): Promise<Runtime
   return mode as RuntimeSnapshot['inputMode'];
 }
 
-/** Reach controls through the real closed-by-default player menu. */
+/**
+ * The menu key opens the hub (decision 0016 U2.1); its Items entry opens the Inventory dialog until U2.2. Closing the
+ * Inventory returns to the hub, and closing the hub returns to the map.
+ */
+export async function openInventory(page: Page): Promise<void> {
+  await page.keyboard.press('KeyI');
+  await expect(page.locator('#game-menu')).toBeVisible();
+  await page.locator('#game-menu .menu-row[data-id="items"]').click();
+  await expect(page.locator('#inventory-dialog')).toBeVisible();
+}
+/** Close the Inventory and then the hub, back to the map. */
+export async function closeInventory(page: Page): Promise<void> {
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#inventory-dialog')).toBeHidden();
+  await expect(page.locator('#game-menu')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#game-menu')).toBeHidden();
+  await expect(page.locator('#stage')).toBeFocused();
+}
+
+/** Reach controls through the real closed-by-default player menu: Menu, Items, then the Inventory's Settings. */
 export async function openTools(page: Page, tab: 'options' | 'debug' = 'options'): Promise<void> {
   if (await page.locator('#tools-panel').isHidden()) {
-    if (await page.locator('#inventory-dialog').isHidden()) await page.locator('#tools-toggle').click();
-    await expect.poll(async () => await page.locator('#inventory-dialog').isVisible() || await page.locator('#tools-panel').isVisible()).toBe(true);
+    if (await page.locator('#inventory-dialog').isHidden() && await page.locator('#game-menu').isHidden()) await page.locator('#tools-toggle').click();
+    await expect.poll(async () => await page.locator('#game-menu').isVisible() || await page.locator('#inventory-dialog').isVisible() || await page.locator('#tools-panel').isVisible()).toBe(true);
+    if (await page.locator('#game-menu').isVisible()) await page.locator('#game-menu .menu-row[data-id="items"]').click();
     if (await page.locator('#inventory-dialog').isVisible()) await page.locator('#inventory-settings').click();
   }
   const button = page.locator(`#${tab}-tab`);

@@ -34,6 +34,20 @@ import type { ConfirmationDialogParts, PromptEntry } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
+import { MenuController, ScreenRegistry, createMenuLayer } from './menu/screens';
+import { HUB_SCREEN, hubScreen } from './menu/hub';
+import type { PartyMember } from './menu/blocks';
+import { spritePortrait } from './menu/portrait';
+import type { Entry as MenuEntry, MenuDefinition } from '../content/generated/menu';
+import type { WindowskinHandle } from './ui/windowskin';
+import type { Condition } from '../domain/session';
+
+/**
+ * Where each built-in hub entry goes until its new screen exists (decision 0016 U2.1, Ariel's interim answer): the
+ * existing Inventory, Journal, Save/Load and Settings windows. Cancel there comes back to the hub. Entries for screens
+ * that do not exist yet (Status, Formation, Codex, Credits) are shown greyed.
+ */
+const HUB_ROUTES = new Set(['builtin:items', 'builtin:journal', 'builtin:save', 'builtin:config', 'builtin:help']);
 
 /** A Move choice's cell, from its menu entry id (`cell:lane,depth`). */
 const cellOf=(id:string)=>{const [lane,depth]=id.slice('cell:'.length).split(',').map(Number);return{lane:lane!,depth:depth!};};
@@ -47,7 +61,12 @@ export interface FoundationElements {
   saves: SaveService;
   base: URL;
   inventoryPrompt: () => PromptEntry[];
-  openSettings: () => void;
+  /** Open the settings panel; `help` opens How to play, `onClosed` runs once when the panel closes. */
+  openSettings: (options?: { help?: boolean; onClosed?: () => void }) => void;
+  /** The game's hub menu (menu.json). */
+  menu: MenuDefinition;
+  /** The page's window skins, so menu windows are skinned as they open. */
+  windowskin: () => WindowskinHandle | null;
   closeTools: () => void;
   toolsOwnInput: () => boolean;
   updateTools: (deltaMs: number) => void;
@@ -103,14 +122,54 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private inventory: InventoryMenu | null = null;
     private saveMenu: SaveMenu | null = null;
     private menuPending = false;
+    /** The hub (decision 0016 U2.1) and its layer; built with the scene, disposed with it. */
+    private hub: MenuController | null = null;
+    /** The hub entry last chosen while the player is in a window opened from the hub; Cancel there returns to the hub. */
+    private hubEntry: string | null = null;
+    private saveFromHub = false;
+    private hubSilent = false;
 
-    openInventory(): void {
+    openMenu(): void {
       if (phase !== 'ready' || this.mode !== 'exploration') return;
       if (this.room?.actor.motion) { this.menuPending = true; this.inputOwner?.clear(); return; }
       this.menuPending = false;
       elements.closeTools();
-      this.setMode('inventory');
-      this.inventory?.open();
+      this.openHub();
+    }
+    private openHub(): void {
+      if (!this.hub) return;
+      this.setMode('menu');
+      this.hub.push(HUB_SCREEN);
+    }
+    /** Close the hub without returning to the map (going on to another window). */
+    private leaveHub(): void { this.hubSilent = true; try { this.hub?.close(); } finally { this.hubSilent = false; } }
+    private hubClosed(): void { if (!this.hubSilent) this.resume(); }
+    private backToHub(): void { this.inventory?.close(); this.saveMenu?.close(); this.openHub(); }
+    private chooseEntry(entry: MenuEntry): void {
+      if (this.mode !== 'menu' || !HUB_ROUTES.has(entry.screen)) return;
+      this.hubEntry = entry.id;
+      if (entry.screen === 'builtin:items' || entry.screen === 'builtin:journal') {
+        this.leaveHub(); this.setMode('inventory'); this.inventory?.open(entry.screen === 'builtin:journal' ? 'journal' : 'items');
+      } else if (entry.screen === 'builtin:save') {
+        this.leaveHub(); this.saveFromHub = true; this.returnLabel('Return to Menu'); this.setMode('save'); void this.saveMenu?.open().catch(cause => this.fail(cause));
+      } else {
+        // Config and Help are the settings panel until U2.3; closing it comes back to the hub on this entry.
+        const back = entry.id;
+        this.resume();
+        elements.openSettings({ help: entry.screen === 'builtin:help', onClosed: () => { if (this.mode !== 'exploration' || !this.hub) return; this.hubEntry = back; this.openHub(); } });
+      }
+    }
+    /** Party cards: the hero only, with no lasting stats until the roster (M5.4d), and a portrait cut from its sprite. */
+    private partyCards(): PartyMember[] {
+      const frame = this.textures.exists(ATLAS) ? this.textures.getFrame(ATLAS, 'hero-down') : null;
+      const portrait = frame ? spritePortrait(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }) : null;
+      return [{ id: 'hero', name: 'Hero', portrait }];
+    }
+    menuState(): RuntimeSnapshot['menu'] {
+      const hub = this.hub;
+      if (!hub?.open) return null;
+      const active = document.activeElement;
+      return { screen: hub.topId!, focused: active instanceof HTMLElement && hub.layer.element.contains(active) ? active.dataset.id ?? null : null };
     }
 
     constructor() { super(SCENE); }
@@ -138,8 +197,22 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.room = new MapView(this, content, elements.session.current, characterArt);
         this.room.bind(elements.session);
         this.room.show();
+        const registry = new ScreenRegistry();
+        registry.register(HUB_SCREEN, context => hubScreen(context, {
+          menu: elements.menu,
+          party: () => this.partyCards(),
+          info: () => ({ location: content.map.name }),
+          available: entry => HUB_ROUTES.has(entry.screen),
+          choose: entry => this.chooseEntry(entry),
+          focus: () => this.hubEntry,
+        }));
+        const layer = createMenuLayer(document.body, 'Game menu');
+        layer.element.id = 'game-menu';
+        // The menu key closes the menu from inside it too, like the controller's Menu button.
+        layer.element.addEventListener('keydown', event => { if (event.code === 'KeyI' && !event.repeat) { event.preventDefault(); this.resume(); } }, { signal: this.sceneLifetime.signal });
+        this.hub = new MenuController(layer, registry, { holds: condition => elements.session.evaluate(condition as Condition) }, elements.windowskin(), () => this.hubClosed());
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
-          elements.gamepad, elements.canPlay, elements.dialog, elements.inventory,elements.saveDialog);
+          elements.gamepad, elements.canPlay, elements.dialog, elements.inventory,elements.saveDialog,layer.element);
         starts += 1;
         current = this;
         this.room.setEffectsEnabled(elements.effects.checked);
@@ -152,7 +225,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         }, { signal: this.sceneLifetime.signal });
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
         this.inventory = new InventoryMenu(elements.inventory, elements.session,
-          () => this.resume(), () => { this.resume(); elements.openSettings(); },()=>this.openSaves(),elements.inventoryPrompt);
+          () => { if (this.hubEntry) this.backToHub(); else this.resume(); }, () => { this.resume(); elements.openSettings(); },()=>this.openSaves(),elements.inventoryPrompt);
         this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory(),elements.saveConfirmation,()=>this.inputOwner?.clear(),reason=>this.checkpointReason(reason));
         phase = 'ready';
         scheduleResize();
@@ -187,7 +260,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
           this.menuPending = false;
           room.releaseDeferred();
           const exit = room.exits.arrive(room.actor.tile);
-          if (exit) this.startTransition(exit); else this.openInventory();
+          if (exit) this.startTransition(exit); else this.openMenu();
         }
         return;
       }
@@ -202,6 +275,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
         return;
       }
       if(this.mode==='save'){this.saveMenu?.sample({direction,interact,cancel,menu,burst:false},delta);return;}
+      if (this.mode === 'menu') {
+        const tab = input.consumeTab();
+        if (menu) { this.resume(); return; } // The Menu button closes the menu, as it opened it.
+        this.hub?.sample({ direction, interact, cancel, menu: false, burst: false, tab }, delta);
+        return;
+      }
       if(this.mode==='dialogue'){this.dialog.sampleChoices({direction,interact,cancel,menu,burst:false},delta);return;}
       if(this.mode==='battle'){
         room.sync(delta); // Keep cosmetic timelines alive while exploration simulation is paused.
@@ -209,7 +288,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         else if(cancel)this.cancelModal();
         return;
       }
-      if (this.mode === 'exploration' && menu) { this.openInventory(); return; }
+      if (this.mode === 'exploration' && menu) { this.openMenu(); return; }
       if (this.mode !== 'exploration') {
         if (cancel) this.cancelModal();
         else if (interact && this.mode === 'message') {
@@ -388,13 +467,15 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if(id==='skip')view.skip();
       else if(id==='speed'){view.speed=nextSpeed(view.speed);this.showBattle();}
     }
-    private openSaves():void{if(this.mode!=='inventory')return;this.inventory?.close();this.setMode('save');void this.saveMenu?.open().catch(cause=>this.fail(cause));}
-    private returnToInventory():void{if(this.mode!=='save')return;this.setMode('inventory');this.inventory?.open();}
+    /** The Save/Load dialog's return button names where it goes back to. */
+    private returnLabel(text:string):void{const button=elements.saveDialog.querySelector<HTMLElement>('#save-close');if(button)button.textContent=text;}
+    private openSaves():void{if(this.mode!=='inventory')return;this.returnLabel('Return to Inventory');this.inventory?.close();this.setMode('save');void this.saveMenu?.open().catch(cause=>this.fail(cause));}
+    private returnToInventory():void{if(this.mode!=='save')return;if(this.saveFromHub){this.saveFromHub=false;this.backToHub();return;}this.setMode('inventory');this.inventory?.open();}
     private checkpoint(){const room=this.room!;return{mapId:room.content.map.id,tile:{...room.actor.tile},facing:room.actor.facing};}
     /** Refuses a write whose checkpoint the saved session could not restore (standing on a deferral-closing gate); the player stays put with a visible reason. */
     private checkpointReason(checkpoint:SaveCheckpoint):string|null{return this.room&&this.room.checkpointBlocked(checkpoint.tile)?'Cannot save here: the gate beneath you is still closing. Step off it, then save or export again.':null;}
     private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
-      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.setMode('transition');
+      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.hubEntry=null;this.saveFromHub=false;this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog,quests:elements.session.current.questCatalog},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
@@ -431,6 +512,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private resume(): void {
       this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null;
       this.dialog.close(); this.inventory?.close();this.saveMenu?.close(); this.message = null;this.dialogue=null;
+      this.leaveHub(); this.hubEntry = null; this.saveFromHub = false;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
     private cancelModal(): void {
@@ -516,6 +598,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.generation += 1; this.transfer.dispose();
       this.dialog.dispose(); this.message = null;this.dialogue=null;
       this.inventory?.dispose(); this.inventory = null;this.saveMenu?.dispose();this.saveMenu=null;
+      this.hubSilent = true; this.hub?.dispose(); this.hub = null; this.hubSilent = false; this.hubEntry = null; this.saveFromHub = false;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;
       stops += 1;
@@ -586,7 +669,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
 
   return {
     clearInput(): void { current?.inputOwner?.clear(); },
-    openInventory(): void { current?.openInventory(); },
+    openMenu(): void { current?.openMenu(); },
     snapshot(): RuntimeSnapshot {
       const { map, spawn, collision } = content;
       const room = current?.room;
@@ -596,6 +679,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         phase, scene: SCENE, starts, stops, session: elements.session.current.snapshot(),
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
+        menu: current?.menuState() ?? null,
         battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,windows:current.battleView?.windowSource??'fallback',speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor),art:current.battleView?.artState()??{}};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,

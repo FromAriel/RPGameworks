@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, snapshot, tapDirection } from './helpers';
+import { test, expect, openRoom, openInventory, closeInventory, snapshot, tapDirection } from './helpers';
 import { SKIN_SPECS, atlasDataUrl, buildSkin } from '../fixtures/skin-fixtures';
 
 /**
@@ -46,11 +46,10 @@ test('the UI theme re-skins only the surface it names, loading that skin once', 
   const requests = await withThinSkin(page, (theme) => { theme.surfaces.inventory = THIN; });
   await openRoom(page);
   for (let round = 0; round < 2; round++) {
-    await page.keyboard.press('KeyI');
+    await openInventory(page);
     await painted(page, '#inventory-dialog');
     await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-active', THIN);
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#inventory-dialog')).toBeHidden();
+    await closeInventory(page);
   }
   await talkToMara(page);
   await painted(page, '#interaction-dialog');
@@ -75,7 +74,7 @@ test('a dialogue that names a skin uses it, and the window returns to its defaul
   await expect(page.locator('#interaction-dialog')).toHaveAttribute('data-skin-active', THIN);
   await closeDialogue(page);
   await expect(page.locator('#interaction-dialog')).not.toHaveAttribute('data-skin-id', /./);
-  await page.keyboard.press('KeyI');
+  await openInventory(page);
   await painted(page, '#inventory-dialog');
   await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-active', BASE);
 });
@@ -83,12 +82,11 @@ test('a dialogue that names a skin uses it, and the window returns to its defaul
 test('a skin whose atlas is missing falls back on its own surfaces only', { tag: ['@windows', '@inventory'] }, async ({ page }) => {
   await withThinSkin(page, (theme) => { theme.surfaces.inventory = THIN; }, 'missing');
   await openRoom(page);
-  await page.keyboard.press('KeyI');
+  await openInventory(page);
   await painted(page, '#inventory-dialog', 'fallback');
   await expect(page.locator('#skin-status')).toContainText('Plain accessible windows remain usable.');
   await expect(page.locator('#inventory-close')).toBeVisible(); // Still a usable window.
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#inventory-dialog')).toBeHidden();
+  await closeInventory(page);
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   await talkToMara(page);
   await painted(page, '#interaction-dialog');

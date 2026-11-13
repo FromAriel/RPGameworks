@@ -4,6 +4,54 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## U2.1 the hub — November 13, 2026, local
+
+[Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.1: the menu key now opens a Final Fantasy-style hub instead of the Inventory dialog.
+
+- **Opening and closing:**
+  - **Open:** I, Escape, the Menu button, or the controller's Menu button.
+  - **Close:** Cancel, I, or the Menu button again. Focus returns to the map.
+  - A menu requested mid-step opens at the next tile, as before.
+- **Look** (`src/presentation/menu/hub.ts`): drawn at the game's pixel scale with the U2.0 blocks.
+  - **Help line** along the top.
+  - **Party card** for the hero only, with a placeholder portrait cut from its own sprite (`portrait.ts`, 0016 Q4). It has no HP or MP bars, because outside battle the party has no lasting stats until the roster (M5.4d), and showing an encounter's numbers would invent them.
+  - **Command column** read from the demo's `menu.json`.
+  - **Info:** a location window. Play time and money stay hidden until those systems exist (0016 Q3).
+  - The column can sit on either side (`layout`).
+  - A game without a `menu.json` gets a built-in default menu.
+- **Entries (Ariel's interim answer):** until U2.2 and U2.3 build their screens, entries open the existing windows, and Cancel there comes back to the hub on the same entry.
+  - **Items:** the Inventory.
+  - **Journal:** the Inventory on its Journal.
+  - **Save:** Save/Load, whose button now reads "Return to Menu". Opened from the Inventory, it still reads "Return to Inventory" and goes back there.
+  - **Config:** the settings panel.
+  - **Help:** the settings panel with How to play open.
+  - **Status, Formation and Codex:** greyed, with "Arrives later." in the help line.
+  - An entry with an unlock condition appears once the condition holds.
+- **Input:**
+  - **New input mode:** `menu`. The snapshot's `menu` field reports the top screen and the focused entry.
+  - **Controller tabs:** the shoulder-button tab edge reaches the menu.
+  - **Fixed along the way:** the controller gate counted the hidden menu layer as an open modal (`aria-modal`), which blocked the controller in every other window. Hidden layers no longer count.
+  - **Load resets:** loading a save clears the "opened from the hub" state.
+  - **Label:** the map's screen-reader label now says I or Escape open "the menu".
+- **Tests:**
+  - **Unit (`hub.test.ts`, 5):** entry order; condition hiding; greyed entries; choosing; info slots and sizes; left layout; default menu is valid.
+  - **Browser (`hub.spec.ts`, 4):**
+    - keyboard open, move and close;
+    - every interim route and its return, including Save from the Inventory;
+    - pointer and controller;
+    - a conditional entry appearing after the plaque fact is set.
+  - **Existing browser specs:** about 40 tests that pressed I for the Inventory now go through the hub's Items, using shared `openInventory`/`closeInventory` helpers. A few now use the hub's Journal and Save entries.
+  - **`maps.spec`:** the content-only fixture game drops `menuFile`, like its other optional files, and so uses the default menu.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build and `check:test-tags` (189 tagged) passed;
+  - unit tests **528/528**;
+  - full browser suite **189/189**.
+
+  A screenshot of the hub in the running game was taken.
+- **Not yet:** Ariel's review of the hub. Items, Journal, Config, Help and Save still look like the old windows until U2.2–U2.3.
+- Migration: none (no save or settings change). Next: **U2.2, the Items screen** with categories.
+
 ## U2.0 menu layer, blocks and data — November 13, 2026, local
 
 [Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.0: the foundation for the JRPG menu screens. Nothing in the game uses it yet; U2.1 builds the hub on it.

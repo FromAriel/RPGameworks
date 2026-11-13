@@ -92,7 +92,8 @@ export class InventoryMenu {
     for(const quest of quests){const button=document.createElement('button');button.type='button';button.className='ui-list-row';button.textContent=`${this.sessions.current.quest(quest.id)==='completed'?'✓':'•'} ${quest.title}`;button.onclick=()=>select(quest.id);button.onfocus=()=>select(quest.id);list.append(button);}
     if(quests[0])select(quests[0].id);else{title.textContent='';description.textContent='';}
   }
-  open(): void {
+  open(view: 'items' | 'journal' = 'items'): void {
+    if (view === 'journal') this.setJournalOpen(true);
     this.renderJournal();
     const session=this.sessions.current;const state = session.snapshot();
     if (this.revision !== state.revision) {

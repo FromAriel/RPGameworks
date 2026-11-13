@@ -14,6 +14,8 @@ async function capture(target: Locator, name: string, info: TestInfo): Promise<v
 
 async function openInventory(page: Page): Promise<void> {
   await page.keyboard.press('KeyI');
+  await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
+  await page.keyboard.press('Enter');
   await expect(page.locator('#inventory-dialog')).toBeVisible();
 }
 
@@ -54,10 +56,13 @@ async function tapPad(page: Page, index: number): Promise<void> {
 
 async function openInventoryWithPad(page: Page): Promise<void> {
   const inventory = page.locator('#inventory-dialog');
-  for (let attempt = 0; attempt < 3 && await inventory.isHidden(); attempt += 1) {
+  const hub = page.locator('#game-menu');
+  for (let attempt = 0; attempt < 3 && await hub.isHidden(); attempt += 1) {
     await tapPad(page, 9);
-    if (await inventory.isHidden()) await page.waitForTimeout(300);
+    if (await hub.isHidden()) await page.waitForTimeout(300);
   }
+  await expect(hub).toBeVisible();
+  await tapPad(page, 2); // Confirm Items.
   await expect(inventory).toBeVisible();
 }
 
@@ -196,6 +201,7 @@ test.describe('U1.1 real-screen references', () => {
     test('captures narrow touch Inventory', { tag: ['@windows'] }, async ({ page }, info) => {
       await openRoom(page);
       await page.locator('#tools-toggle').tap();
+      await page.locator('#game-menu .menu-row[data-id="items"]').tap();
       await expect(page.locator('#inventory-dialog')).toBeVisible();
       await capture(page.locator('#inventory-dialog'), 'u1-inventory-touch-390x844.png', info);
     });

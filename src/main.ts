@@ -6,6 +6,7 @@ import './presentation/ui/save-menu.css';
 import { loadItemCatalog } from './platform/item-loader';
 import { loadFactCatalog } from './platform/fact-loader';
 import { loadQuestCatalog } from './platform/quest-loader';
+import { loadMenu } from './platform/menu-loader';
 import { SessionState } from './domain/session';
 import { SessionController } from './runtime/session-controller';
 import { SaveService } from './runtime/save-service';
@@ -55,9 +56,14 @@ const pageErrorNotice = required<HTMLElement>('#page-error-notice');
 const controller = new GamepadController();
 const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
 const loadingNotice = required<HTMLElement>('#loading-notice');
-const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.reset(); }, () => drawDiagnostics(),
+// Settings opened from the hub (Config, Help) return to the hub when the panel closes (decision 0016 U2.1).
+let afterTools: (() => void) | null = null;
+const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.reset(); }, () => {
+  drawDiagnostics();
+  if (afterTools && required<HTMLElement>('#tools-panel').hidden) { const next = afterTools; afterTools = null; next(); }
+},
   () => !handle || handle.snapshot().inputMode === 'exploration',
-  () => { if (handle?.snapshot().phase === 'ready' && !failed) { shell.close(); handle.openInventory(); } else shell.open('options'); });
+  () => { if (handle?.snapshot().phase === 'ready' && !failed) { shell.close(); handle.openMenu(); } else shell.open('options'); });
 const controllerUI = mountControllerSettings(controllerPanel, controller, stage, () => ({
   build: __BUILD_ID__, version: __APP_VERSION__,
   runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
@@ -106,7 +112,7 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = artWarning || (snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or open the Journal.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
+    const message = artWarning || (snapshot.inputMode === 'menu' ? 'Menu open. Choose a command, or press Escape to return.' : snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or open the Journal.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
@@ -208,7 +214,7 @@ async function start(): Promise<void> {
     // Window skins are cosmetic: a theme that cannot load leaves Ariel's skin in place instead of stopping the game.
     try { const theme = await loadUiTheme(base, content.game, appLifetime.signal); if (theme && !disposed) windowSkin.useTheme(theme); }
     catch (cause) { if (!appLifetime.signal.aborted) console.warn('[RPGameworks] UI theme unavailable; keeping the base window skin:', cause); }
-    const [catalog,facts,quests,stateIndex]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal)]);
+    const [catalog,facts,quests,stateIndex,menu]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal),loadMenu(base,content,appLifetime.signal)]);
     if(JSON.stringify(quests.map(quest=>quest.id))!==JSON.stringify(stateIndex.questIds??[]))throw new Error('Quest catalog does not match the save state index');
     const session = new SessionController(new SessionState({items:catalog,facts,quests}));
     saveService=new SaveService({gameId:content.game.id,saveCompatibilityVersion:content.game.saveCompatibilityVersion??1,index:stateIndex},new IndexedDbSaveRepository());
@@ -222,7 +228,16 @@ async function start(): Promise<void> {
       saves:saveService,
       base,
       inventoryPrompt,
-      openSettings: () => shell.open('options'),
+      openSettings: options => {
+        shell.open('options');
+        afterTools = options?.onClosed ?? null;
+        if (options?.help) {
+          const help = document.querySelector<HTMLDetailsElement>('#tools-panel .help-panel');
+          if (help) { help.open = true; help.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true }); }
+        }
+      },
+      menu,
+      windowskin: () => windowSkin,
       closeTools: () => shell.close(),
       toolsOwnInput: () => shell.ownsInput || controllerPanel.open,
       updateTools: delta => {

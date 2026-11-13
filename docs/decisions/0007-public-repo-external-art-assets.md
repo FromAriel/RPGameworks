@@ -1,5 +1,7 @@
 # Decision 0007 — Public repository, private external art
 
+> **Exception (November 12, 2026, Ariel; [decision 0015](0015-stone-soup-creatures.md)):** Dungeon Crawl Stone Soup monster art is public domain (CC0 1.0) and **is committed to the repository**, with its licence and credits, so the framework ships with real creatures. Everything else here, including LPC, is unchanged.
+
 **Status:** Policy set by Ariel on November 8, 2026. Planning only: no external asset has been imported, no fetch script exists, and no `.gitignore` change has been made. Execution follows the import plan below after Ariel reviews it.
 
 ## Context

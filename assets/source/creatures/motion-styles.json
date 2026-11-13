@@ -1,0 +1,146 @@
+{
+  "format": "rpgameworks.creature-motion",
+  "formatVersion": 1,
+  "pad": 4,
+  "styles": {
+    "walk": {
+      "label": "Walk",
+      "legShare": 0.22,
+      "armShare": 0.25,
+      "walkMs": 110,
+      "idleMs": 650,
+      "walk": [
+        {
+          "legL": [
+            -2,
+            0
+          ],
+          "legR": [
+            2,
+            -1
+          ],
+          "armL": -1
+        },
+        {
+          "legL": [
+            -1,
+            0
+          ],
+          "legR": [
+            0,
+            -2
+          ],
+          "armL": -1
+        },
+        {
+          "legL": [
+            2,
+            -1
+          ],
+          "legR": [
+            -2,
+            0
+          ],
+          "armR": -1
+        },
+        {
+          "legL": [
+            0,
+            -2
+          ],
+          "legR": [
+            -1,
+            0
+          ],
+          "armR": -1
+        }
+      ],
+      "idle": [
+        {},
+        {
+          "squash": -1
+        }
+      ]
+    },
+    "slither": {
+      "label": "Slither",
+      "legShare": 0,
+      "waveAmp": 1,
+      "wavePeriod": 10,
+      "walkMs": 90,
+      "idleMs": 260,
+      "walk": [
+        {
+          "wave": 0
+        },
+        {
+          "wave": 0.25
+        },
+        {
+          "wave": 0.5
+        },
+        {
+          "wave": 0.75
+        }
+      ],
+      "idle": [
+        {
+          "wave": 0
+        },
+        {
+          "wave": 0.25
+        },
+        {
+          "wave": 0.5
+        },
+        {
+          "wave": 0.75
+        }
+      ]
+    },
+    "hover": {
+      "label": "Float",
+      "legShare": 0,
+      "walkMs": 120,
+      "idleMs": 200,
+      "walk": [
+        {
+          "bounce": -2,
+          "lean": 1
+        },
+        {
+          "bounce": -3,
+          "lean": 1
+        },
+        {
+          "bounce": -2,
+          "lean": 1
+        },
+        {
+          "bounce": -1,
+          "lean": 1
+        }
+      ],
+      "idle": [
+        {
+          "bounce": -1
+        },
+        {
+          "bounce": -2
+        },
+        {
+          "bounce": -3
+        },
+        {
+          "bounce": -3
+        },
+        {
+          "bounce": -2
+        },
+        {
+          "bounce": -1
+        }
+      ]
+    }
+  }
+}

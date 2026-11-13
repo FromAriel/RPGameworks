@@ -4,6 +4,36 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## C2 creature pixel motion and Ariel's motion assignments — November 12, 2026, local
+
+[Decision 0015](decisions/0015-stone-soup-creatures.md) C2. The game does not use it yet (C3 bakes poses in the content build and animates battlers).
+
+- **Execution answer (Ariel, recorded in 0015):** the pose code is a JSDoc-typed `.mjs` module checked by the strict typecheck, like `battle-grid.mjs`. The content build that will bake with it also runs on the Pages runner's Node 22, which cannot run `.ts`.
+- **Pose module** (`src/content/creature-pose.mjs`, ported from Splurt's `tools/pose-sprite.mjs`, itself from DanJen Delver; pure pixels):
+  - finds the drop shadow and the body shape with its balance column;
+  - builds poses from leg steps, arm swing, lean (mirrored for left-facing art), squash, bounce and the slither wave, with the shadow planted;
+  - `keepShadow: false` gives the body-only hit flash;
+  - `poseLoop` builds a style's walk or idle loop;
+  - it validates both data files with exact messages.
+- **Data:**
+  - `assets/source/creatures/motion-styles.json`: Splurt's three presets with their timings and a 4-pixel pad, labelled Walk, Slither and Float (`hover`).
+  - `assets/source/creatures/motion-assignments.json`: Ariel's first-pass classification of all **1,282** monsters (589 walk, 379 float, 314 slither), from `J:\DOWN Loads\sprite-motion-assignments.json` and sorted by ID.
+- **Tests:** `tests/unit/creature-pose.test.ts` (7):
+  - DanJen Delver's three motion tests, ported: shadow detection, palette kept, bounce and feet;
+  - the styles are valid, and four broken poses are reported exactly;
+  - the assignments cover exactly the 1,282 library IDs with known styles and the expected counts, and bad IDs and styles are reported;
+  - **every monster** poses through its walk and idle loops using only its own colours;
+  - pinned digests for a skeletal warrior (walk), a white imp (float, facing left) and an adder (slither).
+
+  A pose sheet of those three was sent to Ariel. Local results:
+  - typecheck passed;
+  - unit tests **511/511**;
+  - the guards, library check and `npm run validate` passed;
+  - the build passed with no motion code in `dist/`.
+
+  Browser tests were not run (no game change).
+- Migration: none. Next: **C3**, animated creatures in battle (encounter `creature` field, poses baked by the content build, idle loops, lunge and hit flash, reduced-motion and fallback paths, and two demo creatures for Ariel to pick).
+
 ## C1 Stone Soup monster library imported — November 12, 2026, local
 
 [Decision 0015](decisions/0015-stone-soup-creatures.md) C1: the public-domain Dungeon Crawl Stone Soup monster tiles are committed, the one exception to decision 0007. Nothing in the game uses them yet (C3).
@@ -787,7 +817,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**Decision 0015 C2 — port the pixel motion and import Ariel's motion assignments** (M5.4a and C1 are done, see above), then C3 and **M5.4b**. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**Decision 0015 C3 — animated Stone Soup creatures in battle** (M5.4a, C1 and C2 are done, see above), then **M5.4b**. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

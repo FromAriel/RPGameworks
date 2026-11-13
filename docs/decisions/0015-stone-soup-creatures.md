@@ -58,7 +58,7 @@ Splurt's `tools/pose-sprite.mjs` (Ariel's code, adapted from DanJen Delver) and 
 - **Guards:** `check:external-art` keeps guarding `external/` and the other ignored roots, and its policy text names this exception. The credits appear in `NOTICE`.
 - **Acceptance:** every PNG is listed and its hash matches; a test reads every file as a 32 × 32 RGBA PNG; the game build is unchanged.
 
-**C2 — Port the motion and import the assignments.**
+**C2 — Port the motion and import the assignments.** *(Ariel, November 12: the pose code is a JSDoc-typed `.mjs` module checked by the strict typecheck, like `battle-grid.mjs`, because the content build that bakes poses also runs on the Pages runner's Node 22, which cannot run `.ts` files.)*
 - **Code:** a strict TypeScript pose module, the motion presets as a validated data file, and the 1,282-entry assignments validated against the library.
 - **Tests:** ported from Splurt and DanJen Delver (synthetic shadow, palette kept, feet move, presets valid), plus deterministic bakes against fixtures.
 - **Acceptance:** those tests pass, and the assignments cover every library ID with known styles.

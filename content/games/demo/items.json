@@ -6,31 +6,36 @@
       "id": "demo:item.lens",
       "nameKey": "lens.name",
       "descriptionKey": "lens.description",
-      "maxStack": 1
+      "maxStack": 1,
+      "category": "key"
     },
     {
       "id": "demo:item.brass-key",
       "nameKey": "key.name",
       "descriptionKey": "key.description",
-      "maxStack": 1
+      "maxStack": 1,
+      "category": "key"
     },
     {
       "id": "demo:item.archive-ledger",
       "nameKey": "ledger.name",
       "descriptionKey": "ledger.description",
-      "maxStack": 1
+      "maxStack": 1,
+      "category": "key"
     },
     {
       "id": "demo:item.workshop-key",
       "nameKey": "workshop-key.name",
       "descriptionKey": "workshop-key.description",
-      "maxStack": 1
+      "maxStack": 1,
+      "category": "key"
     },
     {
       "id": "demo:item.tonic",
       "nameKey": "tonic.name",
       "descriptionKey": "tonic.description",
       "maxStack": 9,
+      "category": "consumables",
       "battleUse": {
         "type": "heal",
         "amount": 12

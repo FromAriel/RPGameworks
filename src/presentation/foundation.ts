@@ -36,6 +36,9 @@ import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 import { MenuController, ScreenRegistry, createMenuLayer } from './menu/screens';
 import { HUB_SCREEN, hubScreen } from './menu/hub';
+import { ITEMS_SCREEN, itemsScreen } from './menu/items-screen';
+import type { ItemDetail, ItemsMemory } from './menu/items-screen';
+import { ALL_ITEMS, categoryOf, itemCategories } from '../domain/item-order';
 import type { PartyMember } from './menu/blocks';
 import { spritePortrait } from './menu/portrait';
 import type { Entry as MenuEntry, MenuDefinition } from '../content/generated/menu';
@@ -100,6 +103,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
   const appLifetime = new AbortController();
   let characterArt: CharacterArt | null = null;
   let characterArtStatus: RuntimeSnapshot['characterArtStatus'] = 'loading';
+  // The Items screen's tab and sort, kept for the whole play session (Ariel, U2.2), not in saves.
+  const itemsMemory: ItemsMemory = { tab: ALL_ITEMS, sort: 'type' };
 
   class MapScene extends Phaser.Scene {
     room: MapView | null = null;
@@ -149,7 +154,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if (this.mode !== 'menu' || !HUB_ROUTES.has(entry.screen)) return;
       this.hubEntry = entry.id;
       if (entry.screen === 'builtin:items' || entry.screen === 'builtin:journal') {
-        this.leaveHub(); this.setMode('inventory'); this.inventory?.open(entry.screen === 'builtin:journal' ? 'journal' : 'items');
+        if (entry.screen === 'builtin:items') { this.hub?.push(ITEMS_SCREEN); return; } // U2.2: the new Items screen.
+        this.leaveHub(); this.setMode('inventory'); this.inventory?.open('journal');
       } else if (entry.screen === 'builtin:save') {
         this.leaveHub(); this.saveFromHub = true; this.returnLabel('Return to Menu'); this.setMode('save'); void this.saveMenu?.open().catch(cause => this.fail(cause));
       } else {
@@ -164,6 +170,16 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const frame = this.textures.exists(ATLAS) ? this.textures.getFrame(ATLAS, 'hero-down') : null;
       const portrait = frame ? spritePortrait(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }) : null;
       return [{ id: 'hero', name: 'Hero', portrait }];
+    }
+    /** What the party carries, for the Items screen: names, descriptions, counts and categories from the catalog. */
+    private carriedItems(categories: ReturnType<typeof itemCategories>): ItemDetail[] {
+      const session = elements.session.current, state = session.snapshot(), strings = session.catalog.strings.en;
+      return session.catalog.items.flatMap(item => {
+        const count = state.inventory[item.id];
+        if (!count) return [];
+        const use = item.battleUse ? `Restores ${item.battleUse.amount} HP to one ally in battle.` : '';
+        return [{ id: item.id, name: strings[item.nameKey]!, description: strings[item.descriptionKey]!, count, maxStack: item.maxStack, category: categoryOf(item, categories), use }];
+      });
     }
     menuState(): RuntimeSnapshot['menu'] {
       const hub = this.hub;
@@ -205,6 +221,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
           available: entry => HUB_ROUTES.has(entry.screen),
           choose: entry => this.chooseEntry(entry),
           focus: () => this.hubEntry,
+        }));
+        const categories = itemCategories(elements.session.current.catalog);
+        registry.register(ITEMS_SCREEN, context => itemsScreen(context, {
+          categories,
+          memory: itemsMemory,
+          items: () => this.carriedItems(categories),
+          capacity: () => ({ used: Object.keys(elements.session.current.snapshot().inventory).length, capacity: elements.session.current.catalog.capacity }),
         }));
         const layer = createMenuLayer(document.body, 'Game menu');
         layer.element.id = 'game-menu';
@@ -278,7 +301,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if (this.mode === 'menu') {
         const tab = input.consumeTab();
         if (menu) { this.resume(); return; } // The Menu button closes the menu, as it opened it.
-        this.hub?.sample({ direction, interact, cancel, menu: false, burst: false, tab }, delta);
+        this.hub?.sample({ direction, interact, cancel, menu: false, burst, tab }, delta); // Burst: the screen's secondary action.
         return;
       }
       if(this.mode==='dialogue'){this.dialog.sampleChoices({direction,interact,cancel,menu,burst:false},delta);return;}

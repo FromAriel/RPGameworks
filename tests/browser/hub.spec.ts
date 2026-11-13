@@ -56,13 +56,13 @@ test('the menu key opens the hub: party, commands from menu.json, location; grey
   expect(await tapDirection(page, 'ArrowDown')).toBe('walked'); // The map has input again.
 });
 
-test('hub entries open the existing windows, and Cancel there comes back to the hub on the same entry', { tag: ['@inventory', '@saves'] }, async ({ page }) => {
+test('hub entries open their screens or the existing windows, and Cancel there comes back to the hub on the same entry', { tag: ['@inventory', '@saves'] }, async ({ page }) => {
   await openRoom(page);
   await page.keyboard.press('KeyI');
   await expect(row(page, 'items')).toBeFocused(); // The hub opens on the next game frame.
-  await page.keyboard.press('Enter'); // Items
-  await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await expect(page.locator('#inventory-title')).toHaveText('Inventory');
+  await page.keyboard.press('Enter'); // Items: the Items screen (U2.2), on the menu's own stack.
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
+  expect((await snapshot(page)).menu?.screen).toBe('builtin:items');
   await page.keyboard.press('Escape');
   await expect(menu(page)).toBeVisible();
   await expect(row(page, 'items')).toBeFocused();
@@ -86,8 +86,8 @@ test('hub entries open the existing windows, and Cancel there comes back to the 
   await expect(page.locator('#tools-panel .help-panel summary')).toBeFocused();
   await page.locator('#tools-close').click();
   await expect(row(page, 'help')).toBeFocused();
-  // Items → the Inventory's own Save button → Return goes back to the Inventory, as before.
-  await row(page, 'items').click();
+  // The old dialog's own Save button → Return goes back to that dialog, as before (until U2.3 retires it).
+  await row(page, 'journal').click();
   await page.locator('#inventory-saves').click();
   await expect(page.locator('#save-close')).toHaveText('Return to Inventory');
   await page.locator('#save-close').click();
@@ -104,7 +104,7 @@ test('pointer and controller: the Menu button and the pad open the hub, move, ch
   await page.locator('#tools-toggle').click();
   await expect(menu(page)).toBeVisible();
   await page.locator('#game-menu .menu-row', { hasText: 'Items' }).click();
-  await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
   await tapPad(page, 1); // Cancel: back to the hub…
   await expect(menu(page)).toBeVisible();
   await tapPad(page, 1); // …and back to the map.

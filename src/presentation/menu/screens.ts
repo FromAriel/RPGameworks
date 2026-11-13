@@ -36,6 +36,8 @@ export interface MenuScreen {
   focusFirst(): void;
   /** Q/E or the shoulder buttons: step through tabs or party members. */
   step?(delta: -1 | 1): void;
+  /** The controller's Burst button: a screen's secondary action, such as changing the Items sort. */
+  secondary?(): void;
   /** Cancel: return true when the screen handled it itself (for example closing a picker); otherwise the menu goes back. */
   cancel?(): boolean;
   /** Release everything the screen owns. */
@@ -101,14 +103,16 @@ export class MenuController {
     private readonly onClose: () => void = () => undefined,
   ) {
     this.navigation = new MenuNavigation(layer.surface, () => this.cancel());
+    // Q and E step a screen's tabs (decision 0016). On a screen without tabs E confirms, like Enter (MenuNavigation).
+    // Captured first, so E on a screen with tabs never also confirms the focused row.
     layer.surface.addEventListener('keydown', event => {
-      if (event.repeat || (event.code !== 'KeyQ' && event.code !== 'KeyE')) return;
+      if (event.code !== 'KeyQ' && event.code !== 'KeyE') return;
       if ((event.target as HTMLElement).closest('input,select,textarea')) return;
-      // E confirms the focused button (MenuNavigation); it steps tabs only from a tab itself.
-      if (event.code === 'KeyE' && !(event.target as HTMLElement).closest('[role="tab"]')) return;
-      event.preventDefault();
-      this.top?.screen.step?.(event.code === 'KeyQ' ? -1 : 1);
-    }, { signal: this.lifetime.signal });
+      const screen = this.top?.screen;
+      if (!screen?.step) return;
+      event.preventDefault(); event.stopPropagation();
+      if (!event.repeat) screen.step(event.code === 'KeyQ' ? -1 : 1);
+    }, { capture: true, signal: this.lifetime.signal });
   }
 
   get open(): boolean { return this.stack.length > 0; }
@@ -160,6 +164,7 @@ export class MenuController {
   sample(pad: Readonly<PadInput>, deltaMs: number): void {
     if (!this.open) return;
     if (pad.tab) this.top?.screen.step?.(pad.tab);
+    if (pad.burst) this.top?.screen.secondary?.();
     this.navigation.sample(pad, deltaMs);
   }
 

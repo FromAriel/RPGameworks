@@ -62,11 +62,12 @@ test('chest grants once, reconstructs after actual room travel and room restart,
 test('Menu opens real inventory with no tools, empty state, and working Settings route',{ tag: ['@inventory', '@smoke'] }, async({page})=>{
   await openRoom(page);await page.locator('#tools-toggle').click();
   await expect(page.locator('#game-menu')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
-  await page.locator('#game-menu .menu-row[data-id="items"]').click();
+  await page.locator('#game-menu .menu-row[data-id="journal"]').click();
   await expect(page.locator('#inventory-dialog')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
+  await page.locator('#inventory-journal').click();
   await expect(page.locator('#item-name')).toHaveText('Empty inventory');
-  await expect(page.locator('#inventory-close')).toBeFocused();
-  await page.keyboard.press('ArrowUp');await expect(page.locator('#inventory-settings')).toBeFocused();
+  await expect(page.locator('#inventory-journal')).toBeFocused();
+  await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');await expect(page.locator('#inventory-settings')).toBeFocused();
   await page.keyboard.press('Enter');await expect(page.locator('#tools-panel')).toBeVisible();
   await expect(page.locator('#inventory-dialog')).toBeHidden();await closeTools(page);
 });
@@ -93,8 +94,8 @@ test('controller Menu opens inventory, keeps held inputs isolated, and cancel re
   await padButton(page,9,true);await expect(page.locator('#game-menu')).toBeVisible();
   await page.waitForTimeout(220);await expect(page.locator('#game-menu')).toBeVisible(); // Held Menu does not close it again.
   await padButton(page,9,false);await page.waitForTimeout(120);
-  await tapPad(page,2);await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await tapPad(page,12);await expect(page.locator('#inventory-settings')).toBeFocused();
+  await tapPad(page,13);await tapPad(page,13);await tapPad(page,13);await tapPad(page,2);await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await tapPad(page,13);await tapPad(page,13);await expect(page.locator('#inventory-settings')).toBeFocused();
   await tapPad(page,2);await expect(page.locator('#options-panel')).toBeVisible();
   const before=await snapshot(page);await tapPad(page,13); // moves to next real focus target, not character
   expect((await snapshot(page)).actorTile).toEqual(before.actorTile);
@@ -218,7 +219,7 @@ test('direct configuration steps skip conflicts and text entry does not close th
 
 test('disconnect and reconnect during inventory never consume a held confirm or cancel',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);
-  await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,2);
+  await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,13);await tapPad(page,13);await tapPad(page,13);await tapPad(page,2);
   await expect(page.locator('#inventory-dialog')).toBeVisible();const before=(await snapshot(page)).session;
   await page.evaluate(()=>{(navigator.getGamepads()[0] as unknown as {connected:boolean}).connected=false;});
   await page.waitForTimeout(150);await expect(page.locator('#inventory-dialog')).toBeVisible();

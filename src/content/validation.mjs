@@ -96,9 +96,27 @@ export function readItems(value, file = 'items.json') {
   for (const [key, text] of Object.entries(data.strings.en)) {
     if (!text.trim()) issues.push({file, id:'catalog', path:`/strings/en/${key}`, message:'String must contain visible text', value:text});
   }
+  // Categories (decision 0016 Q2): the catalog's own list, or the default three.
+  const categories = new Set();
+  (data.categories ?? []).forEach((category, index) => {
+    if (categories.has(category.id)) issues.push({file, id:'catalog', path:`/categories/${index}/id`, message:'Duplicate item category', value:category.id});
+    categories.add(category.id);
+    if (!Object.hasOwn(data.strings.en, category.labelKey)) issues.push({file, id:'catalog', path:`/categories/${index}/labelKey`, message:'Missing category string', value:category.labelKey});
+  });
+  const known = data.categories ? categories : new Set(DEFAULT_ITEM_CATEGORIES.map(category => category.id));
+  data.items.forEach((item, index) => {
+    if (item.category !== undefined && !known.has(item.category)) issues.push({file, id:item.id, path:`/items/${index}/category`, message:`Unknown item category (known: ${[...known].join(', ')})`, value:item.category});
+  });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
 }
+
+/** The Items screen's categories when a catalog declares none (decision 0016 Q2). */
+export const DEFAULT_ITEM_CATEGORIES = Object.freeze([
+  Object.freeze({ id: 'consumables', label: 'Consumables' }),
+  Object.freeze({ id: 'key', label: 'Key Items' }),
+  Object.freeze({ id: 'materials', label: 'Materials' }),
+]);
 
 /** @param {unknown} value @param {string} file @returns {FactCatalog} */
 export function readFacts(value, file = 'facts.json') {

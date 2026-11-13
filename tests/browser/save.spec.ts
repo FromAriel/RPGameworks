@@ -47,10 +47,10 @@ test('exports a deterministic JSON filename and imports a validated fixture into
 });
 
 test('keyboard and controller navigate Save without a virtual pointer and isolate held input',{ tag: ['@saves', '@input'] }, async({page})=>{
-  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,2);await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await tapPad(page,12);await tapPad(page,12);await expect(page.locator('#inventory-saves')).toBeFocused();await tapPad(page,2);await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
+  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,13);await tapPad(page,13);await tapPad(page,13);await tapPad(page,2);await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await tapPad(page,13);await expect(page.locator('#inventory-saves')).toBeFocused();await tapPad(page,2);await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
   await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await tapPad(page,1);await expect(page.locator('#inventory-dialog')).toBeVisible();await tapPad(page,1);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,1);await expect(page.locator('#stage')).toBeFocused();expect((await snapshot(page)).pendingSaveOperations).toBe(0);
-  await openInventory(page);await page.keyboard.press('ArrowUp');await page.keyboard.press('ArrowUp');await expect(page.locator('#inventory-saves')).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#save-dialog')).toBeVisible();
+  await openInventory(page);await page.keyboard.press('ArrowDown');await expect(page.locator('#inventory-saves')).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#save-dialog')).toBeVisible();
 });
 
 test('rejects malformed and incompatible imports without changing the running session',{ tag: ['@saves'] }, async({page})=>{

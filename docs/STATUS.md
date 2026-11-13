@@ -4,6 +4,54 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## U2.2 the Items screen, with sorting — November 13, 2026, local
+
+[Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.2: the hub's **Items** entry now opens a real Items screen inside the menu, instead of the old Inventory dialog.
+
+- **Layout:**
+  - **Help line** along the top.
+  - **Top window:** category tabs (**All**, Consumables, Key Items, Materials) and a **sort bar** (Type, A-Z, Qty). The sort bar is Ariel's addition.
+  - **Item list** with counts (×3).
+  - **Detail window:** name, description, quantity out of the stack limit, category, what the item is for, and stacks carried out of capacity.
+  - **Empty:** an empty tab or inventory says so and stays navigable.
+- **Sorting** (`src/domain/item-order.ts`, pure):
+  - **Type:** category order, then name.
+  - **A-Z:** case-insensitive.
+  - **Qty:** most first, then name.
+  - Every order ends on the item ID, so ties never shuffle. The highlighted item stays highlighted when the sort changes.
+- **Controls:**
+  - **Tabs:** Q/E or the shoulder buttons.
+  - **Sort:** R or the controller's **Burst** button, which in menus is now a screen's secondary action and never a map burst.
+  - **Pointer:** clicks pick tabs, sorts and rows.
+  - **Remembered:** the tab and sort last for the whole play session, but are not saved (Ariel's choice).
+- **Browsing only (Ariel's choice):** nothing can be used outside battle until the party has lasting stats (M5.4d). The tonic says "Restores 12 HP to one ally in battle." The party picker for "use on whom?" comes with M5.4d.
+- **Categories in content (0016 Q2):**
+  - Items take an optional `category`, and a catalog may declare its own `categories` (ID and label string). Otherwise the default three apply.
+  - An uncategorised item goes under the first category.
+  - Validation rejects unknown or duplicate categories and missing label strings.
+  - Demo: the tonic is a Consumable; the lens, ledger and both keys are Key Items.
+  - Saves are unaffected, since they store only counts.
+- **Menu fixes:**
+  - **E now steps tabs:** on a screen that has tabs, E steps them like Q. Before, it confirmed the focused row, so only Q worked. On screens without tabs, E still confirms.
+  - **Burst reaches the menu:** the controller's Burst button reaches menu screens.
+- **The old Inventory dialog** is still reachable from the hub's **Journal** (with its Inventory toggle) until U2.3 retires it. Tests that check that dialog now reach it that way.
+- **Tests:**
+  - **Unit (`item-order.test.ts`, 5):** default and custom categories; the three sorts and their tie-breaks; tab filtering; the sort cycle; category validation errors.
+  - **Browser (`items-screen.spec.ts`, 3):**
+    - keyboard tabs, sorts, detail and help, with tab and sort remembered after closing;
+    - controller shoulder tabs and Burst sort, pointer tabs, sorts and rows, with no map burst;
+    - the empty inventory.
+  - **Updated:** `hub.spec`, `menu-blocks.spec` (Enter confirms on a screen with tabs), and the old-dialog tests in `inventory`, `save`, `player-shell` and `ui-reference`.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build and `check:test-tags` (192 tagged) passed;
+  - unit tests **533/533**;
+  - full browser suite **192/192**.
+
+  A screenshot of the Items screen was sent to Ariel.
+- **Not yet:** Ariel's review of the Items screen.
+- Migration: none. Next: **U2.3**, Journal, Help, Config and Save/Load as menu screens, retiring the old Inventory dialog.
+
 ## U2.1 the hub — November 13, 2026, local
 
 [Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.1: the menu key now opens a Final Fantasy-style hub instead of the Inventory dialog.

@@ -41,7 +41,7 @@ test('the menu controller: keyboard moves and opens screens, Q/E switch tabs, Ca
   await page.keyboard.press('Enter');
   await expect.poll(async () => (await menu(page)).top).toBe('gallery:items');
   expect(await menu(page)).toMatchObject({ focused: 'Workshop tonic2', help: 'Restores 12 HP.' });
-  await page.keyboard.press('KeyE'); // On a list row E confirms: the party picker opens.
+  await page.keyboard.press('Enter'); // Enter confirms the row (on a screen with tabs, E steps the tabs): the picker opens.
   await expect(page.locator('.menu-layer button.menu-card')).toHaveCount(4);
   await page.keyboard.press('Escape'); // Cancel closes the picker first…
   await expect(page.locator('.menu-layer button.menu-card')).toHaveCount(0);

@@ -12,11 +12,14 @@ async function capture(target: Locator, name: string, info: TestInfo): Promise<v
   await target.screenshot({ path: info.outputPath(name), animations: 'disabled' });
 }
 
+/** The old Inventory dialog these U1 references capture: the hub's Journal, then the dialog's Inventory toggle (until U2.3). */
 async function openInventory(page: Page): Promise<void> {
   await page.keyboard.press('KeyI');
   await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
-  await page.keyboard.press('Enter');
+  await page.locator('#game-menu .menu-row[data-id="journal"]').click();
   await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await page.locator('#inventory-journal').click();
+  await expect(page.locator('#inventory-title')).toHaveText('Inventory');
 }
 
 async function collectLens(page: Page): Promise<void> {
@@ -62,8 +65,20 @@ async function openInventoryWithPad(page: Page): Promise<void> {
     if (await hub.isHidden()) await page.waitForTimeout(300);
   }
   await expect(hub).toBeVisible();
-  await tapPad(page, 2); // Confirm Items.
+  // Down to Journal, the old dialog (until U2.3), one short step at a time.
+  const journal = page.locator('#game-menu .menu-row[data-id="journal"]');
+  for (let i = 0; i < 8 && !(await journal.evaluate(e => e === document.activeElement)); i += 1) {
+    // A short tap: one step, below the menu's repeat delay.
+    await page.evaluate(() => Object.assign(navigator.getGamepads()[0]!.buttons[13]!, { pressed: true, value: 1 }));
+    await page.waitForTimeout(70);
+    await page.evaluate(() => Object.assign(navigator.getGamepads()[0]!.buttons[13]!, { pressed: false, value: 0 }));
+    await page.waitForTimeout(100);
+  }
+  await expect(journal).toBeFocused();
+  await tapPad(page, 2);
   await expect(inventory).toBeVisible();
+  await tapPad(page, 2); // Its Journal/Inventory toggle has focus: show the item list.
+  await expect(page.locator('#inventory-title')).toHaveText('Inventory');
 }
 
 test.describe('U1.1 real-screen references', () => {
@@ -201,8 +216,9 @@ test.describe('U1.1 real-screen references', () => {
     test('captures narrow touch Inventory', { tag: ['@windows'] }, async ({ page }, info) => {
       await openRoom(page);
       await page.locator('#tools-toggle').tap();
-      await page.locator('#game-menu .menu-row[data-id="items"]').tap();
-      await expect(page.locator('#inventory-dialog')).toBeVisible();
+      await page.locator('#game-menu .menu-row[data-id="journal"]').tap();
+      await page.locator('#inventory-journal').tap();
+      await expect(page.locator('#inventory-title')).toHaveText('Inventory');
       await capture(page.locator('#inventory-dialog'), 'u1-inventory-touch-390x844.png', info);
     });
   });
@@ -216,10 +232,9 @@ test.describe('U1.1 real-screen references', () => {
         (element) => getComputedStyle(element).backgroundImage === 'none',
       ))).toBe(true);
       await openInventory(page);
-      await expect(page.locator('#inventory-close')).toBeFocused();
+      await expect(page.locator('#inventory-journal')).toBeFocused();
       await capture(page.locator('#inventory-dialog'), 'u1-inventory-forced-colors.png', info);
-      await page.keyboard.press('ArrowUp');
-      await page.keyboard.press('ArrowUp');
+      await page.keyboard.press('ArrowDown');
       await expect(page.locator('#inventory-saves')).toBeFocused();
       await page.keyboard.press('Enter');
       await expect(page.locator('#save-dialog')).toBeVisible();

@@ -115,7 +115,7 @@ export class InputController {
 
   private queue(action: Action): void {
     if (!this.canPlay()) return;
-    if (action === 'burst' && this.mode !== 'exploration') return;
+    if (action === 'burst' && this.mode !== 'exploration' && this.mode !== 'menu') return; // In menus, Burst is a screen's secondary action.
     if (action === 'interact' && this.mode === 'transition') return;
     this.queued[action] = true;
   }

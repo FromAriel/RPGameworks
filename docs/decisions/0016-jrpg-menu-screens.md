@@ -133,6 +133,11 @@ The game's menus look and play like a classic Final Fantasy-style JRPG menu, and
 - **Default menu:** a game without `menu.json` gets a built-in default (Items, Journal, Config, Help, Save; location).
 - **Test tag:** hub tests use the existing `@inventory` area rather than a new tag.
 
+**Execution notes (U2.2, Ariel's answers):**
+- **Sorting:** an **All** tab before the categories, and a sort bar (Type, A-Z, Qty). R or the controller's Burst button cycles the sort, which is remembered for the play session but not saved.
+- **Use:** browsing only until M5.4d gives the party lasting stats. The "use on whom?" picker moves to M5.4d.
+- **E key:** on screens with tabs, Q and E step the tabs. Enter, Space or the controller's confirm button picks the focused row.
+
 ## 7. Not in U2
 
 - Equip and Skills screens, which arrive with equipment and skills (M5.9–M5.10).

@@ -47,6 +47,33 @@ export function withBand(draft: Draft, band: number): Draft {
   return { ...clone(draft), band: { top: band, right: band, bottom: band, left: band } };
 }
 
+export type FillType = 'flat' | 'gradient' | 'bands';
+/** The start and end colours of any fill (a flat fill's single colour is both). */
+export function fillColors(draft: Draft): { from: string; to: string } {
+  const f = draft.fill;
+  if (f.type === 'gradient') return { from: f.from ?? '#000000', to: f.to ?? '#000000' };
+  if (f.type === 'bands') return { from: f.top ?? '#000000', to: f.bottom ?? '#000000' };
+  return { from: f.color ?? '#000000', to: f.color ?? '#000000' };
+}
+
+/** Switch the fill kind, keeping its colours; a new gradient runs top to bottom in 16 bands. */
+export function withFillType(draft: Draft, type: FillType): Draft {
+  const { from, to } = fillColors(draft);
+  const fill: Draft['fill'] = type === 'flat' ? { type, color: from }
+    : type === 'gradient' ? { type, from, to, steps: 16, direction: 'down' }
+      : { type, top: from, bottom: to, bandHeight: 4, tileHeight: 16 };
+  return { ...clone(draft), fill };
+}
+
+/** Set a fill's start or end colour (a flat fill has only the one). */
+export function withFillColor(draft: Draft, end: 'from' | 'to', hex: string): Draft {
+  const next = clone(draft), f = next.fill;
+  if (f.type === 'flat') f.color = hex;
+  else if (f.type === 'gradient') f[end] = hex;
+  else f[end === 'from' ? 'top' : 'bottom'] = hex;
+  return next;
+}
+
 /** The recipe as the studio saves it: two-space JSON with a final newline, like the committed recipes. */
 export function recipeText(draft: Draft): string {
   return `${JSON.stringify(draft, null, 2)}\n`;

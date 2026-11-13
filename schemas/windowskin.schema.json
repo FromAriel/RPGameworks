@@ -50,6 +50,14 @@
           }
         },
         "contentMargin": {"type": "integer", "minimum": 0, "maximum": 512, "description": "Extra space between the deepest frame piece on a side and the content. Default 4."},
+        "fill": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "How the window fill piece covers the interior. Without this, fill.plain repeats (never stretched). With stretch, fill.plain is stretched pixel-sharp across the whole window along one axis, so a column of bands becomes a gradient spanning the window (decision 0011 W3.6, November 12, 2026).",
+          "properties": {
+            "stretch": {"enum": ["vertical", "horizontal"], "description": "vertical: fill.plain's rows are spread over the window's height (and its width repeated across); horizontal: its columns over the width."}
+          }
+        },
         "contentInsets": {"$ref": "#/definitions/sides", "description": "Optional exact insets that replace the derived ones; each must still clear the frame."}
       }
     },

@@ -12,8 +12,8 @@ import type { FilledRecipe } from '../skin-bake/bake-core.ts';
 import type { RgbaImage } from '../skin-bake/pixel-frame/shade.ts';
 import { mountWindowskin } from '../../src/presentation/ui/windowskin';
 import type { WindowskinHandle } from '../../src/presentation/ui/windowskin';
-import { applyFlair, parseProfile, parseRamp, recipeText, withBand } from './studio-model';
-import type { Draft, Flair } from './studio-model';
+import { applyFlair, fillColors, parseProfile, parseRamp, recipeText, withBand, withFillColor, withFillType } from './studio-model';
+import type { Draft, FillType, Flair } from './studio-model';
 
 const RECIPES = import.meta.glob<Draft>(['../../assets/source/ui/skins/*/recipe.json', '../../tests/fixtures/recipes/**/*.json'], { eager: true, import: 'default' });
 const ART = import.meta.glob<string>(['../../assets/source/ui/skins/*/*.png', '../../tests/fixtures/recipes/**/*.png'], { eager: true, query: '?url', import: 'default' });
@@ -88,10 +88,14 @@ function sync(): void {
   input('base').disabled = draft.colors.theme !== undefined;
   input('frame-ramp').value = (draft.colors.frame ?? []).join(' ');
   input('accent-ramp').value = (draft.colors.accent ?? []).join(' ');
-  const flat = draft.fill.type === 'flat';
-  input('fill').value = flat ? draft.fill.color ?? '#0b1220' : draft.fill.top ?? '#0b1220';
-  input('fill').disabled = !flat;
-  input('fill').title = flat ? '' : 'A banded fill is edited in the recipe file.';
+  const fill = draft.fill, colours = fillColors(draft);
+  select('fill-type').value = fill.type;
+  for (const row of document.querySelectorAll<HTMLElement>('[data-fill]')) row.hidden = !(row.dataset.fill ?? '').split(' ').includes(fill.type);
+  input('fill').value = colours.from;
+  input('fill-from').value = colours.from;
+  input('fill-to').value = colours.to;
+  input('fill-steps').value = String(fill.steps ?? 16); $('fill-steps-value').textContent = String(fill.steps ?? 16);
+  select('fill-direction').value = fill.direction ?? 'down';
   input('azimuth').value = String(draft.light.azimuth); $('azimuth-value').textContent = `${draft.light.azimuth}°`;
   input('elevation').value = String(draft.light.elevation); $('elevation-value').textContent = `${draft.light.elevation}°`;
   input('steps').value = String(draft.light.steps ?? 5);
@@ -205,7 +209,12 @@ function bind(): void {
         ramp === null ? `${key === 'frame' ? 'Frame' : 'Accent'} colours: type #rrggbb colours separated by spaces, darkest first.` : undefined);
     });
   }
-  input('fill').addEventListener('input', () => edit((d) => { if (d.fill.type === 'flat') d.fill.color = input('fill').value; }));
+  select('fill-type').addEventListener('change', () => edit((d) => withFillType(d, select('fill-type').value as FillType)));
+  input('fill').addEventListener('input', () => edit((d) => withFillColor(d, 'from', input('fill').value)));
+  input('fill-from').addEventListener('input', () => edit((d) => withFillColor(d, 'from', input('fill-from').value)));
+  input('fill-to').addEventListener('input', () => edit((d) => withFillColor(d, 'to', input('fill-to').value)));
+  input('fill-steps').addEventListener('input', () => edit((d) => { if (d.fill.type === 'gradient') d.fill.steps = number('fill-steps'); }));
+  select('fill-direction').addEventListener('change', () => edit((d) => { if (d.fill.type === 'gradient') d.fill.direction = select('fill-direction').value as 'down' | 'up' | 'right' | 'left'; }));
   input('azimuth').addEventListener('input', () => edit((d) => { d.light.azimuth = number('azimuth'); }));
   input('elevation').addEventListener('input', () => edit((d) => { d.light.elevation = number('elevation'); }));
   input('steps').addEventListener('change', () => edit((d) => { d.light.steps = number('steps'); }));

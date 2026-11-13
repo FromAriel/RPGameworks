@@ -1,10 +1,66 @@
-# Window skin — W1 implementation and atlas format
+# Window skins — the W1 window system, format version 2, and making skins
 
-**September 18, 2026. W1 is implemented; M1.6 performance closeout remains next.**
+**Updated November 12, 2026 (W3.7).** Every window in the game, page windows and battle windows alike, is drawn by one compositor (W1, extended by decision [0011](decisions/0011-reusable-window-skins.md) W3.0–W3.6). A skin is an atlas PNG plus a manifest. Skins can be drawn by hand, or written as a recipe and baked by the tool from decision [0013](decisions/0013-skin-recipes-and-bake-tool.md). The game's default is the baked **White and Silver** skin; Ariel's hand-edited **Midnight Silver** stays available. Appendix A keeps the original version 1 record of Midnight Silver.
+
+## 1. Where skins live and which one a window uses
+
+| Path | What it is |
+| --- | --- |
+| `assets/source/ui/skins/<name>/` | A baked skin: `recipe.json` (the source), its PNG art, and the baked `Window.png`, `Window.manifest.json` and `Window.audit.json`. Today: `white-silver/`. |
+| `assets/source/ui/base/` | Midnight Silver, Ariel's hand-edited version 1 atlas (Appendix A). Canonical and byte-identical. |
+| `content/games/<game>/ui-theme.json` | The game's UI theme: the skins it ships, and the skin for each of the six surfaces. |
+
+**Choosing skins (W3.4).** The UI theme lists skins by stable ID (`demo:skin.white-silver`) with the manifest path under `assets/source/ui/`, and names one skin for each surface: `dialogue`, `inventory`, `saves`, `settings`, `confirmation` and `battle`. A map message or dialogue may name its own `skin`, which the dialogue window uses while showing it. A window's skin is, in order: the skin it asks for itself (`data-skin-id`), its surface's skin (`data-skin-surface`), or the fallback. The content build validates every skin and every skin a message names, and emits each atlas and manifest as hashed files. A skin that fails to load, has the wrong size or times out (5 seconds) falls back to plain, usable windows with a Debug notice; it never blocks play.
+
+**Battle windows (W3.5)** are composed by the battle surface's skin through the same painter (`painterFor('battle')`), cached as textures; their layout grows to fit the skin's insets. If that skin cannot load, battle uses the plain M5.3c panels.
+
+## 2. Format version 2
+
+A version 2 manifest (`schemas/windowskin.schema.json`, reader `src/presentation/skin/skin-manifest.mjs`) declares its own geometry instead of assuming W1's fixed 16-pixel grid. Version 1 manifests are read as version 2, so Midnight Silver needs no changes.
+
+- **`tiles`**: named rectangles in the atlas (`corner.tl`, `edge.top.rail`, `title.open`, `divider.h.repeat`, `fill.plain`, …), or `same` aliases that reuse another tile. Gutters between tiles must stay fully transparent (the audit checks this).
+- **`geometry.band`**: the frame thickness on each side.
+- **`geometry.title`**: the title pieces' band, where the title text's centre line sits (`textCenter`), and the space between text and brackets (`textGap`).
+- **`geometry.rails`** for each side: a **spacing mode** and a **gap fill**.
+  - `mirrored-end` (W1's rule): whole pattern tiles, one plain gap, then one whole mirrored tile.
+  - `even`: whole tiles spread evenly between the corners, the leftover shared out between them.
+  - Gaps are filled with a plain tile, or by stretching the rail tile's own first or last pixel row or column (`railEdge`). Pattern tiles are never cut.
+- **`geometry.midpoints`**: optional medallions at the middle of a side, each shown only on edges at least `minEdge` long. The top one appears only on untitled windows.
+- **`geometry.fill`** (W3.6, November 12): without it, `fill.plain` **repeats** across the interior. With `stretch: "vertical"` or `"horizontal"`, `fill.plain` is **stretched pixel-sharp** across the whole window along that axis. A one-pixel line of colour bands then becomes a soft gradient spanning the window, whatever its size.
+- **`geometry.contentMargin`** (default 4) and optional exact **`contentInsets`**.
+- Corner and ornament art may overhang **inward** only (outset is 0).
+
+The painter (`src/presentation/skin/paint.ts`) draws the fill from the middle of each band inward, then the rails, corners, medallions and title brackets over it, all pixel-sharp with smoothing off.
+
+## 3. Fitting content to the skin (W3.3)
+
+The skin, not the stylesheet, decides how much room the frame takes. After each paint, the compositor publishes CSS custom properties on the window, in CSS pixels including the window's scale: `--skin-inset-left`, `--skin-inset-right`, `--skin-inset-bottom` (the frame's reach plus `contentMargin`), `--skin-content-top`, `--skin-title-max` (the widest title that fits between the corners and brackets) and `--skin-title-clearance` (extra space under a heading so content clears the frame). Window CSS adds its own spacing to these. Every `var()` keeps a fallback equal to Midnight Silver, so loading and fallback windows keep their layout.
+
+A title sits in a gap in the top edge (`gap` mode) when it fits; otherwise it drops below the edge as a header (`header` mode). Windows marked `--skin-scale: 2` (the dialogue on larger screens, for example) draw the skin at 2×.
+
+## 4. Making a skin with the bake tool (decision 0013)
+
+- **Recipe** (`schemas/skin-recipe.schema.json`): band per side and bevel profile; corner, motif and medallion art (12 built-in pieces, or PNG art up to 20 × 20 in Pixel Frame's colour conventions) with size and `material` (`accent` draws a piece in the accent colours); colours from a theme or base colour, with optional `frame` and `accent` ramps; light direction, height, shades, outline, shadow, `wear` and `tarnish`; title piece widths; divider; content margin. The **fill** is one of:
+  - `flat`: one colour;
+  - `bands`: a repeating banded tile;
+  - `gradient`: `from` and `to` colours, `steps` bands (default 16), and `direction` (`down`, the default, `up`, `right` or `left`). It bakes as a one-pixel line of bands with `geometry.fill.stretch`, so it spans the whole window. Where a gradient shows through inside the frame pieces, those pixels stay clear, so the corners never carry a patch of fixed colour.
+- **`npm run skins`** bakes every recipe under `assets/source/ui/skins/` into the atlas, manifest and audit beside it. `npm run skins -- --check` fails if any committed skin no longer matches its recipe.
+- **`npm run studio`** (http://127.0.0.1:4175/) is a local page for changing a recipe's settings. It re-bakes in the page and shows real windows composed by W1 at 1× and 2×. **Save** downloads `recipe.json`. It is never part of the game build.
+- Baked skins are ordinary version 2 skins: commit them, review them and hand-edit them like any art. If you hand-edit a baked atlas, remove its `recipe.json` so a re-bake does not overwrite the edit.
+
+## 5. Checks
+
+`node tools/audit-windowskin.mjs --manifest <file>` reads a version 1 or 2 manifest, checks the PNG matches it, and reports gutters, partial alpha, frame reach and insets. Unit tests compose every example and baked skin at odd and even sizes, with and without a title, and require every band pixel covered exactly once, no overlapping pieces, whole ornaments, uncut patterns, and only one-pixel gap fills stretched (`tests/unit/skin-checks.ts`). The golden test keeps Midnight Silver's composition identical. Browser tests cover theme choice per surface and per message, fitting at 1× and 2×, battle windows, fallbacks and the studio.
+
+---
+
+# Appendix A — Midnight Silver, the version 1 atlas (September 2026 record)
+
+**September 18, 2026. W1 is implemented; M1.6 performance closeout remains next.** *(Historical: this appendix describes the original W1 implementation and Ariel's version 1 atlas. Sections 1–5 above describe the current system.)*
 
 Mara's actual conversation window, the Settings/Debug drawer, and the Display & controls divider now use Ariel's edited silver-and-midnight sheet. Text and controls remain semantic HTML, and the dialogue remains a native modal. This is a bounded decorative compositor, not a theme editor, a replacement input engine, or new RPG state.
 
-## 1. Canonical files and provenance
+## A.1 Canonical files and provenance
 
 | File | Role |
 | --- | --- |
@@ -18,7 +74,7 @@ The source PNG SHA-256 is `758fb5bf370a5c7c2cee950c861245491cd127a8a48d036a7f3d0
 
 The imported manifest preserves all 64 tile definitions, their coordinates, and all fitting metadata from the companion. Only theme, status, alpha description, and the original-manifest hash metadata were updated. Its SHA-256 is `c2968d1ed7b7c93c60eaf55b045e0d93217debd141de151940609396ccc29056`. This is an artwork/metadata revision within packing version 1, not an RPG Maker-compatible Window.png.
 
-## 2. Runtime behavior
+## A.2 Runtime behavior
 
 `src/presentation/skin/layout.ts` computes bounded source-UI-pixel span/title geometry. `paint.ts` extracts the exact atlas rectangles into one reusable off-DOM Canvas 2D scratch surface. `src/presentation/ui/windowskin.ts` applies the resulting bitmap as an element background; there is no DOM element for each repeated tile, no accessible decorative canvas, and no decoration hit target. `windowskin.css` supplies padding, readable live text, focus/state cues, and plain fallback styles.
 
@@ -28,7 +84,7 @@ A single scheduled invalidation responds to visibility, size, title and font-loa
 
 A failed, wrong-size, or five-second-timed-out atlas falls back to plain usable windows and a Debug notice. Decoration failure does not stop map travel or hide dialogue. Oversized/invalid paint geometry also falls back. A reload is required to retry a failed skin in this first implementation. Actual game failures retain the existing visible error behavior.
 
-## 3. Exact tile packing
+## A.3 Exact tile packing
 
 The sheet has **8 rows × 8 columns**, labeled **A1–H8**: A is the top row; 1 is the left column. Each cell is **24 × 24**, with a **16 × 16** artwork rectangle inset **4 pixels** from every edge. Adjacent artwork therefore has an eight-pixel transparent gap. Extract and repeat only the artwork, never its gutter.
 
@@ -36,7 +92,7 @@ For zero-based column c and row r, the source rectangle is `(4 + 24c, 4 + 24r, 1
 
 The alpha channel is straight RGBA8 and includes partial alpha. The original sample's binary-alpha assumption does not apply to this edit. Transparent gutters and sample-template marks are separate: colored guide marks never belong in the runtime PNG.
 
-## 4. Corners, live titles, and fixed anchors
+## A.4 Corners, live titles, and fixed anchors
 
 A normal frame has four fixed corners, horizontal/vertical runs, and a quiet interior fill. Corners and ornaments are never stretched. The frame band is 16 source-UI pixels, with a rail center at coordinate 8. Artwork footprint and live-content padding are separate. A 32 × 32 frame is a structural minimum, not a practical text window.
 
@@ -48,7 +104,7 @@ The current dialogue uses 2× UI artwork at viewport width ≥768 and height ≥
 
 Long dialogue starts at its first line. Only the body scrolls; title and action buttons remain outside that scroller. New pages and reopened conversations reset the body to its beginning without moving keyboard focus or changing the gameplay input owner. Menu/F2 access, native modal priority, neutral controller rearming, and closed-by-default tools are preserved.
 
-## 5. Divider and junction vocabulary
+## A.5 Divider and junction vocabulary
 
 A free horizontal divider is cap.left → horizontal repeat → optional midpoint/junction → horizontal repeat → cap.right. A frame-connected divider substitutes attach.left/right for the caps. Vertical dividers use the corresponding top/bottom pieces. A labeled divider inserts divider.label.open → live heading → divider.label.close. If the heading does not fit, it sits above a plain divider rather than being compressed.
 
@@ -56,7 +112,7 @@ N/E/S/W identify connecting tile edges. `tee.n` connects N/E/W; `tee.e` N/E/S; `
 
 **Implemented subset:** W1 renders a real free horizontal, captioned Settings divider using caps, repeats, plain connectors and label brackets. The complete cross/T/elbow/attachment/vertical vocabulary is retained and audited, not claimed to be a general runtime layout API. In particular D6 (right frame attachment) is not used; it does not match the revised right bevel without a later explicit compatibility decision. Controls currently use CSS state/focus styling, not the optional H-row nine-slices. The H-row and G-row glyphs remain available for later exercised features.
 
-## 6. Mirrored terminal tile and connector policy
+## A.6 Mirrored terminal tile and connector policy
 
 For a rail length L, let q=floor(L/16), r=L mod 16:
 
@@ -70,7 +126,7 @@ The original kit's exact-seam guarantee required each repeat's first and last fo
 
 **Explicit right-side adapter:** right-edge plain gaps sample the north port row of their own B4/B6 repeat and extend that one-row profile longitudinally. This preserves the revised bevel instead of inserting the incompatible F7 profile. It changes no source bytes and performs no alpha thresholding. Under the first accepted edit all eight right border/corner port comparisons matched that derived profile; the second edit moves the mid.right edge profile, so its north/south derived checks record as two retained, seen seams. It is not a general repair for the other shoulder differences or for the unused D6 attachment.
 
-## 7. Audit results and limits
+## A.7 Audit results and limits
 
 Run `node tools/audit-windowskin.mjs` to print the recomputed report. `--write` replaces the REPORT only, never the PNG. Unit tests recompute and compare it with the committed report and enforce the exact source identities. The PNG decoder checks chunk CRCs, bounded decompression, format/dimensions, packing and transparency. It is an audit for this canonical asset, not a general image-import library.
 
@@ -86,7 +142,7 @@ Run `node tools/audit-windowskin.mjs` to print the recomputed report. `--write` 
 
 See Window.audit.json for the per-tile counts. These differences in the second edit are intentionally retained, not suppressed, repainted or hidden: the accepted connector policy (right edge plain gaps derive from their own B4/B6 north-port rows) is unchanged runtime behavior, and exact per-tile matches are measured fresh on each audit. The two actual windows are usable with this source and declared connector policy; full junction and arbitrary-theme perfection are not claimed.
 
-## 8. Complete slot map
+## A.8 Complete slot map
 
 All listed rectangles are **16 × 16**, excluding gutters. All 64 definitions are preserved; only the subset described above is used by W1.
 
@@ -159,7 +215,7 @@ All listed rectangles are **16 × 16**, excluding gutters. All 64 definitions ar
 
 H1–H5 retain four-pixel nine-slice margins: only flat centers and straight rails may stretch in a future small-control renderer; corners stay fixed. H6/H7 are checkbox glyphs. The continuation glyph is one static frame, not an animation or a binding. These descriptions preserve the asset contract, not a claim that W1 renders every slot.
 
-## 9. Verification and recovery record
+## A.9 Verification and recovery record
 
 The interrupted implementation survived as `75bed7605ed6d4eb857cc92027d0ebc25b86e420` on work/w1-base-skin. [Run 35369541935](https://github.com/FromAriel/RPGameworks/actions/runs/35369541935) passed all Windows/Node 24.15.0, Linux/Node 24.15.0 and Linux/Node 22.16.0 jobs. Both Node 24 jobs used npm 11.6.2. Each leg ran installation, source checking, 207 unit tests, content validation, production builds and 78 Chromium scenarios. The retrieved Linux/Node 24 report records 78 expected, zero unexpected, zero flaky and zero skipped results.
 

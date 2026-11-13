@@ -44,10 +44,19 @@ export function readRecipeWith(json, { art: artInfo, file = 'recipe' } = {}) {
     const out = ramp?.findIndex((hex, i) => i > 0 && luminance(hex) < luminance(/** @type {string} */ (ramp[i - 1])));
     if (ramp && out !== undefined && out > 0) at(`/colors/${key}/${out}`, `${ramp[out]} is darker than ${ramp[out - 1]}; list the shades darkest first`);
   }
+  const only = (/** @type {readonly ('color' | 'top' | 'bottom' | 'bandHeight' | 'tileHeight' | 'from' | 'to' | 'steps' | 'direction')[]} */ keys, /** @type {string} */ kind) => {
+    for (const key of keys) if (r.fill[key] !== undefined) at(`/fill/${key}`, `is only used by ${kind}`);
+  };
   if (r.fill.type === 'flat') {
     if (!r.fill.color) at('/fill', 'a flat fill needs "color"');
-    for (const key of /** @type {const} */ (['top', 'bottom', 'bandHeight', 'tileHeight'])) if (r.fill[key] !== undefined) at(`/fill/${key}`, 'is only used by a banded fill');
+    only(['top', 'bottom', 'bandHeight', 'tileHeight'], 'a banded fill');
+    only(['from', 'to', 'steps', 'direction'], 'a gradient fill');
+  } else if (r.fill.type === 'gradient') {
+    for (const key of /** @type {const} */ (['from', 'to'])) if (r.fill[key] === undefined) at('/fill', `a gradient fill needs "${key}"`);
+    only(['color'], 'a flat fill');
+    only(['top', 'bottom', 'bandHeight', 'tileHeight'], 'a banded fill');
   } else {
+    only(['from', 'to', 'steps', 'direction'], 'a gradient fill');
     for (const key of /** @type {const} */ (['top', 'bottom', 'bandHeight', 'tileHeight'])) if (r.fill[key] === undefined) at('/fill', `a banded fill needs "${key}"`);
     if (r.fill.color !== undefined) at('/fill/color', 'is only used by a flat fill');
     if (r.fill.bandHeight !== undefined && r.fill.tileHeight !== undefined && r.fill.bandHeight > r.fill.tileHeight) {
@@ -90,6 +99,7 @@ export function readRecipeWith(json, { art: artInfo, file = 'recipe' } = {}) {
       title: { textGap: 4, ...r.title },
       light: { steps: 5, outline: true, shadow: false, wear: 0, tarnish: true, ...r.light },
       divider: { band: dividerBand, profile: dividerProfile },
+      fill: r.fill.type === 'gradient' ? { steps: 16, direction: 'down', ...r.fill } : r.fill,
       contentMargin: r.contentMargin ?? 4,
     },
   };

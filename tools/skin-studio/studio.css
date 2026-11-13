@@ -1,4 +1,5 @@
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { color: var(--ui-text-primary); background: var(--ui-world); font-family: var(--ui-font-body); }
 body { margin: 0; min-height: 100vh; }
 code { font-size: .92em; }

@@ -42,7 +42,10 @@ export interface FilledRecipe {
   readonly title: { readonly openWidth: number; readonly fillWidth: number; readonly closeWidth: number; readonly textGap: number };
   readonly colors: { readonly theme?: 'iron' | 'brass' | 'silver' | 'obsidian'; readonly base?: string; readonly frame?: readonly string[]; readonly accent?: readonly string[] };
   readonly light: { readonly azimuth: number; readonly elevation: number; readonly steps: number; readonly outline: boolean; readonly shadow: boolean; readonly wear: number; readonly tarnish: boolean };
-  readonly fill: { readonly type: 'flat' | 'bands'; readonly color?: string; readonly top?: string; readonly bottom?: string; readonly bandHeight?: number; readonly tileHeight?: number };
+  readonly fill: {
+    readonly type: 'flat' | 'bands' | 'gradient'; readonly color?: string; readonly top?: string; readonly bottom?: string; readonly bandHeight?: number; readonly tileHeight?: number;
+    readonly from?: string; readonly to?: string; readonly steps?: number; readonly direction?: 'down' | 'up' | 'right' | 'left';
+  };
   readonly divider: { readonly band: number; readonly profile: readonly number[] };
   readonly contentMargin: number;
 }
@@ -75,8 +78,13 @@ export function bakeAtlas(recipe: FilledRecipe, { art: loadArt, image = 'Window.
     theme: recipeTheme(recipe), wear: recipe.light.wear, tarnish: recipe.light.tarnish, dither: false, brushed: false,
   };
   const backdrop = fillColor(recipe);
+  // A gradient changes across the window, so no fixed colour can stand in for it inside the frame pieces: where the
+  // painter's fill already covers (from the middle of each band inward), those pixels stay clear and the fill shows.
+  const clearFill = recipe.fill.type === 'gradient'
+    ? { top: Math.floor(recipe.band.top / 2), right: Math.floor(recipe.band.right / 2), bottom: Math.floor(recipe.band.bottom / 2), left: Math.floor(recipe.band.left / 2) }
+    : null;
   const lit = (style: FrameStyle, W: number, H: number, size: OrnamentSize, transpose = false): Lit =>
-    makeLit(style, W, H, size, shadeOptions, o, backdrop, transpose);
+    makeLit(style, W, H, size, shadeOptions, o, backdrop, transpose, clearFill);
   const style = (extra: Partial<FrameStyle> = {}, profile: readonly number[] = recipe.profile): FrameStyle =>
     ({ name: recipe.name, tier: 'panel', profile: profile as Profile, corner: null, motif: null, medallion: null, ...extra });
 
@@ -154,7 +162,7 @@ export function bakeAtlas(recipe: FilledRecipe, { art: loadArt, image = 'Window.
   };
   post('title.open', recipe.title.openWidth, recipe.band.top, recipe.profile);
   post('title.close', recipe.title.closeWidth, recipe.band.top, recipe.profile);
-  add(solid('title.fill', recipe.title.fillWidth, recipe.band.top, backdrop));
+  add(solid('title.fill', recipe.title.fillWidth, recipe.band.top, titleFillColor(recipe) ?? backdrop));
 
   // Dividers: one lit bar; caps from its ends, the repeat from its middle.
   {
@@ -187,6 +195,7 @@ export function bakeAtlas(recipe: FilledRecipe, { art: loadArt, image = 'Window.
       rails: Object.fromEntries(SIDES.map(side => [side, { spacing, gapFill: { tile: `edge.${side}.plain` } }])),
       ...(Object.keys(midpoints).length ? { midpoints } : {}),
       contentMargin: recipe.contentMargin,
+      ...(recipe.fill.type === 'gradient' ? { fill: { stretch: recipe.fill.direction === 'right' || recipe.fill.direction === 'left' ? 'horizontal' : 'vertical' } } : {}),
     },
     tiles: manifestTiles,
   };
@@ -203,7 +212,7 @@ interface Lit {
 }
 
 function makeLit(style: FrameStyle, W: number, H: number, size: OrnamentSize, options: ShadeOptions, o: number,
-  backdrop: readonly [number, number, number], transpose: boolean): Lit {
+  backdrop: readonly [number, number, number], transpose: boolean, clearFill: Readonly<Record<Side, number>> | null): Lit {
   const p = style.profile.length;
   let frame: ComposedFrame, image: RgbaImage;
   if (!transpose) {
@@ -224,7 +233,8 @@ function makeLit(style: FrameStyle, W: number, H: number, size: OrnamentSize, op
           const bx = x0 + tx - o, by = y0 + ty - o; // Box coordinates.
           const t = (ty * w + tx) * 4;
           // Inside the box beyond the bevel, the window fill shows through (so thick bands have no gap).
-          if (bx >= 0 && by >= 0 && bx < W && by < H && Math.min(bx, by, W - 1 - bx, H - 1 - by) >= p) {
+          const covered = clearFill !== null && bx + o >= clearFill.left && by + o >= clearFill.top && W - 1 - bx + o >= clearFill.right && H - 1 - by + o >= clearFill.bottom;
+          if (!covered && bx >= 0 && by >= 0 && bx < W && by < H && Math.min(bx, by, W - 1 - bx, H - 1 - by) >= p) {
             data[t] = backdrop[0]; data[t + 1] = backdrop[1]; data[t + 2] = backdrop[2]; data[t + 3] = 255;
           }
           const fx = bx + M, fy = by + M;
@@ -282,8 +292,18 @@ function baseArtName(ref: ArtRef, loadArt: ArtLoader): string {
   return name;
 }
 
+/** Behind the title, in the top band: a top-to-bottom gradient's top colour (null: the backdrop colour). */
+function titleFillColor(recipe: FilledRecipe): readonly [number, number, number] | null {
+  const f = recipe.fill;
+  if (f.type !== 'gradient' || f.direction === 'right' || f.direction === 'left') return null;
+  return hexToRgb((f.direction === 'up' ? f.to : f.from) as string);
+}
+
 function fillColor(recipe: FilledRecipe): readonly [number, number, number] {
-  return hexToRgb(recipe.fill.type === 'flat' ? recipe.fill.color as string : recipe.fill.top as string);
+  const f = recipe.fill;
+  // What shows through inside the box beyond the bevel; a gradient uses its middle colour.
+  if (f.type === 'gradient') return hexToRgb(mix(f.from as string, f.to as string, 0.5));
+  return hexToRgb(f.type === 'flat' ? f.color as string : f.top as string);
 }
 
 function solid(id: string, w: number, h: number, rgb: readonly [number, number, number]): Tile {
@@ -296,6 +316,17 @@ function solid(id: string, w: number, h: number, rgb: readonly [number, number, 
 function fillTile(recipe: FilledRecipe): Tile {
   const f = recipe.fill;
   if (f.type === 'flat') return solid('fill.plain', 8, 8, hexToRgb(f.color as string));
+  if (f.type === 'gradient') {
+    // One pixel per band, in a line the window stretches across itself (manifest geometry.fill.stretch).
+    const steps = f.steps as number, horizontal = f.direction === 'right' || f.direction === 'left';
+    const reversed = f.direction === 'up' || f.direction === 'left';
+    const data = new Uint8ClampedArray(steps * 4);
+    for (let i = 0; i < steps; i++) {
+      const t = i / (steps - 1), rgb = hexToRgb(mix(f.from as string, f.to as string, reversed ? 1 - t : t));
+      data.set([rgb[0], rgb[1], rgb[2], 255], i * 4);
+    }
+    return { id: 'fill.plain', w: horizontal ? steps : 1, h: horizontal ? 1 : steps, data };
+  }
   const h = f.tileHeight as number, band = f.bandHeight as number, bands = Math.ceil(h / band);
   const data = new Uint8ClampedArray(8 * h * 4);
   for (let y = 0; y < h; y++) {

@@ -25,6 +25,8 @@ export interface SkinGeometry {
   mids: Partial<Record<Side, { rect: Rect; minEdge: number }>>;
   divider: { height: number; capLeft: Rect; capRight: Rect; open: Rect; close: Rect; repeat: Rect; plain: Rect };
   fill: Rect;
+  /** Without a value, the fill piece repeats; otherwise it is stretched across the window along this axis. */
+  fillStretch: 'vertical' | 'horizontal' | null;
   /** The shortest frame the corners allow: the taller of the left and right corner pairs. */
   minHeight: number;
   minWidth: number;
@@ -58,6 +60,7 @@ export function skinGeometry(skin: WindowSkinManifestV2): SkinGeometry {
     divider: { height: r('divider.h.repeat').h, capLeft: r('divider.cap.left'), capRight: r('divider.cap.right'), open: r('divider.label.open'),
       close: r('divider.label.close'), repeat: r('divider.h.repeat'), plain: r('divider.h.plain') },
     fill: r('fill.plain'),
+    fillStretch: g.fill?.stretch ?? null,
     minHeight: Math.max(corner.tl.h + corner.bl.h, corner.tr.h + corner.br.h),
     minWidth: Math.max(corner.tl.w + corner.tr.w, corner.bl.w + corner.br.w),
   };

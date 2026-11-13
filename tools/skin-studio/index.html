@@ -42,7 +42,12 @@
           <label>Base colour <input id="base" type="color" /></label>
           <label>Frame colours (darkest first, blank for the theme's) <input id="frame-ramp" type="text" spellcheck="false" /></label>
           <label>Accent colours (darkest first, blank for the theme's) <input id="accent-ramp" type="text" spellcheck="false" /></label>
-          <label>Window fill <input id="fill" type="color" /></label>
+          <label>Window fill <select id="fill-type"><option value="flat">One colour</option><option value="gradient">Soft gradient across the window</option><option value="bands">Repeating bands</option></select></label>
+          <label data-fill="flat">Fill colour <input id="fill" type="color" /></label>
+          <label data-fill="gradient bands">Start colour <input id="fill-from" type="color" /></label>
+          <label data-fill="gradient bands">End colour <input id="fill-to" type="color" /></label>
+          <label data-fill="gradient">Bands <output id="fill-steps-value"></output><input id="fill-steps" type="range" min="2" max="64" step="1" /></label>
+          <label data-fill="gradient">Direction <select id="fill-direction"><option value="down">Top to bottom</option><option value="up">Bottom to top</option><option value="right">Left to right</option><option value="left">Right to left</option></select></label>
         </fieldset>
 
         <fieldset>

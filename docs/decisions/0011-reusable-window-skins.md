@@ -145,6 +145,8 @@ Rules:
 
 ### W3.6 — The Final Fantasy-like skin (art)
 
+> **Outcome (November 12, 2026, Ariel):** the baked **White and Silver** skin is this skin. Ariel asked for a soft blue that bands smoothly across the window, settable and baked in. That added one W1 ability, `geometry.fill.stretch` (approved by Ariel), and a `gradient` recipe fill (top to bottom by default; up, left and right settable). It is the default on all six surfaces; Midnight Silver stays available. Acceptance in play is Ariel's.
+
 > **Changed (November 9, 2026, [decision 0013](0013-skin-recipes-and-bake-tool.md), approved by Ariel):** make this skin as a recipe baked by a skin bake tool (packets B1–B3, optionally a studio page B4) instead of a hand-written drawing script. The output is still an ordinary v2 skin, Claude still drafts, Ariel still edits, and the acceptance below is unchanged.
 
 - A new atlas and manifest for this system, in Ariel's design style with a Final Fantasy-like feel: a thin pale bevel over a blue interior.

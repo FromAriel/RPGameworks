@@ -51,6 +51,15 @@ export class SkinPainter {
       for (let dx = 0; dx < width; dx += r.w) this.stamp(id, x + dx, y + dy, null, Math.min(r.w, width - dx), Math.min(r.h, height - dy));
     }
   }
+  /**
+   * A stretch fill (manifest geometry.fill): the fill piece spread pixel-sharp over the whole interior along one axis, so
+   * its rows (vertical) or columns (horizontal) become even bands across the window; along the other axis it repeats.
+   */
+  private stretchFill(axis: 'vertical' | 'horizontal', x: number, y: number, width: number, height: number): void {
+    const r = this.geometry.fill;
+    if (axis === 'vertical') for (let dx = 0; dx < width; dx += r.w) { const w = Math.min(r.w, width - dx); this.ctx.drawImage(this.image, r.x, r.y, w, r.h, x + dx, y, w, height); }
+    else for (let dy = 0; dy < height; dy += r.h) { const h = Math.min(r.h, height - dy); this.ctx.drawImage(this.image, r.x, r.y, r.w, h, x, y + dy, width, h); }
+  }
   /** One rail run: whole pattern tiles (never cut), with the skin's gap fill in the plain parts. */
   private rail(id: string, rule: RailRule, axis: Axis, x: number, y: number, length: number): void {
     const r = this.rect(id), period = axis === 'h' ? r.w : r.h;
@@ -86,7 +95,9 @@ export class SkinPainter {
     this.reset(width, height);
     // Fill from the middle of each band, so transparent outer corner pixels stay clear.
     const fx = Math.floor(band.left / 2), fy = g.top + Math.floor(band.top / 2);
-    this.fill('fill.plain', fx, fy, width - fx - Math.floor(band.right / 2), height - fy - Math.floor(band.bottom / 2));
+    const fw = width - fx - Math.floor(band.right / 2), fh = height - fy - Math.floor(band.bottom / 2);
+    if (geo.fillStretch) this.stretchFill(geo.fillStretch, fx, fy, fw, fh);
+    else this.fill('fill.plain', fx, fy, fw, fh);
     const topEnd = width - corner.tr.w;
     if (g.title) {
       const { openX, closeX } = g.title, t = geo.title;

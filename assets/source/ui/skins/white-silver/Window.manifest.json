@@ -44,7 +44,10 @@
         }
       }
     },
-    "contentMargin": 4
+    "contentMargin": 4,
+    "fill": {
+      "stretch": "vertical"
+    }
   },
   "tiles": [
     {
@@ -196,8 +199,8 @@
       "rect": {
         "x": 136,
         "y": 1,
-        "w": 8,
-        "h": 8
+        "w": 1,
+        "h": 16
       }
     },
     {

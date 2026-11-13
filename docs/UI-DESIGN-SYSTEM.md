@@ -1,6 +1,6 @@
 # RPGameworks — UI Visual Language and System Plan
 
-**Version:** 0.4 · **Date:** September 20, 2026 · **Status:** Workshop Astral tokens/references and the U1.2 component/gallery system are accepted; U1.3 existing-screen normalization is next in [ROADMAP](ROADMAP.md).
+**Version:** 0.5 · **Date:** November 12, 2026 · **Status:** Workshop Astral tokens/references and the U1.2 component/gallery system are accepted. Window frames now come from swappable skins chosen by the game's UI theme (decision 0011 W3); the default is the baked White and Silver skin (see "Window frames" below).
 
 ## Purpose and authority
 
@@ -11,7 +11,7 @@ This document defines the intended visual language, reusable component contracts
 - [PLAN](PLAN.md) owns architecture and accessibility boundaries.
 - [ROADMAP](ROADMAP.md) owns packet order and acceptance gates.
 - [STATUS](STATUS.md) owns what is actually implemented and verified.
-- [WINDOW-SKIN](WINDOW-SKIN.md) owns the exact source art, packing and compositor contract.
+- [WINDOW-SKIN](WINDOW-SKIN.md) owns the window skin format (version 2), the compositor contract, skin selection, and how skins are made and baked.
 - [Decision 0002](decisions/0002-workshop-astral-ui-language.md) records why the selected visual synthesis supersedes the three separate concept directions.
 - This document owns how those foundations should become a coherent full-JRPG interface.
 
@@ -34,6 +34,19 @@ The direction extends the current exact windowskin rather than replacing it:
 - **Readable contemporary text** remains the default. A pixel display font may be evaluated later for short headings only after licensing, Unicode coverage and small-size readability are proven.
 
 This is a product-wide baseline, not a promise that every region must use the same color. Future game themes may remap semantic tokens and provide compatible art while retaining the same component and interaction contracts.
+
+### Window frames (November 12, 2026)
+
+Window frames are skins, not stylesheet decoration. The game's UI theme picks one skin for each surface (dialogue, inventory, Save/Load, settings, confirmation, battle), and a message or dialogue may ask for its own. Since W3.6 the default on every surface is **White and Silver**: a thin three-pixel white bevel, silver accent corners, and a soft blue gradient that bands once from top to bottom across the whole window, the classic JRPG window. Ariel's **Midnight Silver** (silver frame over midnight blue-black) remains available as a second skin.
+
+Rules for screens and components:
+
+- Content must stay readable on any skin's interior. Text sits on the window fill directly or on a component surface; never assume a particular fill colour behind text.
+- Spacing around content comes from the skin's published insets (`--skin-inset-*`, `--skin-content-top`, `--skin-title-max`), not fixed numbers, so a thicker or thinner frame needs no stylesheet change.
+- Titles live in the frame's top edge when they fit, and drop to a header otherwise; screens do not draw their own title plates.
+- New skins are made by hand or with the bake tool and its studio (`npm run studio`), and become available by adding them to the UI theme.
+
+Component surfaces inside windows (panels, buttons, slot rows) still use the dark Workshop Astral tokens over the blue gradient. Whether they should lighten or tint to sit better on the blue is an open design question, not yet decided.
 
 ### Combination rule
 
@@ -245,7 +258,7 @@ Title/start, Continue, New Game, slot selection, settings, credits and postgame 
 
 - Introduce a small CSS token layer and component classes; keep domain rules out of CSS and UI modules.
 - Preserve semantic HTML controls. Canvas-rendered menus are not the default for text-heavy screens.
-- Keep the exact windowskin compositor as frame presentation. Do not duplicate its geometry in each feature stylesheet.
+- Keep the W1 window compositor as the only frame presentation, for page and battle windows alike; skins come from the UI theme. Do not duplicate frame geometry in feature stylesheets or draw bespoke frames.
 - Provide plain high-contrast fallbacks when decorative art fails or forced colors is active.
 - Prefer shared primitives for selection, status, action bars, list/detail layout and confirmations. Do not create a universal UI framework or theme editor before concrete screens require it.
 - Keep Debug styles namespaced so development density does not redefine player-facing typography or hierarchy.

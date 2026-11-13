@@ -12,5 +12,5 @@
     "accent": ["#262a32", "#3f4550", "#5d6573", "#808a9a", "#a5aebc", "#c9d0da"]
   },
   "light": { "azimuth": 135, "elevation": 60 },
-  "fill": { "type": "flat", "color": "#0b1220" }
+  "fill": { "type": "gradient", "from": "#2f4fb2", "to": "#0b1650", "steps": 16, "direction": "down" }
 }

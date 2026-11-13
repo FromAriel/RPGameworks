@@ -4,6 +4,33 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## W3.6 soft blue gradient and W3.7 clean-up — November 12, 2026, local
+
+Ariel decided that White and Silver is W3.6's Final Fantasy-like skin, with a soft blue that bands smoothly across each window, settable, and baked in. Ariel's two answers: **top to bottom by default and settable**, and **add one W1 ability, a stretch fill**. This packet also covers W3.7.
+
+- **W1 stretch fill** (`schemas/windowskin.schema.json`, `layout.ts`, `paint.ts`): a version 2 manifest may set `geometry.fill.stretch` to `vertical` or `horizontal`. The painter then stretches `fill.plain` pixel-sharp across the whole interior along that axis (repeating along the other) instead of tiling it. Skins without it, including Midnight Silver, are unchanged; the golden test still passes.
+- **Gradient fill in recipes** (`skin-recipe.schema.json`, `recipe-core.mjs`, `bake-core.ts`): `fill.type: "gradient"` with `from`, `to`, `steps` (2–64 bands, default 16) and `direction` (`down` by default, `up`, `right`, `left`). It bakes as a one-pixel line of bands plus `geometry.fill.stretch`. Inside the frame pieces, wherever the painter's fill already covers, the gradient's pixels stay clear, so corners carry no patch of fixed colour. The title gap piece takes the gradient's top colour. Flat and banded skins bake exactly as before.
+- **Studio**: a fill selector (one colour, soft gradient, repeating bands) with start and end colours, number of bands and direction; switching kinds keeps the colours.
+- **White and Silver** now uses `gradient` from `#2f4fb2` to `#0b1650` in 16 bands, top to bottom. Re-baked atlas: 996 bytes.
+- **Checked across the game:** a temporary Playwright capture (removed) on the test build photographed the dialogue, inventory, Save/Load, replace-slot confirmation, settings and battle windows. All six show the same thin white frame, silver corners and blue gradient, at 1× and 2×. The screenshots were sent to Ariel.
+  - **Open design question:** component surfaces inside windows (panels, slot rows, buttons) still use the dark Workshop Astral tokens over the blue. Recorded in UI-DESIGN-SYSTEM; not changed.
+- **W3.7:** no W2 code remains in `src/`, `tests/` or `index.html`. The only Pixel Frame code is the bake tool's `tools/skin-bake/pixel-frame/`, by design (0013). `docs/WINDOW-SKIN.md` now describes the current system first: where skins live and how a window's skin is chosen; format version 2 (bands, title, spacing modes, gap fills, midpoints, fill and stretch, content margin and insets, inward overhang); fitting; making skins with recipes, `npm run skins` and the studio; and checks. The September version 1 record of Midnight Silver became Appendix A. `docs/UI-DESIGN-SYSTEM.md` gains a "Window frames" section and updated references. ROADMAP already marked W2 superseded.
+- **Tests:** new `tests/unit/skin-gradient.test.ts` (5):
+  - gradient defaults and fill-setting errors;
+  - the baked line in all four directions, with its first and last colours;
+  - W1 draws one stretched fill column per interior pixel spanning the interior, and the skin still composes cleanly;
+  - corner pieces stay clear where the gradient shows;
+  - the studio's fill switching.
+
+  Local results:
+  - typecheck passed;
+  - unit tests **486/486**;
+  - `check:external-art`, `check:test-tags` (172 tagged), `npm run validate` and `npm run skins -- --check` passed;
+  - fixture build passed;
+  - full browser suite **172/172**.
+- **Not yet:** Ariel has not seen the gradient in play (W3.6 acceptance is "Ariel accepts the art in play"). Not committed or published.
+- Migration: none; saves do not store skins. Next: Ariel's look at the blue in play; then **M5.4 rows and party**.
+
 ## B4 skin studio — November 12, 2026, local
 
 The last packet of the skin bake tool ([decision 0013](decisions/0013-skin-recipes-and-bake-tool.md) B4), with Ariel's four execution answers recorded in 0013 §8 (wear in B4; flair as a studio shortcut; bake in the page; local only). No game code changed.
@@ -703,7 +730,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**W3.6 — the Final Fantasy-like skin, made with the studio** ([decision 0011](decisions/0011-reusable-window-skins.md), [0013](decisions/0013-skin-recipes-and-bake-tool.md); B1–B4 and W3.0–W3.5 are done, see above, and the baked White and Silver skin is the default on all six surfaces; first ask Ariel whether White and Silver already fills this role; then W3.7 clean-up). The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**Ariel accepts the White and Silver blue gradient in play (W3.6), then M5.4 — rows and party** (W3.0–W3.7 and B1–B4 are done locally, see above; W3.6 waits only on Ariel's look in play). The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

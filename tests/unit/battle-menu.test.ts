@@ -88,6 +88,20 @@ describe('battle menu', () => {
     expect(menu.state().level).toBe('root');
   });
 
+  it('offers only enemies the active fighter can reach, and the help line names the rest (decision 0014)', () => {
+    const drill = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters[1]! as Encounter;
+    const { battle, menu } = setup([], drill);
+    expect(battle.snapshot().active).toBe('archer'); // The fastest member: ranged, so it may target anyone.
+    menu.confirm();
+    expect(menu.state().entries.map(entry => entry.name)).toEqual(['Two-Headed Ogre', 'Clay Golem', 'Bat']);
+    expect(menu.state().help).toBe('Two-Headed Ogre  60/60 HP');
+    const hero = { ...drill, party: drill.party.map(c => (c.id === 'hero' ? { ...c, speed: 30 } : c)) };
+    const melee = setup([], hero).menu;
+    melee.confirm();
+    expect(melee.state().entries.map(entry => entry.name)).toEqual(['Two-Headed Ogre', 'Clay Golem']); // The bat is behind the golem.
+    expect(melee.state().help).toBe('Two-Headed Ogre  60/60 HP  Out of reach: Bat.');
+  });
+
   it('offers the end-of-battle choices for each outcome', () => {
     const { battle, menu, context } = setup();
     battle.command({ type: 'escape' });

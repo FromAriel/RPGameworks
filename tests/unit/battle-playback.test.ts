@@ -28,15 +28,19 @@ describe('battle playback timing', () => {
     expect(Object.fromEntries(hpBefore(healed, healed.events))).toEqual(hpAfterAttack);
   });
 
-  it('places up to four allies and six enemies inside 640 × 360, apart and facing each other', () => {
-    const party = [0, 1, 2, 3].map(slot => battlerPosition('party', slot));
-    const enemies = [0, 1, 2, 3, 4, 5].map(slot => battlerPosition('enemy', slot));
-    for (const { x, y } of [...party, ...enemies]) {
-      expect(x - 32).toBeGreaterThanOrEqual(0); expect(x + 32).toBeLessThanOrEqual(640);
-      expect(y - 32).toBeGreaterThanOrEqual(48); expect(y + 60).toBeLessThanOrEqual(360);
+  it('places every grid cell of both sides inside 640 × 360, apart and facing each other (decision 0014 M5.4b)', () => {
+    const cells = [0, 1, 2].flatMap(lane => [0, 1, 2].map(depth => ({ lane, depth, lanes: 1, depths: 1 })));
+    const party = cells.map(c => battlerPosition('party', c)), enemies = cells.map(c => battlerPosition('enemy', c));
+    for (const { x, y, scale } of [...party, ...enemies]) {
+      expect(scale).toBe(2);
+      expect(x - 40).toBeGreaterThanOrEqual(0); expect(x + 40).toBeLessThanOrEqual(640);
+      expect(y - 20 * scale).toBeGreaterThanOrEqual(72); expect(y + 19 * scale + 5).toBeLessThanOrEqual(224); // Below the timeline, HP bar above the bottom windows.
     }
     expect(Math.min(...party.map(p => p.x))).toBeGreaterThan(Math.max(...enemies.map(e => e.x)) + 96);
-    const keys = new Set([...party, ...enemies].map(({ x, y }) => `${x},${y}`));
-    expect(keys.size).toBe(10);
+    expect(new Set([...party, ...enemies].map(({ x, y }) => `${x},${y}`)).size).toBe(18);
+    // Front columns face each other; a lane further down sits lower; a big fighter is centred on its cells, drawn larger.
+    expect(battlerPosition('party', { lane: 0, depth: 0, lanes: 1, depths: 1 }).x).toBeLessThan(battlerPosition('party', { lane: 0, depth: 1, lanes: 1, depths: 1 }).x);
+    expect(battlerPosition('enemy', { lane: 0, depth: 0, lanes: 1, depths: 1 }).x).toBeGreaterThan(battlerPosition('enemy', { lane: 0, depth: 1, lanes: 1, depths: 1 }).x);
+    expect(battlerPosition('enemy', { lane: 0, depth: 0, lanes: 2, depths: 2 })).toEqual({ x: 171, y: 132, scale: 3 });
   });
 });

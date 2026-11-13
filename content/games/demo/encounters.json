@@ -11,5 +11,20 @@
       {"id": "sigil", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
       {"id": "shard", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
     ]
+  }, {
+    "id": "demo:encounter.formation-drill",
+    "name": "Formation Drill",
+    "seed": 2604,
+    "party": [
+      {"id": "hero", "name": "Hero", "frame": "hero-left", "cell": {"lane": 2, "depth": 1}, "hp": 30, "attack": 7, "defense": 2, "speed": 10},
+      {"id": "archer", "name": "Archer", "frame": "archer-left", "cell": {"lane": 2, "depth": 2}, "reach": "ranged", "hp": 22, "attack": 6, "defense": 1, "speed": 11},
+      {"id": "lancer", "name": "Lancer", "frame": "lancer-left", "cell": {"lane": 3, "depth": 1}, "reach": "reach", "hp": 26, "attack": 7, "defense": 2, "speed": 9},
+      {"id": "mage", "name": "Mage", "frame": "mage-left", "cell": {"lane": 3, "depth": 3}, "reach": "ranged", "hp": 20, "attack": 6, "defense": 1, "speed": 8}
+    ],
+    "enemies": [
+      {"id": "ogre", "name": "Two-Headed Ogre", "frame": "sigil", "creature": "dcss/monster/two_headed_ogre_new", "cell": {"lane": 2, "depth": 2}, "size": {"lanes": 2, "depths": 2}, "hp": 60, "attack": 9, "defense": 2, "speed": 6},
+      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "cell": {"lane": 1, "depth": 1}, "hp": 24, "attack": 6, "defense": 2, "speed": 8},
+      {"id": "bat", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "cell": {"lane": 1, "depth": 2}, "hp": 12, "attack": 4, "defense": 0, "speed": 14}
+    ]
   }]
 }

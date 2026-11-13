@@ -28,9 +28,27 @@ export function hpBefore(after: BattleSnapshot, events: readonly BattleEvent[]):
   return hp;
 }
 
-/** Screen positions in the 640 × 360 battle view: enemies on the left, the party on the right, facing each other. */
-export function battlerPosition(side: 'party' | 'enemy', slot: number): { x: number; y: number } {
-  return side === 'enemy'
-    ? { x: 200 - (slot % 3) * 64, y: 128 + (slot % 3) * 22 + Math.floor(slot / 3) * 8 }
-    : { x: 448 + (slot % 4) * 40, y: 128 + (slot % 4) * 22 };
+/** Grid layout on the 640 × 360 stage (decision 0014 M5.4b). */
+export const STAGE_GRID = Object.freeze({
+  /** Centre x of each side's front column; the party stands on the right, the enemies on the left, facing each other. */
+  partyFrontX: 432, enemyFrontX: 208,
+  /** Horizontal step per depth (away from the other side), vertical step per lane, and a slight slant per lane. */
+  depthStep: 60, laneStep: 32, laneSlant: 14,
+  /** Centre y of the top lane. */
+  topY: 116,
+});
+
+/**
+ * Where a battler stands, and its draw scale: the centre of the grid cells it covers. Lanes stack downwards with a
+ * slight slant, so the three lanes overlap a little and the stage stays compact. A big fighter is drawn larger: 2× for
+ * one cell, 3× for two cells across, 4× for three.
+ */
+export function battlerPosition(side: 'party' | 'enemy', p: { readonly lane: number; readonly depth: number; readonly lanes: number; readonly depths: number }): { x: number; y: number; scale: number } {
+  const g = STAGE_GRID, lane = p.lane + (p.lanes - 1) / 2, depth = p.depth + (p.depths - 1) / 2;
+  const away = depth * g.depthStep + lane * g.laneSlant;
+  return {
+    x: Math.round(side === 'party' ? g.partyFrontX + away : g.enemyFrontX - away),
+    y: Math.round(g.topY + lane * g.laneStep),
+    scale: 1 + Math.min(3, Math.max(p.lanes, p.depths)),
+  };
 }

@@ -30,6 +30,9 @@
     {"id": "demo:object.supply-room.tonic-crate", "frame": "chest-closed", "x": 5, "y": 1, "solid": true, "chest": {"itemId": "demo:item.tonic", "quantity": 2, "openedFrame": "chest-open", "openedMessageId": "tonic-crate-found", "emptyMessageId": "tonic-crate-empty"}},
     {"id":"demo:object.practice-sigil","frame":"sigil","x":2,"y":3,"solid":true,"states":[
       {"id":"ready","frame":"sigil","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.practice-sigil"}}
+    ]},
+    {"id":"demo:object.formation-sigil","frame":"sigil-lit","x":2,"y":1,"solid":true,"states":[
+      {"id":"ready","frame":"sigil-lit","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.formation-drill"}}
     ]}
   ],
   "exits": [

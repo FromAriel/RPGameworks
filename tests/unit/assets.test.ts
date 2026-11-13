@@ -18,7 +18,7 @@ describe('original atlas build', () => {
       expect(readFileSync(join(temporary, 'foundation.json'), 'utf8')).toEqual(json);
       expect(first.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
       const atlas = JSON.parse(json) as { frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>; meta: { size: { w: number; h: number } } };
-      expect(Object.keys(atlas.frames)).toHaveLength(17);
+      expect(Object.keys(atlas.frames)).toHaveLength(20); // 17 original frames plus the lancer, archer and mage placeholders (decision 0014 M5.4b).
       expect(atlas.meta.size.h).toBe(32); // 32-pixel world tiles (decision 0008)
       expect(atlas.frames['door-locked']?.frame.w).toBe(32);
       expect(atlas.frames['plaque-read']?.frame.w).toBe(32);

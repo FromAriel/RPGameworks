@@ -162,7 +162,7 @@ describe('commands', () => {
 
 describe('authored encounter validation', () => {
   it('accepts the demo catalog and rejects duplicates, empty names, unknown frames and the old format', () => {
-    expect(catalog.encounters).toHaveLength(1);
+    expect(catalog.encounters.map(e => e.id)).toEqual(['demo:encounter.practice-sigil', 'demo:encounter.formation-drill']);
     const valid = { schemaVersion: 2, encounters: [practice] };
     expect(readEncounters(valid, 'encounters.json', ['hero-left', 'sigil', 'sigil-lit']).encounters).toHaveLength(1);
     expect(() => readEncounters({ schemaVersion: 2, encounters: [practice, practice] })).toThrow(/Duplicate encounter ID/);

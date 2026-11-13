@@ -4,6 +4,45 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4b the battle grid on screen: the Formation Drill — November 13, 2026, local
+
+[Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4b, at the current 640 × 360 view.
+
+**Ariel's choices:**
+- the big enemy is the **two-headed ogre**;
+- the four-member fight is a **new "Formation Drill" sigil**, so the one-hero practice fight and its tests stay as they are;
+- the turn-timeline strip should be thinner;
+- the bigger screen (the 640 × 360 view sits small in larger windows) is to be **discussed after M5.4b** (Ariel: "let's chat"; finish M5.4b first).
+
+- **Party art** (`assets/source/foundation.json`): three original placeholder battlers, the hero recoloured with a spear (`lancer-left`), a bow (`archer-left`) and a staff (`mage-left`). The atlas grows from 17 to 20 frames. LPC party art comes later (S1.5).
+- **Formation Drill** (`demo:encounter.formation-drill`, reached from a second sigil at (2,1) in the Supply Room):
+  - **Party:** Hero (front, middle lane), Archer (ranged, behind the hero), Lancer (reach, front, bottom lane) and Mage (ranged, at the back of the bottom lane, behind the lancer).
+  - **Enemies:** a Clay Golem (top lane, front), a Bat sheltered behind it, and a **2 × 2 Two-Headed Ogre** in the bottom-back corner. The ogre's lanes are open, so it can still be hit in melee.
+  - **Balance:** a headless run with everyone always attacking wins in 24 party turns, with two members knocked out. Tuning is Ariel's in play.
+- **Stage** (`playback.ts` `battlerPosition`, `battle-view.ts`):
+  - **Placement:** battlers stand at their grid cells. Each side's front column faces the other (party front x 432, enemy front x 208); depth steps 60 px, lanes 32 px down with a 14 px slant (a diagonal battle line); a big fighter is centred on its cells at 3×.
+  - **Sizes:** HP bars, the target cursor and tap areas follow each battler's scale. Tap areas are one lane band by one depth column, so overlapping sprites never share one.
+  - **Shield pips:** small cyan pips mark living allies ahead of a battler in its lane, one pip for 20% less damage and two for 35%.
+  - **Timeline:** the strip is thinner (24-pixel icons, a 28-pixel marker, tighter spacing, 6 pixels higher), and the floor now starts just below it.
+- **Menu** (`battle-menu.ts`): while choosing an attack target, the help line names enemies out of reach, for example "Out of reach: Bat." Screen readers get it as each target button's description. Unreachable enemies were already left out of the choices.
+- **Tests:**
+  - `tests/browser/formation.spec.ts` (4): four members and three creatures with the expected shield counts; the archer may target the bat but the hero is never offered it, and the help says why; the party wins the drill by keyboard alone; a stronger drill defeats the party, offers Retry and Leave, and Leave returns to the room unchanged.
+  - **Unit:** the battle menu's reach filtering and help line; every grid cell of both sides inside the stage and clear of the windows; the demo catalog's two encounters; the atlas's 20 frames.
+  - The runtime snapshot's `battle.art` now includes each battler's `shields` count.
+
+  Local results:
+  - typecheck passed;
+  - unit tests **517/517**;
+  - `check:external-art`, `check:test-tags` (179 tagged), the library check and `npm run validate` passed;
+  - full browser suite **179/179**.
+
+  The first full run had two failures from overlapping tap areas, which led to the one-lane, one-column tap areas, plus the asset frame count. A fixture build once failed because the dev server held `public/generated/content` (Windows lock); stopping it fixed that.
+- **Not yet:**
+  - Ariel's play review.
+  - The bigger-screen conversation.
+  - Not committed.
+- Migration: none (saves untouched). Next: **M5.4c, the Move command in battle**, then the U2 menu planning session Ariel asked for.
+
 ## C3 animated Stone Soup creatures in battle — November 12, 2026, local
 
 [Decision 0015](decisions/0015-stone-soup-creatures.md) C3. Ariel picked the **clay golem** and the **bat** (from ten candidates) for the Supply Room practice fight. Each creature uses its motion profile from Ariel's assignments: the golem walks and the bat floats.
@@ -36,10 +75,12 @@
   - full browser suite **175/175**.
 
   A screenshot of the fight was sent to Ariel.
+- **Committed and published:** `fc8373b`, published by Pages [run 43372379936](https://github.com/FromAriel/RPGameworks/actions/runs/43372379936) (build and deploy succeeded).
+  - The Node 22 runner baked the same creature files as the local build (`creatures.8fa2073c9f04.png`, `creatures.3d73769ab176.json`).
+  - A temporary browser test against the live site entered the practice fight: both enemies are drawn as creatures on their idle loops, and a screenshot was taken.
 - **Not yet:**
   - Ariel's play review of the animated fight.
   - The golem and bat stand at the old slot positions and overlap slightly. M5.4b lays the grid out.
-  - Not committed or published.
 - Migration: none (saves untouched; encounter fields optional). Next: Ariel's play review, then **M5.4b**, the grid on the battle screen.
 
 ## C2 creature pixel motion and Ariel's motion assignments — November 12, 2026, local
@@ -855,7 +896,7 @@ Supported Node remains `>=22.16.0 <23 || >=24.15.0 <25`. Fresh checkouts use `np
 
 ## Next concrete packet
 
-**M5.4b — the grid on the battle screen** ([decision 0014](decisions/0014-battle-grid-and-party.md); M5.4a and decision 0015's C1–C3 are done, see above; C3 waits on Ariel's play review). M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
+**M5.4c — Move in battle** ([decision 0014](decisions/0014-battle-grid-and-party.md); M5.4a, M5.4b and decision 0015's C1–C3 are done, see above), then a **detailed U2 menu planning session** with Ariel (Ariel, November 13), and a conversation about using the bigger screen. M5.4 is planned in [decision 0014](decisions/0014-battle-grid-and-party.md) (proposed November 12 and rewritten around Ariel's 3 × 3 grid after discussion: per-lane front-facing, reach, 20%/35% shields, area falloff and line shapes, big enemies, Move, back attack and pincer, a party roster with a formation screen and save version 3; packets M5.4a–f; **approved by Ariel on November 12 with all recommendations**; next: M5.4a grid rules in the kernel). Then, by [decision 0015](decisions/0015-stone-soup-creatures.md) (Ariel, November 12), **Stone Soup creatures**: the public-domain monster library is committed as the one exception to decision 0007, and Splurt's pixel motion and Ariel's 1,282 motion assignments are ported (packets C1–C3), before M5.4b lays out the grid with real animated monsters. Ariel also raised three tracks now on the ROADMAP as planned: animated battlers, a director system for signature attacks, and a menu screens redesign (U2). W3 and the skin bake tool (B1–B4) are complete; Ariel accepted W3.6 in play on November 12. The test work in [decision 0012](decisions/0012-faster-local-tests.md) is done apart from the optional T1.7 fake-clock trial. After W3.7: M5.4. **Do not start W2.4; it is cancelled.** See the direction reset above. M5.4 then adds three-row slot formations for both sides, reach by weapon type, row exposure, area falloff from a primary target, pincer and back-attack orientation from one rule, and grows the party from two to four. Other open items in the November 8 notes remain: how break serves the story, whether the threat level survives save/load, and the public-build art option. The remaining order is in [ROADMAP §M5](ROADMAP.md#m5--battle-and-core-rpg-rules) and [§S1](ROADMAP.md#s1--world-scale-and-external-art-planned). Expand PixelFX against concrete battle needs. [JRPG-BUILDOUT](JRPG-BUILDOUT.md) remains the long-range companion.
 
 ## Limits and continuity
 

@@ -111,7 +111,7 @@ There are no special formulas: everything above asks "which allies stand between
 
 **Between M5.4a and M5.4b: Stone Soup creatures** ([decision 0015](0015-stone-soup-creatures.md), Ariel, November 12). Packets C1 import the library, C2 port the pixel motion and import Ariel's motion assignments, and C3 animate the creatures in battle. M5.4b then lays out the grid with real animated monsters, and its big enemy is a real creature drawn at 2 × 2 instead of a placeholder sigil.
 
-**M5.4b — The grid on the battle screen, party of four.**
+**M5.4b — The grid on the battle screen, party of four.** *(Ariel, November 13: the four-member fight is a new "Formation Drill" sigil beside the practice fight; its big enemy is the two-headed ogre; the timeline strip was thinned. Done locally.)*
 - **Content:** the demo battle gets four members in an authored formation (party art, Q1) against a mixed group including one big enemy. The party is still authored in the encounter until M5.4d moves it.
 - **Stage:** battlers stand at their cells, with lanes stacked and slightly overlapped so 640 × 360 stays readable.
 - **Shields:** a small marker shows shielded fighters, with one or two pips.

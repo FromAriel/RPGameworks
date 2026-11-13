@@ -192,9 +192,15 @@ export class BattleMenu {
     if (!context) return [];
     if (level === 'end') return endEntries(context.phase);
     if (level === 'target') {
-      return this.targets(this.pending!).map(candidate => ({
+      // Decision 0014: an enemy the active fighter cannot reach is not offered; the help line says who and why.
+      const pending = this.pending!;
+      const unreachable = pending.type === 'attack'
+        ? context.combatants.filter(c => c.side === 'enemy' && c.hp > 0 && context.validate({ type: 'attack', target: c.id }) === 'out-of-reach').map(c => c.name)
+        : [];
+      const note = unreachable.length ? `  Out of reach: ${unreachable.join(', ')}.` : '';
+      return this.targets(pending).map(candidate => ({
         id: `target:${candidate.id}`, label: candidate.name, name: candidate.name, enabled: true,
-        help: `${candidate.name}  ${candidate.hp}/${candidate.maxHp} HP`,
+        help: `${candidate.name}  ${candidate.hp}/${candidate.maxHp} HP${note}`,
       }));
     }
     const items = context.items.filter(item => item.count > 0);

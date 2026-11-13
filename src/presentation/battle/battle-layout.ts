@@ -45,7 +45,7 @@ export function battleLayout(insets: Sides | null): BattleLayout {
     list: { x: 0, y, w: 504, h: band },
     inset,
     helpText: insets ? { x: insets.left + 2, y: insets.top, right: insets.right + 2 } : { x: 8, y: 4, right: 8 },
-    timelineY: helpH + 22,
+    timelineY: helpH + 16, // A 24-pixel icon strip just below the help window (thinner since M5.4b, Ariel).
   };
 }
 

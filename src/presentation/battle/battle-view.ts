@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { BattleEvent, BattleSnapshot, CombatantSnapshot } from '../../domain/battle';
 import type { MenuEntry } from '../../domain/battle-menu';
-import { battlerPosition, hpBefore, stepDuration } from './playback';
+import { STAGE_GRID, battlerPosition, hpBefore, stepDuration } from './playback';
 import type { PlaybackSpeed } from './playback';
 import { BattleWindows, PANEL_STYLE } from './battle-windows';
 import type { BattleLayout, Rect } from './battle-windows';
@@ -10,6 +10,7 @@ import { PIXEL_FONT_BITMAP_SIZE, addPixelFont, releasePixelFont } from '../pixel
 import type { CreatureArt } from '../../platform/creature-loader';
 import type { CreatureFrames } from '../../content/creature-atlas.mjs';
 import { creatureKey } from '../../content/creature-atlas.mjs';
+import { alliesAhead } from '../../domain/battle-grid.mjs';
 
 /** Pixel labels use the UNSCII bitmap font; ordinary canvas text is only the fallback when that font is missing. */
 type Label = Phaser.GameObjects.BitmapText | Phaser.GameObjects.Text;
@@ -34,7 +35,11 @@ interface Battler {
   readonly sprite: Phaser.GameObjects.Image;
   /** Enemy HP bar; party HP is shown in the party window. */
   readonly bar: Phaser.GameObjects.Rectangle | null;
-  readonly home: { x: number; y: number };
+  readonly home: { x: number; y: number; scale: number };
+  readonly barWidth: number;
+  /** Shield pips: how many living allies stand ahead of this battler in its lane (decision 0014). */
+  readonly shields: Phaser.GameObjects.Graphics;
+  shieldCount: number;
   /** Stone Soup creature frames when this battler is drawn as a creature (decision 0015 C3). */
   readonly creature: CreatureFrames | null;
   flashing: boolean;
@@ -92,25 +97,29 @@ export class BattleView {
     this.windows = new BattleWindows(scene, (x, y, text, color) => this.label(x, y, text, color), DEPTH.windows, options.skin ?? null);
     const TIMELINE_Y = this.windows.layout.timelineY;
     this.own(scene.add.rectangle(0, 0, width, height, 0x0b111b).setOrigin(0).setDepth(DEPTH.backdrop));
-    this.own(scene.add.rectangle(0, 112, width, 104, 0x18243a).setOrigin(0).setDepth(DEPTH.floor));
-    this.own(scene.add.rectangle(0, 112, width, 2, 0x2e4a66).setOrigin(0).setDepth(DEPTH.floor));
+    // The floor runs from just below the turn timeline down to the bottom windows (thinner strip, M5.4b).
+    const floorTop = TIMELINE_Y + 16, floorBottom = this.windows.layout.enemies.y;
+    this.own(scene.add.rectangle(0, floorTop, width, floorBottom - floorTop, 0x18243a).setOrigin(0).setDepth(DEPTH.floor));
+    this.own(scene.add.rectangle(0, floorTop, width, 2, 0x2e4a66).setOrigin(0).setDepth(DEPTH.floor));
     this.own(this.label(8, TIMELINE_Y - 8, 'Next', TEXT_COLOR).setDepth(DEPTH.ui));
-    this.timelineMarker = this.own(scene.add.rectangle(0, 0, 36, 36).setStrokeStyle(2, 0x88c2c3).setDepth(DEPTH.ui));
+    this.timelineMarker = this.own(scene.add.rectangle(0, 0, 28, 28).setStrokeStyle(2, 0x88c2c3).setDepth(DEPTH.ui));
     for (let index = 0; index < TIMELINE_ICONS; index += 1) {
-      this.timeline.push(this.own(scene.add.image(64 + index * 40, TIMELINE_Y, options.atlas, 'spark').setDepth(DEPTH.ui).setVisible(false)));
+      this.timeline.push(this.own(scene.add.image(56 + index * 30, TIMELINE_Y, options.atlas, 'spark').setDepth(DEPTH.ui).setVisible(false)));
     }
     for (const combatant of initial.combatants) {
-      const home = battlerPosition(combatant.side, combatant.slot);
+      const home = battlerPosition(combatant.side, combatant);
       const creature = this.creatureOf(combatant);
       const sprite = this.own(creature
         ? scene.add.image(home.x, home.y, options.creatures!.texture, creature.still).setFlipX(creature.faces === 'left')
-        : scene.add.image(home.x, home.y, options.atlas, combatant.frame)).setScale(2).setDepth(DEPTH.battler + home.y / 10000);
+        : scene.add.image(home.x, home.y, options.atlas, combatant.frame)).setScale(home.scale).setDepth(DEPTH.battler + home.y / 10000);
       let bar: Phaser.GameObjects.Rectangle | null = null;
+      const barWidth = Math.round(BAR_WIDTH * home.scale / 2), barY = home.y + 19 * home.scale;
       if (combatant.side === 'enemy') {
-        this.own(scene.add.rectangle(home.x - BAR_WIDTH / 2, home.y + 38, BAR_WIDTH, 5, 0x080c14).setOrigin(0).setDepth(DEPTH.ui));
-        bar = this.own(scene.add.rectangle(home.x - BAR_WIDTH / 2, home.y + 38, BAR_WIDTH, 5, 0x6fbf73).setOrigin(0).setDepth(DEPTH.ui));
+        this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x080c14).setOrigin(0).setDepth(DEPTH.ui));
+        bar = this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x6fbf73).setOrigin(0).setDepth(DEPTH.ui));
       }
-      this.battlers.set(combatant.id, { combatant, sprite, bar, home, creature, flashing: false });
+      const shields = this.own(scene.add.graphics().setDepth(DEPTH.ui));
+      this.battlers.set(combatant.id, { combatant, sprite, bar, barWidth, home, shields, shieldCount: 0, creature, flashing: false });
     }
     // Creatures breathe on their own idle loops; reduced motion keeps each one still (decision 0015 C3).
     if (!options.reducedMotion && [...this.battlers.values()].some(b => b.creature)) {
@@ -143,12 +152,13 @@ export class BattleView {
       battler.sprite.setAlpha(combatant.hp > 0 ? 1 : 0.25);
       this.drawHp(combatant.id);
     }
+    this.drawShields(snapshot);
     if (snapshot.phase === 'escaped') for (const battler of this.battlers.values()) if (battler.combatant.side === 'party') battler.sprite.setAlpha(0);
     snapshot.timeline.slice(0, TIMELINE_ICONS).forEach((turn, index) => {
       const icon = this.timeline[index]!;
       const battler = this.battlers.get(turn.actor);
-      if (battler?.creature) icon.setTexture(this.options.creatures!.texture, battler.creature.still).setScale(0.8);
-      else icon.setTexture(this.options.atlas, battler?.combatant.frame ?? 'spark').setScale(1);
+      if (battler?.creature) icon.setTexture(this.options.creatures!.texture, battler.creature.still).setScale(0.6);
+      else icon.setTexture(this.options.atlas, battler?.combatant.frame ?? 'spark').setScale(0.75);
       icon.setVisible(true);
     });
     for (let index = snapshot.timeline.length; index < TIMELINE_ICONS; index += 1) this.timeline[index]!.setVisible(false);
@@ -164,19 +174,23 @@ export class BattleView {
     this.menu = menu;
     const target = menu?.target ? this.battlers.get(menu.target) : undefined;
     this.targetCursor.setVisible(!!target);
-    if (target) this.targetCursor.setPosition(target.home.x, target.home.y - 52);
+    if (target) this.targetCursor.setPosition(target.home.x, target.home.y - 26 * target.home.scale);
     this.refreshWindows();
   }
 
   /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
-  artState(): Record<string, { source: 'creature' | 'frame'; frame: string }> {
-    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name }]));
+  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount }]));
   }
 
   /** The logical rectangle a tap on this combatant should cover. */
   targetRect(id: string): Rect | null {
     const battler = this.battlers.get(id);
-    return battler ? { x: battler.home.x - 32, y: battler.home.y - 40, w: 64, h: 84 } : null;
+    if (!battler) return null;
+    // One lane band tall and one depth column wide per cell, so neighbouring battlers never share a tap area even
+    // though their sprites overlap a little (decision 0014 M5.4b).
+    const c = battler.combatant, w = STAGE_GRID.depthStep * c.depths, h = STAGE_GRID.laneStep * c.lanes;
+    return { x: Math.round(battler.home.x - w / 2), y: Math.round(battler.home.y - h / 2 + 4), w, h };
   }
 
   /** Replay `target.events` one at a time from the state before them, then show `target` and call `done`. */
@@ -341,13 +355,36 @@ export class BattleView {
     const battler = this.battlers.get(id);
     if (!battler?.bar) return;
     const hp = this.hp.get(id) ?? 0, max = battler.combatant.maxHp;
-    battler.bar.setSize(Math.max(0, Math.round(BAR_WIDTH * hp / max)), 5);
+    battler.bar.setSize(Math.max(0, Math.round(battler.barWidth * hp / max)), 5);
     battler.bar.setFillStyle(hp * 4 <= max ? 0xd9705f : 0x6fbf73);
   }
 
   private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): void {
     const tween = this.scene.tweens.add({ ...config, onComplete: (...args) => { this.tweens.delete(tween); (config.onComplete as ((...a: unknown[]) => void) | undefined)?.(...args); } });
     this.tweens.add(tween);
+  }
+
+  /**
+   * One small pip per living ally standing between a battler and its attackers (decision 0014): one pip takes 20% off,
+   * two take 35%. Measured from the side the opposing group attacks from; a back attack turns the party around.
+   */
+  private drawShields(snapshot: BattleSnapshot): void {
+    const living = snapshot.combatants.filter(c => c.hp > 0);
+    for (const battler of this.battlers.values()) {
+      const c = snapshot.combatants.find(other => other.id === battler.combatant.id);
+      const g = battler.shields.clear();
+      battler.shieldCount = 0;
+      if (!c || c.hp <= 0 || snapshot.phase === 'escaped') continue;
+      const allies = living.filter(o => o.id !== c.id && o.side === c.side && o.flank === c.flank);
+      const from = c.side === 'party' && snapshot.opening === 'back-attack' ? 'rear' : 'front';
+      const count = Math.min(2, alliesAhead(c, allies, from));
+      battler.shieldCount = count;
+      const s = battler.home.scale, x = battler.home.x - 16 * s, y = battler.home.y - 20 * s;
+      for (let i = 0; i < count; i++) {
+        g.fillStyle(SHADOW_COLOR, 1).fillRect(x + i * 7 - 1, y - 1, 7, 8);
+        g.fillStyle(0x88c2c3, 1).fillRect(x + i * 7, y, 5, 6).fillStyle(0x0b111b, 1).fillRect(x + i * 7 + 2, y + 2, 1, 3);
+      }
+    }
   }
 
   private creatureOf(combatant: CombatantSnapshot): CreatureFrames | null {

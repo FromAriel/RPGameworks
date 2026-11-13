@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, openTools, closeTools, openInventory, closeInventory, snapshot, setEffects, tapDirection, holdToExit, type DirectionKey } from './helpers';
+import { test, expect, openRoom, openTools, closeTools, openInventory, closeInventory, itemRows, snapshot, setEffects, tapDirection, holdToExit, type DirectionKey } from './helpers';
 const gallery='demo:map.gallery', workshop='demo:map.workshop', lens='demo:item.lens';
 const chest='demo:object.gallery.lens-chest';
 // Walking uses the shared helpers, which release keys inside the page, so a loaded machine cannot add a step.
@@ -49,27 +49,23 @@ test('chest grants once, reconstructs after actual room travel and room restart,
   await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
   expect((await snapshot(page)).session).toEqual(state);
   await openInventory(page);
-  const lensRow=page.locator('[data-item-id="'+lens+'"]');
-  await expect(lensRow.locator('.ui-list-row__label')).toHaveText('Polished lens');
-  await expect(lensRow.locator('.ui-list-row__trailing')).toHaveText('× 1');
-  await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-state','ready');
+  await expect(itemRows(page)).toHaveText(['Polished lens']);
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row-detail')).toHaveText('×1');
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('[data-skin-state="ready"]')).toHaveCount(4);
   await page.screenshot({path:info.outputPath('m2-inventory-wide.png')});
   await page.reload();await expect.poll(()=>page.evaluate(()=>window.__RPGAMEWORKS__?.snapshot().phase)).toBe('ready');
   expect((await snapshot(page)).session.inventory).toEqual({});
   expect((await snapshot(page)).session.placements).toEqual({});
 });
 
-test('Menu opens real inventory with no tools, empty state, and working Settings route',{ tag: ['@inventory', '@smoke'] }, async({page})=>{
+test('Menu opens the real menu with no tools, an empty Items screen, and a working Config route',{ tag: ['@inventory', '@smoke'] }, async({page})=>{
   await openRoom(page);await page.locator('#tools-toggle').click();
   await expect(page.locator('#game-menu')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
-  await page.locator('#game-menu .menu-row[data-id="journal"]').click();
-  await expect(page.locator('#inventory-dialog')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
-  await page.locator('#inventory-journal').click();
-  await expect(page.locator('#item-name')).toHaveText('Empty inventory');
-  await expect(page.locator('#inventory-journal')).toBeFocused();
-  await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');await expect(page.locator('#inventory-settings')).toBeFocused();
-  await page.keyboard.press('Enter');await expect(page.locator('#tools-panel')).toBeVisible();
-  await expect(page.locator('#inventory-dialog')).toBeHidden();await closeTools(page);
+  await page.locator('#game-menu .menu-row[data-id="items"]').click();
+  await expect(itemRows(page)).toHaveText(['Nothing here']);await expect(page.locator('#tools-panel')).toBeHidden();
+  await page.keyboard.press('Escape');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
+  await page.locator('#game-menu .menu-row[data-id="config"]').click();await expect(page.locator('#tools-panel')).toBeVisible();
+  await expect(page.locator('#game-menu')).toBeHidden();await closeTools(page);
 });
 
 test('menu queued during movement stops at a safe tile and cannot move or burst underneath it',{ tag: ['@inventory'] }, async({page})=>{
@@ -94,14 +90,18 @@ test('controller Menu opens inventory, keeps held inputs isolated, and cancel re
   await padButton(page,9,true);await expect(page.locator('#game-menu')).toBeVisible();
   await page.waitForTimeout(220);await expect(page.locator('#game-menu')).toBeVisible(); // Held Menu does not close it again.
   await padButton(page,9,false);await page.waitForTimeout(120);
-  await tapPad(page,13);await tapPad(page,13);await tapPad(page,13);await tapPad(page,2);await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await tapPad(page,13);await tapPad(page,13);await expect(page.locator('#inventory-settings')).toBeFocused();
+  await tapPad(page,2);await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible(); // Items.
+  await tapPad(page,1);await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
+  for(let i=0;i<5;i++)await tapPad(page,13); // Down to Config.
+  await expect(page.locator('#game-menu .menu-row[data-id="config"]')).toBeFocused();
   await tapPad(page,2);await expect(page.locator('#options-panel')).toBeVisible();
   const before=await snapshot(page);await tapPad(page,13); // moves to next real focus target, not character
   expect((await snapshot(page)).actorTile).toEqual(before.actorTile);
   await padButton(page,1,true);await expect(page.locator('#tools-panel')).toBeHidden();
   await padButton(page,0,true);await page.waitForTimeout(200);expect((await snapshot(page)).burstRequests).toBe(0);
   await padButton(page,1,false);await padButton(page,0,false);await page.waitForTimeout(120);
+  await expect(page.locator('#game-menu')).toBeVisible(); // Closing Config returns to the menu…
+  await tapPad(page,1);await expect(page.locator('#game-menu')).toBeHidden(); // …and Cancel to the map.
   await tapPad(page,0);await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
 });
 
@@ -114,7 +114,9 @@ test('v2 custom bindings survive migration to v4 and use an unoccupied menu butt
   const stored=await page.evaluate(()=>({old:JSON.parse(localStorage.getItem('rpgameworks.controller.v2')!),current:JSON.parse(localStorage.getItem('rpgameworks.controller.v4')!)}));
   expect(stored.old.version).toBe(2);expect(stored.current.version).toBe(4);
   for(const [key,value] of Object.entries(stored.old.buttons))expect(stored.current.buttons[key]).toBe(value);
-  await closeTools(page);await page.keyboard.press('KeyI');await expect(page.locator('#inventory-prompt')).toContainText('button 4');
+  await closeTools(page);await page.keyboard.press('KeyI');await page.locator('#game-menu .menu-row[data-id="help"]').click();
+  await page.keyboard.press('KeyE');await page.keyboard.press('ArrowDown'); // Controller tab, Talking topic.
+  await expect(page.locator('#game-menu .menu-detail')).toContainText('LB (button 4): talk, read or open.');
 });
 
 test('second chest stack failure keeps its closed state and correct inventory',{ tag: ['@inventory'] }, async({page})=>{
@@ -147,9 +149,10 @@ test('inventory stays usable at narrow sizes, with skin failure, and with litera
     const response=await route.fetch(), data=await response.json();data.strings.en['lens.name']='<img onerror=alert(1)> 世界';await route.fulfill({json:data});
   });
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);await openInventory(page);
-  await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-state','fallback');
-  await expect(page.locator('#item-name')).toContainText('<img');await expect(page.locator('#inventory-dialog img')).toHaveCount(0);
-  const box=(await page.locator('#inventory-dialog').boundingBox())!;expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-window').first()).toHaveAttribute('data-skin-state','fallback');
+  await expect(itemRows(page)).toHaveText(['<img onerror=alert(1)> 世界']);await expect(page.locator('#game-menu img')).toHaveCount(0);
+  await expect(page.locator('#game-menu .menu-detail h3')).toContainText('<img');
+  const box=(await page.locator('#game-menu .menu-surface').boundingBox())!;expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);
   await page.screenshot({path:info.outputPath('m2-inventory-narrow-fallback.png')});await closeInventory(page);
 });
 
@@ -158,14 +161,14 @@ test('repeated inventory opens preserve state, scene counts and single atlas loa
   await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);const before=await snapshot(page);
   for(let i=0;i<12;i++) {await openInventory(page);await closeInventory(page);}
   const after=await snapshot(page);expect(after.session).toEqual(before.session);expect(after.starts).toBe(before.starts);expect(after.displayObjects).toBe(before.displayObjects);
-  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(6);
+  expect(requests).toHaveLength(1);await expect(page.locator('[data-window-skin]')).toHaveCount(5); // Menu screens remove their windows on close.
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false})));
-  await expect(page.locator('#inventory-list button')).toHaveCount(0);expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
+  await expect(page.locator('#game-menu')).toHaveCount(0);expect(await page.evaluate(()=>window.__RPGAMEWORKS__)).toBeUndefined();
 });
 
 test('missing item catalog reports a visible loading error without a fake empty inventory',{ tag: ['@inventory'] }, async({page})=>{
   await page.route('**/generated/content/items.*.json',route=>route.abort());await page.goto('./');
-  await expect(page.locator('#error')).toBeVisible();await expect(page.locator('#inventory-dialog')).toBeHidden();
+  await expect(page.locator('#error')).toBeVisible();await expect(page.locator('#game-menu')).toHaveCount(0);
 });
 
 test('effects disabled cannot change chest rewards',{ tag: ['@inventory'] }, async({page})=>{
@@ -195,11 +198,12 @@ test('many content-authored items scroll and select directly without consuming t
     await collect(page);
   }
   const state=(await snapshot(page)).session;expect(Object.keys(state.inventory)).toHaveLength(14);
-  await openInventory(page);await expect(page.locator('#inventory-list button')).toHaveCount(14);
+  await openInventory(page);await expect(itemRows(page)).toHaveCount(14);
   for(let i=0;i<11;i++)await page.keyboard.press('ArrowDown');
-  await expect(page.locator('#item-name')).toHaveText('Keepsake 12');
-  expect(await page.locator('#inventory-list').evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
-  await tapPad(page,13);await expect(page.locator('#item-name')).toHaveText('Keepsake 13');
+  await expect(page.locator('#game-menu .menu-detail h3')).toHaveText('Keepsake 12');
+  await tapPad(page,13);await expect(page.locator('#game-menu .menu-detail h3')).toHaveText('Keepsake 13');
+  // Row 13 is below the list window's fold: the window scrolls to keep the highlighted row in view.
+  expect(await page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-window-body').nth(2).evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
   await tapPad(page,2);expect((await snapshot(page)).session).toEqual(state);
   await page.screenshot({path:info.outputPath('m2-inventory-list-narrow.png')});
 });
@@ -219,14 +223,14 @@ test('direct configuration steps skip conflicts and text entry does not close th
 
 test('disconnect and reconnect during inventory never consume a held confirm or cancel',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await syntheticPad(page);await openRoom(page,'?map='+gallery);await chestFromStart(page);await collect(page);
-  await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,13);await tapPad(page,13);await tapPad(page,13);await tapPad(page,2);
-  await expect(page.locator('#inventory-dialog')).toBeVisible();const before=(await snapshot(page)).session;
+  await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,2);
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();const before=(await snapshot(page)).session;
   await page.evaluate(()=>{(navigator.getGamepads()[0] as unknown as {connected:boolean}).connected=false;});
-  await page.waitForTimeout(150);await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await page.waitForTimeout(150);await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
   await padButton(page,1,true);await page.evaluate(()=>{(navigator.getGamepads()[0] as unknown as {connected:boolean}).connected=true;});
-  await page.waitForTimeout(200);await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await page.waitForTimeout(200);await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
   expect((await snapshot(page)).session).toEqual(before);
   await padButton(page,1,false);await page.waitForTimeout(120);await tapPad(page,1);
-  await expect(page.locator('#inventory-dialog')).toBeHidden();await expect(page.locator('#game-menu')).toBeVisible();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toHaveCount(0);await expect(page.locator('#game-menu')).toBeVisible();
   await tapPad(page,1);await expect(page.locator('#game-menu')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
 });

@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import type { SessionController } from '../runtime/session-controller';
-import { InventoryMenu } from './ui/inventory';
 import { SaveMenu } from './ui/save-menu';
 import type { SaveCheckpoint,SaveEnvelopeV1 } from '../domain/save';
 import { SessionState } from '../domain/session';
@@ -30,13 +29,17 @@ import type { InputMode } from '../platform/input';
 import { MapView, ATLAS } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
 import { CharacterArt } from './character-view';
-import type { ConfirmationDialogParts, PromptEntry } from './ui/components';
+import type { ConfirmationDialogParts } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
 import type { FoundationHandle, RuntimeSnapshot } from '../runtime-types';
 import { MenuController, ScreenRegistry, createMenuLayer } from './menu/screens';
 import { HUB_SCREEN, hubScreen } from './menu/hub';
 import { ITEMS_SCREEN, itemsScreen } from './menu/items-screen';
+import { JOURNAL_SCREEN, journalScreen } from './menu/journal-screen';
+import type { JournalQuest } from './menu/journal-screen';
+import { HELP_SCREEN, helpScreen } from './menu/help-screen';
+import type { PadAction } from '../platform/gamepad-model';
 import type { ItemDetail, ItemsMemory } from './menu/items-screen';
 import { ALL_ITEMS, categoryOf, itemCategories } from '../domain/item-order';
 import type { PartyMember } from './menu/blocks';
@@ -46,9 +49,9 @@ import type { WindowskinHandle } from './ui/windowskin';
 import type { Condition } from '../domain/session';
 
 /**
- * Where each built-in hub entry goes until its new screen exists (decision 0016 U2.1, Ariel's interim answer): the
- * existing Inventory, Journal, Save/Load and Settings windows. Cancel there comes back to the hub. Entries for screens
- * that do not exist yet (Status, Formation, Codex, Credits) are shown greyed.
+ * The built-in hub entries that do something (decision 0016). Items, Journal and Help are menu screens; Config (the
+ * settings panel) and Save (the Save/Load dialog) open the existing windows until U2.3b and U2.3c, and Cancel there
+ * comes back to the hub. Entries for screens that do not exist yet (Status, Formation, Codex, Credits) are greyed.
  */
 const HUB_ROUTES = new Set(['builtin:items', 'builtin:journal', 'builtin:save', 'builtin:config', 'builtin:help']);
 
@@ -58,14 +61,14 @@ const SCENE = 'rpgameworks:map';
 
 export interface FoundationElements {
   session: SessionController;
-  inventory: HTMLDialogElement;
   saveDialog: HTMLDialogElement;
   saveConfirmation: ConfirmationDialogParts;
   saves: SaveService;
   base: URL;
-  inventoryPrompt: () => PromptEntry[];
-  /** Open the settings panel; `help` opens How to play, `onClosed` runs once when the panel closes. */
-  openSettings: (options?: { help?: boolean; onClosed?: () => void }) => void;
+  /** The controller's current button for each action, for the Help screen. */
+  controllerBindings: () => Readonly<Record<PadAction, number>>;
+  /** Open the settings panel; `onClosed` runs once when the panel closes. */
+  openSettings: (options?: { onClosed?: () => void }) => void;
   /** The game's hub menu (menu.json). */
   menu: MenuDefinition;
   /** The page's window skins, so menu windows are skinned as they open. */
@@ -124,14 +127,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private generation = 0;
     private lastExit: MapExit | null = null;
     private readonly dialog = new InteractionDialog(elements.dialog,()=>this.cancelModal());
-    private inventory: InventoryMenu | null = null;
     private saveMenu: SaveMenu | null = null;
     private menuPending = false;
     /** The hub (decision 0016 U2.1) and its layer; built with the scene, disposed with it. */
     private hub: MenuController | null = null;
     /** The hub entry last chosen while the player is in a window opened from the hub; Cancel there returns to the hub. */
     private hubEntry: string | null = null;
-    private saveFromHub = false;
     private hubSilent = false;
 
     openMenu(): void {
@@ -149,20 +150,19 @@ export function createFoundation(elements: FoundationElements, onError: (message
     /** Close the hub without returning to the map (going on to another window). */
     private leaveHub(): void { this.hubSilent = true; try { this.hub?.close(); } finally { this.hubSilent = false; } }
     private hubClosed(): void { if (!this.hubSilent) this.resume(); }
-    private backToHub(): void { this.inventory?.close(); this.saveMenu?.close(); this.openHub(); }
+    private backToHub(): void { this.saveMenu?.close(); this.openHub(); }
     private chooseEntry(entry: MenuEntry): void {
       if (this.mode !== 'menu' || !HUB_ROUTES.has(entry.screen)) return;
       this.hubEntry = entry.id;
-      if (entry.screen === 'builtin:items' || entry.screen === 'builtin:journal') {
-        if (entry.screen === 'builtin:items') { this.hub?.push(ITEMS_SCREEN); return; } // U2.2: the new Items screen.
-        this.leaveHub(); this.setMode('inventory'); this.inventory?.open('journal');
-      } else if (entry.screen === 'builtin:save') {
-        this.leaveHub(); this.saveFromHub = true; this.returnLabel('Return to Menu'); this.setMode('save'); void this.saveMenu?.open().catch(cause => this.fail(cause));
+      const screen = { 'builtin:items': ITEMS_SCREEN, 'builtin:journal': JOURNAL_SCREEN, 'builtin:help': HELP_SCREEN }[entry.screen];
+      if (screen) { this.hub?.push(screen); return; }
+      if (entry.screen === 'builtin:save') {
+        this.leaveHub(); this.setMode('save'); void this.saveMenu?.open().catch(cause => this.fail(cause));
       } else {
-        // Config and Help are the settings panel until U2.3; closing it comes back to the hub on this entry.
+        // Config is the settings panel until U2.3b; closing it comes back to the hub on this entry.
         const back = entry.id;
         this.resume();
-        elements.openSettings({ help: entry.screen === 'builtin:help', onClosed: () => { if (this.mode !== 'exploration' || !this.hub) return; this.hubEntry = back; this.openHub(); } });
+        elements.openSettings({ onClosed: () => { if (this.mode !== 'exploration' || !this.hub) return; this.hubEntry = back; this.openHub(); } });
       }
     }
     /** Party cards: the hero only, with no lasting stats until the roster (M5.4d), and a portrait cut from its sprite. */
@@ -179,6 +179,15 @@ export function createFoundation(elements: FoundationElements, onError: (message
         if (!count) return [];
         const use = item.battleUse ? `Restores ${item.battleUse.amount} HP to one ally in battle.` : '';
         return [{ id: item.id, name: strings[item.nameKey]!, description: strings[item.descriptionKey]!, count, maxStack: item.maxStack, category: categoryOf(item, categories), use }];
+      });
+    }
+    /** Quests the party knows, for the Journal: active ones with their objective, completed ones with how they ended. */
+    private journalQuests(): JournalQuest[] {
+      const session = elements.session.current;
+      return session.questCatalog.flatMap(quest => {
+        const state = session.quest(quest.id);
+        return state === 'active' || state === 'completed'
+          ? [{ id: quest.id, title: quest.title, state, text: state === 'completed' ? quest.completedText : quest.objective }] : [];
       });
     }
     menuState(): RuntimeSnapshot['menu'] {
@@ -229,13 +238,15 @@ export function createFoundation(elements: FoundationElements, onError: (message
           items: () => this.carriedItems(categories),
           capacity: () => ({ used: Object.keys(elements.session.current.snapshot().inventory).length, capacity: elements.session.current.catalog.capacity }),
         }));
+        registry.register(JOURNAL_SCREEN, context => journalScreen(context, { quests: () => this.journalQuests() }));
+        registry.register(HELP_SCREEN, context => helpScreen(context, { bindings: elements.controllerBindings }));
         const layer = createMenuLayer(document.body, 'Game menu');
         layer.element.id = 'game-menu';
         // The menu key closes the menu from inside it too, like the controller's Menu button.
         layer.element.addEventListener('keydown', event => { if (event.code === 'KeyI' && !event.repeat) { event.preventDefault(); this.resume(); } }, { signal: this.sceneLifetime.signal });
         this.hub = new MenuController(layer, registry, { holds: condition => elements.session.evaluate(condition as Condition) }, elements.windowskin(), () => this.hubClosed());
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
-          elements.gamepad, elements.canPlay, elements.dialog, elements.inventory,elements.saveDialog,layer.element);
+          elements.gamepad, elements.canPlay, elements.dialog, elements.saveDialog, layer.element);
         starts += 1;
         current = this;
         this.room.setEffectsEnabled(elements.effects.checked);
@@ -247,9 +258,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
           this.scene.restart();
         }, { signal: this.sceneLifetime.signal });
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
-        this.inventory = new InventoryMenu(elements.inventory, elements.session,
-          () => { if (this.hubEntry) this.backToHub(); else this.resume(); }, () => { this.resume(); elements.openSettings(); },()=>this.openSaves(),elements.inventoryPrompt);
-        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnToInventory(),elements.saveConfirmation,()=>this.inputOwner?.clear(),reason=>this.checkpointReason(reason));
+        this.saveMenu=new SaveMenu(elements.saveDialog,elements.saves,elements.session,()=>this.checkpoint(),envelope=>this.loadSave(envelope),()=>this.returnFromSaves(),elements.saveConfirmation,()=>this.inputOwner?.clear(),reason=>this.checkpointReason(reason));
         phase = 'ready';
         scheduleResize();
         const lifetime = this.sceneLifetime.signal;
@@ -293,10 +302,6 @@ export function createFoundation(elements: FoundationElements, onError: (message
       }
       const direction = input.direction(); // One gameplay consumption of the sampled controller.
       const interact = input.consumeInteract(), cancel = input.consumeCancel(), burst = input.consumeBurst(), menu = input.consumeMenu();
-      if (this.mode === 'inventory') {
-        this.inventory?.sample({direction,interact,cancel,menu,burst:false},delta);
-        return;
-      }
       if(this.mode==='save'){this.saveMenu?.sample({direction,interact,cancel,menu,burst:false},delta);return;}
       if (this.mode === 'menu') {
         const tab = input.consumeTab();
@@ -491,14 +496,13 @@ export function createFoundation(elements: FoundationElements, onError: (message
       else if(id==='speed'){view.speed=nextSpeed(view.speed);this.showBattle();}
     }
     /** The Save/Load dialog's return button names where it goes back to. */
-    private returnLabel(text:string):void{const button=elements.saveDialog.querySelector<HTMLElement>('#save-close');if(button)button.textContent=text;}
-    private openSaves():void{if(this.mode!=='inventory')return;this.returnLabel('Return to Inventory');this.inventory?.close();this.setMode('save');void this.saveMenu?.open().catch(cause=>this.fail(cause));}
-    private returnToInventory():void{if(this.mode!=='save')return;if(this.saveFromHub){this.saveFromHub=false;this.backToHub();return;}this.setMode('inventory');this.inventory?.open();}
+    /** Save/Load is opened from the hub, and returns there. */
+    private returnFromSaves():void{if(this.mode!=='save')return;this.backToHub();}
     private checkpoint(){const room=this.room!;return{mapId:room.content.map.id,tile:{...room.actor.tile},facing:room.actor.facing};}
     /** Refuses a write whose checkpoint the saved session could not restore (standing on a deferral-closing gate); the player stays put with a visible reason. */
     private checkpointReason(checkpoint:SaveCheckpoint):string|null{return this.room&&this.room.checkpointBlocked(checkpoint.tile)?'Cannot save here: the gate beneath you is still closing. Step off it, then save or export again.':null;}
     private async loadSave(envelope:SaveEnvelopeV1):Promise<void>{
-      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.hubEntry=null;this.saveFromHub=false;this.setMode('transition');
+      if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.saveMenu?.close();this.hubEntry=null;this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const candidate=new SessionState({items:elements.session.current.catalog,facts:elements.session.current.factCatalog,quests:elements.session.current.questCatalog},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
@@ -534,8 +538,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
     private resume(): void {
       this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null;
-      this.dialog.close(); this.inventory?.close();this.saveMenu?.close(); this.message = null;this.dialogue=null;
-      this.leaveHub(); this.hubEntry = null; this.saveFromHub = false;
+      this.dialog.close(); this.saveMenu?.close(); this.message = null;this.dialogue=null;
+      this.leaveHub(); this.hubEntry = null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
     private cancelModal(): void {
@@ -608,7 +612,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private fail(cause: unknown): void {
       if (phase === 'error') return;
       phase = 'error';
-      this.generation += 1; this.transfer.cancel();this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null; this.dialog.close(); this.inventory?.close(); this.inputOwner?.clear();
+      this.generation += 1; this.transfer.cancel();this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null; this.dialog.close(); this.inputOwner?.clear();
       elements.burst.disabled = true; elements.restart.disabled = true; elements.interact.disabled = true;
       console.error('[RPGameworks] Map scene failed', cause);
       onError(`Map scene failed: ${cause instanceof Error ? cause.message : String(cause)}`);
@@ -620,8 +624,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
       this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null;
       this.generation += 1; this.transfer.dispose();
       this.dialog.dispose(); this.message = null;this.dialogue=null;
-      this.inventory?.dispose(); this.inventory = null;this.saveMenu?.dispose();this.saveMenu=null;
-      this.hubSilent = true; this.hub?.dispose(); this.hub = null; this.hubSilent = false; this.hubEntry = null; this.saveFromHub = false;
+      this.saveMenu?.dispose();this.saveMenu=null;
+      this.hubSilent = true; this.hub?.dispose(); this.hub = null; this.hubSilent = false; this.hubEntry = null;
       this.inputOwner?.dispose(); this.inputOwner = null;
       this.room?.destroy(); this.room = null;
       stops += 1;

@@ -13,7 +13,7 @@
       <div id="stage" tabindex="0" role="group" aria-label="Game viewport. Arrow keys or W A S D to move. E or Enter to interact. I or Escape to open the menu. Space to trigger a cosmetic burst." data-testid="viewport"></div>
       <div id="loading-notice" class="game-notice" role="status">Entering the world…</div>
       <p id="error" class="game-notice" role="alert" hidden></p>
-      <button id="tools-toggle" type="button" aria-label="Open game menu" aria-expanded="false" aria-controls="inventory-dialog"><span aria-hidden="true">☰</span><span>Menu</span></button>
+      <button id="tools-toggle" type="button" aria-label="Open game menu" aria-expanded="false" aria-controls="game-menu"><span aria-hidden="true">☰</span><span>Menu</span></button>
       <div id="touch-controls" class="controls" aria-label="On-screen game controls" hidden>
         <div class="dpad" aria-label="Movement controls">
           <button type="button" data-direction="up" aria-label="Move up">↑</button>
@@ -45,8 +45,8 @@
         <p class="hint">Automatic on touch-first devices. Change for this session.</p>
         <details class="help-panel"><summary>How to play</summary>
           <p class="hint">Move with WASD or the arrow keys. Face someone or something nearby, then press E or Enter to interact. Escape closes messages; Space creates a small spark.</p>
-          <p class="hint">Controller defaults: left stick / D-pad to move, X to interact or inspect, B to close, A for sparks, Menu (button 9) for inventory. Your custom bindings take priority.</p>
-          <p class="hint">I or Escape opens Inventory during exploration. Its Settings button opens these tools. F2 toggles Debug. Click the play area to play with the panel still visible.</p>
+          <p class="hint">Controller defaults: left stick / D-pad to move, X to interact or inspect, B to close, A for sparks, Menu (button 9) for the menu. Your custom bindings take priority.</p>
+          <p class="hint">I or Escape opens the menu during exploration. Its Config entry opens these settings. F2 toggles Debug. Click the play area to play with the panel still visible.</p>
         </details>
         <div class="controller-actions">
           <button id="controller-activate" type="button" class="ui-action-button" data-intent="secondary">Activate controller</button>
@@ -116,40 +116,6 @@
         <button id="dialog-cancel" data-action="cancel" type="button" class="ui-action-button" data-intent="secondary">Close</button>
       </div>
     </dialog>
-    <dialog data-window-skin="frame" data-skin-surface="inventory" id="inventory-dialog" aria-labelledby="inventory-title">
-      <header class="skin-heading"><h2 id="inventory-title" data-skin-title>Inventory</h2></header>
-      <div id="inventory-body-above" hidden></div>
-      <div class="inventory-body">
-        <p id="inventory-count" class="hint"></p>
-        <div class="inventory-columns">
-          <div class="inventory-list-frame">
-            <div id="inventory-list-above" hidden></div>
-            <div id="inventory-list" aria-label="Carried items"></div>
-            <div id="inventory-list-below" hidden></div>
-          </div>
-          <section id="inventory-detail" class="ui-inset" aria-live="polite" aria-atomic="true">
-            <h3 id="item-name" class="ui-inset__title">Empty inventory</h3>
-            <div class="ui-inset__body">
-              <p id="item-description"></p><p id="item-quantity" class="hint"></p>
-            </div>
-          </section>
-        </div>
-        <p id="inventory-prompt"></p>
-        <p class="hint">Items survive room travel. Use Save / Load to preserve progress across browser reloads.</p>
-      </div>
-      <div id="inventory-body-below" hidden></div>
-      <section id="journal-body" class="inventory-body" hidden aria-label="Quest journal">
-        <p id="journal-empty" class="hint">No quests accepted yet. Read the Gallery plaque, then talk to Mara in the Workshop.</p>
-        <div id="journal-list" class="inventory-list-frame" aria-label="Accepted and completed quests"></div>
-        <section id="journal-detail" class="ui-inset" aria-live="polite"><h3 id="journal-name" class="ui-inset__title"></h3><p id="journal-description" class="ui-inset__body"></p></section>
-      </section>
-      <div class="dialog-actions">
-        <button id="inventory-journal" type="button" class="ui-action-button" data-intent="secondary">Journal</button>
-        <button id="inventory-saves" type="button" class="ui-action-button" data-intent="secondary">Save / Load</button>
-        <button id="inventory-settings" type="button" class="ui-action-button" data-intent="secondary">Settings</button>
-        <button id="inventory-close" type="button" class="ui-action-button" data-intent="primary">Return to game</button>
-      </div>
-    </dialog>
     <dialog data-window-skin="frame" data-skin-surface="saves" id="save-dialog" aria-labelledby="save-title">
       <header class="skin-heading"><h2 id="save-title" data-skin-title>Save / Load</h2></header>
       <div class="save-body">
@@ -163,7 +129,7 @@
         </div>
         <p class="hint">Saving is available only at a stationary exploration checkpoint. Import and Load replace the current unsaved session only after confirmation. Save files are plain local JSON.</p>
       </div>
-      <div class="dialog-actions"><button id="save-close" type="button" class="ui-action-button" data-intent="primary">Return to Inventory</button></div>
+      <div class="dialog-actions"><button id="save-close" type="button" class="ui-action-button" data-intent="primary">Return to Menu</button></div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>

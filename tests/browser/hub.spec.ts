@@ -67,8 +67,8 @@ test('hub entries open their screens or the existing windows, and Cancel there c
   await expect(menu(page)).toBeVisible();
   await expect(row(page, 'items')).toBeFocused();
   await row(page, 'journal').click();
-  await expect(page.locator('#inventory-title')).toHaveText('Journal');
-  await page.locator('#inventory-close').click();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:journal"]')).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(row(page, 'journal')).toBeFocused();
   await row(page, 'save').click();
   await expect(page.locator('#save-dialog')).toBeVisible();
@@ -82,17 +82,9 @@ test('hub entries open their screens or the existing windows, and Cancel there c
   await page.locator('#tools-close').click();
   await expect(row(page, 'config')).toBeFocused();
   await row(page, 'help').click();
-  await expect(page.locator('#tools-panel .help-panel')).toHaveJSProperty('open', true);
-  await expect(page.locator('#tools-panel .help-panel summary')).toBeFocused();
-  await page.locator('#tools-close').click();
-  await expect(row(page, 'help')).toBeFocused();
-  // The old dialog's own Save button → Return goes back to that dialog, as before (until U2.3 retires it).
-  await row(page, 'journal').click();
-  await page.locator('#inventory-saves').click();
-  await expect(page.locator('#save-close')).toHaveText('Return to Inventory');
-  await page.locator('#save-close').click();
-  await expect(page.locator('#inventory-dialog')).toBeVisible();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:help"]')).toBeVisible();
   await page.keyboard.press('Escape');
+  await expect(row(page, 'help')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(menu(page)).toBeHidden();
   await expect(page.locator('#stage')).toBeFocused();
@@ -115,7 +107,7 @@ test('pointer and controller: the Menu button and the pad open the hub, move, ch
   await tapPad(page, 13); await tapPad(page, 13); await tapPad(page, 13); // Down to Journal.
   await expect.poll(async () => (await snapshot(page)).menu?.focused).toBe('journal');
   await tapPad(page, 2); // Confirm.
-  await expect(page.locator('#inventory-title')).toHaveText('Journal');
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:journal"]')).toBeVisible();
   await tapPad(page, 1);
   await expect.poll(async () => (await snapshot(page)).menu?.focused).toBe('journal');
   await tapPad(page, 9); // The Menu button closes the hub too.

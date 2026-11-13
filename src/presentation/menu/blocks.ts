@@ -67,7 +67,10 @@ export function createList({ label, entries, onChoose, onFocus }: {
   });
   element.addEventListener('focusin', event => {
     const row = (event.target as HTMLElement).closest<HTMLButtonElement>('.menu-row');
-    if (row) onFocus?.(row.dataset.id!);
+    if (!row) return;
+    // Controller and arrow movement focus without scrolling; keep the highlighted row visible in a long list.
+    row.scrollIntoView({ block: 'nearest' });
+    onFocus?.(row.dataset.id!);
   });
   function setEntries(next: readonly ListEntry[]): void {
     const focused = handle.focusedId;

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { test, expect, openRoom, openInventory, snapshot, tapDirection, holdToExit } from './helpers';
+import { test, expect, openRoom, openSaves as openSaveDialog, snapshot, tapDirection, holdToExit } from './helpers';
 
 const GALLERY = 'demo:map.gallery';
 const STOREROOM = 'demo:map.storeroom';
@@ -31,9 +31,7 @@ async function interact(page: Page): Promise<string> {
   return text ?? '';
 }
 async function openSaves(page: Page): Promise<void> {
-  await openInventory(page);
-  await page.locator('#inventory-saves').click();
-  await expect(page.locator('#save-dialog')).toBeVisible();
+  await openSaveDialog(page);
   await expect(page.locator('#save-slots .save-slot')).toHaveCount(3);
 }
 const slot = (page: Page, index: number) => page.locator('#save-slots .save-slot').nth(index);
@@ -185,9 +183,8 @@ test('a walkable denied exit shows one reason and makes zero destination request
   await openSaves(page);
   await slot(page, 0).getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('#save-status')).toContainText('Cannot save here'); // Unrestorable checkpoint is refused.
-  await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); // Save/Load, then the Inventory…
-  await expect(page.locator('#save-dialog')).toBeHidden();
-  await page.keyboard.press('Escape'); await expect(page.locator('#game-menu')).toBeHidden(); // …then the menu.
+  await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); // Save/Load, then the menu.
+  await expect(page.locator('#save-dialog')).toBeHidden(); await expect(page.locator('#game-menu')).toBeHidden();
   expect((await snapshot(page)).pendingSaveOperations).toBe(0); // Nothing was written.
   await step(page, 'ArrowLeft'); // Walk off west; the arrival releases the deferral and the gate closes.
   expect((await snapshot(page)).actorTile).toEqual({ x: 11, y: 6 });
@@ -198,8 +195,7 @@ test('a walkable denied exit shows one reason and makes zero destination request
   await slot(page, 0).getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('#save-status')).toContainText('Progress saved');
   const tile = (await snapshot(page)).actorTile;
-  await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
-  await page.keyboard.press('Escape'); await expect(page.locator('#game-menu')).toBeHidden(); // Save/Load, Inventory, menu.
+  await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await expect(page.locator('#game-menu')).toBeHidden(); // Save/Load, then the menu.
   expect((await snapshot(page)).session.facts['demo:fact.gallery.gate-open']).toBe(false);
   await openSaves(page);
   await confirmLoad(page, 0);

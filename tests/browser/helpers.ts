@@ -123,44 +123,56 @@ export async function holdToExit(page: Page, key: DirectionKey): Promise<Runtime
   return mode as RuntimeSnapshot['inputMode'];
 }
 
-/**
- * The old Inventory dialog (until U2.3 retires it): the hub's Journal entry opens it on the Journal, and its own
- * Inventory button shows the item list. Items in the hub opens the new Items screen (decision 0016 U2.2). Closing the
- * dialog returns to the hub, and closing the hub returns to the map.
- */
+/** The menu key opens the hub (decision 0016); its Items entry opens the Items screen. */
 export async function openInventory(page: Page): Promise<void> {
   await page.keyboard.press('KeyI');
-  await expect(page.locator('#game-menu')).toBeVisible();
-  await page.locator('#game-menu .menu-row[data-id="journal"]').click();
-  await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await page.locator('#inventory-journal').click();
-  await expect(page.locator('#inventory-title')).toHaveText('Inventory');
+  await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
+  await page.locator('#game-menu .menu-row[data-id="items"]').click();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
 }
-/** Close the Inventory and then the hub, back to the map. */
+/** Back from a hub screen to the hub, then to the map. */
 export async function closeInventory(page: Page): Promise<void> {
   await page.keyboard.press('Escape');
-  await expect(page.locator('#inventory-dialog')).toBeHidden();
-  await expect(page.locator('#game-menu')).toBeVisible();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:hub"]')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('#game-menu')).toBeHidden();
   await expect(page.locator('#stage')).toBeFocused();
 }
+/** The Journal screen (decision 0016 U2.3a). */
+export const journalScreen = (page: Page) => page.locator('#game-menu .menu-screen[data-screen="builtin:journal"]');
+/** Menu, then Journal. */
+export async function openJournal(page: Page): Promise<void> {
+  await page.keyboard.press('KeyI');
+  await expect(page.locator('#game-menu .menu-row[data-id="journal"]')).toBeVisible();
+  await page.locator('#game-menu .menu-row[data-id="journal"]').click();
+  await expect(journalScreen(page)).toBeVisible();
+}
+/** Menu, then Save: the Save/Load dialog (until U2.3c rebuilds it in the menu). */
+export async function openSaves(page: Page): Promise<void> {
+  await page.keyboard.press('KeyI');
+  await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeVisible();
+  await page.locator('#game-menu .menu-row[data-id="save"]').click();
+  await expect(page.locator('#save-dialog')).toBeVisible();
+}
+/** The Items screen's rows (labels), in order. */
+export const itemRows = (page: Page) => page.locator('#game-menu .menu-screen[data-screen="builtin:items"] .menu-row .menu-row-label');
 
-/** Reach controls through the real closed-by-default player menu: Menu, Journal, then the old dialog's Settings. */
+/** Reach the settings through the real closed-by-default player menu: Menu, then Config (decision 0016). */
 export async function openTools(page: Page, tab: 'options' | 'debug' = 'options'): Promise<void> {
   if (await page.locator('#tools-panel').isHidden()) {
-    if (await page.locator('#inventory-dialog').isHidden() && await page.locator('#game-menu').isHidden()) await page.locator('#tools-toggle').click();
-    await expect.poll(async () => await page.locator('#game-menu').isVisible() || await page.locator('#inventory-dialog').isVisible() || await page.locator('#tools-panel').isVisible()).toBe(true);
-    if (await page.locator('#game-menu').isVisible()) await page.locator('#game-menu .menu-row[data-id="journal"]').click();
-    if (await page.locator('#inventory-dialog').isVisible()) await page.locator('#inventory-settings').click();
+    if (await page.locator('#game-menu').isHidden()) await page.locator('#tools-toggle').click();
+    await expect.poll(async () => await page.locator('#game-menu').isVisible() || await page.locator('#tools-panel').isVisible()).toBe(true);
+    if (await page.locator('#game-menu').isVisible()) await page.locator('#game-menu .menu-row[data-id="config"]').click();
   }
   const button = page.locator(`#${tab}-tab`);
   if (await button.getAttribute('aria-selected') !== 'true') await button.click();
   await expect(page.locator(`#${tab}-panel`)).toBeVisible();
 }
+/** Close the settings; opened from the hub's Config they return to the hub, so close that too. */
 export async function closeTools(page: Page): Promise<void> {
   if (await page.locator('#tools-panel').isVisible()) await page.locator('#tools-close').click();
   await expect(page.locator('#tools-panel')).toBeHidden();
+  if (await page.locator('#game-menu').isVisible()) { await page.keyboard.press('Escape'); await expect(page.locator('#game-menu')).toBeHidden(); }
   await expect(page.locator('#stage')).toBeFocused();
 }
 export async function openControllerSettings(page: Page): Promise<void> {

@@ -60,10 +60,9 @@ test('menu tabs support keyboard navigation and repeated opening does not recrea
   for (let i = 0; i < 8; i += 1) {
     await page.keyboard.press('Escape');
     await expect(page.locator('#game-menu')).toBeVisible();
-    await page.locator('#game-menu .menu-row[data-id="journal"]').click();
-    await expect(page.locator('#inventory-dialog')).toBeVisible();
-    await page.locator('#inventory-settings').click();
-    await expect(page.locator('#options-tab')).toBeFocused();
+    await page.locator('#game-menu .menu-row[data-id="config"]').click();
+    await expect(page.locator('#tools-panel')).toBeVisible();
+    await page.locator('#options-tab').focus();
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#debug-tab')).toBeFocused();
     await expect(page.locator('#options-panel')).toBeHidden();
@@ -71,7 +70,9 @@ test('menu tabs support keyboard navigation and repeated opening does not recrea
     await expect(page.locator('#options-tab')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.locator('#tools-panel')).toBeHidden();
-    await expect(page.locator('#stage')).toBeFocused();
+    await expect(page.locator('#game-menu .menu-row[data-id="config"]')).toBeFocused(); // Config returns to the menu…
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#stage')).toBeFocused(); // …and Escape to the map.
   }
   const final = await snapshot(page);
   expect(final.starts).toBe(initial.starts); expect(final.stops).toBe(initial.stops);

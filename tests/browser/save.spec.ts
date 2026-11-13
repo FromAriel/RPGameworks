@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, openInventory, snapshot, tapDirection, type DirectionKey } from './helpers';
+import { test, expect, openRoom, openSaves as openSaveDialog, snapshot, tapDirection, type DirectionKey } from './helpers';
 
 const gallery='demo:map.gallery';
 // Shared tap: releases the key inside the page, so a loaded machine cannot add a step.
 async function step(page:Page,key:DirectionKey):Promise<void>{expect(await tapDirection(page,key)).toBe('walked');}
-async function openSaves(page:Page):Promise<void>{await openInventory(page);await page.locator('#inventory-saves').click();await expect(page.locator('#save-dialog')).toBeVisible();await expect(page.locator('#save-slots .save-slot')).toHaveCount(3);}
+async function openSaves(page:Page):Promise<void>{await openSaveDialog(page);await expect(page.locator('#save-slots .save-slot')).toHaveCount(3);}
 const slot=(page:Page,index:number)=>page.locator('#save-slots .save-slot').nth(index);
 async function confirm(page:Page,index:number,action:'Load'|'Save'|'Import here'|'Recover previous'):Promise<void>{
   const n=index+1;
@@ -27,7 +27,7 @@ test('three-slot UI exposes real disabled Load controls and saves/loads a sessio
   expect((await snapshot(page)).session.facts['demo:fact.gallery.plaque-read']).toBe(true);const savedTile=(await snapshot(page)).actorTile;
   await openSaves(page);for(let index=0;index<3;index++){await expect(slot(page,index)).toContainText('Empty');await expect(slot(page,index).getByRole('button',{name:'Load'})).toBeDisabled();}
   await slot(page,0).getByRole('button',{name:'Save'}).click();await expect(page.locator('#save-status')).toContainText('Progress saved');await expect(slot(page,0)).toContainText('The Pillar Gallery');
-  await page.locator('#save-close').click();await page.locator('#inventory-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await step(page,'ArrowDown');expect((await snapshot(page)).actorTile).not.toEqual(savedTile);
+  await page.locator('#save-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await step(page,'ArrowDown');expect((await snapshot(page)).actorTile).not.toEqual(savedTile);
   await openSaves(page);await confirm(page,0,'Load');await expect(page.locator('#save-dialog')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
   const after=await snapshot(page);expect(after.actorTile).toEqual(savedTile);expect(after.session.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(after.activeScenes).toBe(1);expect(after.sessionSubscribers).toBe(1);expect(after.heroArt).toBe('layered');await expect(page.locator('#stage')).toBeFocused();
 });
@@ -47,10 +47,10 @@ test('exports a deterministic JSON filename and imports a validated fixture into
 });
 
 test('keyboard and controller navigate Save without a virtual pointer and isolate held input',{ tag: ['@saves', '@input'] }, async({page})=>{
-  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,13);await tapPad(page,13);await tapPad(page,13);await tapPad(page,2);await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await tapPad(page,13);await expect(page.locator('#inventory-saves')).toBeFocused();await tapPad(page,2);await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
-  await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await tapPad(page,1);await expect(page.locator('#inventory-dialog')).toBeVisible();await tapPad(page,1);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,1);await expect(page.locator('#stage')).toBeFocused();expect((await snapshot(page)).pendingSaveOperations).toBe(0);
-  await openInventory(page);await page.keyboard.press('ArrowDown');await expect(page.locator('#inventory-saves')).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#save-dialog')).toBeVisible();
+  await syntheticPad(page);await openRoom(page);await tapPad(page,9);await expect(page.locator('#game-menu')).toBeVisible();for(let i=0;i<7;i++)await tapPad(page,13);await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();
+  await tapPad(page,2);await expect(page.locator('#save-dialog')).toBeVisible();await expect(slot(page,0).getByRole('button',{name:'Save'})).toBeFocused();
+  await tapPad(page,2);await expect(page.locator('#save-status')).toContainText('Progress saved');await tapPad(page,1);await expect(page.locator('#game-menu')).toBeVisible();await tapPad(page,1);await expect(page.locator('#stage')).toBeFocused();expect((await snapshot(page)).pendingSaveOperations).toBe(0);
+  await page.keyboard.press('KeyI');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();for(let i=0;i<7;i++)await page.keyboard.press('ArrowDown');await expect(page.locator('#game-menu .menu-row[data-id="save"]')).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#save-dialog')).toBeVisible();
 });
 
 test('rejects malformed and incompatible imports without changing the running session',{ tag: ['@saves'] }, async({page})=>{
@@ -79,14 +79,14 @@ test('repeated save-window openings and in-place loads retain bounded ownership'
   test.setTimeout(60000);await openRoom(page);const baseline=await snapshot(page);
   for(let cycle=0;cycle<6;cycle++){
     await openSaves(page);if(cycle===0)await slot(page,0).getByRole('button',{name:'Save'}).click();else await confirm(page,0,'Save');
-    await page.locator('#save-close').click();await page.locator('#inventory-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await step(page,'ArrowLeft');
+    await page.locator('#save-close').click();await page.keyboard.press('Escape');await expect(page.locator('#game-menu')).toBeHidden();await step(page,'ArrowLeft');
     await openSaves(page);await confirm(page,0,'Load');await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
     const state=await snapshot(page);expect(state.activeScenes).toBe(1);expect(state.loadedMaps).toBe(1);expect(state.sessionSubscribers).toBe(baseline.sessionSubscribers);expect(state.pendingSaveOperations).toBe(0);expect(state.displayObjects).toBe(baseline.displayObjects);expect(state.textureCount).toBe(baseline.textureCount);
   }
 });
 
 test('unavailable IndexedDB keeps gameplay and current-session export usable',{ tag: ['@saves'] }, async({page})=>{
-  await page.addInitScript(()=>Object.defineProperty(globalThis,'indexedDB',{value:undefined,configurable:true}));await openRoom(page);await openInventory(page);await page.locator('#inventory-saves').click();await expect(page.locator('#save-dialog')).toBeVisible();await expect(page.locator('#save-status')).toContainText('Local saves unavailable');
+  await page.addInitScript(()=>Object.defineProperty(globalThis,'indexedDB',{value:undefined,configurable:true}));await openRoom(page);await page.keyboard.press('KeyI');await page.locator('#game-menu .menu-row[data-id="save"]').click();await expect(page.locator('#save-dialog')).toBeVisible();await expect(page.locator('#save-status')).toContainText('Local saves unavailable');
   const download=page.waitForEvent('download');await page.locator('#save-export-current').click();expect((await download).suggestedFilename()).toBe('demo-game.foundation-slot-1-r1.json');expect((await snapshot(page)).phase).toBe('ready');
 });
 

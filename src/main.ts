@@ -1,7 +1,6 @@
 import './presentation/ui/tokens.css';
 import './presentation/ui/components.css';
 import './style.css';
-import './presentation/ui/inventory.css';
 import './presentation/ui/save-menu.css';
 import { loadItemCatalog } from './platform/item-loader';
 import { loadFactCatalog } from './platform/fact-loader';
@@ -23,7 +22,6 @@ import { PageErrorLog } from './platform/page-errors';
 import { focusGameWhenIdle } from './platform/input';
 import { GamepadController } from './platform/gamepad';
 import { mountControllerSettings } from './presentation/ui/controller-settings';
-import type { PromptEntry } from './presentation/ui/components';
 import { loadSelectedMap } from './platform/map-loader';
 import type { FoundationHandle } from './runtime-types';
 
@@ -58,6 +56,8 @@ const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
 const loadingNotice = required<HTMLElement>('#loading-notice');
 // Settings opened from the hub (Config, Help) return to the hub when the panel closes (decision 0016 U2.1).
 let afterTools: (() => void) | null = null;
+// "Return to game" means the game, not the menu: registered before the shell's own close handler, so it runs first.
+required<HTMLElement>('#tools-resume').addEventListener('click', () => { afterTools = null; }, { signal: appLifetime.signal });
 const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.reset(); }, () => {
   drawDiagnostics();
   if (afterTools && required<HTMLElement>('#tools-panel').hidden) { const next = afterTools; afterTools = null; next(); }
@@ -69,7 +69,7 @@ const controllerUI = mountControllerSettings(controllerPanel, controller, stage,
   runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
   fatalGameError: failed ? error.textContent : null,
   pageErrors: pageErrors.snapshot(),
-}), () => shell.close());
+}), () => { afterTools = null; shell.close(); });
 
 const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel'), () => {
   if (controllerPanel.open) { controllerPanel.open = false; controller.reset(); controllerPanel.querySelector<HTMLElement>('summary')?.focus(); }
@@ -80,16 +80,6 @@ const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel')
 const saveConfirmation: ConfirmationDialogParts = createConfirmationDialog('save-confirmation');
 document.body.append(saveConfirmation.dialog);
 const windowSkin = mountWindowskin();
-function inventoryPrompt(): PromptEntry[] {
-  const buttons = controller.settings.buttons;
-  const label = (index: number): string => index === -1 ? 'unassigned' : `button ${index}`;
-  return [
-    { action: 'select', input: 'Arrows / stick' },
-    { action: 'inspect', input: `E / Enter / ${label(buttons.interact)}` },
-    { action: 'back', input: `Escape / ${label(buttons.cancel)}` },
-    { action: 'menu', input: `I / ${label(buttons.menu)}` },
-  ];
-}
 
 required<HTMLElement>('#build-label').textContent = `v${__APP_VERSION__} · ${__BUILD_ID__}`;
 
@@ -112,7 +102,7 @@ function drawDiagnostics(): void {
       startupFocusPending = false;
       focusGameWhenIdle(stage);
     }
-    const message = artWarning || (snapshot.inputMode === 'menu' ? 'Menu open. Choose a command, or press Escape to return.' : snapshot.inputMode === 'inventory' ? 'Inventory open. Inspect items or open the Journal.' :snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to Inventory.': snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
+    const message = artWarning || (snapshot.inputMode === 'menu' ? 'Menu open. Choose a command, or press Escape to return.' : snapshot.inputMode==='save'?'Save menu open. Choose a manual slot or return to the menu.': snapshot.inputMode === 'message'||snapshot.inputMode==='dialogue' ? 'Conversation open. Advance, choose a response, or close it to resume exploring.' :
       snapshot.inputMode === 'transition' ? 'Preparing the destination. Cancel to remain in this room.' :
       snapshot.inputMode === 'transition-error' ? 'Travel failed safely. Retry or stay in your current room.' :
       snapshot.interactionTarget ? 'Ready. Within reach. Press E / Enter or the configured interaction button.' :
@@ -222,19 +212,14 @@ async function start(): Promise<void> {
     if (disposed) {saveService.close();saveService=null;return;}
     handle = createFoundation({
       session,
-      inventory: required<HTMLDialogElement>('#inventory-dialog'),
       saveDialog:required<HTMLDialogElement>('#save-dialog'),
       saveConfirmation,
       saves:saveService,
       base,
-      inventoryPrompt,
+      controllerBindings: () => controller.settings.buttons,
       openSettings: options => {
         shell.open('options');
         afterTools = options?.onClosed ?? null;
-        if (options?.help) {
-          const help = document.querySelector<HTMLDetailsElement>('#tools-panel .help-panel');
-          if (help) { help.open = true; help.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true }); }
-        }
       },
       menu,
       windowskin: () => windowSkin,

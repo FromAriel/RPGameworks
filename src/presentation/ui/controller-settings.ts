@@ -2,7 +2,8 @@ import { ACTIONS, axisValue, buttonPressed, defaultControllerConfig } from '../.
 import type { PadAction } from '../../platform/gamepad-model';
 import type { GamepadController } from '../../platform/gamepad';
 
-const standardNames = ['A / bottom', 'B / right', 'X / left', 'Y / top', 'LB', 'RB', 'LT', 'RT',
+/** Standard-layout names for button numbers (also used by the menu's Help screen). */
+export const standardNames = ['A / bottom', 'B / right', 'X / left', 'Y / top', 'LB', 'RB', 'LT', 'RT',
   'View', 'Menu', 'Left stick click', 'Right stick click', 'D-pad up', 'D-pad down', 'D-pad left', 'D-pad right', 'Guide'];
 const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst', interact: 'Interact / advance', cancel: 'Cancel / close', menu: 'Game menu / inventory', tabPrev: 'Menu: previous tab', tabNext: 'Menu: next tab' };
 

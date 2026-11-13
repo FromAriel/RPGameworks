@@ -3,6 +3,7 @@
  *
  * Categories come from the item catalog (or the default three). An item without a category belongs to the first one.
  * Sorting is stable and total: every order ends on the item ID, so equal names or counts never shuffle between opens.
+ * Names compare case-insensitively and with numbers in numeric order ("Keepsake 2" before "Keepsake 10").
  */
 import { DEFAULT_ITEM_CATEGORIES } from '../content/validation.mjs';
 import type { ItemCatalog } from '../content/generated/items';
@@ -25,7 +26,7 @@ export function categoryOf(item: { readonly category?: string }, categories: rea
   return item.category ?? categories[0]?.id ?? '';
 }
 
-const byName = (a: CarriedItem, b: CarriedItem) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+const byName = (a: CarriedItem, b: CarriedItem) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true }) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
 /** The items shown under a tab (`all` or a category ID), in the chosen order. */
 export function orderItems(items: readonly CarriedItem[], tab: string, sort: ItemSort, categories: readonly ItemCategory[]): CarriedItem[] {

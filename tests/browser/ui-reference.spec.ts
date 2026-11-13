@@ -12,14 +12,18 @@ async function capture(target: Locator, name: string, info: TestInfo): Promise<v
   await target.screenshot({ path: info.outputPath(name), animations: 'disabled' });
 }
 
-/** The old Inventory dialog these U1 references capture: the hub's Journal, then the dialog's Inventory toggle (until U2.3). */
+/** The Items screen (decision 0016), which replaced the U1 Inventory dialog in these captures. */
 async function openInventory(page: Page): Promise<void> {
   await page.keyboard.press('KeyI');
   await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
-  await page.locator('#game-menu .menu-row[data-id="journal"]').click();
-  await expect(page.locator('#inventory-dialog')).toBeVisible();
-  await page.locator('#inventory-journal').click();
-  await expect(page.locator('#inventory-title')).toHaveText('Inventory');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
+}
+/** From the Items screen, back to the menu and on to Save / Load. */
+async function itemsToSaves(page: Page): Promise<void> {
+  await page.keyboard.press('Escape');
+  await page.locator('#game-menu .menu-row[data-id="save"]').click();
+  await expect(page.locator('#save-dialog')).toBeVisible();
 }
 
 async function collectLens(page: Page): Promise<void> {
@@ -58,27 +62,15 @@ async function tapPad(page: Page, index: number): Promise<void> {
 }
 
 async function openInventoryWithPad(page: Page): Promise<void> {
-  const inventory = page.locator('#inventory-dialog');
   const hub = page.locator('#game-menu');
   for (let attempt = 0; attempt < 3 && await hub.isHidden(); attempt += 1) {
     await tapPad(page, 9);
     if (await hub.isHidden()) await page.waitForTimeout(300);
   }
   await expect(hub).toBeVisible();
-  // Down to Journal, the old dialog (until U2.3), one short step at a time.
-  const journal = page.locator('#game-menu .menu-row[data-id="journal"]');
-  for (let i = 0; i < 8 && !(await journal.evaluate(e => e === document.activeElement)); i += 1) {
-    // A short tap: one step, below the menu's repeat delay.
-    await page.evaluate(() => Object.assign(navigator.getGamepads()[0]!.buttons[13]!, { pressed: true, value: 1 }));
-    await page.waitForTimeout(70);
-    await page.evaluate(() => Object.assign(navigator.getGamepads()[0]!.buttons[13]!, { pressed: false, value: 0 }));
-    await page.waitForTimeout(100);
-  }
-  await expect(journal).toBeFocused();
-  await tapPad(page, 2);
-  await expect(inventory).toBeVisible();
-  await tapPad(page, 2); // Its Journal/Inventory toggle has focus: show the item list.
-  await expect(page.locator('#inventory-title')).toHaveText('Inventory');
+  await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
+  await tapPad(page, 2); // Confirm Items.
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
 }
 
 test.describe('U1.1 real-screen references', () => {
@@ -136,24 +128,10 @@ test.describe('U1.1 real-screen references', () => {
     });
     await collectLens(page);
     await openInventoryWithPad(page);
-    const item = page.locator('[data-item-id="demo:item.lens"]');
+    const item = page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row[data-id="demo:item.lens"]');
     await expect(item).toBeFocused();
-    await expect(item).toHaveAttribute('aria-pressed', 'true');
-    expect(await item.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        background: style.backgroundColor,
-        selectionLine: style.borderLeftColor,
-        focusStyle: style.outlineStyle,
-        focusColor: style.outlineColor,
-      };
-    })).toEqual({
-      background: 'rgb(38, 59, 80)',
-      selectionLine: 'rgb(189, 229, 244)',
-      focusStyle: 'dashed',
-      focusColor: 'rgb(241, 246, 250)',
-    });
-    await expect(page.locator('#item-name')).toHaveText('Polished lens');
+    expect(await item.evaluate((element) => getComputedStyle(element, '::before').content)).toBe('"▶"'); // The menu cursor.
+    await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-detail h3')).toHaveText('Polished lens');
   });
 
   test('captures wide lens Inventory and empty and populated Save Load', { tag: ['@windows'] }, async ({ page }, info) => {
@@ -161,12 +139,10 @@ test.describe('U1.1 real-screen references', () => {
     await openRoom(page, `?map=${gallery}`);
     await collectLens(page);
     await openInventory(page);
-    const lensRow = page.locator('[data-item-id="demo:item.lens"]');
-    await expect(lensRow.locator('.ui-list-row__label')).toHaveText('Polished lens');
-    await expect(lensRow.locator('.ui-list-row__trailing')).toHaveText('× 1');
-    await capture(page.locator('#inventory-dialog'), 'u1-inventory-lens-1100x850.png', info);
-    await page.locator('#inventory-saves').click();
-    await expect(page.locator('#save-dialog')).toBeVisible();
+    await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row-label')).toHaveText(['Polished lens']);
+    await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row-detail')).toHaveText(['×1']);
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-items-lens-1100x850.png', info);
+    await itemsToSaves(page);
     await expect(page.getByText('Empty — Load and Export are unavailable.')).toHaveCount(3);
     await capture(page.locator('#save-dialog'), 'u1-save-empty-1100x850.png', info);
     await page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' }).click();
@@ -190,8 +166,7 @@ test.describe('U1.1 real-screen references', () => {
     await page.setViewportSize({ width: 1100, height: 850 });
     await openRoom(page);
     await openInventory(page);
-    await page.locator('#inventory-saves').click();
-    await expect(page.locator('#save-dialog')).toBeVisible();
+    await itemsToSaves(page);
     await expect(page.locator('#save-status')).toContainText('Local saves unavailable');
     await capture(page.locator('#save-dialog'), 'u1-save-storage-unavailable-1100x850.png', info);
   });
@@ -204,9 +179,8 @@ test.describe('U1.1 real-screen references', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('#stage')).toBeFocused();
     await openInventory(page);
-    await capture(page.locator('#inventory-dialog'), 'u1-inventory-390x844.png', info);
-    await page.locator('#inventory-saves').click();
-    await expect(page.locator('#save-dialog')).toBeVisible();
+    await capture(page.locator('#game-menu .menu-surface'), 'u2-items-390x844.png', info);
+    await itemsToSaves(page);
     await capture(page.locator('#save-dialog'), 'u1-save-empty-390x844.png', info);
   });
 
@@ -216,10 +190,9 @@ test.describe('U1.1 real-screen references', () => {
     test('captures narrow touch Inventory', { tag: ['@windows'] }, async ({ page }, info) => {
       await openRoom(page);
       await page.locator('#tools-toggle').tap();
-      await page.locator('#game-menu .menu-row[data-id="journal"]').tap();
-      await page.locator('#inventory-journal').tap();
-      await expect(page.locator('#inventory-title')).toHaveText('Inventory');
-      await capture(page.locator('#inventory-dialog'), 'u1-inventory-touch-390x844.png', info);
+      await page.locator('#game-menu .menu-row[data-id="items"]').tap();
+      await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]')).toBeVisible();
+      await capture(page.locator('#game-menu .menu-surface'), 'u2-items-touch-390x844.png', info);
     });
   });
 
@@ -232,12 +205,9 @@ test.describe('U1.1 real-screen references', () => {
         (element) => getComputedStyle(element).backgroundImage === 'none',
       ))).toBe(true);
       await openInventory(page);
-      await expect(page.locator('#inventory-journal')).toBeFocused();
-      await capture(page.locator('#inventory-dialog'), 'u1-inventory-forced-colors.png', info);
-      await page.keyboard.press('ArrowDown');
-      await expect(page.locator('#inventory-saves')).toBeFocused();
-      await page.keyboard.press('Enter');
-      await expect(page.locator('#save-dialog')).toBeVisible();
+      await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"]').locator('.menu-row')).toBeFocused(); // "Nothing here", focusable and greyed.
+      await capture(page.locator('#game-menu .menu-surface'), 'u2-items-forced-colors.png', info);
+      await itemsToSaves(page);
       await expect(page.getByText('Empty — Load and Export are unavailable.')).toHaveCount(3);
       await expect(page.locator('#save-slots .save-slot').first().getByRole('button', { name: 'Save' })).toBeFocused();
       await capture(page.locator('#save-dialog'), 'u1-save-forced-colors.png', info);

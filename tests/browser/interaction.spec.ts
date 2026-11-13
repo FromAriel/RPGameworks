@@ -140,7 +140,7 @@ async function fakePad(page: Page): Promise<void> {
   expect((await snapshot(page)).session.quests['demo:quest.gallery-light']).toBe('active');
   await page.keyboard.press('Escape');
   await page.keyboard.press('KeyI');await page.locator('#game-menu .menu-row[data-id="journal"]').click();
-  await expect(page.locator('#journal-body')).toContainText('Restore the Gallery light');
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:journal"]')).toContainText('Restore the Gallery light');
  });
 
 for (const fault of ['http','malformed','blocked-spawn','missing-spawn','missing-frame'] as const) {

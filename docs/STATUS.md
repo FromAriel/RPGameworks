@@ -4,6 +4,47 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## U2.3a Journal and Help screens; the old Inventory dialog retired — November 13, 2026, local
+
+[Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.3, first of three sub-packets (Ariel: U2.3a Journal and Help, U2.3b Config, U2.3c Save/Load).
+
+- **Journal** (`src/presentation/menu/journal-screen.ts`):
+  - Known quests, active first, then completed ones marked ✓.
+  - The detail window shows the objective, or how the quest ended.
+  - An empty journal says "No quests yet".
+- **Help** (`help-screen.ts`):
+  - **Topics:** Moving, Talking, The menu, Battle and Saving.
+  - **Device tabs:** Keyboard, Controller and Touch (Q/E, the shoulder buttons, or a click).
+  - **Controller lines** name the player's current bindings, for example "X (button 2)", so remapped buttons read correctly. This replaces the old How to play section as the hub's Help entry.
+- **Old Inventory dialog retired:**
+  - **Removed:** the dialog, `inventory.ts`, `inventory.css` and the `inventory` input mode.
+  - **Items:** the Items screen (U2.2) replaces it.
+  - **Save/Load:** opened from the hub only, so its button now reads "Return to Menu".
+  - **Prompt:** the old dialog's prompt line is replaced by Help's controller lines.
+- **Settings (Config, until U2.3b):**
+  - Opened from the hub, × or Escape return to the menu.
+  - **Return to game** now returns to the game, as its label says. Before, it also went back to the menu.
+- **Lists:** a long list now scrolls to keep the highlighted row visible during arrow or controller movement. A-Z puts numbers in numeric order ("Keepsake 2" before "Keepsake 10").
+- **Tests:**
+  - **Unit (`help-screen.test.ts`, 2):** button names; Help follows remapped bindings.
+  - **Browser (`journal-help.spec.ts`, 3):**
+    - Journal order, marks and detail from an imported v2 save with quests;
+    - the empty Journal;
+    - Help topics per device, with controller lines from bindings.
+  - **Updated:** about 60 browser tests that used the old dialog now use the Items screen, Journal, Save or Config entries. They share `openInventory`, `openJournal`, `openSaves`, `openTools` and `closeTools` helpers.
+  - **Reference captures:** the U1 Inventory captures are now `u2-items-*` captures of the Items screen (wide, narrow, touch, forced colours).
+  - **Skin fitting:** measures Save/Load beside the dialogue.
+  - **Skin theme:** checks the menu windows, which use the `inventory` skin surface.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build, `check:test-tags` (195 tagged) and `check:external-art` passed;
+  - unit tests **535/535**;
+  - full browser suite **195/195**.
+
+  Screenshots of the Journal and Help were sent to Ariel.
+- **Not yet:** Ariel's review. Config is still the settings side panel (U2.3b), and Save/Load is still its own dialog (U2.3c).
+- Migration: none. Saves load as before; the controller settings key is unchanged. Next: **U2.3b, the Config screen**, with Debug split off and Controller setup linked from Config.
+
 ## U2.2 the Items screen, with sorting — November 13, 2026, local
 
 [Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.2: the hub's **Items** entry now opens a real Items screen inside the menu, instead of the old Inventory dialog.

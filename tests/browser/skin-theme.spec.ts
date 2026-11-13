@@ -47,8 +47,8 @@ test('the UI theme re-skins only the surface it names, loading that skin once', 
   await openRoom(page);
   for (let round = 0; round < 2; round++) {
     await openInventory(page);
-    await painted(page, '#inventory-dialog');
-    await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-active', THIN);
+    await painted(page, '#game-menu .menu-screen[data-screen="builtin:items"] .menu-window[aria-label="Items"]');
+    await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"] .menu-window[aria-label="Items"]')).toHaveAttribute('data-skin-active', THIN);
     await closeInventory(page);
   }
   await talkToMara(page);
@@ -75,17 +75,17 @@ test('a dialogue that names a skin uses it, and the window returns to its defaul
   await closeDialogue(page);
   await expect(page.locator('#interaction-dialog')).not.toHaveAttribute('data-skin-id', /./);
   await openInventory(page);
-  await painted(page, '#inventory-dialog');
-  await expect(page.locator('#inventory-dialog')).toHaveAttribute('data-skin-active', BASE);
+  await painted(page, '#game-menu .menu-screen[data-screen="builtin:items"] .menu-window[aria-label="Items"]');
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"] .menu-window[aria-label="Items"]')).toHaveAttribute('data-skin-active', BASE);
 });
 
 test('a skin whose atlas is missing falls back on its own surfaces only', { tag: ['@windows', '@inventory'] }, async ({ page }) => {
   await withThinSkin(page, (theme) => { theme.surfaces.inventory = THIN; }, 'missing');
   await openRoom(page);
   await openInventory(page);
-  await painted(page, '#inventory-dialog', 'fallback');
+  await painted(page, '#game-menu .menu-screen[data-screen="builtin:items"] .menu-window[aria-label="Items"]', 'fallback');
   await expect(page.locator('#skin-status')).toContainText('Plain accessible windows remain usable.');
-  await expect(page.locator('#inventory-close')).toBeVisible(); // Still a usable window.
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:items"] .menu-row')).toBeFocused(); // Still a usable window.
   await closeInventory(page);
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   await talkToMara(page);

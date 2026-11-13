@@ -1,5 +1,5 @@
 import type { Page, TestInfo } from '@playwright/test';
-import { test, expect, openRoom, openInventory, closeInventory, snapshot, tapDirection } from './helpers';
+import { test, expect, openRoom, openSaves, snapshot, tapDirection } from './helpers';
 import { SKIN_SPECS, atlasDataUrl, buildSkin } from '../fixtures/skin-fixtures';
 import { contentInsets, readSkinManifest } from '../../src/presentation/skin/skin-manifest.mjs';
 
@@ -71,7 +71,7 @@ async function painted(page: Page, selector: string): Promise<void> {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
-test('Ariel’s skin: dialogue and inventory content stay inside the published insets at both scales', { tag: ['@windows', '@dialogue', '@inventory'] }, async ({ page }) => {
+test('Ariel’s skin: dialogue and Save / Load content stay inside the published insets at both scales', { tag: ['@windows', '@dialogue', '@saves'] }, async ({ page }) => {
   for (const viewport of [{ width: 1100, height: 850 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await openRoom(page);
@@ -85,12 +85,13 @@ test('Ariel’s skin: dialogue and inventory content stay inside the published i
     await page.keyboard.press('Escape');
     await expect(page.locator('#interaction-dialog')).toBeHidden();
     await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
-    await openInventory(page);
-    await painted(page, '#inventory-dialog');
-    const inventory = await measure(page, '#inventory-dialog');
-    expectContentInside(inventory, `inventory ${viewport.width}`);
-    expectTitleFits(inventory, `inventory ${viewport.width}`);
-    await closeInventory(page);
+    await openSaves(page);
+    await painted(page, '#save-dialog');
+    const saves = await measure(page, '#save-dialog');
+    expectContentInside(saves, `saves ${viewport.width}`);
+    expectTitleFits(saves, `saves ${viewport.width}`);
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+    await expect(page.locator('#game-menu')).toBeHidden();
   }
 });
 

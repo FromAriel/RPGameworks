@@ -31,10 +31,8 @@ h3 { font-size: var(--ui-text-body); margin: 22px 0 14px; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; }
 .panel-heading h2 { letter-spacing: 0; }
 #tools-close { font-size: var(--ui-text-icon); width: var(--ui-touch-target); padding: 0; }
-.panel-tabs { margin-bottom: 18px; }
 .resume-button { width: 100%; margin-top: 24px; }
 summary { cursor: pointer; padding: 10px 0; font-size: var(--ui-text-body); font-weight: 600; }
-.help-panel { border-block: 1px solid #343b49; margin: 18px 0; }
 .stage-heading { display: flex; gap: 12px; justify-content: space-between; color: #c6bdac; font-size: var(--ui-text-body); letter-spacing: 0; }
 #status { font-size: var(--ui-text-sm); color: var(--ui-text-diagnostic); line-height: 1.6; }
 .map-picker { display: grid; gap: 8px; margin-block: 16px; font-size: var(--ui-text-body); color: #bac2d1; }

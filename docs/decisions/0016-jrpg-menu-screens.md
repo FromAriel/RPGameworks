@@ -142,6 +142,9 @@ The game's menus look and play like a classic Final Fantasy-style JRPG menu, and
 - **Sub-packets:** U2.3 is cut into three, each tested and committed on its own: U2.3a Journal and Help with the old Inventory dialog removed; U2.3b Config with Debug split off; U2.3c Save/Load rebuilt on the blocks.
 - **Controller setup:** the detailed controller form (device, axes, live inputs, diagnostic report) stays the existing panel. Config links to it, and it closes back to Config.
 - **Return to game:** in the settings, "Return to game" goes to the game, while × or Escape go back to the menu (U2.3a).
+- **Config rows (U2.3b):** existing settings only (Cosmetic particles, On-screen controls, Controller), plus Controller setup. Text scale waits until there is a player text-size setting.
+- **Side panel (U2.3b):** one panel, two modes, no tabs: Controller setup (from Config) or Debug (F2).
+- **Activate controller (U2.3b):** it and the detection status sit at the top of Controller setup. Config's detail window shows the status.
 
 ## 7. Not in U2
 

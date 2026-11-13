@@ -14,74 +14,61 @@ function buildShellDom(): HTMLElement {
   const touchEnabled = document.createElement('input');
   touchEnabled.id = 'touch-enabled'; touchEnabled.type = 'checkbox';
   const panel = document.createElement('aside');
-  panel.id = 'tools-panel'; panel.hidden = true;
+  panel.id = 'tools-panel'; panel.hidden = true; panel.tabIndex = -1;
   const title = document.createElement('h2');
-  title.id = 'tools-title'; title.textContent = 'Settings';
-  const settings = document.createElement('details');
-  settings.id = 'controller-settings';
-  const tablist = document.createElement('div');
-  tablist.className = 'panel-tabs ui-tabs'; tablist.id = 'tools-tabs';
-  tablist.setAttribute('role', 'tablist');
-  const optionsTab = document.createElement('button');
-  optionsTab.id = 'options-tab'; optionsTab.type = 'button';
-  optionsTab.setAttribute('role', 'tab'); optionsTab.setAttribute('aria-selected', 'true');
-  optionsTab.setAttribute('aria-controls', 'options-panel');
-  const debugTab = document.createElement('button');
-  debugTab.id = 'debug-tab'; debugTab.type = 'button';
-  debugTab.setAttribute('role', 'tab'); debugTab.setAttribute('aria-selected', 'false');
-  debugTab.setAttribute('aria-controls', 'debug-panel'); debugTab.tabIndex = -1;
-  tablist.append(optionsTab, debugTab);
+  title.id = 'tools-title'; title.textContent = 'Controller setup';
   const close = document.createElement('button');
   close.id = 'tools-close';
   const resume = document.createElement('button');
   resume.id = 'tools-resume';
-  const optionsPanel = document.createElement('section');
-  optionsPanel.id = 'options-panel'; optionsPanel.setAttribute('role', 'tabpanel');
+  const controllerSection = document.createElement('section');
+  controllerSection.id = 'controller-section';
+  const activate = document.createElement('button');
+  activate.id = 'controller-activate';
+  const settings = document.createElement('details');
+  settings.id = 'controller-settings';
+  controllerSection.append(activate, settings);
   const debugPanel = document.createElement('section');
-  debugPanel.id = 'debug-panel'; debugPanel.setAttribute('role', 'tabpanel'); debugPanel.hidden = true;
-  panel.append(title, settings, tablist, close, resume, optionsPanel, debugPanel);
+  debugPanel.id = 'debug-panel'; debugPanel.hidden = true;
+  panel.append(title, close, controllerSection, debugPanel, resume);
   document.body.append(stage, toggle, touch, touchEnabled, panel);
   return stage;
 }
 
-describe('player shell tab notifications', () => {
-  test('selections notify exactly once; boundary clears follow input-ownership transfer', () => {
+/** Decision 0016 U2.3b: the side panel shows Controller setup (from Config) or Debug (F2), one at a time. */
+describe('player shell modes', () => {
+  test('each mode shows its own section and title; switching inside the panel keeps input ownership', () => {
     const stage = buildShellDom();
     let boundaries = 0;
     let changes = 0;
     const shell = mountPlayerShell(stage, () => { boundaries += 1; }, () => { changes += 1; }, () => true);
+    const settings = document.getElementById('controller-settings') as HTMLDetailsElement;
     expect(boundaries).toBe(0);
     expect(changes).toBe(0);
 
-    shell.open('options'); // Programmatic selection: one change notification; the focused
-    // tab's entry into the panel is the single input-boundary clear.
+    shell.open('controller'); // Entering the panel is the single input-boundary clear.
     expect(boundaries).toBe(1);
     expect(changes).toBe(1);
-    expect(document.getElementById('options-tab')).toBe(document.activeElement);
+    expect(document.getElementById('tools-title')!.textContent).toBe('Controller setup');
+    expect(document.getElementById('controller-activate')).toBe(document.activeElement);
+    expect(settings.open).toBe(true); // The form is always shown; its open state pauses gameplay.
+    expect(document.getElementById('controller-section')!.hidden).toBe(false);
     expect(document.getElementById('debug-panel')!.hidden).toBe(true);
+    expect(shell.debugVisible).toBe(false);
 
-    const debugTab = document.getElementById('debug-tab') as HTMLButtonElement;
-    debugTab.click(); // User tab change through the shared controller: exactly one change.
-    // No boundary clear: input ownership stays inside the panel during internal navigation.
+    shell.open('debug'); // F2 while the panel is open: focus stays inside, so no second clear.
     expect(boundaries).toBe(1);
     expect(changes).toBe(2);
     expect(document.getElementById('tools-title')!.textContent).toBe('Debug');
-    expect(document.getElementById('options-panel')!.hidden).toBe(true);
+    expect(document.getElementById('controller-section')!.hidden).toBe(true);
     expect(document.getElementById('debug-panel')!.hidden).toBe(false);
-    expect(debugTab.tabIndex).toBe(0);
-    expect((document.getElementById('options-tab') as HTMLButtonElement).tabIndex).toBe(-1);
-
-    debugTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    expect(boundaries).toBe(1); // Same-tab-panel navigation never resets controller sampling.
-    expect(changes).toBe(3);
-    expect(document.getElementById('tools-title')!.textContent).toBe('Settings');
-    expect(document.getElementById('options-tab')).toBe(document.activeElement);
+    expect(settings.open).toBe(false);
+    expect(shell.debugVisible).toBe(true);
 
     shell.close(); // Leaving the panel returns ownership and clears input exactly once.
     expect(boundaries).toBe(2);
-    // Close adds its own pre-existing change notification for the panel-visibility
-    // layout change; selections themselves still notified exactly once each.
-    expect(changes).toBe(4);
+    expect(changes).toBe(3);
+    expect(document.getElementById('tools-panel')!.hidden).toBe(true);
 
     shell.dispose();
     expect(document.getElementById('tools-panel')!.hidden).toBe(true);

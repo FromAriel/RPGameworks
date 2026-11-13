@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { test, expect, openRoom, openTools, closeTools, snapshot, tapDirection, holdToExit } from './helpers';
+import { test, expect, openRoom, openTools, closeTools, setEffects, snapshot, tapDirection, holdToExit } from './helpers';
 const dialog = '#interaction-dialog';
 async function talk(page: Page): Promise<void> {
   expect(await tapDirection(page, 'ArrowDown')).toBe('walked'); // Shared tap: one tile, even on a loaded machine.
@@ -25,16 +25,17 @@ test('the theme’s exact baked atlas loads lazily once, while the clean launch 
   expect(images).toHaveLength(1); expect(base).toHaveLength(0); await expect(page.locator('canvas')).toHaveCount(1);
 });
 
-test('real Settings has a live bracketed title and a composed section divider', { tag: ['@windows', '@shell'] }, async ({page},info) => {
-  await openRoom(page); await openTools(page);
+test('real Controller setup has a live bracketed title and a composed section divider', { tag: ['@windows', '@shell'] }, async ({page},info) => {
+  await openRoom(page); const initial=await snapshot(page);
+  await setEffects(page,false);
+  expect((await snapshot(page)).effectsEnabled).toBe(false);expect((await snapshot(page)).actorTile).toEqual(initial.actorTile);
+  await openTools(page);
   await expect(page.locator('#tools-panel')).toHaveAttribute('data-skin-title-mode','gap');
   await expect(page.locator('.skin-divider')).toHaveAttribute('data-skin-state','ready');
-  await expect(page.locator('#tools-title')).toHaveText('Settings');
-  await expect(page.locator('#options-tab')).toBeFocused();
-  const initial=await snapshot(page); await page.locator('#effects').uncheck();
-  expect((await snapshot(page)).effectsEnabled).toBe(false);expect((await snapshot(page)).actorTile).toEqual(initial.actorTile);
+  await expect(page.locator('#tools-title')).toHaveText('Controller setup');
+  await expect(page.locator('#controller-activate')).toBeFocused();
   await page.screenshot({path:info.outputPath('w1-settings-wide.png')});
-  await page.locator('#debug-tab').click();await expect(page.locator('#tools-title')).toHaveText('Debug');
+  await closeTools(page); await openTools(page,'debug');await expect(page.locator('#tools-title')).toHaveText('Debug');
   await expect(page.locator('#skin-status')).toContainText('White and Silver');await closeTools(page);
   await expect(page.locator('#stage')).toBeFocused();
 });
@@ -125,7 +126,7 @@ for(const fault of ['missing','wrong-size','timeout'] as const) {
  });
 }
 
-test('Settings remains usable on a narrow screen with a visible focus cue', { tag: ['@windows', '@shell'] }, async ({page},info) => {
+test('Controller setup remains usable on a narrow screen with a visible focus cue', { tag: ['@windows', '@shell'] }, async ({page},info) => {
  await page.setViewportSize({width:390,height:844});await openRoom(page);await openTools(page);
  await expect(page.locator('#tools-panel')).toHaveAttribute('data-skin-state','ready');
  const closeBox=await page.locator('#tools-close').boundingBox();
@@ -134,7 +135,7 @@ test('Settings remains usable on a narrow screen with a visible focus cue', { ta
  const outline=await page.evaluate(()=>document.activeElement?getComputedStyle(document.activeElement).outlineStyle:'none');
  expect(outline).toBe('dashed');
  await page.screenshot({path:info.outputPath('w1-settings-narrow.png')});
- await page.locator('#controller-settings summary').click();await page.locator('#controller-return').click();
+ await page.locator('#controller-return').click();
  await expect(page.locator('#tools-panel')).toBeHidden();await expect(page.locator('#stage')).toBeFocused();
 });
 

@@ -52,7 +52,7 @@ async function pageEnvironment(page: Page) {
       driver: gl ? String(gl.getParameter(extension?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER)) : null,
       buildLabel: document.querySelector('#build-label')?.textContent,
       debugOpen: !document.querySelector<HTMLElement>('#debug-panel')!.hidden && !document.querySelector<HTMLElement>('#tools-panel')!.hidden,
-      settingsOpen: !document.querySelector<HTMLElement>('#options-panel')!.hidden && !document.querySelector<HTMLElement>('#tools-panel')!.hidden,
+      settingsOpen: !document.querySelector<HTMLElement>('#controller-section')!.hidden && !document.querySelector<HTMLElement>('#tools-panel')!.hidden,
     };
   });
 }

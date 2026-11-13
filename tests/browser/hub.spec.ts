@@ -76,10 +76,10 @@ test('hub entries open their screens or the existing windows, and Cancel there c
   await page.locator('#save-close').click();
   await expect(page.locator('#save-dialog')).toBeHidden();
   await expect(row(page, 'save')).toBeFocused();
-  await row(page, 'config').click();
-  await expect(menu(page)).toBeHidden();
-  await expect(page.locator('#tools-panel')).toBeVisible();
-  await page.locator('#tools-close').click();
+  await row(page, 'config').click(); // Config: its own screen (U2.3b).
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:config"]')).toBeVisible();
+  await expect(page.locator('#tools-panel')).toBeHidden();
+  await page.keyboard.press('Escape');
   await expect(row(page, 'config')).toBeFocused();
   await row(page, 'help').click();
   await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:help"]')).toBeVisible();

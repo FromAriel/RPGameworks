@@ -44,7 +44,7 @@ test('page-level gamepad input works without focusing the viewport but respects 
   await expect(page.locator('#controller-brief')).toContainText('Ready');
   await axis(page,0,.9); await expect.poll(async() => (await snapshot(page)).actorTile.x).toBeGreaterThan(10);
   await axis(page,0,0); await page.waitForTimeout(180);
-  await openTools(page); await page.locator('#effects').focus();
+  await openTools(page); await page.locator('#controller-deadzone').focus();
   await expect(page.locator('#controller-brief')).toContainText('gameplay paused');
   const before = (await snapshot(page)).actorTile;
   await axis(page,0,-.9); await page.waitForTimeout(250);

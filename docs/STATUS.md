@@ -4,6 +4,40 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## U2.3b the Config screen; Debug split off — November 13, 2026, local
+
+[Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.3, second of three sub-packets.
+
+- **Config** (`src/presentation/menu/config-screen.ts`), Ariel's answers:
+  - **Rows:** Cosmetic particles, On-screen controls and Controller, each On/Off. Below them, "Controller setup…". There is no text-scale setting yet: text size still follows the game's pixel scale.
+  - **Changing a value:** Enter, a click, the controller's confirm button, or Left/Right flips a row. Rows are switches (`role="switch"`, `aria-checked`).
+  - **Detail window:** explains the highlighted setting. For Controller setup it also shows the controller's detection status.
+- **Controller setup:**
+  - Opens the existing detailed panel, titled "Controller setup", with Activate controller and the detection status at its top.
+  - × or Escape (the controller's Cancel) return to Config, on the Controller setup row.
+  - "Return to game" goes to the game.
+  - The panel has no tabs now, and its form is always open.
+- **Debug:**
+  - Opened only with F2, in the same side panel but alone, titled "Debug".
+  - It is no longer reachable from the player menu.
+- **Engine changes:**
+  - **List block:** an entry may be `checked`, which makes the row a switch. Left/Right flip a switch row (`MenuNavigation`).
+  - **Fix:** a redrawn list now keeps its focused row. It checked for focus after replacing the rows, so focus was always lost.
+- **Markup:**
+  - The player settings' checkboxes (`#effects`, `#touch-enabled`) stay as hidden state that the game and the shell already listen to. Config sets them.
+  - The panel's one skinned divider now heads the controller form ("Buttons & sticks"), so the skin's divider stays in use.
+- **Tests:**
+  - **Unit:** `config-screen.test.ts` (3): switch rows, Left/Right flipping, the setup row. `player-shell.test.ts` was rewritten for the two panel modes.
+  - **Browser:** `config.spec.ts` (2): flipping each setting by Enter and arrows, with game and form effects; Controller setup returning to Config; Return to game.
+  - **Updated:** specs that used the Settings tab or Debug tab now go through Config or F2. Helpers: `openConfig`, `setConfig`, `closeMenu`, and `openTools(page, 'controller' | 'debug')`.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build, `check:test-tags` (197 tagged) and `check:external-art` passed;
+  - unit tests **538/538**;
+  - full browser suite **197/197 (192 in the full run; the 5 tests that still expected Config to open the panel were fixed and their 5 specs rerun, 42/42)**.
+- **Not yet:** Ariel's review. Save/Load is still its own dialog (U2.3c).
+- Migration: none. Settings keep their storage (controller settings v4; particles and on-screen controls are per session, as before). Next: **U2.3c, Save/Load rebuilt on the menu blocks.**
+
 ## U2.3a Journal and Help screens; the old Inventory dialog retired — November 13, 2026, local
 
 [Decision 0016](decisions/0016-jrpg-menu-screens.md) U2.3, first of three sub-packets (Ariel: U2.3a Journal and Help, U2.3b Config, U2.3c Save/Load).

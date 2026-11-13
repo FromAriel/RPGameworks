@@ -24,6 +24,7 @@ import { GamepadController } from './platform/gamepad';
 import { mountControllerSettings } from './presentation/ui/controller-settings';
 import { loadSelectedMap } from './platform/map-loader';
 import type { FoundationHandle } from './runtime-types';
+import type { PlayerSetting } from './presentation/menu/config-screen';
 
 function required<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -54,7 +55,7 @@ const pageErrorNotice = required<HTMLElement>('#page-error-notice');
 const controller = new GamepadController();
 const controllerPanel = required<HTMLDetailsElement>('#controller-settings');
 const loadingNotice = required<HTMLElement>('#loading-notice');
-// Settings opened from the hub (Config, Help) return to the hub when the panel closes (decision 0016 U2.1).
+// Controller setup opened from the menu's Config returns to Config when the panel closes (decision 0016 U2.3b).
 let afterTools: (() => void) | null = null;
 // "Return to game" means the game, not the menu: registered before the shell's own close handler, so it runs first.
 required<HTMLElement>('#tools-resume').addEventListener('click', () => { afterTools = null; }, { signal: appLifetime.signal });
@@ -63,7 +64,7 @@ const shell = mountPlayerShell(stage, () => { handle?.clearInput(); controller.r
   if (afterTools && required<HTMLElement>('#tools-panel').hidden) { const next = afterTools; afterTools = null; next(); }
 },
   () => !handle || handle.snapshot().inputMode === 'exploration',
-  () => { if (handle?.snapshot().phase === 'ready' && !failed) { shell.close(); handle.openMenu(); } else shell.open('options'); });
+  () => { if (handle?.snapshot().phase === 'ready' && !failed) { shell.close(); handle.openMenu(); } else shell.open('controller'); });
 const controllerUI = mountControllerSettings(controllerPanel, controller, stage, () => ({
   build: __BUILD_ID__, version: __APP_VERSION__,
   runtimePhase: handle?.snapshot().phase ?? (failed ? 'error' : 'booting'),
@@ -71,10 +72,23 @@ const controllerUI = mountControllerSettings(controllerPanel, controller, stage,
   pageErrors: pageErrors.snapshot(),
 }), () => { afterTools = null; shell.close(); });
 
-const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel'), () => {
-  if (controllerPanel.open) { controllerPanel.open = false; controller.reset(); controllerPanel.querySelector<HTMLElement>('summary')?.focus(); }
-  else shell.close();
-});
+// Cancel closes the panel (back to Config when opened from it); the controller form is always open inside it.
+const toolsNavigation = new MenuNavigation(required<HTMLElement>('#tools-panel'), () => shell.close());
+const touchEnabled = required<HTMLInputElement>('#touch-enabled');
+/** Config's settings (decision 0016 U2.3b). The inputs stay the shared state, so the game and the shell see changes. */
+const flip = (input: HTMLInputElement, value: boolean) => { input.checked = value; input.dispatchEvent(new Event('change')); };
+const playerSettings: PlayerSetting[] = [
+  { id: 'particles', label: 'Cosmetic particles', help: 'Sparks and impact effects.',
+    about: ['Sparks and impact effects. Off when the system asks for reduced motion.', 'Effects never change game rules.'],
+    get: () => effects.checked, set: value => flip(effects, value) },
+  { id: 'touch', label: 'On-screen controls', help: 'An arrow pad and buttons on the screen.',
+    about: ['An arrow pad and buttons on the screen, for touch.', 'On by default on touch-first devices. Changes last for this session.'],
+    get: () => touchEnabled.checked, set: value => flip(touchEnabled, value) },
+  { id: 'controller', label: 'Controller', help: 'Play with a connected controller.',
+    about: ['Play with a connected controller. The keyboard always works.', 'Buttons and sticks are in Controller setup.'],
+    get: () => controller.settings.enabled,
+    set: value => { controller.configure({ ...controller.settings, enabled: value }); controllerUI.sync(); controller.reset(); } },
+];
 // The Save/Load confirmation frame must exist before the compositor snapshots
 // [data-window-skin] surfaces, or it would never receive the shared skin.
 const saveConfirmation: ConfirmationDialogParts = createConfirmationDialog('save-confirmation');
@@ -217,10 +231,12 @@ async function start(): Promise<void> {
       saves:saveService,
       base,
       controllerBindings: () => controller.settings.buttons,
-      openSettings: options => {
-        shell.open('options');
-        afterTools = options?.onClosed ?? null;
+      openControllerSetup: onClosed => {
+        shell.open('controller');
+        afterTools = onClosed;
       },
+      playerSettings,
+      controllerStatus: () => controller.status,
       menu,
       windowskin: () => windowSkin,
       closeTools: () => shell.close(),

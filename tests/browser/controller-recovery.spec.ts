@@ -66,7 +66,7 @@ test('unrelated rejection after startup stays observable without stopping keyboa
 test('activation restores viewport focus and reports the actual input gate', { tag: ['@input'] }, async ({ page }, testInfo) => {
   await simulatedController(page); await ready(page);
   await expect(page.locator('#controller-brief')).toContainText('Ready');
-  await openTools(page); await page.locator('#effects').focus();
+  await openTools(page); await page.locator('#controller-deadzone').focus();
   await expect(page.locator('#controller-brief')).toContainText('gameplay paused');
   await openControllerSettings(page);
   await expect(page.locator('#controller-status')).toContainText('gameplay paused');

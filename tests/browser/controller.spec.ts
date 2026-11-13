@@ -34,8 +34,8 @@ test('launch accepts keyboard without any click and does not repeatedly steal fo
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(initial.actorTile.x);
   await page.keyboard.up('ArrowRight');
-  await openTools(page); await page.locator('#effects').focus(); await page.waitForTimeout(500);
-  await expect(page.locator('#effects')).toBeFocused();
+  await openTools(page); await page.locator('#controller-deadzone').focus(); await page.waitForTimeout(500);
+  await expect(page.locator('#controller-deadzone')).toBeFocused();
 });
 
 test('slow startup preserves intentional settings focus', { tag: ['@input'] }, async ({ page }) => {

@@ -8,7 +8,7 @@ export const standardNames = ['A / bottom', 'B / right', 'X / left', 'Y / top', 
 const actionNames: Record<PadAction, string> = { up: 'Move up', down: 'Move down', left: 'Move left', right: 'Move right', burst: 'Pixel burst', interact: 'Interact / advance', cancel: 'Cancel / close', menu: 'Game menu / inventory', tabPrev: 'Menu: previous tab', tabNext: 'Menu: next tab' };
 
 /** Build the small settings UI once; telemetry uses the app's existing 4 Hz refresh. */
-export function mountControllerSettings(root: HTMLDetailsElement, controller: GamepadController, stage: HTMLElement, appReport: () => object, onReturn: () => void = () => {}): { refresh(): void; dispose(): void } {
+export function mountControllerSettings(root: HTMLDetailsElement, controller: GamepadController, stage: HTMLElement, appReport: () => object, onReturn: () => void = () => {}): { refresh(): void; sync(): void; dispose(): void } {
   const lifetime = new AbortController();
   function get<T extends HTMLElement>(selector: string): T {
     const node = root.querySelector<T>(selector);
@@ -124,5 +124,6 @@ export function mountControllerSettings(root: HTMLDetailsElement, controller: Ga
     }
   }
   sync(); refresh();
-  return { refresh, dispose: () => lifetime.abort() };
+  // sync: the menu's Config screen can switch the controller on or off; the form shows it next time.
+  return { refresh, sync, dispose: () => lifetime.abort() };
 }

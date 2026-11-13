@@ -52,6 +52,8 @@ export class MenuNavigation {
       if (delta > 0) node.stepUp(); else node.stepDown();
       node.dispatchEvent(new Event('input',{bubbles:true})); node.dispatchEvent(new Event('change',{bubbles:true})); return true;
     }
+    // An On/Off row (decision 0016 U2.3b): Left or Right flips it, like a JRPG config screen.
+    if (node.matches('[role="switch"]')) { node.click(); return true; }
     if (node.matches('[role="tab"]')) {
       node.dispatchEvent(new KeyboardEvent('keydown', {key:direction === 'right' ? 'ArrowRight' : 'ArrowLeft', bubbles:true})); return true;
     }

@@ -64,7 +64,9 @@ test('Menu opens the real menu with no tools, an empty Items screen, and a worki
   await page.locator('#game-menu .menu-row[data-id="items"]').click();
   await expect(itemRows(page)).toHaveText(['Nothing here']);await expect(page.locator('#tools-panel')).toBeHidden();
   await page.keyboard.press('Escape');await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
-  await page.locator('#game-menu .menu-row[data-id="config"]').click();await expect(page.locator('#tools-panel')).toBeVisible();
+  await page.locator('#game-menu .menu-row[data-id="config"]').click();
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:config"]')).toBeVisible();await expect(page.locator('#tools-panel')).toBeHidden();
+  await page.locator('#game-menu .menu-row[data-id="controller-setup"]').click();await expect(page.locator('#tools-panel')).toBeVisible();
   await expect(page.locator('#game-menu')).toBeHidden();await closeTools(page);
 });
 
@@ -94,21 +96,25 @@ test('controller Menu opens inventory, keeps held inputs isolated, and cancel re
   await tapPad(page,1);await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
   for(let i=0;i<5;i++)await tapPad(page,13); // Down to Config.
   await expect(page.locator('#game-menu .menu-row[data-id="config"]')).toBeFocused();
-  await tapPad(page,2);await expect(page.locator('#options-panel')).toBeVisible();
+  await tapPad(page,2);await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:config"]')).toBeVisible(); // Config.
+  for(let i=0;i<3;i++)await tapPad(page,13); // Down to Controller setup.
+  await expect(page.locator('#game-menu .menu-row[data-id="controller-setup"]')).toBeFocused();
+  await tapPad(page,2);await expect(page.locator('#controller-section')).toBeVisible();
   const before=await snapshot(page);await tapPad(page,13); // moves to next real focus target, not character
   expect((await snapshot(page)).actorTile).toEqual(before.actorTile);
   await padButton(page,1,true);await expect(page.locator('#tools-panel')).toBeHidden();
   await padButton(page,0,true);await page.waitForTimeout(200);expect((await snapshot(page)).burstRequests).toBe(0);
   await padButton(page,1,false);await padButton(page,0,false);await page.waitForTimeout(120);
-  await expect(page.locator('#game-menu')).toBeVisible(); // Closing Config returns to the menu…
-  await tapPad(page,1);await expect(page.locator('#game-menu')).toBeHidden(); // …and Cancel to the map.
+  await expect(page.locator('#game-menu .menu-row[data-id="controller-setup"]')).toBeFocused(); // Closing Controller setup returns to Config…
+  await tapPad(page,1);await expect(page.locator('#game-menu .menu-row[data-id="config"]')).toBeFocused(); // …Cancel to the menu…
+  await tapPad(page,1);await expect(page.locator('#game-menu')).toBeHidden(); // …and to the map.
   await tapPad(page,0);await expect.poll(async()=>(await snapshot(page)).burstRequests).toBe(1);
 });
 
 test('v2 custom bindings survive migration to v4 and use an unoccupied menu button',{ tag: ['@inventory', '@input'] }, async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('rpgameworks.controller.v2',JSON.stringify({version:2,enabled:true,allowUnmapped:false,
     deadzone:.4,axisX:2,axisY:3,invertX:true,invertY:false,buttons:{up:12,down:13,left:14,right:15,burst:9,interact:4,cancel:5}})));
-  await openRoom(page);await openTools(page);await page.locator('#controller-settings summary').click();
+  await openRoom(page);await openTools(page);
   await expect(page.locator('#controller-button-burst')).toHaveValue('9');await expect(page.locator('#controller-button-interact')).toHaveValue('4');
   await expect(page.locator('#controller-button-menu')).not.toHaveValue('9');await expect(page.locator('#controller-deadzone')).toHaveValue('40');
   const stored=await page.evaluate(()=>({old:JSON.parse(localStorage.getItem('rpgameworks.controller.v2')!),current:JSON.parse(localStorage.getItem('rpgameworks.controller.v4')!)}));
@@ -209,7 +215,7 @@ test('many content-authored items scroll and select directly without consuming t
 });
 
 test('direct configuration steps skip conflicts and text entry does not close the menu',{ tag: ['@inventory', '@input'] }, async({page})=>{
-  await syntheticPad(page);await openRoom(page);await openTools(page);await page.locator('#controller-settings summary').click();
+  await syntheticPad(page);await openRoom(page);await openTools(page);
   await page.locator('#controller-axis-x').focus();await page.waitForTimeout(120);await tapPad(page,15);
   await expect(page.locator('#controller-axis-x')).toHaveValue('2'); // Y already occupies axis 1.
   await page.locator('#controller-button-burst').focus();await page.waitForTimeout(120);await tapPad(page,15);

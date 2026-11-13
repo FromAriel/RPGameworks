@@ -41,6 +41,8 @@ export interface ListEntry {
   readonly enabled?: boolean;
   /** Shown in the help line while the row is highlighted, and read by screen readers. */
   readonly help?: string;
+  /** An On/Off setting: the row becomes a switch, flipped by choosing it or by Left/Right. */
+  readonly checked?: boolean;
 }
 export interface MenuList {
   readonly element: HTMLElement;
@@ -81,13 +83,14 @@ export function createList({ label, entries, onChoose, onFocus }: {
       row.className = 'menu-row';
       row.dataset.id = entry.id;
       if (entry.help) { row.dataset.help = entry.help; row.setAttribute('aria-description', entry.help); }
+      if (entry.checked !== undefined) { row.setAttribute('role', 'switch'); row.setAttribute('aria-checked', String(entry.checked)); }
       if (entry.enabled === false) { row.setAttribute('aria-disabled', 'true'); row.setAttribute('data-focusable-disabled', ''); }
       const name = document.createElement('span'); name.className = 'menu-row-label'; name.textContent = entry.label;
       row.append(name);
       if (entry.detail !== undefined) { const detail = document.createElement('span'); detail.className = 'menu-row-detail'; detail.textContent = entry.detail; row.append(detail); }
       return row;
     }));
-    if (focused && element.contains(document.activeElement) === false) return;
+    // A redrawn list keeps the focused row (focusedId is set only while focus is inside the list).
     if (focused) handle.focus(focused);
   }
   const handle: MenuList = {

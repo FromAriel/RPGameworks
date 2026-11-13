@@ -17,8 +17,8 @@
 #tools-panel[data-skin-title-mode="header"] { padding-top: max(var(--ui-space-4), var(--ui-safe-top), var(--skin-content-top, 0px)); }
 .skin-heading { position: relative; flex: none; display: flex; justify-content: center; align-items: center; min-height: 42px; margin: 0 0 calc(12px + var(--skin-title-clearance, 0px)); }
 #tools-title, #interaction-dialog #dialog-title { color: var(--ui-text-title); font-family: var(--ui-font-title); font-weight: 600; font-size: var(--ui-text-heading); line-height: 1.4; letter-spacing: 0; text-align: center; max-width: min(100%, var(--skin-title-max, calc(100% - 64px))); margin: 0; overflow-wrap: anywhere; }
-.panel-toolbar { display: flex; align-items: flex-start; gap: 8px; flex: none; }
-.panel-tabs { flex: 1; min-width: 0; }
+/* No tabs since decision 0016 U2.3b: the panel shows Controller setup or Debug, so the toolbar holds the close button only. */
+.panel-toolbar { display: flex; justify-content: flex-end; align-items: flex-start; gap: 8px; flex: none; }
 #tools-close { flex: none; color: var(--ui-text-title); }
 .tools-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 0 8px 6px; }
 /* Tools-panel tabs and migrated Settings controls are governed by components.css (U1.3c).

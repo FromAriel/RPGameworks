@@ -28,35 +28,22 @@
       </div>
       <noscript><p class="game-notice">JavaScript is required to enter this world.</p></noscript>
     </main>
-    <aside data-window-skin="frame" data-skin-surface="settings" id="tools-panel" tabindex="-1" aria-label="Settings and developer tools" hidden>
-      <header class="panel-heading skin-heading"><h2 id="tools-title" data-skin-title>Settings</h2></header>
+    <aside data-window-skin="frame" data-skin-surface="settings" id="tools-panel" tabindex="-1" aria-labelledby="tools-title" data-mode="controller" hidden>
+      <header class="panel-heading skin-heading"><h2 id="tools-title" data-skin-title>Controller setup</h2></header>
       <div class="panel-toolbar">
-      <div class="panel-tabs ui-tabs" id="tools-tabs" role="tablist" aria-label="Menu sections">
-        <button id="options-tab" type="button" role="tab" aria-selected="true" aria-controls="options-panel">Settings</button>
-        <button id="debug-tab" type="button" role="tab" aria-selected="false" aria-controls="debug-panel" tabindex="-1">Debug</button>
-      </div>
-      <button id="tools-close" type="button" class="ui-action-button" data-intent="secondary" aria-label="Close settings and tools">×</button></div>
+      <button id="tools-close" type="button" class="ui-action-button" data-intent="secondary" aria-label="Close">×</button></div>
       <div class="tools-scroll">
-      <section id="options-panel" role="tabpanel" aria-labelledby="options-tab">
-        <h3 class="skin-divider" data-window-skin="divider" data-skin-surface="settings"><span data-skin-title>Display &amp; controls</span></h3>
-        <label class="setting"><input id="effects" type="checkbox" /> Cosmetic particles</label>
-        <p class="hint">Respects reduced motion. Effects never change game rules.</p>
-        <label class="setting"><input id="touch-enabled" type="checkbox" /> On-screen controls</label>
-        <p class="hint">Automatic on touch-first devices. Change for this session.</p>
-        <details class="help-panel"><summary>How to play</summary>
-          <p class="hint">Move with WASD or the arrow keys. Face someone or something nearby, then press E or Enter to interact. Escape closes messages; Space creates a small spark.</p>
-          <p class="hint">Controller defaults: left stick / D-pad to move, X to interact or inspect, B to close, A for sparks, Menu (button 9) for the menu. Your custom bindings take priority.</p>
-          <p class="hint">I or Escape opens the menu during exploration. Its Config entry opens these settings. F2 toggles Debug. Click the play area to play with the panel still visible.</p>
-        </details>
+      <section id="controller-section" aria-labelledby="tools-title">
         <div class="controller-actions">
           <button id="controller-activate" type="button" class="ui-action-button" data-intent="secondary">Activate controller</button>
           <span id="controller-brief" role="status">Checking controller detection…</span>
         </div>
+      <h3 class="skin-divider" data-window-skin="divider" data-skin-surface="settings"><span data-skin-title>Buttons &amp; sticks</span></h3>
       <details id="controller-settings" class="controller-panel">
-        <summary>Controller configuration</summary>
+        <summary hidden>Controller configuration</summary>
         <p id="controller-status" role="status"></p>
         <p class="hint"><a id="controller-probe" href="./controller-probe.html" target="_blank" rel="noopener">Open MouseJoy-style controller test</a> — same server, direct browser input, no Phaser or saved settings.</p>
-        <p class="hint">Xbox / Elite Series 2 defaults: left stick or D-pad to move; A for a pixel burst; X to interact/advance; B to close/cancel; Menu (button 9) opens inventory. In menus use up/down to select and left/right to adjust values. Existing remapped buttons are preserved. Press a controller button once, then release it, if detection is waiting. Gameplay pauses while this panel is open.</p>
+        <p class="hint">Xbox / Elite Series 2 defaults: left stick or D-pad to move; A for a pixel burst; X to interact/advance; B to close/cancel; Menu (button 9) opens the menu. In menus use up/down to select and left/right to adjust values. Existing remapped buttons are preserved. Press a controller button once, then release it, if detection is waiting. Gameplay pauses while this panel is open.</p>
         <label class="setting"><input id="controller-enabled" type="checkbox" /> Enable controller</label>
         <label class="controller-device-label">Device<select id="controller-device"></select></label>
         <label class="controller-deadzone-label" for="controller-deadzone">Stick deadzone <output id="controller-deadzone-value" for="controller-deadzone">25%</output></label>
@@ -88,7 +75,7 @@
         <p class="hint">Browser-local preferences only. Elite paddles may mirror other buttons or be hidden by the browser. Hardware profiles remain in Xbox Accessories; independent paddles and rumble are not promised.</p>
       </details>
       </section>
-      <section id="debug-panel" role="tabpanel" aria-labelledby="debug-tab" hidden>
+      <section id="debug-panel" aria-labelledby="tools-title" hidden>
         <div class="stage-heading"><span id="map-title">LOADING MAP</span><span id="render-label">BOOTING</span></div>
         <p id="status" role="status">Loading renderer…</p>
         <p id="skin-status" class="hint" role="status">Window skin loads when a window is opened.</p>
@@ -102,6 +89,10 @@
       <button id="tools-resume" class="resume-button ui-action-button" data-intent="primary" type="button">Return to game</button>
       </div>
     </aside>
+    <div id="player-settings" hidden>
+      <input id="effects" type="checkbox" aria-label="Cosmetic particles" />
+      <input id="touch-enabled" type="checkbox" aria-label="On-screen controls" />
+    </div>
     <dialog data-window-skin="frame" data-skin-surface="dialogue" id="interaction-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-text">
       <header class="skin-heading"><h2 id="dialog-title" data-skin-title></h2></header>
       <div id="dialog-scroll-above" hidden></div>

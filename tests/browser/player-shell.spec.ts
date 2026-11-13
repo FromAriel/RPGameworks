@@ -1,4 +1,4 @@
-import { test, expect, openRoom, snapshot, openTools, closeTools } from './helpers';
+import { test, expect, openRoom, snapshot, openTools, closeTools, setConfig } from './helpers';
 
 test('launch is only the centered game, black letterboxing, and a compact menu', { tag: ['@shell'] }, async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -30,7 +30,9 @@ test('Debug docks beside play, stays live, and stops rebuilding rows when closed
   await openRoom(page);
   await page.keyboard.press('F2');
   await expect(page.locator('#debug-panel')).toBeVisible();
-  await expect(page.locator('#debug-tab')).toBeFocused();
+  await expect(page.locator('#tools-panel')).toBeFocused();
+  await expect(page.locator('#tools-title')).toHaveText('Debug');
+  await expect(page.locator('#controller-section')).toBeHidden(); // Debug is its own panel (decision 0016 U2.3b).
   await expect(page.locator('#diagnostics div')).toHaveCount(17);
   await expect.poll(async () => (await page.locator('#stage').boundingBox())?.width).toBe(1080);
   await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(640); // a 1080 px docked stage fits 640 x 360 once
@@ -55,24 +57,25 @@ test('Debug docks beside play, stays live, and stops rebuilding rows when closed
   await expect.poll(async () => (await page.locator('canvas').boundingBox())?.width).toBe(1280);
 });
 
-test('menu tabs support keyboard navigation and repeated opening does not recreate the game', { tag: ['@shell'] }, async ({ page }) => {
+test('Config and Controller setup open by keyboard again and again without recreating the game', { tag: ['@shell'] }, async ({ page }) => {
   await openRoom(page); const initial = await snapshot(page);
   for (let i = 0; i < 8; i += 1) {
     await page.keyboard.press('Escape');
     await expect(page.locator('#game-menu')).toBeVisible();
     await page.locator('#game-menu .menu-row[data-id="config"]').click();
+    for (let j = 0; j < 3; j += 1) await page.keyboard.press('ArrowDown');
+    await expect(page.locator('#game-menu .menu-row[data-id="controller-setup"]')).toBeFocused();
+    await page.keyboard.press('Enter');
     await expect(page.locator('#tools-panel')).toBeVisible();
-    await page.locator('#options-tab').focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(page.locator('#debug-tab')).toBeFocused();
-    await expect(page.locator('#options-panel')).toBeHidden();
-    await page.keyboard.press('Home');
-    await expect(page.locator('#options-tab')).toBeFocused();
+    await expect(page.locator('#tools-title')).toHaveText('Controller setup');
+    await expect(page.locator('#controller-activate')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.locator('#tools-panel')).toBeHidden();
-    await expect(page.locator('#game-menu .menu-row[data-id="config"]')).toBeFocused(); // Config returns to the menu…
+    await expect(page.locator('#game-menu .menu-row[data-id="controller-setup"]')).toBeFocused(); // Back to Config…
     await page.keyboard.press('Escape');
-    await expect(page.locator('#stage')).toBeFocused(); // …and Escape to the map.
+    await expect(page.locator('#game-menu .menu-row[data-id="config"]')).toBeFocused(); // …to the menu…
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#stage')).toBeFocused(); // …and to the map.
   }
   const final = await snapshot(page);
   expect(final.starts).toBe(initial.starts); expect(final.stops).toBe(initial.stops);
@@ -161,7 +164,7 @@ test('small, wide, and large viewports fit without cropping or scrollbars', { ta
 
 test('open tools are not restored on reload and closing nested settings cannot leave input blocked', { tag: ['@shell'] }, async ({ page }) => {
   await openRoom(page); await openTools(page);
-  await page.locator('#controller-settings summary').click();
+  await expect(page.locator('#controller-settings')).toHaveAttribute('open','');
   await closeTools(page);
   await expect(page.locator('#controller-settings')).not.toHaveAttribute('open','');
   await page.keyboard.down('ArrowLeft');
@@ -179,7 +182,7 @@ test.describe('touch-first player layout', () => {
     await expect(page.locator('#touch-controls')).toBeVisible();
     await expect(page.locator('#tools-panel')).toBeHidden();
     await page.screenshot({ path: info.outputPath('player-touch.png') });
-    await openTools(page); await page.locator('#touch-enabled').uncheck(); await closeTools(page);
+    await setConfig(page, 'touch', false);
     await expect(page.locator('#touch-controls')).toBeHidden();
   });
 });

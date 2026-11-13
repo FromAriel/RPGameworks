@@ -39,6 +39,7 @@ import { ITEMS_SCREEN, itemsScreen } from './menu/items-screen';
 import { JOURNAL_SCREEN, journalScreen } from './menu/journal-screen';
 import type { JournalQuest } from './menu/journal-screen';
 import { HELP_SCREEN, helpScreen } from './menu/help-screen';
+import { CONFIG_SCREEN, CONTROLLER_SETUP, configScreen, type ConfigParams, type PlayerSetting } from './menu/config-screen';
 import type { PadAction } from '../platform/gamepad-model';
 import type { ItemDetail, ItemsMemory } from './menu/items-screen';
 import { ALL_ITEMS, categoryOf, itemCategories } from '../domain/item-order';
@@ -67,8 +68,12 @@ export interface FoundationElements {
   base: URL;
   /** The controller's current button for each action, for the Help screen. */
   controllerBindings: () => Readonly<Record<PadAction, number>>;
-  /** Open the settings panel; `onClosed` runs once when the panel closes. */
-  openSettings: (options?: { onClosed?: () => void }) => void;
+  /** Open the Controller setup panel; `onClosed` runs once when it closes (not when the player returns to the game). */
+  openControllerSetup: (onClosed: () => void) => void;
+  /** The player settings shown in the menu's Config screen. */
+  playerSettings: readonly PlayerSetting[];
+  /** The controller's detection status, for Config. */
+  controllerStatus: () => string;
   /** The game's hub menu (menu.json). */
   menu: MenuDefinition;
   /** The page's window skins, so menu windows are skinned as they open. */
@@ -154,16 +159,23 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private chooseEntry(entry: MenuEntry): void {
       if (this.mode !== 'menu' || !HUB_ROUTES.has(entry.screen)) return;
       this.hubEntry = entry.id;
-      const screen = { 'builtin:items': ITEMS_SCREEN, 'builtin:journal': JOURNAL_SCREEN, 'builtin:help': HELP_SCREEN }[entry.screen];
+      const screen = { 'builtin:items': ITEMS_SCREEN, 'builtin:journal': JOURNAL_SCREEN, 'builtin:help': HELP_SCREEN, 'builtin:config': CONFIG_SCREEN }[entry.screen];
       if (screen) { this.hub?.push(screen); return; }
       if (entry.screen === 'builtin:save') {
         this.leaveHub(); this.setMode('save'); void this.saveMenu?.open().catch(cause => this.fail(cause));
-      } else {
-        // Config is the settings panel until U2.3b; closing it comes back to the hub on this entry.
-        const back = entry.id;
-        this.resume();
-        elements.openSettings({ onClosed: () => { if (this.mode !== 'exploration' || !this.hub) return; this.hubEntry = back; this.openHub(); } });
       }
+    }
+    /** Config's Controller setup: the side panel replaces the menu, and closing it comes back to Config on that row. */
+    private openControllerSetup(): void {
+      if (this.mode !== 'menu') return;
+      const back = this.hubEntry;
+      this.resume(); // Closes the menu quietly and hands input back, so the panel may open.
+      elements.openControllerSetup(() => {
+        if (this.mode !== 'exploration' || !this.hub) return;
+        this.hubEntry = back;
+        this.openHub();
+        this.hub.push(CONFIG_SCREEN, { focus: CONTROLLER_SETUP } satisfies ConfigParams);
+      });
     }
     /** Party cards: the hero only, with no lasting stats until the roster (M5.4d), and a portrait cut from its sprite. */
     private partyCards(): PartyMember[] {
@@ -240,6 +252,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
         }));
         registry.register(JOURNAL_SCREEN, context => journalScreen(context, { quests: () => this.journalQuests() }));
         registry.register(HELP_SCREEN, context => helpScreen(context, { bindings: elements.controllerBindings }));
+        registry.register(CONFIG_SCREEN, (context, params) => configScreen(context, {
+          settings: elements.playerSettings,
+          controllerStatus: elements.controllerStatus,
+          openControllerSetup: () => this.openControllerSetup(),
+        }, params as ConfigParams | undefined));
         const layer = createMenuLayer(document.body, 'Game menu');
         layer.element.id = 'game-menu';
         // The menu key closes the menu from inside it too, like the controller's Menu button.

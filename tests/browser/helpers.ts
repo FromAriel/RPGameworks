@@ -157,34 +157,66 @@ export async function openSaves(page: Page): Promise<void> {
 /** The Items screen's rows (labels), in order. */
 export const itemRows = (page: Page) => page.locator('#game-menu .menu-screen[data-screen="builtin:items"] .menu-row .menu-row-label');
 
-/** Reach the settings through the real closed-by-default player menu: Menu, then Config (decision 0016). */
-export async function openTools(page: Page, tab: 'options' | 'debug' = 'options'): Promise<void> {
-  if (await page.locator('#tools-panel').isHidden()) {
-    if (await page.locator('#game-menu').isHidden()) await page.locator('#tools-toggle').click();
-    await expect.poll(async () => await page.locator('#game-menu').isVisible() || await page.locator('#tools-panel').isVisible()).toBe(true);
-    if (await page.locator('#game-menu').isVisible()) await page.locator('#game-menu .menu-row[data-id="config"]').click();
-  }
-  const button = page.locator(`#${tab}-tab`);
-  if (await button.getAttribute('aria-selected') !== 'true') await button.click();
-  await expect(page.locator(`#${tab}-panel`)).toBeVisible();
+/** The menu's Config screen (decision 0016 U2.3b). */
+export const configScreen = (page: Page) => page.locator('#game-menu .menu-screen[data-screen="builtin:config"]');
+/** Close every menu screen with Escape, back to the map. */
+export async function closeMenu(page: Page): Promise<void> {
+  for (let i = 0; i < 4 && await page.locator('#game-menu').isVisible(); i += 1) await page.keyboard.press('Escape');
+  await expect(page.locator('#game-menu')).toBeHidden();
 }
-/** Close the settings; opened from the hub's Config they return to the hub, so close that too. */
+/** Menu, then Config, through the real closed-by-default player menu. */
+export async function openConfig(page: Page): Promise<void> {
+  if (await configScreen(page).isVisible()) return;
+  if (await page.locator('#game-menu').isHidden()) await page.locator('#tools-toggle').click();
+  await page.locator('#game-menu .menu-row[data-id="config"]').click();
+  await expect(configScreen(page)).toBeVisible();
+}
+/** Set an On/Off row in Config (particles, touch, controller), then return to the map. */
+export async function setConfig(page: Page, id: string, value: boolean): Promise<void> {
+  await openConfig(page);
+  const row = configScreen(page).locator(`.menu-row[data-id="${id}"]`);
+  if (await row.getAttribute('aria-checked') !== String(value)) await row.click();
+  await expect(row).toHaveAttribute('aria-checked', String(value));
+  await closeMenu(page);
+}
+/**
+ * Open the side panel: Controller setup through Menu, Config, Controller setup; Debug with F2 (decision 0016 U2.3b).
+ */
+export async function openTools(page: Page, mode: 'controller' | 'debug' = 'controller'): Promise<void> {
+  const panel = page.locator('#tools-panel');
+  if (await panel.isVisible() && await panel.getAttribute('data-mode') === mode) return;
+  if (mode === 'debug') {
+    await closeMenu(page);
+    await page.keyboard.press('F2');
+    await expect(page.locator('#debug-panel')).toBeVisible();
+    return;
+  }
+  if (await panel.isVisible()) { await page.locator('#tools-close').click(); await expect(panel).toBeHidden(); }
+  if (await page.locator('#game-menu').isHidden()) {
+    // Before the game is ready there is no menu: the Menu button opens Controller setup directly.
+    await page.locator('#tools-toggle').click();
+    await expect.poll(async () => await page.locator('#game-menu').isVisible() || await panel.isVisible()).toBe(true);
+    if (await panel.isVisible()) { await expect(page.locator('#controller-section')).toBeVisible(); return; }
+  }
+  await openConfig(page);
+  await configScreen(page).locator('.menu-row[data-id="controller-setup"]').click();
+  await expect(page.locator('#controller-section')).toBeVisible();
+}
+/** Close the panel; Controller setup returns to Config, so close the menu too. */
 export async function closeTools(page: Page): Promise<void> {
   if (await page.locator('#tools-panel').isVisible()) await page.locator('#tools-close').click();
   await expect(page.locator('#tools-panel')).toBeHidden();
-  if (await page.locator('#game-menu').isVisible()) { await page.keyboard.press('Escape'); await expect(page.locator('#game-menu')).toBeHidden(); }
+  await closeMenu(page);
   await expect(page.locator('#stage')).toBeFocused();
 }
 export async function openControllerSettings(page: Page): Promise<void> {
-  await openTools(page);
-  if (!(await page.locator('#controller-settings').evaluate((root: HTMLDetailsElement) => root.open))) {
-    await page.locator('#controller-settings summary').click();
-  }
+  await openTools(page, 'controller');
+  await expect(page.locator('#controller-settings')).toHaveJSProperty('open', true);
 }
 export async function setEffects(page: Page, value: boolean): Promise<void> {
-  await openTools(page); await page.locator('#effects').setChecked(value); await closeTools(page);
+  await setConfig(page, 'particles', value);
 }
 export async function enableTouch(page: Page): Promise<void> {
-  await openTools(page); await page.locator('#touch-enabled').check(); await closeTools(page);
+  await setConfig(page, 'touch', true);
   await expect(page.locator('#touch-controls')).toBeVisible();
 }

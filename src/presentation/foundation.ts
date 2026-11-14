@@ -488,6 +488,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
         event.kind==='heal'?`${names.get(event.actor)} uses ${this.battleItemName(event.itemId)}: ${names.get(event.target)} recovers ${event.amount} HP.`:
         event.kind==='escape'?`${names.get(event.actor)} gets away.`:
         event.kind==='move'?`${names.get(event.actor)} moves${event.swapped?` and swaps places with ${names.get(event.swapped)}`:''}.`:
+        // An area attack lists every member hit, with the share of full damage each took (decision 0014 M5.4f).
+        event.kind==='area'?`${names.get(event.actor)} uses ${event.name}: ${event.hits.map(hit=>`${names.get(hit.target)} ${hit.damage}${hit.percent<100?` (${hit.percent}%)`:''}${hit.guarded?' (guarded)':''}${hit.defeated?', defeated':''}`).join(', ')}.`:
         `${names.get(event.actor)} hits ${names.get(event.target)} for ${event.damage}${event.guarded?' (guarded)':''}.${event.defeated?` ${names.get(event.target)} is defeated.`:''}`).join(' ');
       const hp=(side:'party'|'enemy')=>state.combatants.filter(c=>c.side===side).map(c=>c.hp>0?`${c.name} ${c.hp}/${c.maxHp} HP`:`${c.name} defeated`).join('  •  ');
       const timeline=state.timeline.slice(0,6).map(turn=>names.get(turn.actor)).join(' → ');

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { BattleEvent, BattleSnapshot, Cell, CombatantSnapshot, Opening } from '../../domain/battle';
 import type { MenuEntry } from '../../domain/battle-menu';
-import { STAGE_GRID, battlerPosition, gridSpacing, hpBefore, stepDuration } from './playback';
+import { STAGE_GRID, areaPercentAt, battlerPosition, gridSpacing, hpBefore, stepDuration } from './playback';
 import type { StageFloor } from './playback';
 import type { PlaybackSpeed } from './playback';
 import { BattleWindows, PANEL_STYLE } from './battle-windows';
@@ -322,7 +322,7 @@ export class BattleView {
   private actionLine(event: BattleEvent): string {
     const actor = this.battlers.get(event.actor)?.combatant.name ?? '';
     const action = event.kind === 'attack' ? 'Attack' : event.kind === 'guard' ? 'Guard' : event.kind === 'escape' ? 'Run'
-      : event.kind === 'move' ? 'Move' : this.options.itemName(event.itemId);
+      : event.kind === 'move' ? 'Move' : event.kind === 'area' ? event.name : this.options.itemName(event.itemId);
     return `${actor}: ${action}`;
   }
 
@@ -370,6 +370,7 @@ export class BattleView {
       if (other) slide(other, event.from);
       return;
     }
+    if (event.kind === 'area') { this.animateArea(actor, event, duration); return; }
     const target = this.battlers.get(event.target);
     if (!target) return;
     if (event.kind === 'heal') {
@@ -402,6 +403,37 @@ export class BattleView {
       this.float(target, String(event.damage), event.guarded ? 0xb7c9d0 : 0xffffff, duration - lead);
       this.options.impact({ x: target.home.x, y: target.home.y }, seed);
       if (event.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
+    });
+  }
+
+  /**
+   * An area attack (decision 0014 M5.4f, Ariel: lit cells, then numbers together): the party cells it covers light up on
+   * the floor, brightest at the centre and dimmer by falloff; then every member hit takes its number at once.
+   */
+  private animateArea(actor: Battler, event: Extract<BattleEvent, { kind: 'area' }>, duration: number): void {
+    const lead = Math.round(duration * 0.45);
+    // Transient, like the damage numbers: released when it fades, or by clearMotion when playback is skipped or ends.
+    const cells = this.scene.add.graphics().setDepth(DEPTH.floor + 0.002).setScrollFactor(0);
+    this.transient.add(cells);
+    for (let lane = 0; lane < 3; lane++) for (let depth = 0; depth < 3; depth++) {
+      const percent = areaPercentAt(event.shape, event.centre, { lane, depth });
+      if (!percent) continue;
+      const r = this.cellRect({ lane, depth });
+      // Brighter toward full damage, and the centre outlined, so the falloff reads at a glance.
+      cells.fillStyle(0xe6c27a, 0.3 + 0.6 * percent / 100).fillRect(r.x + 3, r.y + r.h - 14, r.w - 6, 12);
+      if (lane === event.centre.lane && depth === event.centre.depth) cells.lineStyle(2, 0xfff1c4, 1).strokeRect(r.x + 2, r.y + r.h - 15, r.w - 4, 14);
+    }
+    this.tween({ targets: cells, alpha: { from: 1, to: 0 }, delay: lead, duration: duration - lead, onComplete: () => { this.transient.delete(cells); cells.destroy(); } });
+    if (!this.options.reducedMotion) this.tween({ targets: actor.sprite, y: actor.home.y - 10, duration: Math.round(lead / 2), yoyo: true, ease: 'Quad.easeOut' });
+    this.after(lead, () => {
+      for (const hit of event.hits) {
+        const target = this.battlers.get(hit.target);
+        if (!target) continue;
+        this.hp.set(hit.target, Math.max(0, (this.hp.get(hit.target) ?? 0) - hit.damage));
+        this.float(target, String(hit.damage), hit.guarded ? 0xb7c9d0 : 0xffffff, duration - lead);
+        if (hit.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
+      }
+      this.refreshWindows();
     });
   }
 

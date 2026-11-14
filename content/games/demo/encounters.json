@@ -13,8 +13,10 @@
     "name": "Formation Drill",
     "seed": 2604,
     "enemies": [
-      {"id": "ogre", "name": "Two-Headed Ogre", "frame": "sigil", "creature": "dcss/monster/two_headed_ogre_new", "cell": {"lane": 2, "depth": 2}, "size": {"lanes": 2, "depths": 2}, "hp": 60, "attack": 9, "defense": 2, "speed": 6},
-      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "cell": {"lane": 1, "depth": 1}, "hp": 24, "attack": 6, "defense": 2, "speed": 8},
+      {"id": "ogre", "name": "Two-Headed Ogre", "frame": "sigil", "creature": "dcss/monster/two_headed_ogre_new", "cell": {"lane": 2, "depth": 2}, "size": {"lanes": 2, "depths": 2}, "hp": 60, "attack": 9, "defense": 2, "speed": 6,
+        "abilities": [{"id": "ogre-sweep", "name": "Ogre Sweep", "shape": "lane"}], "pattern": ["attack", "attack", "ogre-sweep"]},
+      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "cell": {"lane": 1, "depth": 1}, "hp": 24, "attack": 6, "defense": 2, "speed": 8,
+        "abilities": [{"id": "shard-burst", "name": "Shard Burst", "shape": "radius", "reach": "ranged"}], "pattern": ["attack", "shard-burst"]},
       {"id": "bat", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "cell": {"lane": 1, "depth": 2}, "hp": 12, "attack": 4, "defense": 0, "speed": 14}
     ]
   }, {

@@ -170,6 +170,18 @@ There are no special formulas: everything above asks "which allies stand between
 - **Opening label:** "Back attack" or "Pincer" is written at the right end of the turn strip for the whole fight.
 - **Debug state:** the battle snapshot reports the opening and which way each battler faces.
 
+**Execution answers (Ariel, November 14, before M5.4f):**
+- **When:** each enemy may list a repeating action `pattern` (`"attack"` or one of its `abilities`), cycled in order. There are no random numbers in enemy choices, and enemies without a pattern always attack.
+- **Aim:** an area attack is centred on the party member the enemy would attack anyway, using the ability's reach (default: the enemy's own). A radius falls off from there; a lane or column covers that member's line.
+- **Demo:** in the Formation Drill the Clay Golem alternates attack and **Shard Burst** (radius, ranged), and the Two-Headed Ogre uses **Ogre Sweep** (lane) every third action.
+- **Playback:** the help line names the attack. The struck party cells light up on the floor, brighter toward full damage, with the centre outlined; then every member's number rises at once. The screen-reader text lists each member hit with its share of full damage.
+- **Rolls:** each member hit rolls its own variance in party order; guard, shields and falloff multiply in and round up once. All hits are worked out before anyone falls, so they land together.
+
+**Execution notes (M5.4f):**
+- **Content:** `abilities` (`id`, `name`, `shape`, optional `reach`) and `pattern` on enemies; validation rejects unknown pattern steps, duplicate IDs, an ability called "attack", and either field on the party.
+- **Retry** restarts every pattern from its first step, with the same opening and random stream.
+- **Readability:** the lit strips are partly hidden where the three lanes overlap in the Drill. That comes from the stage's vertical lane spacing (noted in M5.4e), which is for a later layout pass.
+
 **M5.4f — Area attacks you can see.** One enemy gains an area attack ("Shard Burst", radius), and the big enemy gets a lane attack. Playback shows the hit cells and the reduced numbers. The party's own grid spells come with skills in M5.9.
 - **Acceptance:** browser tests and pinned traces; Ariel's play review.
 

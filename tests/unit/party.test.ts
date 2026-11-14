@@ -64,7 +64,9 @@ describe('the party roster', () => {
 
 describe('the party in battle', () => {
   it('plays the Formation Drill exactly as when its party was authored in the encounter', () => {
-    const drill = battleEncounter(encounters[1]!, roster, defaultParty(roster));
+    // Since M5.4f the Drill's Golem and Ogre also have area attacks; without them, the roster's party plays as before.
+    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ abilities: _a, pattern: _p, ...enemy }) => enemy) };
+    const drill = battleEncounter(plain, roster, defaultParty(roster));
     expect(drill).toEqual(authored[1]);
     const play = (encounter: Encounter) => { const battle = new BattleSession(encounter); const trace = []; for (let i = 0; i < 6; i += 1) { const s = battle.snapshot(); if (s.phase !== 'command') break; const target = s.combatants.find(c => c.side === 'enemy' && c.hp > 0 && battle.validate({ type: 'attack', target: c.id }) === null); trace.push(battle.command(target ? { type: 'attack', target: target.id } : { type: 'guard' }).events); } return trace; };
     expect(play(drill)).toEqual(play(authored[1] as Encounter));

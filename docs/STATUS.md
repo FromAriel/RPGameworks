@@ -4,6 +4,54 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4f area attacks you can see — November 14, 2026, local
+
+[Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4f, which completes M5.4's packets. Ariel's answers:
+- enemies follow a repeating action pattern;
+- an area attack is centred on the usual target;
+- the Formation Drill's Golem and Ogre get the attacks;
+- playback lights the cells, then shows every number together;
+- each member hit has its own roll.
+
+- **Content** (`schemas/encounters.schema.json`): enemies may have `abilities` (an ID, a name, a shape and optional reach) and a `pattern` such as `["attack", "shard-burst"]`. Validation reports:
+  - unknown pattern steps;
+  - duplicate ability IDs;
+  - an ability named "attack";
+  - abilities or patterns on the party.
+- **Battle rules** (`src/domain/battle.ts`):
+  - **Pattern:** each enemy action takes the next step of its pattern.
+  - **Aim:** an ability is centred on the member the enemy would attack, using the ability's reach.
+  - **Damage:** each member hit rolls separately in party order, with guard, shields and falloff (or full strength on a line) multiplied in.
+  - **Landing:** all hits land together as one `area` event.
+  - **Retry:** restarts the patterns.
+  - **Unchanged:** the rules for ordinary attacks.
+- **Demo:** in the Formation Drill the Clay Golem alternates attack and **Shard Burst** (radius), and the Two-Headed Ogre uses **Ogre Sweep** (lane) every third action.
+- **Playback:**
+  - **Help line:** names the attack, for example "Clay Golem: Shard Burst".
+  - **Floor:** the struck party cells light up, brighter toward full damage, with the centre outlined.
+  - **Numbers:** every member hit gets its number at once.
+  - **Screen reader:** the dialog text reads, for example, "Clay Golem uses Shard Burst: Hero 3, Archer 3 (80%), Lancer 4 (80%), Mage 2 (50%)."
+- **Tests:**
+  - **Unit:** `battle-area.test.ts` (7):
+    - radius falloff with shields;
+    - a lane attack;
+    - the pattern repeating, and Retry restarting it;
+    - guard, and hits landing together;
+    - playback rebuilding HP from area events, and lighting the same cells the rules hit;
+    - content errors;
+    - a pinned Drill trace: Shard Burst on turn 12, Ogre Sweep on turn 24, victory on turn 31.
+  - **Updated:** the party test now compares the Drill's party with the area attacks set aside.
+  - **Browser:** `area.spec.ts` (1) plays the Drill to both attacks, checks the text and HP against the pinned trace, and wins on turn 31.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build, `check:test-tags` (206 tagged) and `check:external-art` passed;
+  - unit tests **575/575**;
+  - browser: the full suite ran 204 passed and 2 failed in tests this packet does not touch. One page closed after a timeout, and one controller press repeated once too many in the hub. Both files passed on rerun (8/8), so **206/206**.
+  - Checked by eye from the test screenshot mid-burst.
+- **Seen, not changed:** the lit strips are partly hidden where the Drill's three lanes overlap. The vertical lane spacing needs its own layout pass.
+- **Not yet:** Ariel's play review.
+- **Migration:** none; encounters stay schema version 2. **M5.4 packets a–f are done.** Next: Ariel's review of M5.4, then the roadmap's next item.
+
 ## M5.4e back attack and pincer on the battle screen — November 14, 2026, local
 
 [Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4e. Ariel's answers: in a back attack the party turns around; in a pincer the party stands in the middle; each member faces the flank it last fought; the drills reuse the demo creatures. After seeing the first pincer, Ariel asked for more room around the party (for animated battlers later), so the party keeps its ordinary column spacing.

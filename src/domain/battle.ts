@@ -1,5 +1,5 @@
 import type { EncounterCatalog } from '../content/generated/encounters';
-import { GRID, alliesAhead, canReach, placeGrid, scaleDamage, shieldPercent } from './battle-grid.mjs';
+import { GRID, alliesAhead, areaHits, canReach, placeGrid, scaleDamage, shieldPercent } from './battle-grid.mjs';
 import type { Direction, Placement, Reach } from './battle-grid.mjs';
 
 /**
@@ -35,7 +35,13 @@ export type BattleEvent =
   | { readonly kind: 'guard'; readonly actor: string }
   | { readonly kind: 'heal'; readonly actor: string; readonly target: string; readonly itemId: string; readonly amount: number }
   | { readonly kind: 'move'; readonly actor: string; readonly from: Cell; readonly to: Cell; readonly swapped: string | null }
-  | { readonly kind: 'escape'; readonly actor: string };
+  | { readonly kind: 'escape'; readonly actor: string }
+  /** An enemy's area attack (decision 0014 M5.4f): every party member it hits, resolved together. */
+  | { readonly kind: 'area'; readonly actor: string; readonly ability: string; readonly name: string; readonly shape: AreaShape; readonly centre: Cell; readonly hits: readonly AreaHit[] };
+export type AreaShape = 'radius' | 'lane' | 'column' | 'diagonal-down' | 'diagonal-up';
+/** One member hit by an area attack: its damage after guard, shields and falloff (`percent`). */
+export interface AreaHit { readonly target: string; readonly damage: number; readonly percent: number; readonly shields: number; readonly guarded: boolean; readonly defeated: boolean }
+type Ability = NonNullable<Encounter['enemies'][number]['abilities']>[number];
 export type RejectReason = 'phase' | 'unknown-command' | 'invalid-target' | 'out-of-reach' | 'invalid-cell' | 'not-usable' | 'full-hp';
 export interface BattleItemUse { readonly heal: number }
 export interface CombatantSnapshot {
@@ -105,6 +111,8 @@ export class BattleSession {
   private turn = 0;
   private events: BattleEvent[] = [];
   private readonly opening: Opening;
+  /** Enemies with an action pattern: their abilities and how many actions they have taken (decision 0014 M5.4f). */
+  private plans = new Map<string, { readonly abilities: readonly Ability[]; readonly pattern: readonly string[]; actions: number }>();
 
   constructor(readonly encounter: Encounter, private readonly items: ReadonlyMap<string, BattleItemUse> = new Map()) {
     this.opening = encounter.opening ?? 'normal';
@@ -194,11 +202,7 @@ export class BattleSession {
     while (this.phase === 'command') {
       const actor = this.next()!;
       if (actor.side === 'party') { actor.guarding = false; break; }
-      const target = this.enemyTarget(actor);
-      if (target) this.strike(actor, target);
-      actor.nextTick += actionDelay(actor.speed, ACTION_WEIGHT.attack);
-      this.turn += 1;
-      this.settle();
+      this.enemyAct(actor);
     }
     return this.snapshot();
   }
@@ -218,20 +222,49 @@ export class BattleSession {
       ...placements[side][slot]!, reach: combatant.reach ?? 'melee', creature: combatant.creature ?? null, faces: combatant.faces ?? 'left', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
     });
     this.fighters = [...this.encounter.party.map(build('party')), ...this.encounter.enemies.map(build('enemy'))];
+    this.plans = new Map(this.encounter.enemies.flatMap(e => (e.pattern ? [[e.id, { abilities: e.abilities ?? [], pattern: e.pattern, actions: 0 }] as const] : [])));
     this.rng = this.encounter.seed >>> 0;
     this.phase = 'command';
     this.turn = 0;
     this.events = [];
     // A battle that opens on enemy turns resolves them before the first hero decision.
     while (this.next()?.side === 'enemy') {
-      const actor = this.next()!;
-      const target = this.enemyTarget(actor);
-      if (target) this.strike(actor, target);
-      actor.nextTick += actionDelay(actor.speed, ACTION_WEIGHT.attack);
-      this.turn += 1;
-      this.settle();
+      this.enemyAct(this.next()!);
       if (this.phase !== 'command') break;
     }
+  }
+
+  /**
+   * One enemy action: the next step of its pattern (or an ordinary attack), aimed as usual. An ability is centred on the
+   * party member the enemy would attack, using the ability's reach.
+   */
+  private enemyAct(actor: Fighter): void {
+    const plan = this.plans.get(actor.id);
+    const step = plan ? plan.pattern[plan.actions % plan.pattern.length]! : 'attack';
+    if (plan) plan.actions += 1;
+    const ability = step === 'attack' ? undefined : plan!.abilities.find(a => a.id === step);
+    const target = this.enemyTarget(actor, ability?.reach ?? actor.reach);
+    if (target && ability) this.areaStrike(actor, ability, target);
+    else if (target) this.strike(actor, target);
+    actor.nextTick += actionDelay(actor.speed, ACTION_WEIGHT.attack);
+    this.turn += 1;
+    this.settle();
+  }
+
+  /**
+   * An area attack on the party grid. Each member hit rolls its own variance in party order; guard, shields and falloff
+   * multiply in, rounded up once. Everything is worked out before anyone falls, so the hits land together.
+   */
+  private areaStrike(actor: Fighter, ability: Ability, centre: Fighter): void {
+    const party = this.living('party');
+    const hits = areaHits(ability.shape, centre, party).map(({ index, percent }) => {
+      const target = party[index]!, shields = this.ahead(target, actor);
+      const damage = scaleDamage(this.damage(actor.attack, target.defense), [target.guarding ? 50 : 100, shieldPercent(shields), percent]);
+      return { target, damage, percent, shields, guarded: target.guarding };
+    });
+    for (const hit of hits) hit.target.hp = Math.max(0, hit.target.hp - hit.damage);
+    this.events.push({ kind: 'area', actor: actor.id, ability: ability.id, name: ability.name, shape: ability.shape, centre: { lane: centre.lane, depth: centre.depth },
+      hits: hits.map(h => ({ target: h.target.id, damage: h.damage, percent: h.percent, shields: h.shields, guarded: h.guarded, defeated: h.target.hp === 0 })) });
   }
 
   private strike(actor: Fighter, target: Fighter): void {
@@ -276,8 +309,8 @@ export class BattleSession {
    * An enemy's choice, deterministic and free of random numbers: the reachable living party member with the fewest
    * allies ahead (front-facing first), then the lowest lane, then the frontmost.
    */
-  private enemyTarget(actor: Fighter): Fighter | undefined {
-    const reachable = this.living('party').map(f => ({ f, ahead: this.ahead(f, actor) })).filter(({ ahead }) => canReach(actor.reach, ahead));
+  private enemyTarget(actor: Fighter, reach: Reach = actor.reach): Fighter | undefined {
+    const reachable = this.living('party').map(f => ({ f, ahead: this.ahead(f, actor) })).filter(({ ahead }) => canReach(reach, ahead));
     reachable.sort((a, b) => a.ahead - b.ahead || a.f.lane - b.f.lane || a.f.depth - b.f.depth || a.f.slot - b.f.slot);
     return reachable[0]?.f;
   }

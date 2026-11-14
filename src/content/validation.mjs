@@ -210,6 +210,17 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
       if (creatures && combatant.creature && !creatures.has(combatant.creature)) issues.push({file,id:encounter.id,path:`${path}/creature`,message:'Unknown creature: not in the Stone Soup library or without a motion assignment',value:combatant.creature});
       if (side !== 'enemies' && combatant.size) issues.push({file,id:encounter.id,path:`${path}/size`,message:'Only enemies can cover several cells',value:combatant.size});
       if (side !== 'enemies' && combatant.flank) issues.push({file,id:encounter.id,path:`${path}/flank`,message:'Only enemies have a flank',value:combatant.flank});
+      // Area attacks (decision 0014 M5.4f): enemies only, unique IDs, and a pattern naming only 'attack' or its abilities.
+      if (side !== 'enemies' && (combatant.abilities || combatant.pattern)) issues.push({file,id:encounter.id,path:`${path}/${combatant.abilities ? 'abilities' : 'pattern'}`,message:'Only enemies have abilities and an action pattern for now',value:null});
+      const abilityIds = new Set();
+      (combatant.abilities ?? []).forEach((ability, a) => {
+        if (ability.id === 'attack' || abilityIds.has(ability.id)) issues.push({file,id:encounter.id,path:`${path}/abilities/${a}/id`,message:ability.id === 'attack' ? '"attack" is the ordinary attack; give the ability another ID' : 'Duplicate ability ID',value:ability.id});
+        abilityIds.add(ability.id);
+        if (!ability.name.trim()) issues.push({file,id:encounter.id,path:`${path}/abilities/${a}/name`,message:'Ability names must contain visible text',value:ability.name});
+      });
+      (combatant.pattern ?? []).forEach((step, p) => {
+        if (step !== 'attack' && !abilityIds.has(step)) issues.push({file,id:encounter.id,path:`${path}/pattern/${p}`,message:'Unknown action: use "attack" or one of this enemy\'s abilities',value:step});
+      });
       if (side === 'enemies' && (encounter.opening === 'pincer') !== (combatant.flank !== undefined)) issues.push({file,id:encounter.id,path:`${path}/flank`,message:encounter.opening === 'pincer' ? 'Every enemy in a pincer needs a flank (front or rear)' : 'Only pincer encounters give enemies a flank',value:combatant.flank ?? null});
     });
     // Decision 0014: each grid (the party, and the enemies or each pincer flank) is placed on its own 3 × 3 grid.

@@ -1,4 +1,5 @@
-import type { BattleEvent, BattleSnapshot, Opening } from '../../domain/battle';
+import type { BattleEvent, BattleSnapshot, Cell, Opening } from '../../domain/battle';
+import { areaPercent } from '../../domain/battle-grid.mjs';
 
 /**
  * Presentation timing for already-resolved battle events (M5.3b). Nothing here reads or changes battle rules:
@@ -7,7 +8,7 @@ import type { BattleEvent, BattleSnapshot, Opening } from '../../domain/battle';
 export const PLAYBACK_SPEEDS = [1, 2, 4] as const;
 export type PlaybackSpeed = typeof PLAYBACK_SPEEDS[number];
 
-const BASE_MS: Record<BattleEvent['kind'], number> = { attack: 560, guard: 380, heal: 460, move: 420, escape: 520 };
+const BASE_MS: Record<BattleEvent['kind'], number> = { attack: 560, guard: 380, heal: 460, move: 420, escape: 520, area: 760 };
 
 export function stepDuration(event: BattleEvent, speed: PlaybackSpeed): number {
   return Math.ceil(BASE_MS[event.kind] / speed);
@@ -23,6 +24,7 @@ export function hpBefore(after: BattleSnapshot, events: readonly BattleEvent[]):
   for (let index = events.length - 1; index >= 0; index -= 1) {
     const event = events[index]!;
     if (event.kind === 'attack') hp.set(event.target, hp.get(event.target)! + event.damage);
+    else if (event.kind === 'area') for (const hit of event.hits) hp.set(hit.target, hp.get(hit.target)! + hit.damage);
     else if (event.kind === 'heal') hp.set(event.target, hp.get(event.target)! - event.amount);
   }
   return hp;
@@ -92,4 +94,12 @@ export function battlerPosition(side: 'party' | 'enemy', p: StagePlacement, floo
     y: Math.round(lanes.topY + lane * lanes.laneStep),
     scale: 1 + Math.min(3, Math.max(p.lanes, p.depths)),
   };
+}
+
+/** The share of an area attack a party cell takes (0 when the shape misses it), for lighting the floor. */
+export function areaPercentAt(shape: Extract<BattleEvent, { kind: 'area' }>['shape'], centre: Cell, cell: Cell): number {
+  if (shape === 'radius') return areaPercent(Math.abs(cell.lane - centre.lane) + Math.abs(cell.depth - centre.depth));
+  const on = shape === 'lane' ? cell.lane === centre.lane : shape === 'column' ? cell.depth === centre.depth
+    : shape === 'diagonal-down' ? cell.lane - cell.depth === centre.lane - centre.depth : cell.lane + cell.depth === centre.lane + centre.depth;
+  return on ? 100 : 0;
 }

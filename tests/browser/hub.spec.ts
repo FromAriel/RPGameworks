@@ -21,15 +21,15 @@ async function tapPad(page: Page, index: number): Promise<void> {
   await set(true); await page.waitForTimeout(70); await set(false); await page.waitForTimeout(70);
 }
 
-test('the menu key opens the hub: party, commands from menu.json, location; greyed entries say why; I or Escape return to the map', { tag: ['@inventory'] }, async ({ page }, info) => {
+test('the menu key opens the hub: party, commands from menu.json, location; I or Escape return to the map', { tag: ['@inventory'] }, async ({ page }, info) => {
   await openRoom(page);
   await page.keyboard.press('KeyI');
   await expect(menu(page)).toBeVisible();
   expect(await snapshot(page)).toMatchObject({ inputMode: 'menu', menu: { screen: 'builtin:hub', focused: 'items' } });
   await expect(page.locator('#game-menu .menu-row')).toHaveText(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Config', 'Help', 'Credits', 'Save']);
-  await expect(page.locator('#game-menu .menu-row[aria-disabled="true"]')).toHaveText(['Status', 'Formation']); // Not built yet (M5.4d).
-  await expect(page.locator('#game-menu .menu-card')).toHaveCount(1);
-  await expect(page.locator('#game-menu .menu-card')).toHaveAttribute('aria-label', 'Hero');
+  await expect(page.locator('#game-menu .menu-row[aria-disabled="true"]')).toHaveCount(0); // Every demo entry opens since M5.4d; greyed entries are unit-tested (hub.test.ts).
+  await expect(page.locator('#game-menu .menu-card')).toHaveCount(4); // The party roster (M5.4d), with full HP until M5.6.
+  await expect(page.locator('#game-menu .menu-card').first()).toHaveAttribute('aria-label', 'Hero, HP 30 of 30');
   await expect(page.locator('#game-menu .menu-info-window')).toContainText('Location');
   await expect(page.locator('#game-menu .menu-info-window')).toContainText((await snapshot(page)).mapName);
   await expect(page.locator('#game-menu [data-window-skin]')).toHaveCount(4);
@@ -41,9 +41,11 @@ test('the menu key opens the hub: party, commands from menu.json, location; grey
   await expect(help(page)).toHaveText('Use and inspect what you carry.');
   await page.keyboard.press('ArrowDown');
   await expect(row(page, 'status')).toBeFocused();
-  await expect(help(page)).toHaveText("Each member's strength and condition. Arrives later.");
+  await expect(help(page)).toHaveText("Each member's strength and condition.");
   await page.keyboard.press('Enter');
-  expect((await snapshot(page)).menu).toEqual({ screen: 'builtin:hub', focused: 'status' }); // Greyed: nothing opens.
+  expect((await snapshot(page)).menu?.screen).toBe('builtin:status');
+  await page.keyboard.press('Escape');
+  await expect(row(page, 'status')).toBeFocused(); // Back on the hub, on the same entry.
   await page.keyboard.press('Escape');
   await expect(menu(page)).toBeHidden();
   await expect(page.locator('#stage')).toBeFocused();

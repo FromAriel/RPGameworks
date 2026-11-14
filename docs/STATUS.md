@@ -4,6 +4,44 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4d-2 the Formation and Status screens — November 13, 2026, local
+
+[Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4d, second half. Ariel's answers: choose a member then a cell, with Done saving a draft; shield pips on the grid with Q/E flipping to a back attack; Status one member per page; full HP bars on the hub cards.
+
+- **Formation** (`builtin:formation`, `src/presentation/menu/formation-screen.ts`):
+  - **Layout:** the party list (with each member's depth, and Done), the 3 × 3 grid with each member's battle sprite and shield pips, and the highlighted member's detail.
+  - **Moving:** choose a member, then a cell; a member already there swaps places. Pointer and touch tap a member on the grid, then a cell.
+  - **Saving:** changes are a draft until Done, which commits the whole layout as one `setFormation` transaction. Leaving with changes asks "Discard changes?" (Keep editing is focused).
+  - **Preview:** Q/E flips between an ordinary fight and a back attack; the detail says both in words ("In a back attack: shielded once (20% less damage).").
+- **Status** (`builtin:status`, `status-screen.ts`): one member per page: portrait, HP, Attack, Defense, Speed, reach in words, where the member stands and both views. Q/E steps through the party.
+- **Hub:** four party cards with portraits and full HP bars. Every demo menu entry now opens.
+- **Blocks:** `createGrid` (the party grid) and arrow movement between grid cells in `MenuNavigation`; `spriteImage` draws a whole battle frame for the grid. Pure helpers in `src/domain/party.ts`: `moveMember`, `shieldsAt`, `shieldWords`, `cellName`.
+- **Debug state:** the battle snapshot lists each fighter's cell, so tests can check the formation a battle uses.
+- **Tests:**
+  - **Unit:** `formation-screen.test.ts` (7):
+    - moving and swapping;
+    - a draft saved once on Done;
+    - arrows stopping at the grid's edges;
+    - tapping a member;
+    - the back-attack view;
+    - Keep editing and Discard;
+    - repeated opens adding no subscribers;
+    - Status pages.
+  - **Browser:** `formation-screen.spec.ts` (3):
+    - a formation set by keyboard is the one the practice battle uses, and it survives save, reload and load;
+    - pointer swaps and the discard question, with repeated opens leaving nothing behind;
+    - Status pages and four hub cards.
+  - **Updated:** the hub spec (no greyed entries, four cards, Status opens) and an inventory spec that pressed the once-greyed Status.
+
+  Local results:
+  - typecheck, the production build, `check:test-tags` (203 tagged) and `check:external-art` passed;
+  - unit tests **563/563**;
+  - browser: the full suite ran 201 passed and 2 failed, both expected from this packet (the two specs above). After the fixes, those specs and the new one passed (21 tests), so **203/203**.
+  - Checked by eye in the dev server: the hub, Formation (both views and the discard question) and Status.
+- **Mistake caught:** I first wrote the new browser spec over the existing `tests/browser/formation.spec.ts` (the Formation Drill battle tests from M5.4b–c). It was restored from git before any commit, and the new spec is `formation-screen.spec.ts`.
+- **Not yet:** Ariel's play review.
+- **Migration:** none beyond M5.4d-1's save version 3. **M5.4d is complete.** Next: **M5.4e**, back attack and pincer on the battle screen.
+
 ## M5.4d-1 the party roster, guests, save version 3 and play time — November 13, 2026, local
 
 [Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4d, first half. Ariel's answers: all four members start in the party and every fight uses the roster; the item picker waits for M5.6; play time counts while the page is visible; M5.4d is split in two.

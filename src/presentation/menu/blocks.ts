@@ -277,3 +277,65 @@ export function createNumberPicker({ label, min, max, value, onConfirm }: { labe
   element.append(name, input, out, ok);
   return { element, get value() { return Number(input.value); }, focus() { input.focus({ preventScroll: true }); } };
 }
+
+export interface GridCellView {
+  readonly lane: number; readonly depth: number;
+  /** What stands here (a name), or null for an empty cell. */
+  readonly occupant: string | null;
+  /** The screen-reader name, for example "Top lane, front: Hero, front-facing". */
+  readonly label: string;
+  readonly picture?: HTMLElement | null;
+  /** Shield pips (0, 1 or 2), as the battle draws them. */
+  readonly pips?: number;
+  /** Marks the cell of the member being moved. */
+  readonly marked?: boolean;
+  readonly help?: string;
+}
+export interface MenuGrid {
+  readonly element: HTMLElement;
+  setCells(cells: readonly GridCellView[]): void;
+  focus(lane: number, depth: number): void;
+  readonly focused: { readonly lane: number; readonly depth: number } | null;
+}
+const DEPTH_HEADINGS = ['Front', 'Middle', 'Back'];
+/**
+ * The party's 3 × 3 battle grid (decision 0014): lanes top to bottom, the front column on the left, facing the enemies
+ * as in battle. Each cell is a button; arrows move between cells (MenuNavigation), choosing reports the cell.
+ */
+export function createGrid({ label, onChoose, onFocus }: { label: string; onChoose: (lane: number, depth: number) => void; onFocus?: (lane: number, depth: number) => void }): MenuGrid {
+  const element = document.createElement('div');
+  element.className = 'menu-grid';
+  element.setAttribute('role', 'group');
+  element.setAttribute('aria-label', label);
+  const headings = DEPTH_HEADINGS.map(text => { const h = document.createElement('span'); h.className = 'menu-grid-heading'; h.setAttribute('aria-hidden', 'true'); h.textContent = text; return h; });
+  const at = (target: EventTarget | null) => (target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-grid-cell]') ?? null;
+  const read = (cell: HTMLElement) => ({ lane: Number(cell.dataset.lane), depth: Number(cell.dataset.depth) });
+  element.addEventListener('click', event => { const cell = at(event.target); if (cell) { const c = read(cell); onChoose(c.lane, c.depth); } });
+  element.addEventListener('focusin', event => { const cell = at(event.target); if (cell) { const c = read(cell); onFocus?.(c.lane, c.depth); } });
+  const handle: MenuGrid = {
+    element,
+    setCells(cells) {
+      const keep = handle.focused;
+      element.replaceChildren(...headings, ...[1, 2, 3].flatMap(lane => [1, 2, 3].map(depth => {
+        const view = cells.find(c => c.lane === lane && c.depth === depth);
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'menu-grid-cell';
+        button.dataset.gridCell = ''; button.dataset.lane = String(lane); button.dataset.depth = String(depth);
+        button.style.gridRow = String(lane + 1); button.style.gridColumn = String(depth);
+        button.setAttribute('aria-label', view?.label ?? `Lane ${lane}, depth ${depth}`);
+        if (view?.help) { button.dataset.help = view.help; button.setAttribute('aria-description', view.help); }
+        if (view?.marked) button.dataset.marked = '';
+        if (view?.occupant) button.dataset.occupant = view.occupant;
+        if (view?.picture) { const picture = document.createElement('span'); picture.className = 'menu-grid-picture'; picture.setAttribute('aria-hidden', 'true'); picture.append(view.picture); button.append(picture); }
+        const name = document.createElement('span'); name.className = 'menu-grid-name'; name.setAttribute('aria-hidden', 'true'); name.textContent = view?.occupant ?? '';
+        const pips = document.createElement('span'); pips.className = 'menu-grid-pips'; pips.setAttribute('aria-hidden', 'true'); pips.textContent = '◆'.repeat(view?.pips ?? 0);
+        button.append(name, pips);
+        return button;
+      })));
+      if (keep) handle.focus(keep.lane, keep.depth);
+    },
+    focus(lane, depth) { element.querySelector<HTMLElement>(`[data-lane="${lane}"][data-depth="${depth}"]`)?.focus({ preventScroll: true }); },
+    get focused() { const cell = at(document.activeElement); return cell && element.contains(cell) ? read(cell) : null; },
+  };
+  return handle;
+}

@@ -16,7 +16,7 @@ The game manifest names the file (`"menuFile": "menu.json"`). Each entry has:
 | --- | --- |
 | `id` | Unique within the menu, for example `bestiary`. |
 | `label` | The command name, at most 16 characters. |
-| `screen` | `builtin:items`, `builtin:journal`, `builtin:catalog`, `builtin:config`, `builtin:help`, `builtin:save` (with `builtin:status` and `builtin:formation` arriving in M5.4d), or a game's own `mygame:crafting`. |
+| `screen` | `builtin:items`, `builtin:journal`, `builtin:catalog`, `builtin:config`, `builtin:help`, `builtin:save`, `builtin:status`, `builtin:formation` (the last two need a party roster), or a game's own `mygame:crafting`. |
 | `catalog` | For `builtin:catalog` only: which catalog it shows. |
 | `help` | The help line while the entry is highlighted. |
 | `when` | Optional. The entry appears only while this condition holds, using the map condition vocabulary (`factEquals`, `itemAtLeast`, `questStateEquals`, `placementOpened`, `all`, `any`, `not`). |
@@ -89,7 +89,8 @@ The blocks are in `src/presentation/menu/blocks.ts`:
 - `menuWindow` places a skinned window in the 640 × 360 menu;
 - `createList` makes rows of choices; a row can be disabled, or be an On/Off switch;
 - `createDetail`, `createHelpLine`, `createTabs` and `createInfo` cover the detail window, help line, tabs and info windows;
-- `createPartyCards`, `createConfirm` and `createNumberPicker` cover party cards, a Yes/No question and a number choice.
+- `createPartyCards`, `createConfirm` and `createNumberPicker` cover party cards, a Yes/No question and a number choice;
+- `createGrid` draws the party's 3 × 3 battle grid, with arrows moving between cells (the Formation screen).
 
 The worked example is `tests/fixtures/plugin/notes-screen.ts`. It is a list of notes with a detail window and a "Done" row that closes the menu. Shortened here:
 

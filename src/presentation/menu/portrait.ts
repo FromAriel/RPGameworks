@@ -21,3 +21,16 @@ export function spritePortrait(image: CanvasImageSource, frame: SpriteRect): HTM
   g.drawImage(image, sx, sy, side, side, offset, offset, drawn, drawn);
   return canvas;
 }
+
+/** The whole sprite frame, enlarged by the largest whole step that fits `maxW` × `maxH` (the formation grid). */
+export function spriteImage(image: CanvasImageSource, frame: SpriteRect, maxW: number, maxH: number): HTMLCanvasElement {
+  const step = Math.max(1, Math.floor(Math.min(maxW / frame.w, maxH / frame.h)));
+  const canvas = document.createElement('canvas');
+  canvas.width = frame.w * step; canvas.height = frame.h * step;
+  canvas.className = 'menu-sprite';
+  const g = canvas.getContext('2d');
+  if (!g) return canvas;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(image, frame.x, frame.y, frame.w, frame.h, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}

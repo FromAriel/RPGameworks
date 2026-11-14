@@ -78,8 +78,9 @@ test('menu queued during movement stops at a safe tile and cannot move or burst 
   await expect(page.locator('#game-menu .menu-row[data-id="items"]')).toBeFocused();
   await page.keyboard.down('ArrowRight'); // In the menu, Right moves to the next entry, not the hero.
   await expect(page.locator('#game-menu .menu-row[data-id="status"]')).toBeFocused();
-  await page.keyboard.press('Space'); // Confirms the greyed Status (nothing opens), not an exploration burst.
-  await expect(page.locator('#game-menu')).toBeVisible();
+  await page.keyboard.press('Space'); // Opens Status, not an exploration burst.
+  await expect(page.locator('#game-menu .menu-screen[data-screen="builtin:status"]')).toBeVisible();
+  await page.keyboard.press('Escape'); await expect(page.locator('#game-menu .menu-row[data-id="status"]')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#game-menu')).toBeHidden();
   await page.waitForTimeout(200);await page.keyboard.up('ArrowRight');

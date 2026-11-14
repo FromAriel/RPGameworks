@@ -140,6 +140,17 @@ There are no special formulas: everything above asks "which allies stand between
 - **Formation changes** are one `setFormation` session action holding every active member's cell, checked whole (inside the grid, no overlaps, nobody missing), so they commit with other actions or not at all.
 - **Play time is not a transaction:** the session counts it from the frame deltas the game gives it (at most a quarter second per frame), so it never changes the session revision.
 
+**Execution answers (Ariel, November 13, before M5.4d-2):**
+- **Formation:** choose a member, then a cell; an occupied cell swaps the two. Changes are a draft: Done saves the whole layout as one transaction, and leaving with changes asks before discarding them.
+- **Preview:** the grid shows the battle's shield pips for the current view, and Q/E flips between an ordinary fight and a back attack. The detail window says both views in words for the highlighted member.
+- **Status:** one member per page (portrait, HP, Attack, Defense, Speed, reach in words, cell and both views), stepped with Q/E.
+- **Hub cards:** all four members with full HP bars, true while every battle starts at full HP (until M5.6).
+
+**Execution notes (M5.4d-2):**
+- **Grid block** (`createGrid`): nine cell buttons with the front column on the left, facing the enemies as in battle. Arrows move between neighbouring cells and stop at the edges; a tap on a member starts moving it.
+- **Unsaved changes:** Escape, Cancel and the Menu button all go through the screen first, so none of them drops changes without asking. The question's window belongs to the screen from the start (hidden), so the skin paints it when it opens.
+- **Party screens need a roster:** Status and Formation are registered only for a game with `party.json`; otherwise their menu entries stay greyed.
+
 **M5.4e — Back attack and pincer on the screen.**
 - **Back attack:** the party turns to face enemies arriving from the left.
 - **Pincer:** enemy groups stand on both sides, and each party sprite faces the flank it last fought.

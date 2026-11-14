@@ -49,7 +49,9 @@ import type { PadAction } from '../platform/gamepad-model';
 import type { ItemDetail, ItemsMemory } from './menu/items-screen';
 import { ALL_ITEMS, categoryOf, itemCategories } from '../domain/item-order';
 import type { PartyMember } from './menu/blocks';
-import { spritePortrait } from './menu/portrait';
+import { spriteImage, spritePortrait } from './menu/portrait';
+import { FORMATION_SCREEN, formationScreen } from './menu/formation-screen';
+import { STATUS_SCREEN, statusScreen } from './menu/status-screen';
 import type { Entry as MenuEntry, MenuDefinition } from '../content/generated/menu';
 import type { WindowskinHandle } from './ui/windowskin';
 import type { Condition } from '../domain/session';
@@ -181,10 +183,25 @@ export function createFoundation(elements: FoundationElements, onError: (message
       });
     }
     /** Party cards: the hero only, with no lasting stats until the roster (M5.4d), and a portrait cut from its sprite. */
+    private atlasFrame(name: string): Phaser.Textures.Frame | null {
+      return this.textures.exists(ATLAS) && this.textures.get(ATLAS).has(name) ? this.textures.getFrame(ATLAS, name) : null;
+    }
+    /** A member's placeholder portrait: from its facing-down frame when there is one, otherwise its battle frame. */
+    private portraitOf(id: string, battleFrame?: string): HTMLElement | null {
+      const frame = this.atlasFrame(`${id}-down`) ?? (battleFrame ? this.atlasFrame(battleFrame) : null);
+      return frame ? spritePortrait(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }) : null;
+    }
+    /** A member's whole battle frame, facing the enemies as in battle, for the formation grid. */
+    private spriteOf(battleFrame: string): HTMLElement | null {
+      const frame = this.atlasFrame(battleFrame);
+      return frame ? spriteImage(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }, 40, 40) : null;
+    }
+    private member(id: string) { return elements.session.current.roster?.members.find(m => m.id === id) ?? null; }
+    /** The hub's cards: the active party (M5.4d), with full HP because every battle starts at full HP until M5.6. */
     private partyCards(): PartyMember[] {
-      const frame = this.textures.exists(ATLAS) ? this.textures.getFrame(ATLAS, 'hero-down') : null;
-      const portrait = frame ? spritePortrait(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }) : null;
-      return [{ id: 'hero', name: 'Hero', portrait }];
+      const session = elements.session.current, party = session.party();
+      if (!session.roster || !party) return [{ id: 'hero', name: 'Hero', portrait: this.portraitOf('hero') }];
+      return party.active.map(id => { const m = this.member(id)!; return { id, name: m.name, portrait: this.portraitOf(id, m.frame), hp: m.hp, maxHp: m.hp }; });
     }
     /** What the party carries, for the Items screen: names, descriptions, counts and categories from the catalog. */
     private carriedItems(categories: ReturnType<typeof itemCategories>): ItemDetail[] {
@@ -268,6 +285,17 @@ export function createFoundation(elements: FoundationElements, onError: (message
           checkpointReason: checkpoint => this.checkpointReason(checkpoint), ownerId: 'game-menu',
         }));
         registry.register(CATALOG_SCREEN, (context, params) => catalogScreen(context, elements.catalogs, params as CatalogParams | undefined));
+        // The party screens (decision 0014 M5.4d-2) exist only in a game with a party roster.
+        const roster = elements.session.current.roster;
+        if (roster) {
+          const members = roster.members.map(m => ({ id: m.id, name: m.name, hp: m.hp, attack: m.attack, defense: m.defense, speed: m.speed, reach: m.reach ?? 'melee' }));
+          const party = () => elements.session.current.party()!;
+          registry.register(STATUS_SCREEN, context => statusScreen(context, { members, party, portrait: id => this.portraitOf(id, this.member(id)?.frame) }));
+          registry.register(FORMATION_SCREEN, context => formationScreen(context, {
+            members, party, picture: id => this.spriteOf(this.member(id)?.frame ?? ''),
+            commit: cells => elements.session.transact({ actions: [{ type: 'setFormation', cells }] }).kind === 'committed',
+          }));
+        }
         registerGameScreens(registry);
         const layer = createMenuLayer(document.body, 'Game menu');
         layer.element.id = 'game-menu';
@@ -736,7 +764,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
         menu: current?.menuState() ?? null,
-        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,windows:current.battleView?.windowSource??'fallback',speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),timeline:state.timeline.map(turn=>turn.actor),art:current.battleView?.artState()??{}};})() : null,
+        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,windows:current.battleView?.windowSource??'fallback',speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),cells:Object.fromEntries(state.combatants.map(c=>[c.id,[c.lane+1,c.depth+1] as [number,number]])),timeline:state.timeline.map(turn=>turn.actor),art:current.battleView?.artState()??{}};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,

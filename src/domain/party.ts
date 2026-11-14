@@ -1,6 +1,6 @@
 import type { EncounterCatalog } from '../content/generated/encounters';
 import type { PartyRoster } from '../content/generated/party';
-import { GRID } from './battle-grid.mjs';
+import { GRID, alliesAhead } from './battle-grid.mjs';
 import type { Encounter } from './battle';
 
 /**
@@ -80,4 +80,33 @@ export function battleEncounter(encounter: AuthoredEncounter, roster: PartyRoste
     return { ...guest, cell: { lane: cell.lane, depth: cell.depth } };
   });
   return { ...rest, party: [...members, ...joined] };
+}
+
+/** Lane and depth names for help text and screen readers. */
+export const LANE_NAMES = Object.freeze(['top', 'middle', 'bottom']);
+export const DEPTH_NAMES = Object.freeze(['front', 'middle', 'back']);
+export const cellName = (cell: GridCell): string => `${LANE_NAMES[cell.lane - 1]} lane, ${DEPTH_NAMES[cell.depth - 1]}`;
+
+/**
+ * How many party members stand between `id` and an attacker coming from the front (an ordinary fight) or from the rear
+ * (a back attack), with everyone standing: the same rule as battle (`alliesAhead`). 0 means front-facing.
+ */
+export function shieldsAt(party: PartyState, id: string, from: 'front' | 'rear'): number {
+  const at = (cell: GridCell) => ({ lane: cell.lane - 1, depth: cell.depth - 1, lanes: 1, depths: 1 });
+  const others = party.active.filter(other => other !== id).map(other => at(party.cells[other]!));
+  return alliesAhead(at(party.cells[id]!), others, from);
+}
+/** Shield count in words, with the battle's damage reduction. */
+export function shieldWords(shields: number): string {
+  return shields === 0 ? 'front-facing' : shields === 1 ? 'shielded once (20% less damage)' : 'shielded twice (35% less damage)';
+}
+
+/** The party with `id` moved to `to`; a member already there takes `id`'s old cell. */
+export function moveMember(party: PartyState, id: string, to: GridCell): PartyState {
+  const from = party.cells[id];
+  if (!from) throw new Error(`${id} is not in the party`);
+  const other = party.active.find(m => m !== id && party.cells[m]!.lane === to.lane && party.cells[m]!.depth === to.depth);
+  const cells: Record<string, GridCell> = { ...party.cells, [id]: { lane: to.lane, depth: to.depth } };
+  if (other) cells[other] = { lane: from.lane, depth: from.depth };
+  return { active: [...party.active], cells };
 }

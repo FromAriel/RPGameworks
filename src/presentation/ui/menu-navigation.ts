@@ -63,6 +63,14 @@ export class MenuNavigation {
     const nodes = this.candidates(); if (!nodes.length) return;
     const focused = document.activeElement;
     if ((direction === 'left' || direction === 'right') && focused instanceof HTMLElement && this.adjust(focused,direction)) return;
+    // A grid cell (decision 0014 M5.4d formation): arrows move to the neighbouring cell and stop at the edges.
+    if (focused instanceof HTMLElement && focused.matches('[data-grid-cell]')) {
+      const lane = Number(focused.dataset.lane) + (direction === 'up' ? -1 : direction === 'down' ? 1 : 0);
+      const depth = Number(focused.dataset.depth) + (direction === 'left' ? -1 : direction === 'right' ? 1 : 0);
+      const next = focused.parentElement?.querySelector<HTMLElement>(`[data-grid-cell][data-lane="${lane}"][data-depth="${depth}"]`);
+      if (next) this.focus(next);
+      return;
+    }
     const index = nodes.indexOf(focused as HTMLElement);
     const next = index < 0 ? 0 : Math.max(0, Math.min(nodes.length-1,index+((direction === 'up' || direction === 'left') ? -1 : 1)));
     this.focus(nodes[next]!);

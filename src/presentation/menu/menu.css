@@ -106,3 +106,22 @@ button.menu-card:focus::before { content: "▶"; position: absolute; left: 0; to
   .menu-window { background-color: Canvas; outline: 1px solid CanvasText; }
   .menu-row:focus::before, .menu-tab[aria-selected="true"]::before, .menu-sort-button[aria-pressed="true"]::before, button.menu-card:focus::before { color: Highlight; }
 }
+
+/* The party grid (decision 0014 M5.4d-2): front column on the left, facing the enemies as in battle. */
+.menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 18px repeat(3, 46px); column-gap: 4px; row-gap: 2px; }
+.menu-grid-heading { text-align: center; color: var(--ui-text-muted); grid-row: 1; }
+.menu-grid-cell {
+  display: grid; grid-template-columns: 40px 1fr; grid-template-rows: 18px 18px; column-gap: 4px; align-content: center; position: relative;
+  padding: 0 0 0 12px; border: 0; background: var(--ui-surface-raised); color: inherit; font: inherit; line-height: 18px; text-align: left; cursor: pointer; min-width: 0;
+}
+.menu-grid-cell:focus { outline: none; }
+.menu-grid-cell:focus::before { content: "▶"; position: absolute; left: 0; top: 14px; color: var(--ui-text-title); }
+.menu-grid-cell[data-marked] { box-shadow: inset 0 0 0 1px var(--ui-text-title); }
+.menu-grid-picture { grid-row: 1 / 3; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.menu-grid-picture canvas { image-rendering: pixelated; display: block; max-width: 40px; max-height: 40px; }
+.menu-grid-name { grid-column: 2; overflow: hidden; white-space: nowrap; }
+.menu-grid-pips { grid-column: 2; color: var(--ui-text-title); letter-spacing: 2px; }
+/* Four lines (name, cell, both views) fit the 110 px detail window only without gaps. */
+.menu-formation-detail .menu-detail h3, .menu-formation-detail .menu-detail p { margin: 0; }
+.menu-status-page .menu-detail p { margin: 0 0 4px; }
+.menu-status-page .menu-detail .menu-portrait { width: 40px; height: 40px; image-rendering: pixelated; display: block; margin-bottom: 6px; }

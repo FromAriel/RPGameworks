@@ -33,6 +33,12 @@
     ]},
     {"id":"demo:object.formation-sigil","frame":"sigil-lit","x":2,"y":1,"solid":true,"states":[
       {"id":"ready","frame":"sigil-lit","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.formation-drill"}}
+    ]},
+    {"id":"demo:object.ambush-sigil","frame":"sigil-lit","x":6,"y":1,"solid":true,"states":[
+      {"id":"ready","frame":"sigil-lit","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.ambush-drill"}}
+    ]},
+    {"id":"demo:object.pincer-sigil","frame":"sigil","x":6,"y":4,"solid":true,"states":[
+      {"id":"ready","frame":"sigil","visible":true,"fallback":true,"interaction":{"encounterId":"demo:encounter.pincer-drill"}}
     ]}
   ],
   "exits": [

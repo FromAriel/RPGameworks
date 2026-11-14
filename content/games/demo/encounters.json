@@ -17,5 +17,26 @@
       {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "cell": {"lane": 1, "depth": 1}, "hp": 24, "attack": 6, "defense": 2, "speed": 8},
       {"id": "bat", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "cell": {"lane": 1, "depth": 2}, "hp": 12, "attack": 4, "defense": 0, "speed": 14}
     ]
+  }, {
+    "id": "demo:encounter.ambush-drill",
+    "name": "Ambush Drill",
+    "seed": 3141,
+    "opening": "back-attack",
+    "enemies": [
+      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
+      {"id": "bat-a", "name": "Bat A", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14},
+      {"id": "bat-b", "name": "Bat B", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
+    ]
+  }, {
+    "id": "demo:encounter.pincer-drill",
+    "name": "Pincer Drill",
+    "seed": 5926,
+    "opening": "pincer",
+    "enemies": [
+      {"id": "golem-a", "name": "Clay Golem A", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8, "flank": "front"},
+      {"id": "bat-a", "name": "Bat A", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14, "flank": "front"},
+      {"id": "bat-b", "name": "Bat B", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14, "flank": "rear"},
+      {"id": "golem-b", "name": "Clay Golem B", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8, "flank": "rear"}
+    ]
   }]
 }

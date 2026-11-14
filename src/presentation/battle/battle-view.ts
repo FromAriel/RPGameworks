@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import type { BattleEvent, BattleSnapshot, Cell, CombatantSnapshot } from '../../domain/battle';
+import type { BattleEvent, BattleSnapshot, Cell, CombatantSnapshot, Opening } from '../../domain/battle';
 import type { MenuEntry } from '../../domain/battle-menu';
-import { STAGE_GRID, battlerPosition, hpBefore, stepDuration } from './playback';
+import { STAGE_GRID, battlerPosition, gridSpacing, hpBefore, stepDuration } from './playback';
 import type { StageFloor } from './playback';
 import type { PlaybackSpeed } from './playback';
 import { BattleWindows, PANEL_STYLE } from './battle-windows';
@@ -80,6 +80,10 @@ export class BattleView {
   private readonly timers = new Set<Phaser.Time.TimerEvent>();
   private readonly battlers = new Map<string, Battler>();
   private readonly hp = new Map<string, number>();
+  /** How the fight opened (decision 0014 M5.4e): it decides where each side stands. */
+  private readonly opening: Opening;
+  /** Pincer only: the flank each party member last fought, which it faces (it starts toward the front flank). */
+  private readonly facing = new Map<string, 'front' | 'rear'>();
   private readonly timeline: Phaser.GameObjects.Image[] = [];
   private readonly timelineMarker: Phaser.GameObjects.Rectangle;
   private readonly windows: BattleWindows;
@@ -100,6 +104,7 @@ export class BattleView {
 
   constructor(private readonly scene: Phaser.Scene, initial: BattleSnapshot, private readonly options: BattleViewOptions) {
     const { width, height } = scene.scale;
+    this.opening = initial.opening;
     this.font = addPixelFont(scene);
     // The windows come first: the skin decides the help window's height, and the timeline sits just below it.
     this.windows = new BattleWindows(scene, (x, y, text, color) => this.label(x, y, text, color), DEPTH.windows, options.skin ?? null);
@@ -115,8 +120,10 @@ export class BattleView {
     for (let index = 0; index < TIMELINE_ICONS; index += 1) {
       this.timeline.push(this.own(scene.add.image(56 + index * 30, TIMELINE_Y, options.atlas, 'spark').setDepth(DEPTH.ui).setVisible(false)));
     }
+    // A back attack or a pincer is named at the right end of the timeline strip for the whole fight.
+    if (this.opening !== 'normal') this.own(this.label(width - 8, TIMELINE_Y - 8, this.opening === 'pincer' ? 'Pincer' : 'Back attack', 0xe6c27a).setOrigin(1, 0).setDepth(DEPTH.ui));
     for (const combatant of initial.combatants) {
-      const home = battlerPosition(combatant.side, combatant, this.floor);
+      const home = battlerPosition(combatant.side, combatant, this.floor, this.opening);
       const creature = this.creatureOf(combatant);
       const sprite = this.own(creature
         ? scene.add.image(home.x, home.y, options.creatures!.texture, creature.still).setFlipX(creature.faces === 'left')
@@ -129,6 +136,7 @@ export class BattleView {
       }
       const shields = this.own(scene.add.graphics().setDepth(DEPTH.ui));
       this.battlers.set(combatant.id, { combatant, sprite, bar, barWidth, home, shields, shieldCount: 0, creature, flashing: false });
+      this.face(this.battlers.get(combatant.id)!);
     }
     // Creatures breathe on their own idle loops; reduced motion keeps each one still (decision 0015 C3).
     if (!options.reducedMotion && [...this.battlers.values()].some(b => b.creature)) {
@@ -159,11 +167,13 @@ export class BattleView {
       const battler = this.battlers.get(combatant.id);
       if (!battler) continue;
       battler.combatant = combatant;
-      battler.home = battlerPosition(combatant.side, combatant, this.floor);
+      battler.home = battlerPosition(combatant.side, combatant, this.floor, this.opening);
       battler.sprite.setPosition(battler.home.x, battler.home.y).setDepth(DEPTH.battler + battler.home.y / 10000).clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
       battler.sprite.setAlpha(combatant.hp > 0 ? 1 : 0.25);
       this.drawHp(combatant.id);
     }
+    for (const event of snapshot.events) this.noteFacing(event);
+    for (const battler of this.battlers.values()) this.face(battler);
     this.drawShields(snapshot);
     if (snapshot.phase === 'escaped') for (const battler of this.battlers.values()) if (battler.combatant.side === 'party') battler.sprite.setAlpha(0);
     snapshot.timeline.slice(0, TIMELINE_ICONS).forEach((turn, index) => {
@@ -194,19 +204,39 @@ export class BattleView {
   }
 
   /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
-  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number }> {
-    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y) }]));
+  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right' }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left' }]));
+  }
+
+  /** Whether a battler should face right: enemies face the party, and in a pincer a member faces the flank it last fought. */
+  private facesRight(b: Battler): boolean {
+    const c = b.combatant;
+    if (c.side === 'party') return this.opening === 'pincer' && this.facing.get(c.id) === 'rear';
+    return !(this.opening === 'pincer' && c.flank === 'rear'); // The rear flank stands to the party's right and faces left.
+  }
+  /** Turn the sprite: party frames and creature stills are drawn facing left (a creature's own facing is baked in). */
+  private face(b: Battler): void {
+    const right = this.facesRight(b);
+    b.sprite.setFlipX(b.creature ? right === (b.creature.faces === 'left') : right);
+  }
+  /** Pincer: remember which flank each party member last fought (hit, or was hit by). */
+  private noteFacing(event: BattleEvent): void {
+    if (this.opening !== 'pincer' || event.kind !== 'attack') return;
+    const actor = this.battlers.get(event.actor)?.combatant, target = this.battlers.get(event.target)?.combatant;
+    if (!actor || !target) return;
+    if (actor.side === 'party' && target.flank) this.facing.set(actor.id, target.flank);
+    if (target.side === 'party' && actor.flank) this.facing.set(target.id, actor.flank);
   }
 
   /** Where a one-cell party fighter would stand in this cell. */
   private cellCentre(cell: Cell): { x: number; y: number } {
-    const p = battlerPosition('party', { ...cell, lanes: 1, depths: 1 }, this.floor);
+    const p = battlerPosition('party', { ...cell, lanes: 1, depths: 1 }, this.floor, this.opening);
     return { x: p.x, y: p.y };
   }
 
   /** The tap area of a party grid cell while choosing where to Move: one lane band by one depth column. */
   cellRect(cell: Cell): Rect {
-    const at = this.cellCentre(cell), w = STAGE_GRID.depthStep, h = STAGE_GRID.laneStep;
+    const at = this.cellCentre(cell), w = gridSpacing(this.opening).depthStep, h = STAGE_GRID.laneStep;
     return { x: Math.round(at.x - w / 2), y: Math.round(at.y - h / 2 + 4), w, h };
   }
 
@@ -228,7 +258,7 @@ export class BattleView {
     if (!battler) return null;
     // One lane band tall and one depth column wide per cell, so neighbouring battlers never share a tap area even
     // though their sprites overlap a little (decision 0014 M5.4b).
-    const c = battler.combatant, w = STAGE_GRID.depthStep * c.depths, h = STAGE_GRID.laneStep * c.lanes;
+    const c = battler.combatant, w = gridSpacing(this.opening, c.side).depthStep * c.depths, h = STAGE_GRID.laneStep * c.lanes;
     return { x: Math.round(battler.home.x - w / 2), y: Math.round(battler.home.y - h / 2 + 4), w, h };
   }
 
@@ -350,6 +380,7 @@ export class BattleView {
       return;
     }
     const lead = Math.round(duration * 0.3);
+    if (this.opening === 'pincer') { this.noteFacing(event); this.face(actor); this.face(target); }
     if (!this.options.reducedMotion) {
       const direction = target.home.x > actor.home.x ? 1 : -1;
       this.tween({ targets: actor.sprite, x: actor.home.x + direction * 18, duration: lead, yoyo: true, ease: 'Quad.easeOut' });
@@ -427,7 +458,8 @@ export class BattleView {
       battler.shieldCount = 0;
       if (!c || c.hp <= 0 || snapshot.phase === 'escaped') continue;
       const allies = living.filter(o => o.id !== c.id && o.side === c.side && o.flank === c.flank);
-      const from = c.side === 'party' && snapshot.opening === 'back-attack' ? 'rear' : 'front';
+      // The party measures from where the enemy attacks: behind in a back attack, the faced flank in a pincer.
+      const from = c.side !== 'party' ? 'front' : snapshot.opening === 'back-attack' ? 'rear' : snapshot.opening === 'pincer' ? this.facing.get(c.id) ?? 'front' : 'front';
       const count = Math.min(2, alliesAhead(c, allies, from));
       battler.shieldCount = count;
       const s = battler.home.scale, x = battler.home.x - 16 * s, y = battler.home.y - 20 * s;

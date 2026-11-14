@@ -4,6 +4,42 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.4e back attack and pincer on the battle screen — November 14, 2026, local
+
+[Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4e. Ariel's answers: in a back attack the party turns around; in a pincer the party stands in the middle; each member faces the flank it last fought; the drills reuse the demo creatures. After seeing the first pincer, Ariel asked for more room around the party (for animated battlers later), so the party keeps its ordinary column spacing.
+
+- **Stage layout** (`battlerPosition` in `src/presentation/battle/playback.ts`, by opening):
+  - **Ordinary:** unchanged (a unit test compares every cell).
+  - **Back attack:** the enemies stay on the left and the party's grid is mirrored, so its back column stands nearest them. The Move cells follow.
+  - **Pincer:** the front flank on the left, the party centred with its normal 60-pixel columns, and the rear flank on the right with 44-pixel columns, 80 pixels clear of the party on each side. Every cell of all three grids, and a big enemy on either flank, stays on the stage.
+- **Facing and shields:**
+  - **Enemies:** rear-flank enemies face left, toward the party.
+  - **Party in a pincer:** each member turns to the flank it last fought, during playback as well as after a skip.
+  - **Shield pips:** measured from behind in a back attack, and from the faced flank in a pincer.
+- **Label:** "Back attack" or "Pincer" at the right end of the turn strip.
+- **Content:** two sigils in the Supply Room:
+  - **Ambush Drill** (`opening: back-attack`) at (6, 1): a Clay Golem and two Bats;
+  - **Pincer Drill** at (6, 4): Clay Golem A and Bat A on the front flank, Bat B and Clay Golem B on the rear.
+- **Debug state:** the battle snapshot adds `opening` and each battler's facing.
+- **Tests:**
+  - **Unit:** `battle-openings.test.ts` (5):
+    - the ordinary layout unchanged;
+    - the back attack mirrored;
+    - pincer grids in order and on the stage, with the party's spacing and gaps pinned;
+    - both drills' openings from the kernel.
+  - **Browser:** `openings.spec.ts` (2):
+    - **Back attack:** positions, facing and shields, the opening hits shown, then victory on the kernel's turn.
+    - **Pincer:** the flanks on either side and facing correctly, the Archer turned to the rear by the opening, the Hero turning and gaining a shield, then victory on the kernel's turn.
+
+  Local results:
+  - typecheck, `npm run validate`, the production build, `check:test-tags` (205 tagged) and `check:external-art` passed;
+  - unit tests **568/568**;
+  - browser: the full suite passed **205/205** before the spacing change. After it, the five battle specs (20 tests, including both new ones) passed.
+  - Checked by eye from the test screenshots: both openings, and the wider pincer.
+- **Seen, not changed:** in the back attack, the three enemies' lanes are tightly stacked, and a Bat's art overlaps the one below. This is the existing lane spacing with six commands, not new in this packet.
+- **Not yet:** Ariel's play review.
+- **Migration:** none. Next: **M5.4f**, area attacks you can see (Shard Burst and a lane attack for the big enemy).
+
 ## M5.4d-2 the Formation and Status screens — November 13, 2026, local
 
 [Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4d, second half. Ariel's answers: choose a member then a cell, with Done saving a draft; shield pips on the grid with Q/E flipping to a back attack; Status one member per page; full HP bars on the hub cards.

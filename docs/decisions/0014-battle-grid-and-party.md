@@ -157,6 +157,19 @@ There are no special formulas: everything above asks "which allies stand between
 - **Testing:** two more practice sigils in the Supply Room start these fights until M5.7's map contact chooses openings.
 - **Acceptance:** browser tests for both, traces matching the kernel, Ariel's play review.
 
+**Execution answers (Ariel, November 14, before M5.4e):**
+- **Back attack:** the party turns around. The enemies stay on the left, and the party's grid is mirrored, so its back column stands nearest them and its front line at the far right. The Move cells mirror too.
+- **Pincer:** the party in the middle, the front flank on the left and the rear flank on the right; big enemies stay allowed.
+- **Facing:** in a pincer each member faces the flank it last fought (the last enemy it hit or was hit by), starting toward the front flank. Its shield pips are measured from the side it faces.
+- **Enemies:** the demo's own creatures. The Ambush Drill is a Clay Golem and two Bats; the Pincer Drill has a Clay Golem and a Bat on each flank.
+- **Spacing (Ariel, after seeing it):** the party keeps its ordinary 60-pixel columns in a pincer, to leave room for animated battlers. Only the enemy flanks use a narrower 44-pixel step, out toward the stage edges and 80 pixels clear of the party.
+
+**Execution notes (M5.4e):**
+- **Names:** enemies of the same kind get letters (Bat A, Bat B), so the target list stays unambiguous.
+- **Sigils:** the Ambush sigil is at (6, 1) and the Pincer sigil at (6, 4) in the Supply Room.
+- **Opening label:** "Back attack" or "Pincer" is written at the right end of the turn strip for the whole fight.
+- **Debug state:** the battle snapshot reports the opening and which way each battler faces.
+
 **M5.4f — Area attacks you can see.** One enemy gains an area attack ("Shard Burst", radius), and the big enemy gets a lane attack. Playback shows the hit cells and the reduced numbers. The party's own grid spells come with skills in M5.9.
 - **Acceptance:** browser tests and pinned traces; Ariel's play review.
 

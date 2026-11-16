@@ -25,7 +25,7 @@ export interface WindowsView {
   readonly help: string;
   /** Short hint on the right of the help line, such as playback controls. */
   readonly hint: string;
-  readonly enemies: readonly { readonly id: string; readonly name: string; readonly defeated: boolean }[];
+  readonly enemies: readonly { readonly id: string; readonly name: string; readonly defeated: boolean; readonly hp: number; readonly maxHp: number }[];
   readonly party: readonly { readonly id: string; readonly name: string; readonly hp: number; readonly maxHp: number; readonly active: boolean }[];
   /** The combatant being targeted; its name gets the pointer too, as in FF. */
   readonly target: string | null;
@@ -71,6 +71,7 @@ export class BattleWindows {
       const y = L.enemies.y + i.top + index * ROW;
       if (enemy.id === view.target) this.cursor(L.enemies.x + i.left - 4, y, false);
       this.text(L.enemies.x + i.left + CURSOR_W, y, fit(enemy.name, L.enemies.w - i.left - i.right - CURSOR_W), enemy.defeated ? PANEL_STYLE.disabled : PANEL_STYLE.text);
+      if (!enemy.defeated) this.gauge(L.enemies.x + i.left + CURSOR_W, y + 16, L.enemies.w - i.left - i.right - CURSOR_W, enemy.hp, enemy.maxHp);
     });
 
     this.panel(L.party);
@@ -171,6 +172,17 @@ export class BattleWindows {
     g.fillStyle(PANEL_STYLE.border, 1).fillRect(x + 1, y + 1, w - 2, 1).fillRect(x + 1, y + h - 2, w - 2, 1)
       .fillRect(x + 1, y + 1, 1, h - 2).fillRect(x + w - 2, y + 1, 1, h - 2);
     g.fillStyle(PANEL_STYLE.bevel, 1).fillRect(x + 2, y + 2, w - 4, 1).fillRect(x + 2, y + 2, 1, h - 4);
+  }
+
+  /**
+   * An enemy's HP as a 2-pixel underline under its name, in the gap between rows (Ariel, after M5.4): always visible,
+   * never over the art. Red at a quarter or less, as on the stage.
+   */
+  private gauge(x: number, y: number, w: number, hp: number, maxHp: number): void {
+    const g = this.add(this.scene.add.graphics());
+    const filled = maxHp > 0 ? Math.max(1, Math.round(w * Math.max(0, hp) / maxHp)) : 0;
+    g.fillStyle(PANEL_STYLE.outline, 1).fillRect(x, y, w, 2);
+    g.fillStyle(hp * 4 <= maxHp ? 0xd9705f : 0x6fbf73, 1).fillRect(x, y, filled, 2);
   }
 
   /** The ▶ pointer, drawn in whole pixels (7 × 11). An inactive cursor marks the parent entry of an open sub-menu. */

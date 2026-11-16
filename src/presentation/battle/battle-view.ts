@@ -35,8 +35,14 @@ interface Battler {
   /** The latest snapshot of this fighter; its cell changes when it moves (decision 0014 M5.4c). */
   combatant: CombatantSnapshot;
   readonly sprite: Phaser.GameObjects.Image;
-  /** Enemy HP bar; party HP is shown in the party window. */
+  /**
+   * Enemy HP bar on the stage, and its dark track. Shown only while the enemy is targeted and for a moment after it is
+   * hit, so it does not cover the art; the enemy window's underline gauge always shows HP (Ariel, after M5.4).
+   */
   readonly bar: Phaser.GameObjects.Rectangle | null;
+  readonly barBack: Phaser.GameObjects.Rectangle | null;
+  /** True for a moment after a hit. */
+  barHold: boolean;
   home: { x: number; y: number; scale: number };
   readonly barWidth: number;
   /** Shield pips: how many living allies stand ahead of this battler in its lane (decision 0014). */
@@ -128,14 +134,14 @@ export class BattleView {
       const sprite = this.own(creature
         ? scene.add.image(home.x, home.y, options.creatures!.texture, creature.still).setFlipX(creature.faces === 'left')
         : scene.add.image(home.x, home.y, options.atlas, combatant.frame)).setScale(home.scale).setDepth(DEPTH.battler + home.y / 10000);
-      let bar: Phaser.GameObjects.Rectangle | null = null;
+      let bar: Phaser.GameObjects.Rectangle | null = null, barBack: Phaser.GameObjects.Rectangle | null = null;
       const barWidth = Math.round(BAR_WIDTH * home.scale / 2), barY = home.y + 19 * home.scale;
       if (combatant.side === 'enemy') {
-        this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x080c14).setOrigin(0).setDepth(DEPTH.ui));
+        barBack = this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x080c14).setOrigin(0).setDepth(DEPTH.ui));
         bar = this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x6fbf73).setOrigin(0).setDepth(DEPTH.ui));
       }
       const shields = this.own(scene.add.graphics().setDepth(DEPTH.ui));
-      this.battlers.set(combatant.id, { combatant, sprite, bar, barWidth, home, shields, shieldCount: 0, creature, flashing: false });
+      this.battlers.set(combatant.id, { combatant, sprite, bar, barBack, barHold: false, barWidth, home, shields, shieldCount: 0, creature, flashing: false });
       this.face(this.battlers.get(combatant.id)!);
     }
     // Creatures breathe on their own idle loops; reduced motion keeps each one still (decision 0015 C3).
@@ -175,6 +181,7 @@ export class BattleView {
     for (const event of snapshot.events) this.noteFacing(event);
     for (const battler of this.battlers.values()) this.face(battler);
     this.drawShields(snapshot);
+    this.showBars();
     if (snapshot.phase === 'escaped') for (const battler of this.battlers.values()) if (battler.combatant.side === 'party') battler.sprite.setAlpha(0);
     snapshot.timeline.slice(0, TIMELINE_ICONS).forEach((turn, index) => {
       const icon = this.timeline[index]!;
@@ -198,14 +205,15 @@ export class BattleView {
     const cell = menu?.cell ?? null;
     this.drawCellGrid(cell);
     this.targetCursor.setVisible(!!target || !!cell);
+    this.showBars();
     if (target) this.targetCursor.setPosition(target.home.x, target.home.y - 26 * target.home.scale);
     else if (cell) { const at = this.cellCentre(cell); this.targetCursor.setPosition(at.x, at.y - 26); }
     this.refreshWindows();
   }
 
   /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
-  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right' }> {
-    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left' }]));
+  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left', bar: !!b.bar?.visible }]));
   }
 
   /** Whether a battler should face right: enemies face the party, and in a pincer a member faces the flank it last fought. */
@@ -334,7 +342,7 @@ export class BattleView {
       help: playing ? this.banner : menu?.help ?? '',
       hint: playing ? `Speed ${this.currentSpeed}x` : '',
       target: playing ? null : menu?.target ?? null,
-      enemies: all.filter(b => b.combatant.side === 'enemy').map(b => ({ id: b.combatant.id, name: b.combatant.name, defeated: (this.hp.get(b.combatant.id) ?? 0) <= 0 })),
+      enemies: all.filter(b => b.combatant.side === 'enemy').map(b => ({ id: b.combatant.id, name: b.combatant.name, defeated: (this.hp.get(b.combatant.id) ?? 0) <= 0, hp: this.hp.get(b.combatant.id) ?? 0, maxHp: b.combatant.maxHp })),
       party: all.filter(b => b.combatant.side === 'party').map(b => ({ id: b.combatant.id, name: b.combatant.name, hp: this.hp.get(b.combatant.id) ?? 0,
         maxHp: b.combatant.maxHp, active: b.combatant.id === this.active })),
       commands: menu?.commands ?? [],
@@ -389,6 +397,7 @@ export class BattleView {
     this.after(lead, () => {
       this.hp.set(event.target, Math.max(0, (this.hp.get(event.target) ?? 0) - event.damage));
       this.drawHp(event.target);
+      this.holdBar(event.target, duration - lead + 700);
       this.refreshWindows();
       const flashMs = Math.max(40, Math.round(duration * 0.15));
       if (target.creature) {
@@ -467,6 +476,22 @@ export class BattleView {
     return g;
   }
 
+  /** Which stage HP bars show: a living enemy's, while it is targeted or just after a hit. */
+  private showBars(): void {
+    for (const b of this.battlers.values()) {
+      if (!b.bar) continue;
+      const on = (this.hp.get(b.combatant.id) ?? 0) > 0 && (b.barHold || this.menu?.target === b.combatant.id);
+      b.bar.setVisible(on); b.barBack?.setVisible(on);
+    }
+  }
+  /** Show an enemy's stage bar for a moment after it is hit. */
+  private holdBar(id: string, ms: number): void {
+    const b = this.battlers.get(id);
+    if (!b?.bar) return;
+    b.barHold = true; this.showBars();
+    this.after(ms, () => { b.barHold = false; this.showBars(); });
+  }
+
   private drawHp(id: string): void {
     const battler = this.battlers.get(id);
     if (!battler?.bar) return;
@@ -533,6 +558,7 @@ export class BattleView {
   }
 
   private clearMotion(): void {
+    for (const b of this.battlers.values()) b.barHold = false;
     for (const timer of this.timers) timer.remove(false);
     this.timers.clear();
     for (const tween of this.tweens) tween.remove();

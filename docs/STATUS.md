@@ -4,6 +4,24 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## Enemy HP: gauges in the enemy window, stage bars only when they matter — November 15, 2026, local
+
+Ariel, after playing M5.4: the stage HP bars overlapped the creatures, but hiding them behind the art would make them useless, and the enemy window has little room.
+
+- **Enemy window** (`battle-windows.ts`):
+  - **Gauge:** each living enemy's name has a 2-pixel HP gauge as its underline, in the gap between 18-pixel rows. Names keep their full width, and the gauge is red at a quarter HP or less.
+  - **Defeated enemies:** greyed and have no gauge.
+- **Stage bars** (`battle-view.ts`): a living enemy's bar shows only while it is targeted, and during and briefly after a hit; otherwise the art is clear. Skipping playback ends the hold at once.
+- **Debug state:** the battle snapshot reports whether each stage bar is shown (`art[id].bar`).
+- **Tests:**
+  - **Browser:** `enemy-hp.spec.ts` (1):
+    - no bars while choosing a command;
+    - the targeted enemy's bar, following the target;
+    - the bar during a hit, and gone afterwards.
+  - **Local results:** unit tests **576/576**; the full browser suite **207/207** on the first run.
+  - **Checked by eye:** screenshots of the command and target views.
+- **Migration:** none. Next: **M5.5**, weakness, break and momentum.
+
 ## Lane layout: brick stagger, and M5.4 reviewed — November 15, 2026, local
 
 **Ariel played M5.4 and reported that it plays well.** M5.4 (decision 0014) is complete.

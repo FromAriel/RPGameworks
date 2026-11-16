@@ -187,6 +187,7 @@ There are no special formulas: everything above asks "which allies stand between
 - **Floor:** the battle floor is about 143 pixels tall and battlers are 64, so three lanes always overlap vertically. Ariel chose to stagger the lanes sideways.
 - **Brick layout:** two layouts were built and compared in screenshots: a 28-pixel slant per lane, and Ariel's brick pattern, where the middle lane shifts half a column away from the other side and the top and bottom lanes line up. **Ariel chose brick.** It replaces the earlier 14-pixel slant everywhere, including the pincer.
 - **Area strips:** a lit cell is now a strip under the battler's feet, drawn over the battlers (translucent, under the numbers), so a lane in front never hides it.
+- **Enemy HP (Ariel, November 15):** the stage bars overlapped the creatures, and there is little room in the enemy window. Each enemy's HP is now a 2-pixel gauge under its name in the enemy window, in the gap between rows, so it is always visible. A stage bar shows only while that enemy is targeted and for a moment after it is hit.
 
 **M5.4f — Area attacks you can see.** One enemy gains an area attack ("Shard Burst", radius), and the big enemy gets a lane attack. Playback shows the hit cells and the reduced numbers. The party's own grid spells come with skills in M5.9.
 - **Acceptance:** browser tests and pinned traces; Ariel's play review.

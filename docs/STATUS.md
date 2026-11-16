@@ -4,6 +4,30 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## Plan: actions first, then weakness, break and momentum — November 15, 2026
+
+Before M5.5, Ariel and Claude discussed what an enemy can be weak to when there are no damage types or skills yet. Ariel rejected bolting a type onto each member's attack ("let's just build it out the right way now, and we'll reorganize the plan around this design").
+
+- **[Decision 0018](decisions/0018-actions-and-hit-pipeline.md), approved:**
+  - one data-defined **action** model for Attack, Guard, Item, enemy abilities, skills and later combos;
+  - **damage tags** in game-defined groups (weapon, element);
+  - **affinities** at four levels (weak, resist, immune, absorb), with absorb > immune > weak > resist when a hit has several tags, and any weak tag counting as a weakness hit;
+  - an ordered **hit pipeline** of registered steps that report what they did;
+  - **first skills:** Hero Cleave (slash, lane), Lancer Pierce, Archer Volley (pierce, area), Mage Fire Bolt (fire, ranged).
+- **[Decision 0017](decisions/0017-weakness-break-momentum.md), approved:**
+  - **MP** now;
+  - **break defaults:** weak ×1.25 and −1 shield; a break stuns for a turn, pushes back one Attack's delay and gives ×1.5 damage, and the shield returns on the enemy's second turn;
+  - **momentum:** 5 pips, with 1 MP per pip each round;
+  - **discoveries:** saved in version 4 and shown in the Codex.
+- **Roadmap:** M5.5 is now four packets:
+  - **M5.5a** actions and the hit pipeline, with no behaviour change;
+  - **M5.5b** tags, affinities, MP and Special;
+  - **M5.5c** weakness, break and momentum;
+  - **M5.5d** discovery and saves.
+
+  M5.9 shrinks to one status effect and one equipment modifier.
+- Nothing is implemented yet. Next: **M5.5a**.
+
 ## Enemy HP: gauges in the enemy window, stage bars only when they matter — November 15, 2026, local
 
 Ariel, after playing M5.4: the stage HP bars overlapped the creatures, but hiding them behind the art would make them useless, and the enemy window has little room.

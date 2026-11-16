@@ -34,8 +34,13 @@ export function hpBefore(after: BattleSnapshot, events: readonly BattleEvent[]):
 export const STAGE_GRID = Object.freeze({
   /** Centre x of each side's front column; the party stands on the right, the enemies on the left, facing each other. */
   partyFrontX: 432, enemyFrontX: 208,
-  /** Horizontal step per depth (away from the other side), vertical step per lane, and a slight slant per lane. */
-  depthStep: 60, laneStep: 32, laneSlant: 14,
+  /**
+   * Horizontal step per depth (away from the other side) and vertical step per lane. The floor is too short for three
+   * lanes of 64-pixel battlers, so the middle lane is shifted half a column away from the other side, like bricks
+   * (Ariel, after M5.4f; it replaced a 14-pixel slant per lane): the top and bottom lanes line up 62 pixels apart and
+   * barely overlap.
+   */
+  depthStep: 60, laneStep: 32,
   /** Centre y of the top lane, for the default floor (no skin; M5.3c's windows). */
   topY: 112,
 });
@@ -43,15 +48,14 @@ export const STAGE_GRID = Object.freeze({
 /**
  * A pincer (decision 0014 M5.4e, Ariel: party in the middle) fits three grids on the stage: the front flank on the left,
  * the party centred and facing both ways, the rear flank on the right. The party keeps the ordinary column step, so its
- * members have room to move (Ariel, M5.4e: animated battlers will need it); the enemy flanks use a narrower step and a
- * smaller lane slant, out toward the stage edges, 80 pixels clear of the party on each side.
+ * members have room to move (Ariel, M5.4e: animated battlers will need it); the enemy flanks use a narrower step, out
+ * toward the stage edges, at least 80 pixels clear of the party in every lane.
  */
-export const PINCER_GRID = Object.freeze({ partyFrontX: 252, frontFlankX: 172, rearFlankX: 468, enemyStep: 44, laneSlant: 8 });
+export const PINCER_GRID = Object.freeze({ partyFrontX: 252, frontFlankX: 172, rearFlankX: 468, enemyStep: 44 });
 
-/** Horizontal spacing for a side in an opening: the column step and the slant per lane. */
-export function gridSpacing(opening: Opening = 'normal', side: 'party' | 'enemy' = 'party'): { depthStep: number; laneSlant: number } {
-  if (opening !== 'pincer') return { depthStep: STAGE_GRID.depthStep, laneSlant: STAGE_GRID.laneSlant };
-  return { depthStep: side === 'party' ? STAGE_GRID.depthStep : PINCER_GRID.enemyStep, laneSlant: PINCER_GRID.laneSlant };
+/** Horizontal column step for a side in an opening. */
+export function gridSpacing(opening: Opening = 'normal', side: 'party' | 'enemy' = 'party'): { depthStep: number } {
+  return { depthStep: opening === 'pincer' && side === 'enemy' ? PINCER_GRID.enemyStep : STAGE_GRID.depthStep };
 }
 
 /** The floor band the lanes must fit in: from below the turn timeline down to the top of the bottom windows. */
@@ -71,9 +75,9 @@ export function laneLayout(floor?: StageFloor): { topY: number; laneStep: number
 }
 
 /**
- * Where a battler stands, and its draw scale: the centre of the grid cells it covers. Lanes stack downwards with a
- * slight slant, so the three lanes overlap a little and the stage stays compact. A big fighter is drawn larger: 2× for
- * one cell, 3× for two cells across, 4× for three.
+ * Where a battler stands, and its draw scale: the centre of the grid cells it covers. Lanes stack downwards, the middle
+ * one shifted half a column (brick), so the stage stays compact. A big fighter is drawn larger: 2× for one cell, 3×
+ * for two cells across, 4× for three.
  */
 export interface StagePlacement { readonly lane: number; readonly depth: number; readonly lanes: number; readonly depths: number; readonly flank?: 'front' | 'rear' | null }
 /**
@@ -83,9 +87,13 @@ export interface StagePlacement { readonly lane: number; readonly depth: number;
  * - pincer: front-flank enemies on the left, the party in the middle (front column toward them), rear-flank enemies on the right.
  */
 export function battlerPosition(side: 'party' | 'enemy', p: StagePlacement, floor?: StageFloor, opening: Opening = 'normal'): { x: number; y: number; scale: number } {
-  const g = STAGE_GRID, { depthStep, laneSlant } = gridSpacing(opening, side), lane = p.lane + (p.lanes - 1) / 2;
+  const g = STAGE_GRID, { depthStep } = gridSpacing(opening, side), lane = p.lane + (p.lanes - 1) / 2;
   const depth = p.depth + (p.depths - 1) / 2, lanes = laneLayout(floor);
-  const away = (d: number) => d * depthStep + lane * laneSlant;
+  // The brick shift: half a column for the middle lane, averaged over the lanes a big fighter covers.
+  let brick = 0;
+  for (let l = p.lane; l < p.lane + p.lanes; l++) brick += (l % 2) * depthStep / 2;
+  brick /= p.lanes;
+  const away = (d: number) => d * depthStep + brick;
   const x = opening === 'pincer'
     ? (side === 'party' ? PINCER_GRID.partyFrontX + away(depth) : p.flank === 'rear' ? PINCER_GRID.rearFlankX + away(depth) : PINCER_GRID.frontFlankX - away(depth))
     : side === 'party' ? g.partyFrontX + away(opening === 'back-attack' ? 2 - depth : depth) : g.enemyFrontX - away(depth);

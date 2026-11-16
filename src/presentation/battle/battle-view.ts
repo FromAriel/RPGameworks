@@ -413,15 +413,17 @@ export class BattleView {
   private animateArea(actor: Battler, event: Extract<BattleEvent, { kind: 'area' }>, duration: number): void {
     const lead = Math.round(duration * 0.45);
     // Transient, like the damage numbers: released when it fades, or by clearMotion when playback is skipped or ends.
-    const cells = this.scene.add.graphics().setDepth(DEPTH.floor + 0.002).setScrollFactor(0);
+    // Drawn over the battlers (translucent, under the numbers), so lanes in front never hide a lit cell.
+    const cells = this.scene.add.graphics().setDepth(DEPTH.battler + 0.09).setScrollFactor(0);
     this.transient.add(cells);
     for (let lane = 0; lane < 3; lane++) for (let depth = 0; depth < 3; depth++) {
       const percent = areaPercentAt(event.shape, event.centre, { lane, depth });
       if (!percent) continue;
-      const r = this.cellRect({ lane, depth });
-      // Brighter toward full damage, and the centre outlined, so the falloff reads at a glance.
-      cells.fillStyle(0xe6c27a, 0.3 + 0.6 * percent / 100).fillRect(r.x + 3, r.y + r.h - 14, r.w - 6, 12);
-      if (lane === event.centre.lane && depth === event.centre.depth) cells.lineStyle(2, 0xfff1c4, 1).strokeRect(r.x + 2, r.y + r.h - 15, r.w - 4, 14);
+      // A strip under the battler's feet (2× sprites reach 32 pixels below their centre), brighter toward full damage,
+      // and the centre outlined, so the falloff reads at a glance without covering anyone's body.
+      const at = this.cellCentre({ lane, depth }), w = gridSpacing(this.opening).depthStep - 8, x = Math.round(at.x - w / 2), y = at.y + 26;
+      cells.fillStyle(0xe6c27a, 0.3 + 0.5 * percent / 100).fillRect(x, y, w, 8);
+      if (lane === event.centre.lane && depth === event.centre.depth) cells.lineStyle(2, 0xfff1c4, 1).strokeRect(x - 1, y - 1, w + 2, 10);
     }
     this.tween({ targets: cells, alpha: { from: 1, to: 0 }, delay: lead, duration: duration - lead, onComplete: () => { this.transient.delete(cells); cells.destroy(); } });
     if (!this.options.reducedMotion) this.tween({ targets: actor.sprite, y: actor.home.y - 10, duration: Math.round(lead / 2), yoyo: true, ease: 'Quad.easeOut' });

@@ -4,6 +4,23 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## Lane layout: brick stagger, and M5.4 reviewed — November 15, 2026, local
+
+**Ariel played M5.4 and reported that it plays well.** M5.4 (decision 0014) is complete.
+
+- **Problem:** the battle floor is about 143 pixels tall and battlers are drawn 64 pixels tall, so three lanes must overlap. In the Drill this hid the lower lanes' bodies and the area attack's lit cells (noted in M5.4e and M5.4f).
+- **Two layouts tried and compared in screenshots:** a 28-pixel slant per lane, and Ariel's brick pattern (the middle lane shifted half a column, the top and bottom lanes lined up). **Ariel chose brick.**
+  - **Change:** `battlerPosition` (`src/presentation/battle/playback.ts`) shifts the middle lane by half a column away from the other side. A big fighter is shifted by the average of its lanes. This replaces the old 14-pixel slant, so `laneSlant` is gone.
+  - **Where it applies:** an ordinary fight, the back attack and the pincer. Every cell stays at least 40 pixels inside the stage edges, and in a pincer each lane keeps at least 80 pixels between the party and each flank.
+- **Area strips:** a lit cell is now a strip under the battler's feet, drawn over the battlers (translucent, under the numbers), with the centre outlined.
+- **Tests:**
+  - **Unit:** a new test pins the brick pattern; the pincer gap is checked lane by lane; the big enemy's pinned position moved from 171 to 163.
+  - **Local results:**
+    - unit tests **576/576**; `check:test-tags` (206 tagged) passed;
+    - browser: the full suite ran 203 passed and 3 failed in unrelated specs (interaction, inventory and player shell, two of them 30-second timeouts). All three files passed on rerun (39/39), so **206/206**.
+  - **Checked by eye:** screenshots of the Drill mid–Shard Burst and the pincer in both layouts. The brick pair was sent to Ariel.
+- **Migration:** none. Next: **M5.5**, weakness, break and momentum.
+
 ## M5.4f area attacks you can see — November 14, 2026, local
 
 [Decision 0014](decisions/0014-battle-grid-and-party.md) M5.4f, which completes M5.4's packets. Ariel's answers:

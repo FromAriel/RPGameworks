@@ -182,6 +182,12 @@ There are no special formulas: everything above asks "which allies stand between
 - **Retry** restarts every pattern from its first step, with the same opening and random stream.
 - **Readability:** the lit strips are partly hidden where the three lanes overlap in the Drill. That comes from the stage's vertical lane spacing (noted in M5.4e), which is for a later layout pass.
 
+**Play review and lane layout (Ariel, November 15):**
+- **Review:** Ariel played M5.4 and reported that it plays well.
+- **Floor:** the battle floor is about 143 pixels tall and battlers are 64, so three lanes always overlap vertically. Ariel chose to stagger the lanes sideways.
+- **Brick layout:** two layouts were built and compared in screenshots: a 28-pixel slant per lane, and Ariel's brick pattern, where the middle lane shifts half a column away from the other side and the top and bottom lanes line up. **Ariel chose brick.** It replaces the earlier 14-pixel slant everywhere, including the pincer.
+- **Area strips:** a lit cell is now a strip under the battler's feet, drawn over the battlers (translucent, under the numbers), so a lane in front never hides it.
+
 **M5.4f — Area attacks you can see.** One enemy gains an area attack ("Shard Burst", radius), and the big enemy gets a lane attack. Playback shows the hit cells and the reduced numbers. The party's own grid spells come with skills in M5.9.
 - **Acceptance:** browser tests and pinned traces; Ariel's play review.
 

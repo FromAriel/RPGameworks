@@ -41,7 +41,7 @@ describe('battle playback timing', () => {
     // Front columns face each other; a lane further down sits lower; a big fighter is centred on its cells, drawn larger.
     expect(battlerPosition('party', { lane: 0, depth: 0, lanes: 1, depths: 1 }).x).toBeLessThan(battlerPosition('party', { lane: 0, depth: 1, lanes: 1, depths: 1 }).x);
     expect(battlerPosition('enemy', { lane: 0, depth: 0, lanes: 1, depths: 1 }).x).toBeGreaterThan(battlerPosition('enemy', { lane: 0, depth: 1, lanes: 1, depths: 1 }).x);
-    expect(battlerPosition('enemy', { lane: 0, depth: 0, lanes: 2, depths: 2 })).toEqual({ x: 171, y: 128, scale: 3 });
+    expect(battlerPosition('enemy', { lane: 0, depth: 0, lanes: 2, depths: 2 })).toEqual({ x: 163, y: 128, scale: 3 }); // Brick lanes: a 2-lane fighter shifts a quarter column (after M5.4f).
     // A thick battle skin makes the bottom windows taller: the lanes close up so the bottom lane's HP bar stays clear.
     const floor = { top: 84, bottom: 200 };
     for (const lane of [0, 1, 2]) {

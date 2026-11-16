@@ -19,6 +19,15 @@ describe('the stage for each opening', () => {
     }
   });
 
+  it('lays the lanes out like bricks: the top and bottom lanes line up, the middle one shifted half a column', () => {
+    for (const side of ['party', 'enemy'] as const) for (let depth = 0; depth < 3; depth++) {
+      const [top, middle, bottom] = [0, 1, 2].map(lane => battlerPosition(side, one(lane, depth)));
+      expect(top!.x).toBe(bottom!.x);
+      expect(Math.abs(middle!.x - top!.x)).toBe(30); // Half of the 60-pixel column.
+      expect(Math.sign(middle!.x - top!.x)).toBe(side === 'party' ? 1 : -1); // Away from the other side.
+    }
+  });
+
   it('turns the party around in a back attack: its back column stands nearest the enemies', () => {
     for (let lane = 0; lane < 3; lane++) {
       const xs = [0, 1, 2].map(depth => battlerPosition('party', one(lane, depth), undefined, 'back-attack').x);
@@ -33,12 +42,16 @@ describe('the stage for each opening', () => {
     const front = xs('enemy', 'front'), party = xs('party'), rear = xs('enemy', 'rear');
     expect(Math.max(...front)).toBeLessThan(Math.min(...party));
     expect(Math.max(...party)).toBeLessThan(Math.min(...rear));
-    for (const x of [...front, ...party, ...rear]) { expect(x).toBeGreaterThanOrEqual(64); expect(x).toBeLessThanOrEqual(576); }
+    for (const x of [...front, ...party, ...rear]) { expect(x - 40).toBeGreaterThanOrEqual(0); expect(x + 40).toBeLessThanOrEqual(640); } // As for an ordinary fight.
     // The party keeps its ordinary 60-pixel columns, room to move for animated battlers (Ariel, M5.4e), and stays
     // at least 80 pixels clear of each flank.
     expect(battlerPosition('party', one(0, 1), undefined, 'pincer').x - battlerPosition('party', one(0, 0), undefined, 'pincer').x).toBe(60);
-    expect(Math.min(...party) - Math.max(...front)).toBeGreaterThanOrEqual(80);
-    expect(Math.min(...rear) - Math.max(...party)).toBeGreaterThanOrEqual(80);
+    // Measured lane by lane, since the lanes are staggered sideways.
+    for (let lane = 0; lane < 3; lane++) {
+      const at = (xs: number[]) => xs.slice(lane * 3, lane * 3 + 3);
+      expect(Math.min(...at(party)) - Math.max(...at(front))).toBeGreaterThanOrEqual(80);
+      expect(Math.min(...at(rear)) - Math.max(...at(party))).toBeGreaterThanOrEqual(80);
+    }
     // Each flank's front column is nearest the party.
     expect(battlerPosition('enemy', one(0, 0, 'front'), undefined, 'pincer').x).toBeGreaterThan(battlerPosition('enemy', one(0, 2, 'front'), undefined, 'pincer').x);
     expect(battlerPosition('enemy', one(0, 0, 'rear'), undefined, 'pincer').x).toBeLessThan(battlerPosition('enemy', one(0, 2, 'rear'), undefined, 'pincer').x);

@@ -107,6 +107,16 @@ A hit's damage runs through an **ordered list of registered steps**, each a smal
 
 **M5.9** then becomes **one status effect and one equipment modifier** on this model. More skills are content.
 
+## Execution notes (M5.5a, November 15)
+
+- **Built-in actions:** Attack, Guard and Item are defined in code (`CORE_ACTIONS`, `src/domain/actions.ts`) with the same `BattleAction` shape as catalog actions, because every game has them and the battle menu's commands map onto them.
+- **Game catalog:** `actions.json` (`schemas/actions.schema.json`, `game.json` `actionsFile`) holds a game's own actions: today the demo's Shard Burst and Ogre Sweep.
+- **Catalog effects:** only `damage` is allowed in the catalog for now; heal and guard stay built in until a skill needs them (the smallest vocabulary that serves current content).
+- **Encounters version 3:** enemy `abilities` left the encounter file. A `pattern` now names `"attack"` or a catalog action ID (`"demo:action.shard-burst"`), so one action can serve many enemies. Version 2 encounter files are rejected by the schema; the demo, the test fixture and the tests moved to version 3.
+- **Pipeline** (`src/domain/hit.ts`): steps `base` (the registered formula), `power`, `guard`, `shield` and `falloff`, multiplied and rounded up once. A unit test compares it with the M5.4 maths for every combination of guard, shields and falloff.
+- **Reports:** the pipeline reports each step that changed a hit. Battle events do not carry the reports yet, so every recorded fight stays byte-for-byte the same; they join the events in M5.5b, when weakness and resistance give them something new to show.
+- **Variance:** the kernel still draws one seeded roll per target, in the same order as before, and passes it into the pipeline.
+
 ## 7. Not in this decision
 
 - Status effects (M5.9), equipment (M5.10), combos (M5.8): the model allows them; their rules come in their packets.

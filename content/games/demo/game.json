@@ -31,6 +31,7 @@
   "questsFile": "quests.json",
   "encountersFile": "encounters.json",
   "partyFile": "party.json",
+  "actionsFile": "actions.json",
   "uiThemeFile": "ui-theme.json",
   "menuFile": "menu.json",
   "catalogs": [

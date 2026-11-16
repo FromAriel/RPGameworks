@@ -3,7 +3,7 @@ import { readFileSync, statSync, realpathSync, mkdirSync, mkdtempSync, writeFile
 import { dirname, resolve, relative, sep, join, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, readParty, readMenu, readCatalog, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
+import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, readParty, readActions, readMenu, readCatalog, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
 import { expandCatalog } from './library-credits.mjs';
 import { createAuthoringReport } from './authoring-report.mjs';
 import { readUiTheme, emitUiTheme, checkMapSkins } from './ui-theme.mjs';
@@ -54,7 +54,7 @@ try {
   let questsData={schemaVersion:1,quests:[]};
   if(game.questsFile){const file=realpathSync(join(source,game.questsFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.questsFile}: file escapes the content root`);questsData=readJSON(file);}
   const quests=readQuests(questsData);
-  let encountersData={schemaVersion:2,encounters:[]};
+  let encountersData={schemaVersion:3,encounters:[]};
   if(game.encountersFile){const file=realpathSync(join(source,game.encountersFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.encountersFile}: file escapes the content root`);encountersData=readJSON(file);}
   // Stone Soup creatures (decision 0015): the library, its motion styles and Ariel's assignments, checked together.
   const creatureRoot = join(repo, 'assets/source/creatures');
@@ -67,7 +67,10 @@ try {
   // The party roster (decision 0014 M5.4d): encounters without their own party use it.
   let party=null;
   if(game.partyFile){const file=realpathSync(join(source,game.partyFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.partyFile}: file escapes the content root`);party=readParty(readJSON(file),game.partyFile,frames);}
-  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds,party):encountersData;
+  // The action catalog (decision 0018): enemy patterns name its actions.
+  let actions=null;
+  if(game.actionsFile){const file=realpathSync(join(source,game.actionsFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.actionsFile}: file escapes the content root`);actions=readActions(readJSON(file),game.actionsFile);}
+  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds,party,new Set(actions?.actions.map(a=>a.id)??[])):encountersData;
   // Unlock conditions in the menu and in catalogs may name facts, items, quests and placements from this game.
   const known = { facts: new Set(facts.facts.map(f => f.id)), items: new Set(catalog.items.map(i => i.id)),
     quests: new Set(quests.quests.map(q => q.id)), placements: new Set([...maps.values()].flatMap(m => m.objects.map(o => o.id))) };
@@ -138,6 +141,8 @@ try {
       if(game.questsFile){const text=JSON.stringify(quests)+'\n';questsFile=`quests.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,questsFile),text);}
       let encountersFile;
       if(game.encountersFile){const text=JSON.stringify(encounters)+'\n';encountersFile=`encounters.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,encountersFile),text);}
+      let actionsFile;
+      if(actions){const text=JSON.stringify(actions)+'\n';actionsFile=`actions.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,actionsFile),text);}
       let partyFile;
       if(party){const text=JSON.stringify(party)+'\n';partyFile=`party.${createHash('sha256').update(text).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,partyFile),text);}
       const uiThemeFile = uiTheme ? emitUiTheme(staging, uiTheme) : undefined;
@@ -173,7 +178,7 @@ try {
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
         itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile||party?{questIds:quests.quests.map(quest=>quest.id)}:{}),...(party?{party:{memberIds:party.members.map(m=>m.id),defaults:partyDefaults}}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(partyFile?{partyFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(menuFile?{menuFile}:{}),...(catalogEntries.length?{catalogs:catalogEntries}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(partyFile?{partyFile}:{}),...(actionsFile?{actionsFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(menuFile?{menuFile}:{}),...(catalogEntries.length?{catalogs:catalogEntries}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

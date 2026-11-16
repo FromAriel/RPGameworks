@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "EncounterCatalog",
-  "description": "Version 2: an enemy group on a visible turn timeline (decision 0006), placed on a 3 × 3 grid per side (decision 0014; all grid fields are optional). The party comes from the game's roster (party.json, M5.4d) plus any guests; an encounter may instead author its own fixed party.",
+  "description": "Version 3 (decision 0018: enemy abilities moved to the action catalog, actions.json; version 2 had them inline): an enemy group on a visible turn timeline (decision 0006), placed on a 3 × 3 grid per side (decision 0014; all grid fields are optional). The party comes from the game's roster (party.json, M5.4d) plus any guests; an encounter may instead author its own fixed party.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": {"const": 2},
+    "schemaVersion": {"const": 3},
     "encounters": {"type":"array","minItems":1,"maxItems":64,"items":{
       "type":"object","additionalProperties":false,
       "properties":{
@@ -33,13 +33,7 @@
     "creature":{"type":"string","pattern":"^dcss/monster/[A-Za-z0-9_][A-Za-z0-9_/-]{0,120}$","description":"Enemies only: a Stone Soup monster ID from assets/source/creatures/stone-soup (decision 0015). The battle draws it animated with its assigned motion; frame stays the fallback if the creature art cannot load."},
     "faces":{"enum":["left","right"],"description":"Which way the creature art faces. The battle mirrors it to face the party. Default left."},
     "flank":{"enum":["front","rear"],"description":"Pincer encounters only, and required there: which side of the party this enemy attacks from. Each flank has its own grid."},
-    "abilities":{"type":"array","minItems":1,"maxItems":4,"description":"Enemies only (decision 0014 M5.4f): area attacks this enemy can use, named in its pattern.","items":{"type":"object","additionalProperties":false,"required":["id","name","shape"],"properties":{
-      "id":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,31}$"},
-      "name":{"type":"string","pattern":"^[^\\u0000-\\u001f]{1,24}$"},
-      "shape":{"enum":["radius","lane","column","diagonal-down","diagonal-up"],"description":"radius: the target takes full damage and the rest fall off by steps (80%, 65%, 50%, 34%); lane, column and diagonals hit every party member on that line at full strength."},
-      "reach":{"enum":["melee","reach","ranged"],"description":"Which party members it can be centred on, as for an attack. Default: the enemy's own reach."}
-    }}},
-    "pattern":{"type":"array","minItems":1,"maxItems":8,"items":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,31}$"},"description":"Enemies only (decision 0014 M5.4f): the enemy's actions in order, repeating: 'attack' or an ability ID. Default: always attack."}
+    "pattern":{"type":"array","minItems":1,"maxItems":8,"items":{"type":"string","pattern":"^(attack|[a-z][a-z0-9-]{0,31}:action\\.[a-z][a-z0-9.-]{0,95})$"},"description":"Enemies only (decisions 0014 M5.4f, 0018): the enemy's actions in order, repeating: 'attack' or an action ID from the game's action catalog. Default: always attack."}
   },"required":["id","name","frame","hp","attack","defense","speed"]}},
   "required":["schemaVersion","encounters"]
 }

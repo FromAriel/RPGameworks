@@ -70,7 +70,7 @@ describe('grid rules (pure)', () => {
 
 describe('grid content validation', () => {
   const errors = (enc: Encounter) => {
-    try { readEncounters({ schemaVersion: 2, encounters: [enc] }); return []; } catch (error) {
+    try { readEncounters({ schemaVersion: 3, encounters: [enc] }); return []; } catch (error) {
       return (error as { issues: { path: string; message: string }[] }).issues.map(i => `${i.path}: ${i.message}`);
     }
   };

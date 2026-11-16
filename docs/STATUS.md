@@ -4,6 +4,41 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.5a actions and the hit pipeline — November 15, 2026, local
+
+[Decision 0018](decisions/0018-actions-and-hit-pipeline.md) M5.5a: the durable foundation for weakness, break, skills and combos, with **no change in behaviour**.
+
+- **Actions** (`src/domain/actions.ts`): one `BattleAction` shape for everything that hits or helps.
+  - **Built in:** Attack, Guard and Item.
+  - **Game catalog:** `content/games/demo/actions.json` (`schemas/actions.schema.json`, `game.json` `actionsFile`), validated by `readActions`:
+    - unique IDs;
+    - area actions need a shape, and only they have one;
+    - damaging actions need a registered formula, never an expression.
+  - **In the demo catalog:** Shard Burst and Ogre Sweep.
+- **Encounters version 3:** enemy abilities moved out of the encounter file into the catalog, and patterns name catalog actions (`"demo:action.shard-burst"`). The content build and the battle both refuse a pattern naming an unknown action.
+- **Hit pipeline** (`src/domain/hit.ts`): registered, ordered steps (base formula, power, guard, ally shields, area falloff), rounded up once, each reporting what it did.
+- **Battle rules** (`src/domain/battle.ts`): commands and enemy patterns now resolve through one `perform` (guard, heal, damage on one target or an area), and every hit goes through the pipeline. The kernel still draws the seeded variance per target in the same order.
+- **Runtime:** a battle loads the action catalog with the encounter (`src/platform/action-loader.ts`).
+- **Tests:**
+  - **Unit:** `hit-pipeline.test.ts` (4):
+    - the pipeline equals the M5.4 maths for every combination;
+    - step order and reports;
+    - built-in weights;
+    - catalog defaults and an unknown action refused.
+  - **Updated:**
+    - the area tests use a test action catalog, and the catalog's own errors are checked;
+    - the encounters in tests moved to version 3.
+  - **Unchanged:** every pinned trace and every browser test.
+  - **Local results:**
+    - typecheck, `npm run validate`, the production build, `check:test-tags` (207 tagged) and `check:external-art` passed;
+    - unit tests **580/580**;
+    - full browser suite **207/207** on the first run.
+- **Migration:** the encounter file format moved to version 3 (content only; saves unchanged). Next: **M5.5b**:
+  - damage tags and the four affinity levels;
+  - MP;
+  - weapons and the four skills in Special;
+  - the step reports added to battle events.
+
 ## Plan: actions first, then weakness, break and momentum — November 15, 2026
 
 Before M5.5, Ariel and Claude discussed what an enemy can be weak to when there are no damage types or skills yet. Ariel rejected bolting a type onto each member's attack ("let's just build it out the right way now, and we'll reorganize the plan around this design").

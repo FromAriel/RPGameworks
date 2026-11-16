@@ -56,7 +56,7 @@ describe('creature atlas (decision 0015 C3)', () => {
   it('content rejects creatures on the party, unknown creatures, and a facing without a creature', () => {
     const fighter = (id: string, extra: Record<string, unknown> = {}) => ({ id, name: id, frame: 'sigil', hp: 10, attack: 3, defense: 0, speed: 5, ...extra });
     const errors = (party: unknown[], enemies: unknown[]) => {
-      try { readEncounters({ schemaVersion: 2, encounters: [{ id: 'demo:encounter.c', name: 'c', seed: 1, party, enemies }] }, 'e.json', undefined, new Set([GOLEM])); return []; }
+      try { readEncounters({ schemaVersion: 3, encounters: [{ id: 'demo:encounter.c', name: 'c', seed: 1, party, enemies }] }, 'e.json', undefined, new Set([GOLEM])); return []; }
       catch (error) { return (error as { issues: { path: string; message: string }[] }).issues.map(i => `${i.path}: ${i.message}`); }
     };
     expect(errors([fighter('hero', { creature: GOLEM })], [fighter('x')])).toEqual(['/encounters/0/party/0/creature: Only enemies use Stone Soup creatures for now']);

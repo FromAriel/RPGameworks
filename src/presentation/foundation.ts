@@ -10,6 +10,7 @@ import { MessageSession } from '../domain/interaction';
 import { DialogueSession } from '../domain/dialogue';
 import { BattleSession } from '../domain/battle';
 import { battleEncounter } from '../domain/party';
+import { loadActions } from '../platform/action-loader';
 import { formatPlayTime } from '../domain/save';
 import type { BattleCommand, BattleItemUse, BattleSnapshot } from '../domain/battle';
 import { BattleView } from './battle/battle-view';
@@ -439,14 +440,15 @@ export function createFoundation(elements: FoundationElements, onError: (message
       lifetime.addEventListener('abort',cancel,{once:true});
       this.setMode('battle');this.dialog.show('Preparing battle','Loading the practice encounter…','',null,'Leave');
       try{
-        const [encounter,,skin,creatures]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL),elements.battleSkin(),
+        const [encounter,,skin,creatures,actions]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL),elements.battleSkin(),
           // Decoration only (decision 0015 C3): if the creature art fails, every enemy keeps its frame and the battle goes on.
-          loadCreatureArt(this.textures,elements.base,content.game,request.signal).catch((cause:unknown)=>{if(!request.signal.aborted)console.warn('[RPGameworks] Creature art unavailable; using battler frames:',cause);return null;})]);
+          loadCreatureArt(this.textures,elements.base,content.game,request.signal).catch((cause:unknown)=>{if(!request.signal.aborted)console.warn('[RPGameworks] Creature art unavailable; using battler frames:',cause);return null;}),
+          loadActions(elements.base,content.game,request.signal)]);
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
         const uses=new Map<string,BattleItemUse>();
         for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
         const session=elements.session.current;
-        this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses);this.battleLoad=null;this.battleMenu=new BattleMenu();
+        this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses,actions);this.battleLoad=null;this.battleMenu=new BattleMenu();
         const opening=this.battle.snapshot();
         this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,creatures,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});

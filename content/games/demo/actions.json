@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "actions": [
+    {"id": "demo:action.shard-burst", "name": "Shard Burst", "targeting": "area", "shape": "radius", "reach": "ranged",
+      "power": {"formula": "attack-defense"}, "effects": ["damage"]},
+    {"id": "demo:action.ogre-sweep", "name": "Ogre Sweep", "targeting": "area", "shape": "lane",
+      "power": {"formula": "attack-defense"}, "effects": ["damage"]}
+  ]
+}

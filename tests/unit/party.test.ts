@@ -53,7 +53,7 @@ describe('the party roster', () => {
   it('encounters take the roster, may add a guest, and keep an authored party only without guests', () => {
     const practice = (demo('encounters.json') as { encounters: Record<string, unknown>[] }).encounters[0]!;
     const guest = { id: 'mara', name: 'Mara', frame: 'hero-left', hp: 18, attack: 4, defense: 1, speed: 9 };
-    const read = (encounter: Record<string, unknown>, list: typeof roster | null = roster) => issues(() => readEncounters({ schemaVersion: 2, encounters: [encounter] }, 'e.json', undefined, undefined, list));
+    const read = (encounter: Record<string, unknown>, list: typeof roster | null = roster) => issues(() => readEncounters({ schemaVersion: 3, encounters: [encounter] }, 'e.json', undefined, undefined, list));
     expect(read({ ...practice, guests: [guest] })).toEqual([]);
     expect(read(practice, null)).toEqual(['/encounters/0: This game has no party roster (party.json): give the encounter a party']);
     expect(read({ ...practice, guests: [{ ...guest, id: 'hero' }] })).toEqual(['/encounters/0/guests/0/id: A guest cannot share an ID with a party member']);
@@ -65,7 +65,7 @@ describe('the party roster', () => {
 describe('the party in battle', () => {
   it('plays the Formation Drill exactly as when its party was authored in the encounter', () => {
     // Since M5.4f the Drill's Golem and Ogre also have area attacks; without them, the roster's party plays as before.
-    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ abilities: _a, pattern: _p, ...enemy }) => enemy) };
+    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ pattern: _p, ...enemy }) => enemy) };
     const drill = battleEncounter(plain, roster, defaultParty(roster));
     expect(drill).toEqual(authored[1]);
     const play = (encounter: Encounter) => { const battle = new BattleSession(encounter); const trace = []; for (let i = 0; i < 6; i += 1) { const s = battle.snapshot(); if (s.phase !== 'command') break; const target = s.combatants.find(c => c.side === 'enemy' && c.hp > 0 && battle.validate({ type: 'attack', target: c.id }) === null); trace.push(battle.command(target ? { type: 'attack', target: target.id } : { type: 'guard' }).events); } return trace; };

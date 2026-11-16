@@ -1,25 +1,32 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { readEncounters, readParty } from '../../src/content/validation.mjs';
+import { readActions, readEncounters, readParty } from '../../src/content/validation.mjs';
+import { actionMap } from '../../src/domain/actions';
 import { BattleSession } from '../../src/domain/battle';
 import type { BattleEvent, Encounter } from '../../src/domain/battle';
 import { scaleDamage } from '../../src/domain/battle-grid.mjs';
 import { battleEncounter, defaultParty } from '../../src/domain/party';
 import { areaPercentAt, hpBefore } from '../../src/presentation/battle/playback';
 
-/** Decision 0014 M5.4f: enemy area attacks from a repeating action pattern, resolved on the party grid. */
+/** Decision 0014 M5.4f: enemy area attacks from a repeating action pattern, resolved on the party grid. Since decision
+ * 0018 the attacks are actions in a catalog; 'burst' below stands for the test catalog's area action. */
 type Area = Extract<BattleEvent, { kind: 'area' }>;
 const member = (id: string, lane: number, depth: number, extra: Record<string, unknown> = {}) =>
   ({ id, name: id, frame: 'hero-left', cell: { lane, depth }, hp: 40, attack: 5, defense: 1, speed: 5, ...extra });
+const BURST = 'test:action.burst';
+/** An enemy with a pattern ('burst' is the catalog's area action, in `shape`), and the catalog it needs. */
 const caster = (pattern: string[], shape: string, extra: Record<string, unknown> = {}) => ({
-  // Speed 6 against the party's 5: the caster acts once before the party's first turn, then about once per round.
-  id: 'caster', name: 'Caster', frame: 'sigil', hp: 200, attack: 9, defense: 0, speed: 6,
-  abilities: [{ id: 'burst', name: 'Burst', shape, reach: 'ranged' }], pattern, ...extra,
+  enemy: {
+    // Speed 6 against the party's 5: the caster acts once before the party's first turn, then about once per round.
+    id: 'caster', name: 'Caster', frame: 'sigil', hp: 200, attack: 9, defense: 0, speed: 6,
+    pattern: pattern.map(step => (step === 'burst' ? BURST : step)), ...extra,
+  },
+  actions: { schemaVersion: 1, actions: [{ id: BURST, name: 'Burst', targeting: 'area', shape, reach: 'ranged', power: { formula: 'attack-defense' }, effects: ['damage'] }] },
 });
 /** The party in an L: two in the middle lane, one above the front, one at the back of the bottom lane. */
 const party = [member('a', 2, 1), member('b', 2, 2), member('c', 1, 1), member('d', 3, 3)];
-const fight = (enemy: Record<string, unknown>, members = party) => new BattleSession(readEncounters({ schemaVersion: 2, encounters: [
-  { id: 'test:encounter.area', name: 'Area', seed: 99, party: members, enemies: [enemy] }] }).encounters[0] as Encounter);
+const fight = ({ enemy, actions }: ReturnType<typeof caster>, members = party) => new BattleSession(readEncounters({ schemaVersion: 3, encounters: [
+  { id: 'test:encounter.area', name: 'Area', seed: 99, party: members, enemies: [enemy] }] }).encounters[0] as Encounter, new Map(), actionMap(readActions(actions)));
 const areas = (events: readonly BattleEvent[]) => events.filter((e): e is Area => e.kind === 'area');
 
 describe('enemy area attacks', () => {
@@ -84,23 +91,31 @@ describe('enemy area attacks', () => {
   });
 
   it('content mistakes are reported with their place', () => {
-    const read = (enemy: Record<string, unknown>, members: unknown[] = [member('a', 1, 1)]) => {
-      try { readEncounters({ schemaVersion: 2, encounters: [{ id: 'test:encounter.x', name: 'X', seed: 1, party: members, enemies: [enemy] }] }); return []; }
+    const issues = (run: () => unknown) => {
+      try { run(); return []; }
       catch (error) { return ((error as { issues?: { path: string; message: string }[] }).issues ?? [{ path: '', message: String(error) }]).map(i => `${i.path}: ${i.message}`); }
     };
-    expect(read(caster(['burst', 'nova'], 'radius'))).toEqual(['/encounters/0/enemies/0/pattern/1: Unknown action: use "attack" or one of this enemy\'s abilities']);
-    expect(read({ ...caster(['attack'], 'radius'), abilities: [{ id: 'attack', name: 'Hit', shape: 'lane' }] })).toEqual(['/encounters/0/enemies/0/abilities/0/id: "attack" is the ordinary attack; give the ability another ID']);
-    expect(read({ ...caster(['burst'], 'radius'), abilities: [{ id: 'burst', name: 'A', shape: 'lane' }, { id: 'burst', name: 'B', shape: 'lane' }] })).toEqual(['/encounters/0/enemies/0/abilities/1/id: Duplicate ability ID']);
-    expect(read(caster(['burst'], 'radius'), [member('a', 1, 1, { pattern: ['attack'] })])).toEqual(['/encounters/0/party/0/pattern: Only enemies have abilities and an action pattern for now']);
-    expect(read(caster(['burst'], 'cone'))[0]).toContain('/encounters/0/enemies/0/abilities/0/shape');
+    const read = (enemy: Record<string, unknown>, members: unknown[] = [member('a', 1, 1)]) => issues(() => readEncounters({ schemaVersion: 3, encounters: [{ id: 'test:encounter.x', name: 'X', seed: 1, party: members, enemies: [enemy] }] }, 'e.json', undefined, undefined, undefined, new Set([BURST])));
+    expect(read(caster(['burst', 'test:action.nova'], 'radius').enemy)).toEqual(['/encounters/0/enemies/0/pattern/1: Unknown action: use "attack" or an action from the game\'s action catalog']);
+    expect(read(caster(['burst'], 'radius').enemy, [member('a', 1, 1, { pattern: ['attack'] })])).toEqual(['/encounters/0/party/0/pattern: Only enemies have an action pattern for now']);
+    expect(read({ ...caster(['burst'], 'radius').enemy, abilities: [] })[0]).toContain('/encounters/0/enemies/0'); // Version 2's inline abilities are gone.
+    // The catalog's own checks.
+    const action = (extra: Record<string, unknown>) => ({ schemaVersion: 1, actions: [{ id: BURST, name: 'Burst', targeting: 'area', shape: 'radius', power: { formula: 'attack-defense' }, effects: ['damage'], ...extra }] });
+    expect(issues(() => readActions(action({ shape: undefined })))).toEqual(['/actions/0/shape: An area action needs a shape']);
+    expect(issues(() => readActions(action({ targeting: 'enemy' })))).toEqual(['/actions/0/shape: Only area actions have a shape']);
+    expect(issues(() => readActions(action({ power: undefined })))).toEqual(['/actions/0/power: A damaging action needs power (a registered formula)']);
+    expect(issues(() => readActions({ schemaVersion: 1, actions: [...action({}).actions, ...action({}).actions] }))).toEqual(['/actions/1/id: Duplicate action ID']);
+    expect(issues(() => readActions(action({ shape: 'cone' })))[0]).toContain('/actions/0/shape');
+    expect(issues(() => readActions(action({ power: { formula: 'attack * 2' } })))[0]).toContain('/actions/0/power/formula'); // Formulas are registered, never expressions.
   });
 });
 
 describe('the Formation Drill', () => {
   const roster = readParty(JSON.parse(readFileSync('content/games/demo/party.json', 'utf8')));
   const drill = readEncounters(JSON.parse(readFileSync('content/games/demo/encounters.json', 'utf8'))).encounters.find(e => e.id === 'demo:encounter.formation-drill')!;
+  const actions = actionMap(readActions(JSON.parse(readFileSync('content/games/demo/actions.json', 'utf8'))));
   it('pins the Clay Golem\'s Shard Burst and the Ogre\'s Sweep for the same choices', () => {
-    const battle = new BattleSession(battleEncounter(drill, roster, defaultParty(roster)));
+    const battle = new BattleSession(battleEncounter(drill, roster, defaultParty(roster)), new Map(), actions);
     let state = battle.snapshot();
     const seen: string[] = [];
     for (let i = 0; i < 40 && state.phase === 'command'; i++) {

@@ -1,5 +1,8 @@
 import type { EncounterCatalog } from '../content/generated/encounters';
-import { GRID, alliesAhead, areaHits, canReach, placeGrid, scaleDamage, shieldPercent } from './battle-grid.mjs';
+import { GRID, alliesAhead, areaHits, canReach, placeGrid } from './battle-grid.mjs';
+import { CORE_ACTIONS } from './actions';
+import type { AreaShape, BattleAction } from './actions';
+import { resolveHit } from './hit';
 import type { Direction, Placement, Reach } from './battle-grid.mjs';
 
 /**
@@ -38,10 +41,9 @@ export type BattleEvent =
   | { readonly kind: 'escape'; readonly actor: string }
   /** An enemy's area attack (decision 0014 M5.4f): every party member it hits, resolved together. */
   | { readonly kind: 'area'; readonly actor: string; readonly ability: string; readonly name: string; readonly shape: AreaShape; readonly centre: Cell; readonly hits: readonly AreaHit[] };
-export type AreaShape = 'radius' | 'lane' | 'column' | 'diagonal-down' | 'diagonal-up';
+export type { AreaShape } from './actions';
 /** One member hit by an area attack: its damage after guard, shields and falloff (`percent`). */
 export interface AreaHit { readonly target: string; readonly damage: number; readonly percent: number; readonly shields: number; readonly guarded: boolean; readonly defeated: boolean }
-type Ability = NonNullable<Encounter['enemies'][number]['abilities']>[number];
 export type RejectReason = 'phase' | 'unknown-command' | 'invalid-target' | 'out-of-reach' | 'invalid-cell' | 'not-usable' | 'full-hp';
 export interface BattleItemUse { readonly heal: number }
 export interface CombatantSnapshot {
@@ -75,7 +77,7 @@ export interface BattleSnapshot {
 /** Ticks per action at speed 1 and weight 100. */
 export const TIMELINE_BASE = 1000;
 /** Action weights: lighter actions come around again sooner. */
-export const ACTION_WEIGHT = { attack: 100, guard: 60, item: 80, move: 60 } as const;
+export const ACTION_WEIGHT = { attack: CORE_ACTIONS.attack.weight, guard: CORE_ACTIONS.guard.weight, item: CORE_ACTIONS.item.weight, move: 60 } as const;
 export const TIMELINE_LENGTH = 8;
 
 export function actionDelay(speed: number, weight: number): number {
@@ -112,9 +114,16 @@ export class BattleSession {
   private events: BattleEvent[] = [];
   private readonly opening: Opening;
   /** Enemies with an action pattern: their abilities and how many actions they have taken (decision 0014 M5.4f). */
-  private plans = new Map<string, { readonly abilities: readonly Ability[]; readonly pattern: readonly string[]; actions: number }>();
+  private plans = new Map<string, { readonly pattern: readonly string[]; actions: number }>();
 
-  constructor(readonly encounter: Encounter, private readonly items: ReadonlyMap<string, BattleItemUse> = new Map()) {
+  /**
+   * @param items what each usable item does in battle
+   * @param actions the game's action catalog (decision 0018): every action an enemy pattern names must be in it
+   */
+  constructor(readonly encounter: Encounter, private readonly items: ReadonlyMap<string, BattleItemUse> = new Map(), private readonly actions: ReadonlyMap<string, BattleAction> = new Map()) {
+    for (const enemy of encounter.enemies) for (const step of enemy.pattern ?? []) {
+      if (step !== 'attack' && !actions.has(step)) throw new Error(`Encounter ${encounter.id}: ${enemy.id} uses unknown action ${step}`);
+    }
     this.opening = encounter.opening ?? 'normal';
     this.reset();
   }
@@ -187,15 +196,11 @@ export class BattleSession {
       this.turn += 1;
       return this.snapshot();
     }
-    if (command.type === 'attack') this.strike(hero, this.find(command.target)!);
-    else if (command.type === 'guard') { hero.guarding = true; this.events.push({ kind: 'guard', actor: hero.id }); }
+    // Attack, Guard and Item are the engine's own actions (decision 0018); Move stays a command.
+    if (command.type === 'attack') this.perform(hero, CORE_ACTIONS.attack, this.find(command.target)!);
+    else if (command.type === 'guard') this.perform(hero, CORE_ACTIONS.guard, hero);
     else if (command.type === 'move') this.move(hero, command.to);
-    else {
-      const target = this.find(command.target)!;
-      const amount = Math.min(this.items.get(command.itemId)!.heal, target.maxHp - target.hp);
-      target.hp += amount;
-      this.events.push({ kind: 'heal', actor: hero.id, target: target.id, itemId: command.itemId, amount });
-    }
+    else this.perform(hero, CORE_ACTIONS.item, this.find(command.target)!, command.itemId);
     hero.nextTick += actionDelay(hero.speed, command.type === 'attack' ? ACTION_WEIGHT.attack : ACTION_WEIGHT[command.type]);
     this.turn += 1;
     this.settle();
@@ -222,7 +227,7 @@ export class BattleSession {
       ...placements[side][slot]!, reach: combatant.reach ?? 'melee', creature: combatant.creature ?? null, faces: combatant.faces ?? 'left', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
     });
     this.fighters = [...this.encounter.party.map(build('party')), ...this.encounter.enemies.map(build('enemy'))];
-    this.plans = new Map(this.encounter.enemies.flatMap(e => (e.pattern ? [[e.id, { abilities: e.abilities ?? [], pattern: e.pattern, actions: 0 }] as const] : [])));
+    this.plans = new Map(this.encounter.enemies.flatMap(e => (e.pattern ? [[e.id, { pattern: e.pattern, actions: 0 }] as const] : [])));
     this.rng = this.encounter.seed >>> 0;
     this.phase = 'command';
     this.turn = 0;
@@ -235,17 +240,16 @@ export class BattleSession {
   }
 
   /**
-   * One enemy action: the next step of its pattern (or an ordinary attack), aimed as usual. An ability is centred on the
-   * party member the enemy would attack, using the ability's reach.
+   * One enemy action: the next step of its pattern (or an ordinary attack), aimed as usual. An action is centred on the
+   * party member the enemy would attack, using the action's reach.
    */
   private enemyAct(actor: Fighter): void {
     const plan = this.plans.get(actor.id);
     const step = plan ? plan.pattern[plan.actions % plan.pattern.length]! : 'attack';
     if (plan) plan.actions += 1;
-    const ability = step === 'attack' ? undefined : plan!.abilities.find(a => a.id === step);
-    const target = this.enemyTarget(actor, ability?.reach ?? actor.reach);
-    if (target && ability) this.areaStrike(actor, ability, target);
-    else if (target) this.strike(actor, target);
+    const action = step === 'attack' ? CORE_ACTIONS.attack : this.actions.get(step)!;
+    const target = this.enemyTarget(actor, action.reach ?? actor.reach);
+    if (target) this.perform(actor, action, target);
     actor.nextTick += actionDelay(actor.speed, ACTION_WEIGHT.attack);
     this.turn += 1;
     this.settle();
@@ -255,23 +259,45 @@ export class BattleSession {
    * An area attack on the party grid. Each member hit rolls its own variance in party order; guard, shields and falloff
    * multiply in, rounded up once. Everything is worked out before anyone falls, so the hits land together.
    */
-  private areaStrike(actor: Fighter, ability: Ability, centre: Fighter): void {
+  private areaStrike(actor: Fighter, action: BattleAction, centre: Fighter): void {
     const party = this.living('party');
-    const hits = areaHits(ability.shape, centre, party).map(({ index, percent }) => {
+    const hits = areaHits(action.shape!, centre, party).map(({ index, percent }) => {
       const target = party[index]!, shields = this.ahead(target, actor);
-      const damage = scaleDamage(this.damage(actor.attack, target.defense), [target.guarding ? 50 : 100, shieldPercent(shields), percent]);
+      const { damage } = this.hit(actor, target, action, shields, percent);
       return { target, damage, percent, shields, guarded: target.guarding };
     });
     for (const hit of hits) hit.target.hp = Math.max(0, hit.target.hp - hit.damage);
-    this.events.push({ kind: 'area', actor: actor.id, ability: ability.id, name: ability.name, shape: ability.shape, centre: { lane: centre.lane, depth: centre.depth },
+    this.events.push({ kind: 'area', actor: actor.id, ability: action.id, name: action.name, shape: action.shape!, centre: { lane: centre.lane, depth: centre.depth },
       hits: hits.map(h => ({ target: h.target.id, damage: h.damage, percent: h.percent, shields: h.shields, guarded: h.guarded, defeated: h.target.hp === 0 })) });
   }
 
-  private strike(actor: Fighter, target: Fighter): void {
-    const raw = this.damage(actor.attack, target.defense);
+  /**
+   * Resolve an action (decision 0018): guard, heal (an item's amount) or damage, on one target or on an area centred on
+   * one. Every hit goes through the hit pipeline.
+   */
+  private perform(actor: Fighter, action: BattleAction, target: Fighter, itemId?: string): void {
+    if (action.effects.includes('guard')) { actor.guarding = true; this.events.push({ kind: 'guard', actor: actor.id }); }
+    if (action.effects.includes('heal') && itemId) {
+      const amount = Math.min(this.items.get(itemId)!.heal, target.maxHp - target.hp);
+      target.hp += amount;
+      this.events.push({ kind: 'heal', actor: actor.id, target: target.id, itemId, amount });
+    }
+    if (action.effects.includes('damage')) {
+      if (action.targeting === 'area') this.areaStrike(actor, action, target);
+      else this.strike(actor, target, action);
+    }
+  }
+
+  /** One hit through the pipeline: the battle draws the variance from its seeded stream, one roll per target. */
+  private hit(actor: Fighter, target: Fighter, action: BattleAction, shields: number, areaPercent = 100) {
+    const variance = this.roll();
+    return resolveHit({ formula: action.power!.formula, attack: actor.attack, defense: target.defense, variance,
+      ...(action.power!.percent !== undefined ? { powerPercent: action.power!.percent } : {}), guarded: target.guarding, shields, areaPercent });
+  }
+
+  private strike(actor: Fighter, target: Fighter, action: BattleAction): void {
     const shields = this.ahead(target, actor);
-    // Guard halves; shields take 20% or 35% off; rounded up once at the end (decision 0014).
-    const damage = scaleDamage(raw, [target.guarding ? 50 : 100, shieldPercent(shields)]);
+    const { damage } = this.hit(actor, target, action, shields);
     target.hp = Math.max(0, target.hp - damage);
     this.events.push({ kind: 'attack', actor: actor.id, target: target.id, damage, guarded: target.guarding, defeated: target.hp === 0, shields });
   }
@@ -328,10 +354,10 @@ export class BattleSession {
   private living(side: Side): Fighter[] { return this.fighters.filter(fighter => fighter.side === side && fighter.hp > 0); }
   private find(id: string): Fighter | undefined { return this.fighters.find(fighter => fighter.id === id); }
 
-  private damage(attack: number, defense: number): number {
-    // LCG arithmetic is fixed to unsigned 32-bit integers for browser-independent traces.
+  /** The next seeded −1, 0 or +1. LCG arithmetic is fixed to unsigned 32-bit integers for browser-independent traces. */
+  private roll(): number {
     this.rng = (Math.imul(1664525, this.rng) + 1013904223) >>> 0;
-    const variance = this.rng % 3 - 1;
-    return Math.max(1, attack - defense + variance);
+    return this.rng % 3 - 1;
   }
+
 }

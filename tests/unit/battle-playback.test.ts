@@ -9,7 +9,7 @@ const practice = readEncounters(JSON.parse(readFileSync('tests/fixtures/encounte
 
 describe('battle playback timing', () => {
   it('shortens every step with speed and cycles 1×, 2×, 4×', () => {
-    const attack: BattleEvent = { kind: 'attack', actor: 'a', target: 'b', damage: 3, guarded: false, defeated: false, shields: 0 };
+    const attack: BattleEvent = { kind: 'attack', actor: 'a', target: 'b', damage: 3, guarded: false, defeated: false, shields: 0, reports: [] };
     expect(PLAYBACK_SPEEDS.map(speed => stepDuration(attack, speed))).toEqual([560, 280, 140]);
     expect(stepDuration({ kind: 'guard', actor: 'a' }, 4)).toBe(95); // Rounds up to whole milliseconds.
     expect([nextSpeed(1), nextSpeed(2), nextSpeed(4)]).toEqual([2, 4, 1]);

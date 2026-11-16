@@ -4,6 +4,54 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.5b-1 damage tags, affinities, MP and skills (rules) — November 15, 2026, local
+
+[Decision 0018](decisions/0018-actions-and-hit-pipeline.md) M5.5b, first half: the rules and content. The screen (the Special menu, MP shown, affinity feedback) is M5.5b-2.
+
+- **Damage tags:** `tagGroups` in `actions.json` (weapon: slash, pierce, blunt; element: fire), each declared once.
+- **Affinities:** enemies may have `affinities` per tag:
+  - **weak** ×1.25;
+  - **resist** ×0.5;
+  - **immune:** no damage;
+  - **absorb:** heals by the damage, up to the maximum.
+
+  With several tags on one hit, absorb wins, then immune, then weak, then resist (`affinityOf`). The affinity step sits in the hit pipeline after power.
+- **Weapons, MP and skills:** `party.json` members have a weapon (a basic Attack takes its tags), MP, and skills from the catalog:
+  - Hero: Sword, Cleave;
+  - Archer: Bow, Volley;
+  - Lancer: Spear, Pierce;
+  - Mage: Staff, Fire Bolt.
+
+  Every battle starts with full MP.
+- **Battle rules:**
+  - **Command:** a `skill` command, refused when the skill is unknown, MP is short, or the target is out of reach.
+  - **Cost and timing:** MP is spent when the skill resolves, and the skill's weight sets the delay.
+  - **Pierce:** ignores one shielding ally.
+  - **Area skills:** hit the centre's grid only (its flank in a pincer).
+- **Events:** hits carry the pipeline's `reports`, `affinity` when one applied, and the skill's `action` and `name`.
+- **Screen, so far:** absorbed hits rise as green +N, immune hits show "Immune", and the battle text says "(weak)", "(resisted)", "is immune" or "absorbs it and recovers N HP". The Special menu is still empty until M5.5b-2.
+- **Validation:**
+  - unknown or doubly declared tags;
+  - unknown skills;
+  - affinities on the party;
+  - weapons, MP or skills on enemies;
+  - affinity levels other than the four.
+- **Tests:**
+  - **Unit:** `affinity-skills.test.ts` (10):
+    - precedence;
+    - pipeline scaling, including immune 0 and absorb;
+    - weapon tags in battle;
+    - absorb capped and undone by playback;
+    - skill refusals, MP spent, Pierce's shield, Volley's falloff on the enemy grid, and Cleave limited to one pincer flank;
+    - the demo kit;
+    - content errors.
+  - **Updated:** the pipeline's step order, one pinned opening event (now with `reports: []`), and the Drill comparison (members now carry a kit).
+  - **Local results:**
+    - typecheck, `npm run validate`, the production build, `check:test-tags` (207 tagged) and `check:external-art` passed;
+    - unit tests **590/590**;
+    - full browser suite **207/207** on the first run.
+- **Migration:** none (content additions only; saves unchanged). Next: **M5.5b-2**, the Special menu with MP costs, MP in the party window, Status and hub cards, and affinity feedback on the stage.
+
 ## M5.5a actions and the hit pipeline — November 15, 2026, local
 
 [Decision 0018](decisions/0018-actions-and-hit-pipeline.md) M5.5a: the durable foundation for weakness, break, skills and combos, with **no change in behaviour**.

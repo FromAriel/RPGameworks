@@ -148,9 +148,11 @@ export function readFacts(value, file = 'facts.json') {
  * The party roster (decision 0014 M5.4d): unique members with known frames, and a starting party of known, distinct
  * members whose default cells do not overlap.
  * @param {unknown} value @param {string} file @param {readonly string[]} [frames]
+ * @param {{ tags: ReadonlySet<string>, actions: ReadonlySet<string> }} [catalog] The action catalog's tags and action IDs, to
+ *   check weapons and skills (decision 0018); leave it out to skip the check.
  * @returns {import('./generated/party.js').PartyRoster}
  */
-export function readParty(value, file = 'party.json', frames) {
+export function readParty(value, file = 'party.json', frames, catalog) {
   if (!validateParty(value)) schemaFailure(value, file, validateParty.errors);
   const data = /** @type {import('./generated/party.js').PartyRoster} */ (value);
   const known = frames ? new Set(frames) : null;
@@ -162,6 +164,7 @@ export function readParty(value, file = 'party.json', frames) {
     ids.add(member.id);
     if (!member.name.trim()) issues.push({file, id:member.id, path:`${path}/name`, message:'Member names must contain visible text', value:member.name});
     if (known && !known.has(member.frame)) issues.push({file, id:member.id, path:`${path}/frame`, message:'Unknown battler frame', value:member.frame});
+    checkKit(member, path, catalog, (p, message, v) => issues.push({file, id:member.id, path:p, message, value:v}));
   });
   const active = new Set();
   data.active.forEach((id, index) => {
@@ -191,6 +194,12 @@ export function readActions(value, file = 'actions.json') {
   const data = /** @type {import('./generated/actions.js').ActionCatalog} */ (value);
   /** @type {ContentIssue[]} */ const issues = [];
   const ids = new Set();
+  // Damage tags (decision 0018): each declared once, in one group.
+  const tags = new Set();
+  for (const [group, list] of Object.entries(data.tagGroups ?? {})) list.forEach((tag, t) => {
+    if (tags.has(tag)) issues.push({file, id:'tagGroups', path:`/tagGroups/${group}/${t}`, message:'Each damage tag belongs to one group, once', value:tag});
+    tags.add(tag);
+  });
   data.actions.forEach((action, index) => {
     const path = `/actions/${index}`;
     if (ids.has(action.id)) issues.push({file, id:action.id, path:`${path}/id`, message:'Duplicate action ID', value:action.id});
@@ -199,6 +208,7 @@ export function readActions(value, file = 'actions.json') {
     if ((action.targeting === 'area') !== (action.shape !== undefined)) issues.push({file, id:action.id, path:`${path}/shape`, message:action.targeting === 'area' ? 'An area action needs a shape' : 'Only area actions have a shape', value:action.shape ?? null});
     if (action.effects.includes('damage') && !action.power) issues.push({file, id:action.id, path:`${path}/power`, message:'A damaging action needs power (a registered formula)', value:null});
     if (new Set(action.effects).size !== action.effects.length) issues.push({file, id:action.id, path:`${path}/effects`, message:'Each effect is listed once', value:action.effects});
+    (action.tags ?? []).forEach((tag, t) => { if (!tags.has(tag)) issues.push({file, id:action.id, path:`${path}/tags/${t}`, message:'Unknown damage tag (declare it in tagGroups)', value:tag}); });
   });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
@@ -206,11 +216,13 @@ export function readActions(value, file = 'actions.json') {
 
 /**
  * @param {unknown} value @param {string} file @param {readonly string[]} [frames] @param {ReadonlySet<string>} [creatures]
- * @param {ReadonlySet<string>} [actions] The action catalog's IDs, to check patterns; leave it out to skip the check.
+ * @param {ReadonlySet<string>} [actions] The action catalog's IDs, to check patterns and skills; leave it out to skip the check.
+ * @param {ReadonlySet<string>} [tags] The catalog's damage tags, to check weapons and affinities (with `actions`).
  * @param {import('./generated/party.js').PartyRoster | null} [roster] The game's roster; null when the game has none
  *   (every encounter then needs its own party). Leave it out to skip the cross-check.
  */
-export function readEncounters(value, file = 'encounters.json', frames, creatures, roster, actions) {
+export function readEncounters(value, file = 'encounters.json', frames, creatures, roster, actions, tags) {
+  const catalog = actions && tags ? { actions, tags } : undefined;
   if (!validateEncounters(value)) schemaFailure(value, file, validateEncounters.errors);
   const data = /** @type {import('./generated/encounters.js').EncounterCatalog} */ (value);
   const ids = new Set();
@@ -238,6 +250,11 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
       if (side !== 'enemies' && combatant.flank) issues.push({file,id:encounter.id,path:`${path}/flank`,message:'Only enemies have a flank',value:combatant.flank});
       // Action patterns (decisions 0014 M5.4f, 0018): enemies only; each step is 'attack' or an action from the catalog.
       if (side !== 'enemies' && combatant.pattern) issues.push({file,id:encounter.id,path:`${path}/pattern`,message:'Only enemies have an action pattern for now',value:null});
+      const at = (/** @type {string} */ p, /** @type {string} */ message, /** @type {unknown} */ v) => issues.push({file,id:encounter.id,path:p,message,value:v});
+      if (side === 'enemies') for (const field of /** @type {const} */ (['weapon', 'mp', 'skills'])) { if (combatant[field] !== undefined) at(`${path}/${field}`, 'Only the party has weapons, MP and skills for now', null); }
+      else checkKit(combatant, path, catalog, at);
+      if (side !== 'enemies' && combatant.affinities) at(`${path}/affinities`, 'Only enemies have affinities for now', null);
+      for (const tag of Object.keys(combatant.affinities ?? {})) if (catalog && !catalog.tags.has(tag)) at(`${path}/affinities/${tag}`, 'Unknown damage tag (declare it in the action catalog)', tag);
       (combatant.pattern ?? []).forEach((step, p) => {
         if (step !== 'attack' && actions && !actions.has(step)) issues.push({file,id:encounter.id,path:`${path}/pattern/${p}`,message:'Unknown action: use "attack" or an action from the game\'s action catalog',value:step});
       });
@@ -262,6 +279,23 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
   });
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
+}
+
+/**
+ * A party fighter's kit (decision 0018): its weapon's tags and its skills must be in the action catalog.
+ * @param {{ weapon?: { tags: string[] }, skills?: string[] }} who @param {string} path
+ * @param {{ tags: ReadonlySet<string>, actions: ReadonlySet<string> } | undefined} catalog
+ * @param {(path: string, message: string, value: unknown) => void} at
+ */
+function checkKit(who, path, catalog, at) {
+  if (!catalog) return;
+  (who.weapon?.tags ?? []).forEach((tag, t) => { if (!catalog.tags.has(tag)) at(`${path}/weapon/tags/${t}`, 'Unknown damage tag (declare it in the action catalog)', tag); });
+  const seen = new Set();
+  (who.skills ?? []).forEach((skill, s) => {
+    if (!catalog.actions.has(skill)) at(`${path}/skills/${s}`, 'Unknown skill: not in the action catalog', skill);
+    else if (seen.has(skill)) at(`${path}/skills/${s}`, 'A skill is listed once', skill);
+    seen.add(skill);
+  });
 }
 
 /** Screens RPGameworks provides (decision 0016). A game's own screens use another namespace and are registered in code. */

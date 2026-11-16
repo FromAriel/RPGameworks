@@ -117,6 +117,29 @@ A hit's damage runs through an **ordered list of registered steps**, each a smal
 - **Reports:** the pipeline reports each step that changed a hit. Battle events do not carry the reports yet, so every recorded fight stays byte-for-byte the same; they join the events in M5.5b, when weakness and resistance give them something new to show.
 - **Variance:** the kernel still draws one seeded roll per target, in the same order as before, and passes it into the pipeline.
 
+## Execution notes (M5.5b-1, November 15)
+
+- **Sub-packets:** M5.5b is split in two, each tested and committed on its own, as M5.4d was:
+  - **b-1:** the rules and content;
+  - **b-2:** the screen, with the Special menu, MP in the windows, and affinity feedback.
+- **Tags:** `tagGroups` in `actions.json` (demo: weapon slash, pierce, blunt; element fire). Each tag is declared once; weapons, actions and affinities may only use declared tags.
+- **Kit:** party members (and authored parties and guests) may have a `weapon` (name and tags), `mp` and `skills`; enemies may have `affinities`. Validation keeps them on their side for now.
+- **Affinity step:** placed after `power` in the pipeline. An immune hit does 0 damage (not the usual minimum of 1). An absorbed hit heals by the damage it would have done, up to the target's maximum, and the event records what it actually healed.
+- **Skills:** a `skill` command with validation (`unknown-skill`, `not-enough-mp`, reach as for an attack). MP is spent when the skill resolves, and the action's weight sets the timeline delay.
+- **Pierce:** `ignoreShields` counts fewer allies shielding the target. It changes damage only, not who can be reached.
+- **Area skills:** they hit the grid the centre stands on: its side, and its flank in a pincer.
+- **Events:** `attack` events and area hits now carry the pipeline's `reports`, plus `affinity` when one applied. A single-target skill's `attack` event also names its `action`. Recorded fights keep their damage and order; only the extra fields are new.
+- **Demo numbers (starting values):**
+
+| Member | Weapon | MP | Skill |
+| --- | --- | --- | --- |
+| Hero | Sword (slash) | 12 | Cleave: lane, 4 MP |
+| Archer | Bow (pierce) | 14 | Volley: radius, ranged, 80% power, 5 MP |
+| Lancer | Spear (pierce) | 10 | Pierce: 110%, ignores one shield, 3 MP |
+| Mage | Staff (blunt) | 20 | Fire Bolt: ranged, 130%, 4 MP |
+
+- **Demo enemies:** no affinities yet; they come with 0017's content in M5.5c.
+
 ## 7. Not in this decision
 
 - Status effects (M5.9), equipment (M5.10), combos (M5.8): the model allows them; their rules come in their packets.

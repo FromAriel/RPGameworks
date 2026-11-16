@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {"const": 1},
+    "tagGroups": {"type": "object", "maxProperties": 8, "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,31}$"}, "additionalProperties": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"}}, "description": "The game's damage tags, in groups such as weapon (slash, pierce) and element (fire). Weapons, actions and affinities may only use these."},
     "actions": {"type": "array", "minItems": 1, "maxItems": 256, "items": {"$ref": "#/definitions/action"}}
   },
   "required": ["schemaVersion", "actions"],
@@ -20,6 +21,9 @@
       "formula": {"enum": ["attack-defense"], "description": "A registered formula. attack-defense: the user's attack minus the target's defence, plus the seeded -1/0/+1, at least 1."},
       "percent": {"type": "integer", "minimum": 1, "maximum": 500, "description": "Scales the result before rounding. Default 100."}
     }},
-    "effects": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"enum": ["damage"]}, "description": "What it does to each target. More effects (heal, status) join with their packets."}
+    "effects": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"enum": ["damage"]}, "description": "What it does to each target. More effects (heal, status) join with their packets."},
+    "tags": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"}, "description": "The damage tags of its hits. Without tags, a hit is untyped (no affinity applies)."},
+    "cost": {"type": "object", "additionalProperties": false, "required": ["mp"], "properties": {"mp": {"type": "integer", "minimum": 0, "maximum": 999}}, "description": "Spent when the action resolves."},
+    "ignoreShields": {"type": "integer", "minimum": 1, "maximum": 2, "description": "Counts this many fewer allies shielding the target (a piercing thrust)."}
   }}}
 }

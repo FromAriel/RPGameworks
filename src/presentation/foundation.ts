@@ -99,6 +99,9 @@ export interface FoundationElements {
   battleSkin: () => Promise<SkinPainter | null>;
 }
 
+/** One area hit in words: its damage, or what its affinity did (decision 0018). */
+const hitText = (damage: number, affinity?: string): string => affinity === 'immune' ? 'immune' : affinity === 'absorb' ? `absorbs, +${damage} HP` : `${damage}${affinity === 'weak' ? ' (weak)' : affinity === 'resist' ? ' (resisted)' : ''}`;
+
 export function createFoundation(elements: FoundationElements, onError: (message: string) => void, content: LoadedMap): FoundationHandle {
   // Logical canvas and world tile size come from the validated game manifest (decision 0008).
   const WIDTH = content.game.view.width, HEIGHT = content.game.view.height, TILE = content.game.tileSize;
@@ -491,8 +494,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
         event.kind==='escape'?`${names.get(event.actor)} gets away.`:
         event.kind==='move'?`${names.get(event.actor)} moves${event.swapped?` and swaps places with ${names.get(event.swapped)}`:''}.`:
         // An area attack lists every member hit, with the share of full damage each took (decision 0014 M5.4f).
-        event.kind==='area'?`${names.get(event.actor)} uses ${event.name}: ${event.hits.map(hit=>`${names.get(hit.target)} ${hit.damage}${hit.percent<100?` (${hit.percent}%)`:''}${hit.guarded?' (guarded)':''}${hit.defeated?', defeated':''}`).join(', ')}.`:
-        `${names.get(event.actor)} hits ${names.get(event.target)} for ${event.damage}${event.guarded?' (guarded)':''}.${event.defeated?` ${names.get(event.target)} is defeated.`:''}`).join(' ');
+        event.kind==='area'?`${names.get(event.actor)} uses ${event.name}: ${event.hits.map(hit=>`${names.get(hit.target)} ${hitText(hit.damage,hit.affinity)}${hit.percent<100?` (${hit.percent}%)`:''}${hit.guarded?' (guarded)':''}${hit.defeated?', defeated':''}`).join(', ')}.`:
+        // A hit with an affinity says so (decision 0018): weak, resisted, immune or absorbed.
+        event.affinity==='immune'?`${names.get(event.actor)}${event.name?` uses ${event.name}:`:' attacks:'} ${names.get(event.target)} is immune.`:
+        event.affinity==='absorb'?`${names.get(event.actor)}${event.name?` uses ${event.name}:`:' attacks:'} ${names.get(event.target)} absorbs it and recovers ${event.damage} HP.`:
+        `${names.get(event.actor)} ${event.name?`uses ${event.name} on`:'hits'} ${names.get(event.target)} for ${event.damage}${event.affinity==='weak'?' (weak)':event.affinity==='resist'?' (resisted)':''}${event.guarded?' (guarded)':''}.${event.defeated?` ${names.get(event.target)} is defeated.`:''}`).join(' ');
       const hp=(side:'party'|'enemy')=>state.combatants.filter(c=>c.side===side).map(c=>c.hp>0?`${c.name} ${c.hp}/${c.maxHp} HP`:`${c.name} defeated`).join('  •  ');
       const timeline=state.timeline.slice(0,6).map(turn=>names.get(turn.actor)).join(' → ');
       const playing=view.playing;

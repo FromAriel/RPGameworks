@@ -66,11 +66,12 @@ try {
   const creatureIds = new Set(Object.keys(motionAssignments.assignments));
   // The party roster (decision 0014 M5.4d): encounters without their own party use it.
   let party=null;
-  if(game.partyFile){const file=realpathSync(join(source,game.partyFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.partyFile}: file escapes the content root`);party=readParty(readJSON(file),game.partyFile,frames);}
-  // The action catalog (decision 0018): enemy patterns name its actions.
+  // The action catalog (decision 0018) comes first: party weapons, skills and enemy affinities use its tags and actions.
   let actions=null;
   if(game.actionsFile){const file=realpathSync(join(source,game.actionsFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.actionsFile}: file escapes the content root`);actions=readActions(readJSON(file),game.actionsFile);}
-  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds,party,new Set(actions?.actions.map(a=>a.id)??[])):encountersData;
+  const actionIds=new Set(actions?.actions.map(a=>a.id)??[]),tagNames=new Set(Object.values(actions?.tagGroups??{}).flat());
+  if(game.partyFile){const file=realpathSync(join(source,game.partyFile));const rel=relative(source,file);if(rel==='..'||rel.startsWith('..'+sep))throw new Error(`${game.partyFile}: file escapes the content root`);party=readParty(readJSON(file),game.partyFile,frames,{tags:tagNames,actions:actionIds});}
+  const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds,party,actionIds,tagNames):encountersData;
   // Unlock conditions in the menu and in catalogs may name facts, items, quests and placements from this game.
   const known = { facts: new Set(facts.facts.map(f => f.id)), items: new Set(catalog.items.map(i => i.id)),
     quests: new Set(quests.quests.map(q => q.id)), placements: new Set([...maps.values()].flatMap(m => m.objects.map(o => o.id))) };

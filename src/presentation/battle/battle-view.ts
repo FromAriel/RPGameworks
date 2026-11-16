@@ -395,7 +395,7 @@ export class BattleView {
       this.tween({ targets: actor.sprite, x: actor.home.x + direction * 18, duration: lead, yoyo: true, ease: 'Quad.easeOut' });
     }
     this.after(lead, () => {
-      this.hp.set(event.target, Math.max(0, (this.hp.get(event.target) ?? 0) - event.damage));
+      this.hp.set(event.target, this.afterHit(event.target, event.damage, event.affinity));
       this.drawHp(event.target);
       this.holdBar(event.target, duration - lead + 700);
       this.refreshWindows();
@@ -409,7 +409,7 @@ export class BattleView {
         target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         this.after(flashMs, () => target.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
       }
-      this.float(target, String(event.damage), event.guarded ? 0xb7c9d0 : 0xffffff, duration - lead);
+      this.floatHit(target, event.damage, event.guarded, event.affinity, duration - lead);
       this.options.impact({ x: target.home.x, y: target.home.y }, seed);
       if (event.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
     });
@@ -440,12 +440,24 @@ export class BattleView {
       for (const hit of event.hits) {
         const target = this.battlers.get(hit.target);
         if (!target) continue;
-        this.hp.set(hit.target, Math.max(0, (this.hp.get(hit.target) ?? 0) - hit.damage));
-        this.float(target, String(hit.damage), hit.guarded ? 0xb7c9d0 : 0xffffff, duration - lead);
+        this.hp.set(hit.target, this.afterHit(hit.target, hit.damage, hit.affinity));
+        this.floatHit(target, hit.damage, hit.guarded, hit.affinity, duration - lead);
         if (hit.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
       }
       this.refreshWindows();
     });
+  }
+
+  /** HP after a hit: down by its damage, or up when the target absorbed it (decision 0018). */
+  private afterHit(id: string, damage: number, affinity?: string): number {
+    const hp = this.hp.get(id) ?? 0;
+    return affinity === 'absorb' ? hp + damage : Math.max(0, hp - damage);
+  }
+  /** A hit's number: green with + when absorbed, "Immune" when it did nothing, grey when guarded. */
+  private floatHit(target: Battler, damage: number, guarded: boolean, affinity: string | undefined, duration: number): void {
+    if (affinity === 'immune') this.float(target, 'Immune', 0xb7c9d0, duration);
+    else if (affinity === 'absorb') this.float(target, `+${damage}`, 0x8fe08f, duration);
+    else this.float(target, String(damage), guarded ? 0xb7c9d0 : 0xffffff, duration);
   }
 
   private float(battler: Battler, text: string, color: number, duration: number): void {

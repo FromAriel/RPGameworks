@@ -2,7 +2,8 @@ import type { EncounterCatalog } from '../content/generated/encounters';
 import { GRID, alliesAhead, areaHits, canReach, placeGrid } from './battle-grid.mjs';
 import { CORE_ACTIONS } from './actions';
 import type { AreaShape, BattleAction } from './actions';
-import { resolveHit } from './hit';
+import { affinityOf, resolveHit } from './hit';
+import type { Affinity, HitReport } from './hit';
 import type { Direction, Placement, Reach } from './battle-grid.mjs';
 
 /**
@@ -32,19 +33,27 @@ export type BattleCommand =
   | { readonly type: 'guard' }
   | { readonly type: 'item'; readonly itemId: string; readonly target: string }
   | { readonly type: 'move'; readonly to: Cell }
+  /** A skill from the active member's list (decision 0018), aimed at an enemy (or an area centred on one). */
+  | { readonly type: 'skill'; readonly action: string; readonly target: string }
   | { readonly type: 'escape' };
 export type BattleEvent =
-  | { readonly kind: 'attack'; readonly actor: string; readonly target: string; readonly damage: number; readonly guarded: boolean; readonly defeated: boolean; readonly shields: number }
+  /**
+   * One hit on one target: an Attack, or a single-target skill (`action`, `name`). `affinity` says how the target took
+   * it; an absorbed hit's `damage` is what it healed. `reports` are the hit pipeline's records (decision 0018).
+   */
+  | { readonly kind: 'attack'; readonly actor: string; readonly target: string; readonly damage: number; readonly guarded: boolean; readonly defeated: boolean; readonly shields: number;
+      readonly action?: string; readonly name?: string; readonly affinity?: Affinity; readonly reports: readonly HitReport[] }
   | { readonly kind: 'guard'; readonly actor: string }
   | { readonly kind: 'heal'; readonly actor: string; readonly target: string; readonly itemId: string; readonly amount: number }
   | { readonly kind: 'move'; readonly actor: string; readonly from: Cell; readonly to: Cell; readonly swapped: string | null }
   | { readonly kind: 'escape'; readonly actor: string }
-  /** An enemy's area attack (decision 0014 M5.4f): every party member it hits, resolved together. */
+  /** An area attack (decision 0014 M5.4f): an enemy ability or a party skill, every fighter it hits resolved together. */
   | { readonly kind: 'area'; readonly actor: string; readonly ability: string; readonly name: string; readonly shape: AreaShape; readonly centre: Cell; readonly hits: readonly AreaHit[] };
 export type { AreaShape } from './actions';
 /** One member hit by an area attack: its damage after guard, shields and falloff (`percent`). */
-export interface AreaHit { readonly target: string; readonly damage: number; readonly percent: number; readonly shields: number; readonly guarded: boolean; readonly defeated: boolean }
-export type RejectReason = 'phase' | 'unknown-command' | 'invalid-target' | 'out-of-reach' | 'invalid-cell' | 'not-usable' | 'full-hp';
+export interface AreaHit { readonly target: string; readonly damage: number; readonly percent: number; readonly shields: number; readonly guarded: boolean; readonly defeated: boolean;
+  readonly affinity?: Affinity; readonly reports: readonly HitReport[] }
+export type RejectReason = 'phase' | 'unknown-command' | 'invalid-target' | 'out-of-reach' | 'invalid-cell' | 'not-usable' | 'full-hp' | 'unknown-skill' | 'not-enough-mp';
 export interface BattleItemUse { readonly heal: number }
 export interface CombatantSnapshot {
   readonly id: string; readonly side: Side; readonly slot: number; readonly name: string; readonly frame: string;
@@ -57,6 +66,13 @@ export interface CombatantSnapshot {
   readonly flank: Direction | null;
   /** Presentation only (decision 0015): the Stone Soup creature drawn for this enemy, and which way its art faces. */
   readonly creature: string | null; readonly faces: 'left' | 'right';
+  /** MP now and at most (decision 0017); 0 for a fighter without MP. */
+  readonly mp: number; readonly maxMp: number;
+  /** Party: the weapon a basic Attack uses, and the skills under Special (decision 0018). */
+  readonly weapon: { readonly name: string; readonly tags: readonly string[] } | null;
+  readonly skills: readonly string[];
+  /** Enemies: how each damage tag affects it. */
+  readonly affinities: Readonly<Record<string, Affinity>>;
 }
 export interface TurnPreview { readonly actor: string; readonly tick: number }
 export interface BattleSnapshot {
@@ -84,7 +100,7 @@ export function actionDelay(speed: number, weight: number): number {
   return Math.ceil((TIMELINE_BASE * weight) / (100 * speed));
 }
 
-interface Fighter extends Omit<CombatantSnapshot, 'nextTick' | 'guarding' | 'hp' | 'lane' | 'depth'> { hp: number; nextTick: number; guarding: boolean; lane: number; depth: number }
+interface Fighter extends Omit<CombatantSnapshot, 'nextTick' | 'guarding' | 'hp' | 'lane' | 'depth' | 'mp'> { hp: number; mp: number; nextTick: number; guarding: boolean; lane: number; depth: number }
 
 /** Every fighter's grid placement by side and slot (decision 0014). Content validation has already checked them. */
 function gridPlacements(encounter: Encounter): Record<Side, Placement[]> {
@@ -161,6 +177,14 @@ export class BattleSession {
       if (!target || target.side !== 'party' || target.hp <= 0) return 'invalid-target';
       return target.hp >= target.maxHp ? 'full-hp' : null;
     }
+    if (command.type === 'skill') {
+      const action = this.actions.get(command.action);
+      if (!action || !actor.skills.includes(command.action)) return 'unknown-skill';
+      if (actor.mp < (action.cost?.mp ?? 0)) return 'not-enough-mp';
+      const target = this.find(command.target);
+      if (!target || target.side !== 'enemy' || target.hp <= 0) return 'invalid-target';
+      return canReach(action.reach ?? actor.reach, this.ahead(target, actor)) ? null : 'out-of-reach';
+    }
     if (command.type === 'guard' || command.type === 'escape') return null;
     return 'unknown-command';
   }
@@ -173,8 +197,7 @@ export class BattleSession {
     while (result.length < length && sim.length) {
       const actor = sim.reduce((best, fighter) => order(fighter, best) < 0 ? fighter : best);
       result.push({ actor: actor.id, tick: actor.nextTick });
-      const weight = first && command && command.type !== 'escape' && command.type !== 'attack'
-        ? ACTION_WEIGHT[command.type] : ACTION_WEIGHT.attack;
+      const weight = first && command ? this.weightOf(command) : ACTION_WEIGHT.attack;
       actor.nextTick += actionDelay(actor.speed, weight);
       first = false;
     }
@@ -200,8 +223,12 @@ export class BattleSession {
     if (command.type === 'attack') this.perform(hero, CORE_ACTIONS.attack, this.find(command.target)!);
     else if (command.type === 'guard') this.perform(hero, CORE_ACTIONS.guard, hero);
     else if (command.type === 'move') this.move(hero, command.to);
-    else this.perform(hero, CORE_ACTIONS.item, this.find(command.target)!, command.itemId);
-    hero.nextTick += actionDelay(hero.speed, command.type === 'attack' ? ACTION_WEIGHT.attack : ACTION_WEIGHT[command.type]);
+    else if (command.type === 'skill') {
+      const action = this.actions.get(command.action)!;
+      hero.mp -= action.cost?.mp ?? 0;
+      this.perform(hero, action, this.find(command.target)!);
+    } else this.perform(hero, CORE_ACTIONS.item, this.find(command.target)!, command.itemId);
+    hero.nextTick += actionDelay(hero.speed, this.weightOf(command));
     this.turn += 1;
     this.settle();
     while (this.phase === 'command') {
@@ -225,6 +252,7 @@ export class BattleSession {
       hp: combatant.hp, maxHp: combatant.hp, attack: combatant.attack, defense: combatant.defense, speed: combatant.speed,
       nextTick: actionDelay(combatant.speed, ACTION_WEIGHT.attack), guarding: false,
       ...placements[side][slot]!, reach: combatant.reach ?? 'melee', creature: combatant.creature ?? null, faces: combatant.faces ?? 'left', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
+      mp: combatant.mp ?? 0, maxMp: combatant.mp ?? 0, weapon: combatant.weapon ?? null, skills: combatant.skills ?? [], affinities: combatant.affinities ?? {},
     });
     this.fighters = [...this.encounter.party.map(build('party')), ...this.encounter.enemies.map(build('enemy'))];
     this.plans = new Map(this.encounter.enemies.flatMap(e => (e.pattern ? [[e.id, { pattern: e.pattern, actions: 0 }] as const] : [])));
@@ -260,15 +288,18 @@ export class BattleSession {
    * multiply in, rounded up once. Everything is worked out before anyone falls, so the hits land together.
    */
   private areaStrike(actor: Fighter, action: BattleAction, centre: Fighter): void {
-    const party = this.living('party');
-    const hits = areaHits(action.shape!, centre, party).map(({ index, percent }) => {
-      const target = party[index]!, shields = this.ahead(target, actor);
-      const { damage } = this.hit(actor, target, action, shields, percent);
-      return { target, damage, percent, shields, guarded: target.guarding };
+    // Everyone standing on the centre's grid (its side, and its flank in a pincer), in slot order.
+    const grid = this.fighters.filter(f => f.side === centre.side && f.flank === centre.flank && f.hp > 0);
+    const hits = areaHits(action.shape!, centre, grid).map(({ index, percent }) => {
+      const target = grid[index]!, shields = this.shieldsFor(target, actor, action);
+      const result = this.hit(actor, target, action, shields, percent);
+      return { target, ...result, percent, shields, guarded: target.guarding };
     });
-    for (const hit of hits) hit.target.hp = Math.max(0, hit.target.hp - hit.damage);
+    // An absorbed hit records what it actually healed.
+    for (const hit of hits) hit.damage = this.apply(hit.target, hit.damage, hit.affinity);
     this.events.push({ kind: 'area', actor: actor.id, ability: action.id, name: action.name, shape: action.shape!, centre: { lane: centre.lane, depth: centre.depth },
-      hits: hits.map(h => ({ target: h.target.id, damage: h.damage, percent: h.percent, shields: h.shields, guarded: h.guarded, defeated: h.target.hp === 0 })) });
+      hits: hits.map(h => ({ target: h.target.id, damage: h.damage, percent: h.percent, shields: h.shields, guarded: h.guarded, defeated: h.target.hp === 0,
+        ...(h.affinity ? { affinity: h.affinity } : {}), reports: h.reports })) });
   }
 
   /**
@@ -288,18 +319,44 @@ export class BattleSession {
     }
   }
 
-  /** One hit through the pipeline: the battle draws the variance from its seeded stream, one roll per target. */
+  /**
+   * One hit through the pipeline: the battle draws the variance from its seeded stream, one roll per target. Its tags
+   * are the action's own, or for a basic Attack the user's weapon's (decision 0018).
+   */
   private hit(actor: Fighter, target: Fighter, action: BattleAction, shields: number, areaPercent = 100) {
     const variance = this.roll();
+    const tags = action === CORE_ACTIONS.attack ? actor.weapon?.tags ?? [] : action.tags ?? [];
     return resolveHit({ formula: action.power!.formula, attack: actor.attack, defense: target.defense, variance,
-      ...(action.power!.percent !== undefined ? { powerPercent: action.power!.percent } : {}), guarded: target.guarding, shields, areaPercent });
+      ...(action.power!.percent !== undefined ? { powerPercent: action.power!.percent } : {}), guarded: target.guarding, shields, areaPercent,
+      affinity: affinityOf(target.affinities, tags) });
+  }
+
+  /** Allies shielding the target from this attacker, less any the action pierces. */
+  private shieldsFor(target: Fighter, actor: Fighter, action: BattleAction): number {
+    return Math.max(0, this.ahead(target, actor) - (action.ignoreShields ?? 0));
+  }
+
+  /** Take a hit's damage, or heal by it when the target absorbs it (up to its maximum). Returns the HP actually changed. */
+  private apply(target: Fighter, damage: number, affinity: Affinity | null): number {
+    const before = target.hp;
+    target.hp = affinity === 'absorb' ? Math.min(target.maxHp, target.hp + damage) : Math.max(0, target.hp - damage);
+    return affinity === 'absorb' ? target.hp - before : damage;
+  }
+
+  /** Timeline weight of a command: its action's weight; Move's own. */
+  private weightOf(command: BattleCommand): number {
+    if (command.type === 'skill') return this.actions.get(command.action)?.weight ?? ACTION_WEIGHT.attack;
+    if (command.type === 'escape' || command.type === 'attack') return ACTION_WEIGHT.attack;
+    return ACTION_WEIGHT[command.type];
   }
 
   private strike(actor: Fighter, target: Fighter, action: BattleAction): void {
-    const shields = this.ahead(target, actor);
-    const { damage } = this.hit(actor, target, action, shields);
-    target.hp = Math.max(0, target.hp - damage);
-    this.events.push({ kind: 'attack', actor: actor.id, target: target.id, damage, guarded: target.guarding, defeated: target.hp === 0, shields });
+    const shields = this.shieldsFor(target, actor, action);
+    const { damage: dealt, affinity, reports } = this.hit(actor, target, action, shields);
+    // An absorbed hit records what it actually healed.
+    const damage = this.apply(target, dealt, affinity);
+    const named = action === CORE_ACTIONS.attack ? {} : { action: action.id, name: action.name };
+    this.events.push({ kind: 'attack', actor: actor.id, target: target.id, damage, guarded: target.guarding, defeated: target.hp === 0, shields, ...named, ...(affinity ? { affinity } : {}), reports });
   }
 
   /** Move to an empty cell of the actor's grid, or swap with the ally standing there. */

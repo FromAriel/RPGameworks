@@ -17,8 +17,8 @@ describe('the hit pipeline', () => {
   });
 
   it('runs its steps in order and reports each one that changed the hit', () => {
-    expect(HIT_STEPS.map(step => step.id)).toEqual(['base', 'power', 'guard', 'shield', 'falloff']);
-    expect(resolveHit({ formula: 'attack-defense', attack: 9, defense: 1, variance: 0, guarded: false, shields: 0 })).toEqual({ damage: 8, reports: [] });
+    expect(HIT_STEPS.map(step => step.id)).toEqual(['base', 'power', 'affinity', 'guard', 'shield', 'falloff']);
+    expect(resolveHit({ formula: 'attack-defense', attack: 9, defense: 1, variance: 0, guarded: false, shields: 0 })).toEqual({ damage: 8, reports: [], affinity: null });
     const hit = resolveHit({ formula: 'attack-defense', attack: 9, defense: 1, variance: 1, powerPercent: 150, guarded: true, shields: 2, areaPercent: 80 });
     expect(hit.reports).toEqual([{ step: 'power', percent: 150 }, { step: 'guard', percent: 50 }, { step: 'shield', percent: 65 }, { step: 'falloff', percent: 80 }]);
     expect(hit.damage).toBe(scaleDamage(9, [150, 50, 65, 80])); // Rounded up once, at the end.

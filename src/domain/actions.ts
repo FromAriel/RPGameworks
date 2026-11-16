@@ -19,6 +19,12 @@ export interface BattleAction {
   readonly weight: number;
   readonly power?: { readonly formula: 'attack-defense'; readonly percent?: number };
   readonly effects: readonly ActionEffect[];
+  /** The damage tags of its hits; a basic Attack takes its user's weapon's instead. */
+  readonly tags?: readonly string[];
+  /** Spent when it resolves (decision 0017). */
+  readonly cost?: { readonly mp: number };
+  /** Counts this many fewer allies shielding the target. */
+  readonly ignoreShields?: number;
 }
 export type CatalogAction = ActionCatalog['actions'][number];
 

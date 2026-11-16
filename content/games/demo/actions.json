@@ -1,9 +1,21 @@
 {
   "schemaVersion": 1,
+  "tagGroups": {
+    "weapon": ["slash", "pierce", "blunt"],
+    "element": ["fire"]
+  },
   "actions": [
     {"id": "demo:action.shard-burst", "name": "Shard Burst", "targeting": "area", "shape": "radius", "reach": "ranged",
       "power": {"formula": "attack-defense"}, "effects": ["damage"]},
     {"id": "demo:action.ogre-sweep", "name": "Ogre Sweep", "targeting": "area", "shape": "lane",
-      "power": {"formula": "attack-defense"}, "effects": ["damage"]}
+      "power": {"formula": "attack-defense"}, "effects": ["damage"]},
+    {"id": "demo:action.cleave", "name": "Cleave", "targeting": "area", "shape": "lane", "tags": ["slash"], "cost": {"mp": 4},
+      "power": {"formula": "attack-defense"}, "effects": ["damage"]},
+    {"id": "demo:action.pierce", "name": "Pierce", "targeting": "enemy", "tags": ["pierce"], "cost": {"mp": 3}, "ignoreShields": 1,
+      "power": {"formula": "attack-defense", "percent": 110}, "effects": ["damage"]},
+    {"id": "demo:action.volley", "name": "Volley", "targeting": "area", "shape": "radius", "reach": "ranged", "tags": ["pierce"], "cost": {"mp": 5},
+      "power": {"formula": "attack-defense", "percent": 80}, "effects": ["damage"]},
+    {"id": "demo:action.fire-bolt", "name": "Fire Bolt", "targeting": "enemy", "reach": "ranged", "tags": ["fire"], "cost": {"mp": 4},
+      "power": {"formula": "attack-defense", "percent": 130}, "effects": ["damage"]}
   ]
 }

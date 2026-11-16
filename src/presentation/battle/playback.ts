@@ -23,8 +23,9 @@ export function hpBefore(after: BattleSnapshot, events: readonly BattleEvent[]):
   const hp = new Map(after.combatants.map(combatant => [combatant.id, combatant.hp]));
   for (let index = events.length - 1; index >= 0; index -= 1) {
     const event = events[index]!;
-    if (event.kind === 'attack') hp.set(event.target, hp.get(event.target)! + event.damage);
-    else if (event.kind === 'area') for (const hit of event.hits) hp.set(hit.target, hp.get(hit.target)! + hit.damage);
+    // An absorbed hit healed its target (decision 0018), so undoing it takes HP away.
+    if (event.kind === 'attack') hp.set(event.target, hp.get(event.target)! + (event.affinity === 'absorb' ? -event.damage : event.damage));
+    else if (event.kind === 'area') for (const hit of event.hits) hp.set(hit.target, hp.get(hit.target)! + (hit.affinity === 'absorb' ? -hit.damage : hit.damage));
     else if (event.kind === 'heal') hp.set(event.target, hp.get(event.target)! - event.amount);
   }
   return hp;

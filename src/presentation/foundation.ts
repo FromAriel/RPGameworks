@@ -201,11 +201,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
       return frame ? spriteImage(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }, 40, 40) : null;
     }
     private member(id: string) { return elements.session.current.roster?.members.find(m => m.id === id) ?? null; }
-    /** The hub's cards: the active party (M5.4d), with full HP because every battle starts at full HP until M5.6. */
+    /** The hub's cards: the active party (M5.4d), with full HP and MP because every battle starts full until M5.6. */
     private partyCards(): PartyMember[] {
       const session = elements.session.current, party = session.party();
       if (!session.roster || !party) return [{ id: 'hero', name: 'Hero', portrait: this.portraitOf('hero') }];
-      return party.active.map(id => { const m = this.member(id)!; return { id, name: m.name, portrait: this.portraitOf(id, m.frame), hp: m.hp, maxHp: m.hp }; });
+      return party.active.map(id => { const m = this.member(id)!; return { id, name: m.name, portrait: this.portraitOf(id, m.frame), hp: m.hp, maxHp: m.hp, ...(m.mp ? { mp: m.mp, maxMp: m.mp } : {}) }; });
     }
     /** What the party carries, for the Items screen: names, descriptions, counts and categories from the catalog. */
     private carriedItems(categories: ReturnType<typeof itemCategories>): ItemDetail[] {
@@ -292,7 +292,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         // The party screens (decision 0014 M5.4d-2) exist only in a game with a party roster.
         const roster = elements.session.current.roster;
         if (roster) {
-          const members = roster.members.map(m => ({ id: m.id, name: m.name, hp: m.hp, attack: m.attack, defense: m.defense, speed: m.speed, reach: m.reach ?? 'melee' }));
+          const members = roster.members.map(m => ({ id: m.id, name: m.name, hp: m.hp, attack: m.attack, defense: m.defense, speed: m.speed, reach: m.reach ?? 'melee', ...(m.mp ? { mp: m.mp } : {}) }));
           const party = () => elements.session.current.party()!;
           registry.register(STATUS_SCREEN, context => statusScreen(context, { members, party, portrait: id => this.portraitOf(id, this.member(id)?.frame) }));
           registry.register(FORMATION_SCREEN, context => formationScreen(context, {
@@ -479,7 +479,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const battle=this.battle!,state=battle.snapshot(),session=elements.session.current;
       const items:MenuItemInfo[]=session.catalog.items.filter(item=>item.battleUse?.type==='heal').map(item=>({id:item.id,name:this.battleItemName(item.id),
         count:session.count(item.id),help:`Restores ${item.battleUse!.amount} HP.`}));
-      return{phase:state.phase,active:state.active,combatants:state.combatants,items,opening:state.opening,validate:command=>battle.validate(command)};
+      return{phase:state.phase,active:state.active,combatants:state.combatants,items,opening:state.opening,actions:battle.actions,validate:command=>battle.validate(command)};
     }
     /**
      * Classic battle windows (decision 0009): the stage draws them; the dialogue becomes an invisible layer whose
@@ -524,7 +524,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const menu=this.battleMenu,state=menu.state();
       const stage=():StageMenu=>{const now=menu.state(),column=menu.column();
         return{help:now.help,commands:column.entries,commandCursor:column.cursor,commandInactive:column.inactive,
-          list:now.level==='item'?{entries:now.entries,cursor:now.cursor}:null,target:now.target,cell:now.cell};};
+          list:now.level==='item'||now.level==='skill'?{entries:now.entries,cursor:now.cursor}:null,target:now.target,cell:now.cell,area:now.area};};
       view.setMenu(stage());
       const choices:PlacedChoice[]=state.entries.map((entry,index)=>({id:entry.id,name:entry.name,enabled:entry.enabled,help:entry.help,
         rect:state.level==='target'?view.targetRect(entry.id.slice('target:'.length))??entryRect(view.layout,'root',index)
@@ -538,7 +538,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         focus:index=>{menu.focus(index);view.setMenu(stage());}});
     }
     /** Menu state for the runtime snapshot (tests and Debug). */
-    battleMenuState():{level:string;cursor:number;target:string|null}{const state=this.battleMenu.state();return{level:state.level,cursor:state.cursor,target:state.target};}
+    battleMenuState():{level:string;cursor:number;target:string|null;area:string|null}{const state=this.battleMenu.state();return{level:state.level,cursor:state.cursor,target:state.target,area:state.area};}
     private applyBattleOutcome(outcome:MenuOutcome):void{
       if(outcome.kind==='none'){this.presentBattleMenu();return;}
       if(outcome.kind==='end'){this.endBattleChoice(outcome.choice);return;}
@@ -774,7 +774,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         view: { width: WIDTH, height: HEIGHT, tileSize: TILE },
         inputMode: current?.mode ?? 'exploration',
         menu: current?.menuState() ?? null,
-        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,opening:state.opening,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,windows:current.battleView?.windowSource??'fallback',speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),cells:Object.fromEntries(state.combatants.map(c=>[c.id,[c.lane+1,c.depth+1] as [number,number]])),timeline:state.timeline.map(turn=>turn.actor),art:current.battleView?.artState()??{}};})() : null,
+        battle: current?.battle ? (()=>{const state=current.battle.snapshot();return{encounterId:state.encounterId,opening:state.opening,phase:state.phase,turn:state.turn,active:state.active,playing:current.battleView?.playing??false,windows:current.battleView?.windowSource??'fallback',speed:current.battleView?.speed??1,menu:current.battleView&&!current.battleView.playing?current.battleMenuState():null,hp:Object.fromEntries(state.combatants.map(c=>[c.id,c.hp])),mp:Object.fromEntries(state.combatants.map(c=>[c.id,c.mp])),cells:Object.fromEntries(state.combatants.map(c=>[c.id,[c.lane+1,c.depth+1] as [number,number]])),timeline:state.timeline.map(turn=>turn.actor),art:current.battleView?.artState()??{}};})() : null,
         messageId: current?.message?.id ?? current?.dialogue?.graph.id ?? null, messagePage: current?.message?.page ?? current?.dialogue?.page ?? 0,
         interactionTarget: room?.target(actor)?.objectId ?? null,
         transitions, cancelledTransitions, failedTransitions,

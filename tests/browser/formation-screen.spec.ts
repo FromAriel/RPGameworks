@@ -94,16 +94,16 @@ test('pointer and touch: tapping a member, then a cell, swaps; leaving with chan
   expect(await page.locator('#game-menu .menu-formation').count()).toBe(0);
 });
 
-test('Status shows one member per page, and the hub shows all four with full HP', { tag: ['@inventory'] }, async ({ page }, info) => {
+test('Status shows one member per page, and the hub shows all four with full HP and MP', { tag: ['@inventory'] }, async ({ page }, info) => {
   await openRoom(page);
   await page.keyboard.press('KeyI');
   await expect(page.locator('#game-menu .menu-card')).toHaveCount(4);
-  await expect(page.locator('#game-menu .menu-card').nth(1)).toHaveAttribute('aria-label', 'Archer, HP 22 of 22');
+  await expect(page.locator('#game-menu .menu-card').nth(1)).toHaveAttribute('aria-label', 'Archer, HP 22 of 22, MP 14 of 14'); // MP since M5.5b-2.
   await page.screenshot({ path: info.outputPath('hub-party.png') });
   await page.locator('#game-menu .menu-row[data-id="status"]').click();
   await expect(screen(page, 'status')).toBeVisible();
   const page1 = screen(page, 'status').locator('.menu-detail');
-  await expect(page1).toContainText('HP 30 / 30');
+  await expect(page1).toContainText('HP 30 / 30 · MP 12 / 12');
   await page.keyboard.press('KeyE'); await page.keyboard.press('KeyE');
   await expect(page1.locator('h3')).toHaveText('Lancer');
   await expect(page1).toContainText('Reach: front-facing enemies, or the one directly behind them.');

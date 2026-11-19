@@ -39,3 +39,28 @@ export const CORE_ACTIONS: { readonly attack: BattleAction; readonly guard: Batt
 export function actionMap(catalog: ActionCatalog | null | undefined): ReadonlyMap<string, BattleAction> {
   return new Map((catalog?.actions ?? []).map(a => [a.id, Object.freeze({ ...a, weight: a.weight ?? 100 }) as BattleAction]));
 }
+
+const SHAPE_WORDS: Record<AreaShape, string> = {
+  lane: 'a whole lane', column: 'a whole column', radius: 'an area, weaker away from its centre',
+  'diagonal-down': 'a diagonal', 'diagonal-up': 'a diagonal',
+};
+const REACH_PHRASE = { melee: '', reach: 'reaching one behind the front', ranged: 'at any range' } as const;
+
+/**
+ * A one-line description built from an action's data (Ariel, M5.5b-2: no authored help text yet), for the Special
+ * list's help line: its tags, what it hits, its reach and power, and its cost. For example "Slash. Hits a whole lane.
+ * 4 MP." Plain words only; the screen decides how to show it.
+ */
+export function describeAction(action: BattleAction): string {
+  const tags = (action.tags ?? []).map(tag => tag[0]!.toUpperCase() + tag.slice(1)).join(' and ');
+  const what = action.targeting === 'area' ? `Hits ${SHAPE_WORDS[action.shape ?? 'radius']}` : action.targeting === 'enemy' ? 'One enemy'
+    : action.targeting === 'ally' ? 'One ally' : 'Yourself';
+  const parts = [what];
+  if (action.reach && REACH_PHRASE[action.reach]) parts.push(REACH_PHRASE[action.reach]);
+  const percent = action.power?.percent;
+  if (percent !== undefined && percent !== 100) parts.push(`${percent}% power`);
+  const ignore = action.ignoreShields ?? 0;
+  if (ignore > 0) parts.push(ignore === 1 ? 'ignores one shielding ally' : `ignores ${ignore} shielding allies`);
+  const cost = action.cost?.mp ? ` ${action.cost.mp} MP.` : '';
+  return `${tags ? `${tags}. ` : ''}${parts.join(', ')}.${cost}`;
+}

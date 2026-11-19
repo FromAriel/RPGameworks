@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { BattleEvent, BattleSnapshot, Cell, CombatantSnapshot, Opening } from '../../domain/battle';
+import type { AreaShape, BattleEvent, BattleSnapshot, Cell, CombatantSnapshot, Opening } from '../../domain/battle';
 import type { MenuEntry } from '../../domain/battle-menu';
 import { STAGE_GRID, areaPercentAt, battlerPosition, gridSpacing, hpBefore, stepDuration } from './playback';
 import type { StageFloor } from './playback';
@@ -26,6 +26,8 @@ const FALLBACK_TEXT = { fontFamily: 'ui-monospace, monospace', fontSize: '12px',
  */
 const DEPTH = { backdrop: 1.5, floor: 1.51, battler: 1.6, ui: 1.7, windows: 1.8, numbers: 3 } as const;
 const BAR_WIDTH = 48;
+/** Hit text colours by affinity (decision 0018): weak gold, resist grey-blue, immune grey, absorb green. */
+export const AFFINITY_COLOR = { weak: 0xffd25e, resist: 0x9fb4d8, immune: 0xb7c9d0, absorb: 0x8fe08f } as const;
 const TIMELINE_ICONS = 8;
 /** Idle loops advance on this tick; each creature keeps its own loop time and a phase offset by slot (decision 0015). */
 const IDLE_TICK_MS = 50;
@@ -64,6 +66,8 @@ export interface StageMenu {
   readonly target: string | null;
   /** While choosing where to Move: the party grid is shown and this cell is highlighted (decision 0014 M5.4c). */
   readonly cell?: Cell | null;
+  /** While aiming an area skill (M5.5b-2, Ariel: light the cells): its shape, centred on `target`. */
+  readonly area?: AreaShape | null;
 }
 
 export interface BattleViewOptions {
@@ -107,6 +111,8 @@ export class BattleView {
   private readonly floor: StageFloor;
   /** The party's nine cells, drawn while choosing where to Move. */
   private readonly cellGrid: Phaser.GameObjects.Graphics;
+  /** The cells an area skill would hit while it is being aimed. */
+  private readonly aimCells: Phaser.GameObjects.Graphics;
 
   constructor(private readonly scene: Phaser.Scene, initial: BattleSnapshot, private readonly options: BattleViewOptions) {
     const { width, height } = scene.scale;
@@ -150,6 +156,7 @@ export class BattleView {
     }
     this.targetCursor = this.own(this.downPointer()).setDepth(DEPTH.windows).setVisible(false);
     this.cellGrid = this.own(scene.add.graphics().setDepth(DEPTH.floor + 0.001));
+    this.aimCells = this.own(scene.add.graphics().setDepth(DEPTH.battler + 0.09));
     for (const object of this.owned) (object as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
     this.blink = scene.tweens.add({ targets: this.targetCursor, alpha: { from: 1, to: 0.55 }, duration: 360, yoyo: true, repeat: -1 });
     this.render(initial);
@@ -204,6 +211,8 @@ export class BattleView {
     const target = menu?.target ? this.battlers.get(menu.target) : undefined;
     const cell = menu?.cell ?? null;
     this.drawCellGrid(cell);
+    this.aimCells.clear();
+    if (target && menu?.area) this.drawArea(this.aimCells, menu.area, target.combatant);
     this.targetCursor.setVisible(!!target || !!cell);
     this.showBars();
     if (target) this.targetCursor.setPosition(target.home.x, target.home.y - 26 * target.home.scale);
@@ -344,7 +353,7 @@ export class BattleView {
       target: playing ? null : menu?.target ?? null,
       enemies: all.filter(b => b.combatant.side === 'enemy').map(b => ({ id: b.combatant.id, name: b.combatant.name, defeated: (this.hp.get(b.combatant.id) ?? 0) <= 0, hp: this.hp.get(b.combatant.id) ?? 0, maxHp: b.combatant.maxHp })),
       party: all.filter(b => b.combatant.side === 'party').map(b => ({ id: b.combatant.id, name: b.combatant.name, hp: this.hp.get(b.combatant.id) ?? 0,
-        maxHp: b.combatant.maxHp, active: b.combatant.id === this.active })),
+        maxHp: b.combatant.maxHp, mp: b.combatant.mp, maxMp: b.combatant.maxMp, active: b.combatant.id === this.active })),
       commands: menu?.commands ?? [],
       commandCursor: menu?.commandCursor ?? 0,
       commandInactive: menu?.commandInactive ?? false,
@@ -425,15 +434,9 @@ export class BattleView {
     // Drawn over the battlers (translucent, under the numbers), so lanes in front never hide a lit cell.
     const cells = this.scene.add.graphics().setDepth(DEPTH.battler + 0.09).setScrollFactor(0);
     this.transient.add(cells);
-    for (let lane = 0; lane < 3; lane++) for (let depth = 0; depth < 3; depth++) {
-      const percent = areaPercentAt(event.shape, event.centre, { lane, depth });
-      if (!percent) continue;
-      // A strip under the battler's feet (2× sprites reach 32 pixels below their centre), brighter toward full damage,
-      // and the centre outlined, so the falloff reads at a glance without covering anyone's body.
-      const at = this.cellCentre({ lane, depth }), w = gridSpacing(this.opening).depthStep - 8, x = Math.round(at.x - w / 2), y = at.y + 26;
-      cells.fillStyle(0xe6c27a, 0.3 + 0.5 * percent / 100).fillRect(x, y, w, 8);
-      if (lane === event.centre.lane && depth === event.centre.depth) cells.lineStyle(2, 0xfff1c4, 1).strokeRect(x - 1, y - 1, w + 2, 10);
-    }
+    // The grid that was struck: the party's for an enemy ability, the enemies' (one flank in a pincer) for a party skill.
+    const struck = this.battlers.get(event.hits[0]?.target ?? '')?.combatant;
+    this.drawArea(cells, event.shape, event.centre, struck?.side ?? (actor.combatant.side === 'party' ? 'enemy' : 'party'), struck?.flank ?? null);
     this.tween({ targets: cells, alpha: { from: 1, to: 0 }, delay: lead, duration: duration - lead, onComplete: () => { this.transient.delete(cells); cells.destroy(); } });
     if (!this.options.reducedMotion) this.tween({ targets: actor.sprite, y: actor.home.y - 10, duration: Math.round(lead / 2), yoyo: true, ease: 'Quad.easeOut' });
     this.after(lead, () => {
@@ -448,23 +451,51 @@ export class BattleView {
     });
   }
 
+  /**
+   * Light an area's cells on one grid: a strip under each cell's feet (2× sprites reach 32 pixels below their centre),
+   * brighter toward full damage, and the centre outlined, so the falloff reads at a glance without covering anyone's
+   * body. Given a combatant, the area is centred on it, on its own grid.
+   */
+  private drawArea(g: Phaser.GameObjects.Graphics, shape: AreaShape, centre: Cell | CombatantSnapshot, side?: 'party' | 'enemy', flank?: 'front' | 'rear' | null): void {
+    const on = 'side' in centre ? { side: centre.side, flank: centre.flank } : { side: side ?? 'party', flank: flank ?? null };
+    const w = gridSpacing(this.opening, on.side).depthStep - 8;
+    for (let lane = 0; lane < 3; lane++) for (let depth = 0; depth < 3; depth++) {
+      const percent = areaPercentAt(shape, centre, { lane, depth });
+      if (!percent) continue;
+      const at = battlerPosition(on.side, { lane, depth, lanes: 1, depths: 1, flank: on.flank }, this.floor, this.opening);
+      const x = Math.round(at.x - w / 2), y = at.y + 26;
+      g.fillStyle(0xe6c27a, 0.3 + 0.5 * percent / 100).fillRect(x, y, w, 8);
+      if (lane === centre.lane && depth === centre.depth) g.lineStyle(2, 0xfff1c4, 1).strokeRect(x - 1, y - 1, w + 2, 10);
+    }
+  }
+
   /** HP after a hit: down by its damage, or up when the target absorbed it (decision 0018). */
   private afterHit(id: string, damage: number, affinity?: string): number {
     const hp = this.hp.get(id) ?? 0;
     return affinity === 'absorb' ? hp + damage : Math.max(0, hp - damage);
   }
-  /** A hit's number: green with + when absorbed, "Immune" when it did nothing, grey when guarded. */
+  /**
+   * A hit's number: green with + when absorbed, "Immune" when it did nothing, grey when guarded. A weak hit is gold with
+   * "Weak!" above it, a resisted one grey-blue with "Resist" (Ariel, M5.5b-2: word plus colour).
+   */
   private floatHit(target: Battler, damage: number, guarded: boolean, affinity: string | undefined, duration: number): void {
-    if (affinity === 'immune') this.float(target, 'Immune', 0xb7c9d0, duration);
-    else if (affinity === 'absorb') this.float(target, `+${damage}`, 0x8fe08f, duration);
-    else this.float(target, String(damage), guarded ? 0xb7c9d0 : 0xffffff, duration);
+    if (affinity === 'immune') this.float(target, 'Immune', AFFINITY_COLOR.immune, duration);
+    else if (affinity === 'absorb') this.float(target, `+${damage}`, AFFINITY_COLOR.absorb, duration);
+    else if (affinity === 'weak' || affinity === 'resist') {
+      // The word sits a line above the number. On the top lane there is no room above, so the pair starts lower and
+      // rises less, staying on the stage floor instead of crossing the turn timeline.
+      const top = target.home.y - 56, shift = Math.max(0, this.floor.top - top), lift = Math.max(0, Math.min(16, top + shift - this.floor.top));
+      this.float(target, affinity === 'weak' ? 'Weak!' : 'Resist', AFFINITY_COLOR[affinity], duration, shift - 16, lift);
+      this.float(target, String(damage), AFFINITY_COLOR[affinity], duration, shift, lift);
+    } else this.float(target, String(damage), guarded ? 0xb7c9d0 : 0xffffff, duration);
   }
 
-  private float(battler: Battler, text: string, color: number, duration: number): void {
-    const label = this.label(battler.home.x, battler.home.y - 40, text, color)
+  /** A label that rises `lift` pixels and fades; `offset` moves its start from 40 pixels above the battler's centre. */
+  private float(battler: Battler, text: string, color: number, duration: number, offset = 0, lift = 16): void {
+    const label = this.label(battler.home.x, battler.home.y - 40 + offset, text, color)
       .setOrigin(0.5, 0).setDepth(DEPTH.numbers).setScrollFactor(0);
     this.transient.add(label);
-    this.tween({ targets: label, y: label.y - (this.options.reducedMotion ? 0 : 16), alpha: { from: 1, to: 0 }, duration, ease: 'Quad.easeIn',
+    this.tween({ targets: label, y: label.y - (this.options.reducedMotion ? 0 : lift), alpha: { from: 1, to: 0 }, duration, ease: 'Quad.easeIn',
       onComplete: () => { this.transient.delete(label); label.destroy(); } });
   }
 

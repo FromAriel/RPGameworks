@@ -73,15 +73,17 @@ test('classic battle windows play resolved turns and restore exploration focus',
   const dialog = page.locator('#interaction-dialog');
   await expect(dialog).toContainText('Bat hits Hero for 1.');
   await expect(dialog).toContainText('Next: Archer → Hero → Lancer'); // Screen-reader details.
-  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'root', cursor: 0, target: null });
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'root', cursor: 0, target: null, area: null });
   await expect(button(page, 'Attack')).toBeFocused();
-  await expect(button(page, 'Special')).toHaveAttribute('aria-disabled', 'true');
+  // Since M5.5b-2 the roster's members have skills, so Special is open (the Archer's Volley).
+  await expect(button(page, 'Special')).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(button(page, 'Special')).toHaveAttribute('aria-description', 'Skills, magic and combo techs.');
   await expect(button(page, 'Item')).toHaveAttribute('aria-disabled', 'true'); // None carried yet.
   await expect(button(page, 'Item')).toHaveAttribute('aria-description', 'No usable items.');
   expect((await snapshot(page)).displayObjects).toBeGreaterThan(before.displayObjects); // The stage is drawn.
   await page.screenshot({ path: info.outputPath('battle-command.png') });
   await button(page, 'Attack').click();
-  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil' });
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil', area: null });
   await page.screenshot({ path: info.outputPath('battle-target.png') });
   await button(page, 'Bat').click();
   await skip(page);
@@ -110,7 +112,7 @@ test('keyboard confirms in two presses, Cancel backs out without committing, and
   await skip(page);
   const start = (await snapshot(page)).battle!;
   await page.keyboard.press('Enter'); // Attack.
-  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil' });
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'target', cursor: 0, target: 'sigil', area: null });
   await page.keyboard.press('ArrowDown');
   expect((await snapshot(page)).battle?.menu?.target).toBe('shard');
   await page.keyboard.press('Escape'); // Back to the commands; nothing happened.
@@ -118,10 +120,10 @@ test('keyboard confirms in two presses, Cancel backs out without committing, and
   await page.keyboard.press('Escape'); // At the top, Cancel only points at Run.
   expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, phase: 'command', menu: { level: 'root', cursor: 5 } }); // Run is sixth since Move (M5.4c).
   await expect(button(page, 'Run')).toBeFocused();
-  for (let up = 0; up < 4; up++) await page.keyboard.press('ArrowUp'); // Run → Move → Guard → Item → Special.
-  await expect(button(page, 'Special')).toBeFocused(); // Disabled entries can be highlighted to read why…
+  for (let up = 0; up < 3; up++) await page.keyboard.press('ArrowUp'); // Run → Move → Guard → Item (none carried).
+  await expect(button(page, 'Item')).toBeFocused(); // Disabled entries can be highlighted to read why…
   await page.keyboard.press('Enter');
-  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, menu: { level: 'root', cursor: 1 } }); // …but do nothing.
+  expect((await snapshot(page)).battle).toMatchObject({ turn: start.turn, menu: { level: 'root', cursor: 2 } }); // …but do nothing.
   // Tapping an enemy sprite while choosing a command attacks it directly.
   const box = (await page.locator('#stage canvas').boundingBox())!;
   const scale = box.width / 640;
@@ -185,7 +187,7 @@ test('a carried tonic is spent atomically in battle and stays spent after runnin
   await enter(page);
   await skip(page);
   await button(page, 'Item').click();
-  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'item', cursor: 0, target: null });
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'item', cursor: 0, target: null, area: null });
   await expect(button(page, 'Workshop tonic (2)')).toHaveAttribute('aria-description', 'Restores 12 HP.');
   await button(page, 'Workshop tonic (2)').click();
   expect((await snapshot(page)).battle?.menu?.target).toBe('hero'); // The most injured ally.
@@ -271,7 +273,7 @@ test('authored defeat offers Retry with the identical opening and a safe Leave',
   await skip(page);
   for (let turns = 0; turns < 24 && (await snapshot(page)).battle?.phase === 'command'; turns++) await command(page, 'Guard'); // Four members to wear down.
   await expect.poll(async () => (await snapshot(page)).battle?.phase).toBe('defeat');
-  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'end', cursor: 0, target: null });
+  expect((await snapshot(page)).battle?.menu).toEqual({ level: 'end', cursor: 0, target: null, area: null });
   await button(page, 'Retry').click();
   expect({ ...(await snapshot(page)).battle!, art: {} }).toEqual({ ...opening!, art: {} }); // Creature frames animate; the rest restarts exactly.
   await skip(page);

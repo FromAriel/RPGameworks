@@ -26,7 +26,8 @@ export interface WindowsView {
   /** Short hint on the right of the help line, such as playback controls. */
   readonly hint: string;
   readonly enemies: readonly { readonly id: string; readonly name: string; readonly defeated: boolean; readonly hp: number; readonly maxHp: number }[];
-  readonly party: readonly { readonly id: string; readonly name: string; readonly hp: number; readonly maxHp: number; readonly active: boolean }[];
+  /** MP is drawn as a number after HP (Ariel, M5.5b-2: HP and MP columns); blank for a member without MP. */
+  readonly party: readonly { readonly id: string; readonly name: string; readonly hp: number; readonly maxHp: number; readonly mp?: number; readonly maxMp?: number; readonly active: boolean }[];
   /** The combatant being targeted; its name gets the pointer too, as in FF. */
   readonly target: string | null;
   /** The command column's entries (root or end choices), with the cursor or the parent entry of an open sub-level. */
@@ -37,6 +38,9 @@ export interface WindowsView {
   readonly list: { readonly entries: readonly MenuEntry[]; readonly cursor: number } | null;
   readonly showCommands: boolean;
 }
+
+/** Characters kept for the MP number at the right of each party row. */
+const MP_COLUMN = 3;
 
 type Label = Phaser.GameObjects.BitmapText | Phaser.GameObjects.Text;
 export type LabelFactory = (x: number, y: number, text: string, color: number) => Label;
@@ -82,7 +86,9 @@ export class BattleWindows {
       const color = member.hp <= 0 ? PANEL_STYLE.disabled : low ? PANEL_STYLE.danger : PANEL_STYLE.text;
       this.text(L.party.x + i.left + CURSOR_W, y, fit(member.name, 120), color);
       const hp = `${String(member.hp).padStart(3)}/${String(member.maxHp).padStart(3)}`;
-      this.text(L.party.x + L.party.w - i.right - hp.length * 8, y, hp, color);
+      const right = L.party.x + L.party.w - i.right, mpWidth = MP_COLUMN * 8;
+      this.text(right - mpWidth - 16 - hp.length * 8, y, hp, color);
+      if (member.maxMp) this.text(right - mpWidth, y, String(member.mp ?? 0).padStart(MP_COLUMN), member.hp <= 0 ? PANEL_STYLE.disabled : PANEL_STYLE.text);
     });
 
     // The command window stays as an empty panel while actions play, so the band never shows a hole.

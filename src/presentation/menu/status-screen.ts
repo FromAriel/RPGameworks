@@ -1,6 +1,6 @@
 /**
  * The Status screen (decision 0014 M5.4d-2, Ariel's answer: one member per page). The party list on the left picks the
- * page; Q/E or the shoulder buttons step through it. The page shows the portrait, HP and battle stats, reach in words,
+ * page; Q/E or the shoulder buttons step through it. The page shows the portrait, HP, MP (M5.5b-2) and battle stats, reach in words,
  * and where the member stands. Level, experience and equipment arrive with M5.6 and M5.9–M5.10.
  */
 import { createDetail, createHelpLine, createList, menuWindow } from './blocks';
@@ -14,6 +14,8 @@ export const STATUS_SCREEN = 'builtin:status';
 export interface StatusMember {
   readonly id: string; readonly name: string;
   readonly hp: number; readonly attack: number; readonly defense: number; readonly speed: number;
+  /** MP at most (decision 0018); every battle starts with full MP, so outside battle it is shown full. */
+  readonly mp?: number;
   readonly reach: 'melee' | 'reach' | 'ranged';
 }
 export interface StatusOptions {
@@ -46,7 +48,7 @@ export function statusScreen(_context: ScreenContext, options: StatusOptions): M
     const cell = party.cells[m.id]!;
     detail.set({
       picture: options.portrait(m.id), heading: m.name,
-      lines: [`HP ${m.hp} / ${m.hp}`, `Attack ${m.attack} · Defense ${m.defense} · Speed ${m.speed}`, REACH_WORDS[m.reach],
+      lines: [`HP ${m.hp} / ${m.hp}${m.mp ? ` · MP ${m.mp} / ${m.mp}` : ''}`, `Attack ${m.attack} · Defense ${m.defense} · Speed ${m.speed}`, REACH_WORDS[m.reach],
         `Stands in the ${cellName(cell)}.`, ...exposureLines(party, m.id)],
     });
   };

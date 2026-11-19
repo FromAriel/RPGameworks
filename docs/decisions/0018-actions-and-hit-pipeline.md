@@ -140,6 +140,24 @@ A hit's damage runs through an **ordered list of registered steps**, each a smal
 
 - **Demo enemies:** no affinities yet; they come with 0017's content in M5.5c.
 
+## Execution notes (M5.5b-2, November 18)
+
+Ariel's choices for the screen:
+- **MP in the party window:** a third column after HP, with current MP only, as in the classic layout (`Hero  32/ 40  12`).
+- **Aiming an area skill:** the cells it would hit light up on the target's grid, dimmer where falloff lowers damage, as enemy area attacks do.
+- **Weak and resisted hits:** a word above the number, both in one colour: "Weak!" in gold, "Resist" in grey-blue. Immune and absorb are unchanged.
+- **Skill help:** generated from the action's data (`describeAction`), for example "Slash. Hits a whole lane. 4 MP." No authored help field yet.
+
+What was built:
+- **Special:** the battle menu's **Special** lists the active member's skills, with the MP cost on the right.
+  - A skill that cannot be used now is listed but disabled, and its help line starts with the reason ("Not enough MP." or "No enemy can be reached.").
+  - Special itself is disabled when no skill can be used. It gives that shared reason, or "No specials yet." for a member with no skills.
+  - Choosing a skill opens targeting as Attack does: out-of-reach enemies are left out and named in the help line. Cancel goes back to the skill list, then to the command column.
+  - The menu remembers the last skill and target per member.
+- **Area playback:** an area skill's cells now light on the grid that was struck. In M5.5b-1 they always lit on the party's grid, which was right only for enemy abilities.
+- **MP elsewhere:** the Status page shows `HP 30 / 30 · MP 12 / 12`, and the hub cards add MP to their HP. Both are shown full, because every battle starts with full MP.
+- **Top-lane text:** for a top-lane enemy there is no room above the number, so the weak or resist pair starts lower and rises less, staying clear of the turn timeline.
+
 ## 7. Not in this decision
 
 - Status effects (M5.9), equipment (M5.10), combos (M5.8): the model allows them; their rules come in their packets.

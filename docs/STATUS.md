@@ -4,6 +4,55 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.5b-2 the Special menu, MP on screen, and affinity feedback — November 18, 2026, local
+
+[Decision 0018](decisions/0018-actions-and-hit-pipeline.md) M5.5b, second half. With M5.5b-1, **M5.5b is done locally**.
+
+- **Special:** each member's skill is listed with its MP cost:
+  - Hero: Cleave, 4;
+  - Archer: Volley, 5;
+  - Lancer: Pierce, 3;
+  - Mage: Fire Bolt, 4.
+
+  The help line describes the skill from its data, for example "Slash. Hits a whole lane. 4 MP.".
+  - A skill that can't be used now is disabled and says why ("Not enough MP." or "No enemy can be reached.").
+  - Special itself is disabled when no skill can be used.
+  - Aiming works as for Attack, and Cancel backs out one level at a time.
+  - The last skill and target are remembered for each member.
+- **Area aim:** while aiming Cleave or Volley, the enemy cells it would hit light up, dimmer where falloff lowers damage.
+  - Playback now lights the struck grid; in M5.5b-1 it always lit the party's.
+- **MP on screen:**
+  - **Battle party window:** a third column with current MP, after HP.
+  - **Status page:** `HP 30 / 30 · MP 12 / 12`.
+  - **Hub cards:** MP alongside HP, read aloud as "MP 12 of 12".
+- **Affinity feedback:** "Weak!" (gold) or "Resist" (grey-blue) above the number, which takes the same colour. For top-lane enemies the pair stays below the turn timeline.
+- **Runtime snapshot:** `battle.mp` per combatant, and `battle.menu.area` while aiming an area skill.
+- **Not yet visible in normal play:** no demo enemy has affinities until M5.5c. A temporary local probe (Bat weak to pierce, Golem resisting it; reverted, not committed) showed the words on the stage and the text "Clay Golem 1 (resisted) (80%), Bat 5 (weak)".
+- **Tests:**
+  - **Unit:** `special-menu.test.ts` (7):
+    - the list, costs and help;
+    - the generated descriptions;
+    - three-confirm skill commands with memory and cancel;
+    - disabled skills and the out-of-reach note;
+    - the area shape while aiming;
+    - a member with no skills;
+    - the list's position.
+  - **Browser:** `special.spec.ts` (1): MP at the start; Cleave, Volley and Fire Bolt used through the real menu; MP spent; the aim and hit screenshots.
+  - **Updated:** the hub and Status assertions now include MP.
+  - **Local results:**
+    - typecheck, `npm run validate`, the production build, `check:test-tags` (208 tagged) and `check:external-art` passed;
+    - unit tests **597/597**;
+    - full browser suite **205/208** on the last full run. The 3 failures were `ENOSPC: no space left on device` while Playwright wrote test traces: drive G: was full (623 MB free). Two earlier full runs failed 6–7 tests, probably for the same reason; this was not confirmed. Two of those failures were real: battle assertions that expected Special to be disabled and the old menu snapshot without `area`. Both were fixed. Every spec that failed in any full run (battle, conditional-access, interaction, inventory, openings, menu-blocks) then passed run on its own, 1 worker.
+- **Not checked by Ariel yet:**
+  - how Cleave and Volley feel in play;
+  - the colours of "Weak!" and "Resist".
+- **Known look:** while aiming at the Two-Headed Ogre (2 × 2 cells), the lit strips cross its body, as enemy area attacks do on the party. Cells are lit per cell, not per fighter.
+- **Migration:** none. Saves and content are unchanged.
+- **Next:** **M5.5c**:
+  - shields, break and regeneration;
+  - momentum and MP recovery;
+  - affinities for the demo enemies.
+
 ## M5.5b-1 damage tags, affinities, MP and skills (rules) — November 15, 2026, local
 
 [Decision 0018](decisions/0018-actions-and-hit-pipeline.md) M5.5b, first half: the rules and content. The screen (the Special menu, MP shown, affinity feedback) is M5.5b-2.

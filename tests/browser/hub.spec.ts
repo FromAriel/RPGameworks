@@ -29,7 +29,7 @@ test('the menu key opens the hub: party, commands from menu.json, location; I or
   await expect(page.locator('#game-menu .menu-row')).toHaveText(['Items', 'Status', 'Formation', 'Journal', 'Codex', 'Config', 'Help', 'Credits', 'Save']);
   await expect(page.locator('#game-menu .menu-row[aria-disabled="true"]')).toHaveCount(0); // Every demo entry opens since M5.4d; greyed entries are unit-tested (hub.test.ts).
   await expect(page.locator('#game-menu .menu-card')).toHaveCount(4); // The party roster (M5.4d), with full HP until M5.6.
-  await expect(page.locator('#game-menu .menu-card').first()).toHaveAttribute('aria-label', 'Hero, HP 30 of 30');
+  await expect(page.locator('#game-menu .menu-card').first()).toHaveAttribute('aria-label', 'Hero, HP 30 of 30, MP 12 of 12'); // MP since M5.5b-2.
   await expect(page.locator('#game-menu .menu-info-window')).toContainText('Location');
   await expect(page.locator('#game-menu .menu-info-window')).toContainText((await snapshot(page)).mapName);
   await expect(page.locator('#game-menu [data-window-skin]')).toHaveCount(4);

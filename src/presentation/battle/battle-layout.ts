@@ -17,7 +17,7 @@ const LINE = 16; // One UNSCII 16 text line.
 /** Where every battle window sits and where its text starts. */
 export interface BattleLayout {
   readonly help: Rect; readonly enemies: Rect; readonly party: Rect; readonly commands: Rect;
-  /** Sub-lists (Item, later Special) open over the enemy and party windows, as in FF6. */
+  /** Sub-lists (Item and Special) open over the enemy and party windows, as in FF6. */
   readonly list: Rect;
   /** Text inset inside the bottom windows; the cursor sits at `left - 4`, as in M5.3c. */
   readonly inset: Sides;
@@ -54,7 +54,7 @@ export const FALLBACK_LAYOUT = battleLayout(null);
 
 /** Where entry `index` of a menu at `level` is drawn, for the cursor and for the mirror's button. */
 export function entryRect(layout: BattleLayout, level: MenuLevel, index: number): Rect {
-  const box = level === 'item' ? layout.list : layout.commands, i = layout.inset;
+  const box = level === 'item' || level === 'skill' ? layout.list : layout.commands, i = layout.inset;
   return { x: box.x + i.left - 6, y: box.y + i.top - 2 + index * ROW, w: box.w - (i.left - 6) - (i.right - 6), h: ROW };
 }
 

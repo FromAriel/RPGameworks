@@ -1,5 +1,7 @@
-import type { BattleCommand, BattlePhase, Cell, CombatantSnapshot, Opening, RejectReason } from './battle';
+import type { AreaShape, BattleCommand, BattlePhase, Cell, CombatantSnapshot, Opening, RejectReason } from './battle';
 import { GRID, alliesAhead } from './battle-grid.mjs';
+import { describeAction } from './actions';
+import type { BattleAction } from './actions';
 
 /**
  * Classic battle command menu (decision 0009), independent of Phaser and the DOM. It only builds a command: nothing
@@ -15,8 +17,10 @@ export interface MenuContext {
   readonly validate: (command: BattleCommand) => RejectReason | null;
   /** How the battle opened; a back attack measures shields from the party's rear. Default normal. */
   readonly opening?: Opening;
+  /** The battle's action catalog, for the active member's skills under Special (decision 0018 M5.5b). */
+  readonly actions?: ReadonlyMap<string, BattleAction>;
 }
-export type MenuLevel = 'root' | 'item' | 'target' | 'move' | 'end';
+export type MenuLevel = 'root' | 'item' | 'skill' | 'target' | 'move' | 'end';
 export interface MenuEntry {
   readonly id: string;
   /** Text drawn in the window. */
@@ -37,6 +41,8 @@ export interface MenuState {
   readonly target: string | null;
   /** The grid cell under the cursor while choosing where to Move (decision 0014 M5.4c). */
   readonly cell: Cell | null;
+  /** While aiming an area skill: its shape, centred on `target`, so the stage can light the cells it would hit. */
+  readonly area: AreaShape | null;
 }
 export type EndChoice = 'finish' | 'retry' | 'leave';
 export type MenuOutcome =
@@ -44,8 +50,8 @@ export type MenuOutcome =
   | { readonly kind: 'command'; readonly command: BattleCommand }
   | { readonly kind: 'end'; readonly choice: EndChoice };
 
-type Pending = { readonly type: 'attack' } | { readonly type: 'item'; readonly itemId: string };
-interface Memory { root?: string; item?: string; attackTarget?: string; itemTarget?: string }
+type Pending = { readonly type: 'attack' } | { readonly type: 'item'; readonly itemId: string } | { readonly type: 'skill'; readonly action: string };
+interface Memory { root?: string; item?: string; skill?: string; attackTarget?: string; itemTarget?: string; skillTarget?: string }
 
 const ROOT_HELP: Record<string, string> = {
   attack: 'Strike one enemy.',
@@ -81,7 +87,9 @@ export class BattleMenu {
     const entry = entries[this.cursor];
     const target = this.level === 'target' ? entry?.id.slice('target:'.length) ?? null : null;
     const cell = this.level === 'move' && entry ? parseCell(entry.id) : null;
-    return { level: this.level, entries, cursor: this.cursor, help: entry?.help ?? '', target, cell };
+    const aimed = this.level === 'target' && this.pending?.type === 'skill' ? this.context?.actions?.get(this.pending.action) : undefined;
+    const area = aimed?.targeting === 'area' ? aimed.shape ?? null : null;
+    return { level: this.level, entries, cursor: this.cursor, help: entry?.help ?? '', target, cell, area };
   }
 
   /**
@@ -91,7 +99,8 @@ export class BattleMenu {
   column(): { readonly entries: readonly MenuEntry[]; readonly cursor: number; readonly inactive: boolean } {
     if (this.level === 'root' || this.level === 'end') return { entries: this.entries(), cursor: this.cursor, inactive: false };
     const entries = this.entriesFor('root');
-    const parent = this.level === 'move' ? 'move' : this.level === 'item' || this.pending?.type === 'item' ? 'item' : 'attack';
+    const parent = this.level === 'move' ? 'move' : this.level === 'item' || this.pending?.type === 'item' ? 'item'
+      : this.level === 'skill' || this.pending?.type === 'skill' ? 'special' : 'attack';
     return { entries, cursor: Math.max(0, entries.findIndex(entry => entry.id === parent)), inactive: true };
   }
 
@@ -126,6 +135,7 @@ export class BattleMenu {
       if (entry.id === 'run') return { kind: 'command', command: { type: 'escape' } };
       if (entry.id === 'attack') { this.enterTarget({ type: 'attack' }); return NONE; }
       if (entry.id === 'item') { this.enterItems(); return NONE; }
+      if (entry.id === 'special') { this.enterSkills(); return NONE; }
       if (entry.id === 'move') { this.level = 'move'; this.pending = null; this.cursor = Math.max(0, this.entries().findIndex(e => e.enabled)); return NONE; }
       return NONE;
     }
@@ -136,9 +146,16 @@ export class BattleMenu {
       this.enterTarget({ type: 'item', itemId });
       return NONE;
     }
+    if (this.level === 'skill') {
+      const action = entry.id.slice('skill:'.length);
+      this.memo().skill = action;
+      this.enterTarget({ type: 'skill', action });
+      return NONE;
+    }
     const target = entry.id.slice('target:'.length);
     const pending = this.pending!;
     if (pending.type === 'attack') { this.memo().attackTarget = target; return { kind: 'command', command: { type: 'attack', target } }; }
+    if (pending.type === 'skill') { this.memo().skillTarget = target; return { kind: 'command', command: { type: 'skill', action: pending.action, target } }; }
     this.memo().itemTarget = target;
     return { kind: 'command', command: { type: 'item', itemId: pending.itemId, target } };
   }
@@ -146,8 +163,9 @@ export class BattleMenu {
   /** Back out one level without committing anything. At the top level the cursor moves to Run instead. */
   cancel(): void {
     if (this.level === 'target' && this.pending?.type === 'item') { this.enterItems(); return; }
-    if (this.level === 'target' || this.level === 'item' || this.level === 'move') {
-      const back = this.level === 'item' ? 'item' : this.level === 'move' ? 'move' : 'attack';
+    if (this.level === 'target' && this.pending?.type === 'skill') { this.enterSkills(); return; }
+    if (this.level === 'target' || this.level === 'item' || this.level === 'skill' || this.level === 'move') {
+      const back = this.level === 'item' ? 'item' : this.level === 'skill' ? 'special' : this.level === 'move' ? 'move' : 'attack';
       this.level = 'root'; this.pending = null;
       this.cursor = Math.max(0, this.entries().findIndex(entry => entry.id === back));
       return;
@@ -169,10 +187,17 @@ export class BattleMenu {
     this.cursor = index >= 0 ? index : Math.max(0, entries.findIndex(entry => entry.enabled));
   }
 
+  private enterSkills(): void {
+    this.level = 'skill'; this.pending = null;
+    const entries = this.entries();
+    const index = entries.findIndex(entry => entry.id === `skill:${this.memo().skill}` && entry.enabled);
+    this.cursor = index >= 0 ? index : Math.max(0, entries.findIndex(entry => entry.enabled));
+  }
+
   private enterTarget(pending: Pending): void {
     this.level = 'target'; this.pending = pending;
     const candidates = this.targets(pending);
-    const remembered = pending.type === 'attack' ? this.memo().attackTarget : this.memo().itemTarget;
+    const remembered = pending.type === 'attack' ? this.memo().attackTarget : pending.type === 'skill' ? this.memo().skillTarget : this.memo().itemTarget;
     let index = candidates.findIndex(candidate => candidate.id === remembered);
     if (index < 0 && pending.type === 'item') {
       // Healing starts on the most injured candidate; ties keep the listed order.
@@ -189,9 +214,23 @@ export class BattleMenu {
   private targets(pending: Pending): CombatantSnapshot[] {
     const context = this.context!;
     const order = [...context.combatants].sort((a, b) => (a.side === b.side ? a.slot - b.slot : a.side === 'enemy' ? -1 : 1));
-    return order.filter(candidate => candidate.hp > 0 && context.validate(pending.type === 'attack'
-      ? { type: 'attack', target: candidate.id }
-      : { type: 'item', itemId: pending.itemId, target: candidate.id }) === null);
+    return order.filter(candidate => candidate.hp > 0 && context.validate(commandFor(pending, candidate.id)) === null);
+  }
+
+  /** The active member's skills, in their listed order, with their catalog actions. */
+  private skills(): { readonly id: string; readonly action: BattleAction }[] {
+    const context = this.context!;
+    const actor = context.combatants.find(c => c.id === context.active);
+    return (actor?.skills ?? []).flatMap(id => { const action = context.actions?.get(id); return action ? [{ id, action }] : []; });
+  }
+
+  /** Why a skill cannot be used now, or null: MP first, then reach. */
+  private skillReason(id: string): string | null {
+    const context = this.context!;
+    const living = context.combatants.filter(c => c.side === 'enemy' && c.hp > 0);
+    const reasons = living.map(c => context.validate({ type: 'skill', action: id, target: c.id }));
+    if (reasons.some(reason => reason === null)) return null;
+    return reasons.includes('not-enough-mp') ? 'Not enough MP.' : 'No enemy can be reached.';
   }
 
   private entries(): MenuEntry[] { return this.entriesFor(this.level); }
@@ -203,8 +242,8 @@ export class BattleMenu {
     if (level === 'target') {
       // Decision 0014: an enemy the active fighter cannot reach is not offered; the help line says who and why.
       const pending = this.pending!;
-      const unreachable = pending.type === 'attack'
-        ? context.combatants.filter(c => c.side === 'enemy' && c.hp > 0 && context.validate({ type: 'attack', target: c.id }) === 'out-of-reach').map(c => c.name)
+      const unreachable = pending.type !== 'item'
+        ? context.combatants.filter(c => c.side === 'enemy' && c.hp > 0 && context.validate(commandFor(pending, c.id)) === 'out-of-reach').map(c => c.name)
         : [];
       const note = unreachable.length ? `  Out of reach: ${unreachable.join(', ')}.` : '';
       return this.targets(pending).map(candidate => ({
@@ -213,6 +252,14 @@ export class BattleMenu {
       }));
     }
     if (level === 'move') return this.moveEntries();
+    if (level === 'skill') {
+      // Every skill is listed with its MP cost; one the member cannot use now is shown disabled, and says why.
+      return this.skills().map(({ id, action }) => {
+        const reason = this.skillReason(id), mp = action.cost?.mp ?? 0;
+        return { id: `skill:${id}`, label: action.name, name: mp ? `${action.name} (${mp} MP)` : action.name, detail: mp ? String(mp) : '',
+          enabled: reason === null, help: reason === null ? describeAction(action) : `${reason} ${describeAction(action)}` };
+      });
+    }
     const items = context.items.filter(item => item.count > 0);
     if (level === 'item') {
       return items.map(item => {
@@ -224,11 +271,15 @@ export class BattleMenu {
     const attack = this.targets({ type: 'attack' }).length > 0;
     const usableItem = items.some(item => this.targets({ type: 'item', itemId: item.id }).length > 0);
     const run = context.validate({ type: 'escape' }) === null;
+    const skills = this.skills(), skillReasons = skills.map(skill => this.skillReason(skill.id));
+    const special = skillReasons.some(reason => reason === null);
+    // When no skill can be used, one shared reason ("Not enough MP.") or a general one if the reasons differ.
+    const specialReason = !skills.length ? 'No specials yet.' : new Set(skillReasons).size === 1 ? skillReasons[0]! : 'No special can be used now.';
     const entry = (id: string, label: string, enabled: boolean, reason: string): MenuEntry =>
       ({ id, label, name: label, enabled, help: enabled ? ROOT_HELP[id]! : reason });
     return [
       entry('attack', 'Attack', attack, 'No enemy can be reached.'),
-      entry('special', 'Special', false, 'No specials yet.'),
+      entry('special', 'Special', special, specialReason),
       entry('item', 'Item', usableItem, items.length ? this.itemReason(items[0]!.id) : 'No usable items.'),
       entry('guard', 'Guard', context.validate({ type: 'guard' }) === null, 'Cannot guard now.'),
       entry('move', 'Move', this.moveEntries().some(e => e.enabled), 'There is nowhere to move.'),
@@ -278,6 +329,13 @@ function endEntries(phase: BattlePhase): MenuEntry[] {
   if (phase === 'victory') return [entry('finish', 'Finish', 'Victory! Return to the room.')];
   if (phase === 'defeat') return [entry('retry', 'Retry', 'Start this battle again from the beginning.'), entry('leave', 'Leave', 'Return to the room.')];
   return [entry('leave', 'Leave', 'Escaped. Return to the room.')];
+}
+
+/** The command `pending` would make against `target`. */
+function commandFor(pending: Pending, target: string): BattleCommand {
+  return pending.type === 'attack' ? { type: 'attack', target }
+    : pending.type === 'skill' ? { type: 'skill', action: pending.action, target }
+    : { type: 'item', itemId: pending.itemId, target };
 }
 
 const LANES = ['Top', 'Middle', 'Bottom'] as const;

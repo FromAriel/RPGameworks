@@ -136,7 +136,7 @@ export class BattleSession {
    * @param items what each usable item does in battle
    * @param actions the game's action catalog (decision 0018): every action an enemy pattern names must be in it
    */
-  constructor(readonly encounter: Encounter, private readonly items: ReadonlyMap<string, BattleItemUse> = new Map(), private readonly actions: ReadonlyMap<string, BattleAction> = new Map()) {
+  constructor(readonly encounter: Encounter, private readonly items: ReadonlyMap<string, BattleItemUse> = new Map(), readonly actions: ReadonlyMap<string, BattleAction> = new Map()) {
     for (const enemy of encounter.enemies) for (const step of enemy.pattern ?? []) {
       if (step !== 'attack' && !actions.has(step)) throw new Error(`Encounter ${encounter.id}: ${enemy.id} uses unknown action ${step}`);
     }

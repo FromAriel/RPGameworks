@@ -1,3 +1,4 @@
+import type { BestiaryRecord } from '../../domain/session';
 import './menu.css';
 import { MenuNavigation } from '../ui/menu-navigation';
 import type { PadInput } from '../../platform/gamepad-model';
@@ -17,6 +18,8 @@ import type { Condition } from '../../domain/session';
 export interface MenuServices {
   /** Whether a content condition holds now (unlock conditions in menu.json). */
   holds(condition: Condition): boolean;
+  /** What the party has discovered about an enemy kind (decision 0017 M5.5d), for creature entries. */
+  discoveries?(kind: string): BestiaryRecord | undefined;
 }
 
 export interface ScreenContext {

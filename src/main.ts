@@ -223,7 +223,7 @@ async function start(): Promise<void> {
     const [catalog,facts,quests,stateIndex,menu,catalogs]=await Promise.all([loadItemCatalog(base,content,appLifetime.signal),loadFactCatalog(base,content,appLifetime.signal),loadQuestCatalog(base,content,appLifetime.signal),loadStateIndex(base,content.game,appLifetime.signal),loadMenu(base,content,appLifetime.signal),loadCatalogs(base,content,appLifetime.signal)]);
     if(JSON.stringify(quests.map(quest=>quest.id))!==JSON.stringify(stateIndex.questIds??[]))throw new Error('Quest catalog does not match the save state index');
     const party=await loadParty(base,content,stateIndex,appLifetime.signal);
-    const session = new SessionController(new SessionState({items:catalog,facts,quests,...(party?{party}:{})}));
+    const session = new SessionController(new SessionState({items:catalog,facts,quests,...(party?{party}:{}),...(stateIndex.bestiary?{bestiary:stateIndex.bestiary}:{})}));
     saveService=new SaveService({gameId:content.game.id,saveCompatibilityVersion:content.game.saveCompatibilityVersion??1,index:stateIndex},new IndexedDbSaveRepository());
     const { createFoundation } = await import('./presentation/foundation');
     if (disposed) {saveService.close();saveService=null;return;}

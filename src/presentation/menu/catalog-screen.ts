@@ -3,6 +3,7 @@
  * (tabs), and entries with a title and paragraphs; an entry with an unlock condition shows as ??? until it holds. A
  * codex, a bestiary, a glossary or the credits are each a catalog file plus a menu entry, with no code.
  */
+import { describeDiscoveries } from '../../domain/session';
 import type { CatalogDefinition } from '../../content/generated/catalog';
 import type { Condition } from '../../domain/session';
 import { createDetail, createHelpLine, createInfo, createList, createTabs, menuWindow, type ListEntry } from './blocks';
@@ -35,7 +36,9 @@ export function catalogScreen(context: ScreenContext, catalogs: ReadonlyMap<stri
   const describe = (id: string) => {
     const entry = catalog.entries.find(e => e.id === id);
     if (!entry) { detail.set({ heading: 'Nothing here', lines: ['Nothing in this category yet.'] }); return; }
-    detail.set(known(entry) ? { heading: entry.title, lines: entry.text } : { heading: LOCKED, lines: ['Not discovered yet.'] });
+    // A creature entry adds what the party has discovered about its kind (decision 0017 M5.5d).
+    const discovered = entry.kind ? describeDiscoveries(context.services.discoveries?.(entry.kind)) : [];
+    detail.set(known(entry) ? { heading: entry.title, lines: [...entry.text, ...discovered] } : { heading: LOCKED, lines: ['Not discovered yet.'] });
   };
   const list = createList({ label: catalog.title, entries: [], onChoose: () => undefined, onFocus: describe });
   const show = (category: string | undefined) => {

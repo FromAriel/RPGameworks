@@ -3,11 +3,32 @@ import type { ItemCatalog } from '../content/generated/items';
 import type { MapDefinition } from '../content/generated/map';
 import { defaultParty, partyProblem } from './party';
 import type { GridCell, PartyRoster, PartyState } from './party';
+import type { Affinity } from './hit';
+
+/**
+ * What the party has learned about one enemy kind (decision 0017 M5.5d, Ariel's answers): every affinity it has seen
+ * a damage tag show (several for a kind whose phases differ), and whether it has ever been broken.
+ */
+export interface BestiaryRecord { readonly affinities: Readonly<Record<string, readonly Affinity[]>>; readonly broken: boolean }
+export type Bestiary = Readonly<Record<string, BestiaryRecord>>;
+/** Affinity levels in the order a record lists them. */
+export const AFFINITY_LEVELS: readonly Affinity[] = Object.freeze(['weak', 'resist', 'immune', 'absorb']);
+const LEVEL_WORDS: Readonly<Record<Affinity, string>> = { weak: 'Weak', resist: 'Resists', immune: 'Immune', absorb: 'Absorbs' };
+/**
+ * A creature's Codex lines for what is known (decision 0017 M5.5d, Ariel: entries always listed): each level with its
+ * tags, for example "Weak: pierce. Resists: fire.", and "Broken in battle." once it has been; "Affinities: none found
+ * yet." before anything is known.
+ */
+export function describeDiscoveries(record: BestiaryRecord | undefined): string[] {
+  const parts = AFFINITY_LEVELS.map(level => [level, Object.keys(record?.affinities ?? {}).filter(tag => record!.affinities[tag]!.includes(level))] as const)
+    .filter(([, tags]) => tags.length).map(([level, tags]) => `${LEVEL_WORDS[level]}: ${tags.join(', ')}.`);
+  return [parts.length ? parts.join(' ') : 'Affinities: none found yet.', ...(record?.broken ? ['Broken in battle.'] : [])];
+}
 
 export type Placement = MapDefinition['objects'][number];
 export type QuestState = 'active' | 'completed';
 export interface QuestDefinition { readonly id:string; readonly title:string; readonly objective:string; readonly completedText:string }
-export type DependencyKey = `fact:${string}` | `item:${string}` | `placement:${string}` | `quest:${string}` | 'party:formation';
+export type DependencyKey = `fact:${string}` | `item:${string}` | `placement:${string}` | `quest:${string}` | 'party:formation' | `bestiary:${string}`;
 export interface SessionSnapshot {
   readonly revision: number;
   readonly inventory: Readonly<Record<string, number>>;
@@ -16,6 +37,8 @@ export interface SessionSnapshot {
   readonly quests: Readonly<Record<string, QuestState>>;
   /** The party and its formation (decision 0014 M5.4d), or null for a game without a party roster. */
   readonly party: PartyState | null;
+  /** Discoveries by enemy kind (save version 4). */
+  readonly bestiary: Bestiary;
 }
 export interface SessionData {
   readonly inventory: Readonly<Record<string, number>>;
@@ -25,8 +48,12 @@ export interface SessionData {
   readonly party?: PartyState;
   /** Whole seconds played (save version 3). */
   readonly playTime?: number;
+  /** Discoveries by enemy kind (save version 4). */
+  readonly bestiary?: Bestiary;
 }
-export interface SessionDefinitions { readonly items: ItemCatalog; readonly facts: FactCatalog; readonly quests?: readonly QuestDefinition[]; readonly party?: PartyRoster }
+export interface SessionDefinitions { readonly items: ItemCatalog; readonly facts: FactCatalog; readonly quests?: readonly QuestDefinition[]; readonly party?: PartyRoster;
+  /** Each enemy kind and the damage tags a discovery may name (the save state index's bestiary). */
+  readonly bestiary?: Readonly<Record<string, readonly string[]>> }
 export interface ItemChange { readonly itemId:string; readonly delta:number }
 export type Condition =
   | { readonly type: 'all'; readonly conditions: readonly Condition[] }
@@ -42,7 +69,9 @@ export type SessionAction =
   | { readonly type: 'markPlacementOpened'; readonly placementId: string }
   | { readonly type: 'setQuestState'; readonly questId: string; readonly value: QuestState }
   /** Every active member's cell at once (the formation screen commits one of these). */
-  | { readonly type: 'setFormation'; readonly cells: Readonly<Record<string, GridCell>> };
+  | { readonly type: 'setFormation'; readonly cells: Readonly<Record<string, GridCell>> }
+  /** Merge a battle's discoveries into the bestiary (decision 0017 M5.5d): affinities are added, never removed. */
+  | { readonly type: 'recordDiscoveries'; readonly discoveries: Bestiary };
 export interface TransactionRequest {
   readonly prerequisites?: Condition;
   /** Compatibility alias for the original transaction draft. New callers use prerequisites. */
@@ -72,9 +101,32 @@ function freezeParty(party: PartyState): PartyState {
 }
 const MAX_PLAY_SECONDS = 359_999_999;
 
-function freezeSnapshot(revision: number, inventory: Record<string, number>, facts: Record<string, boolean>, placements: Record<string, {readonly opened:true}>, quests: Record<string,QuestState>, party: PartyState | null): SessionSnapshot {
+function freezeSnapshot(revision: number, inventory: Record<string, number>, facts: Record<string, boolean>, placements: Record<string, {readonly opened:true}>, quests: Record<string,QuestState>, party: PartyState | null, bestiary: Bestiary): SessionSnapshot {
   for (const value of Object.values(placements)) Object.freeze(value);
-  return Object.freeze({revision, inventory:Object.freeze(inventory), facts:Object.freeze(facts), placements:Object.freeze(placements), quests:Object.freeze(quests), party});
+  return Object.freeze({revision, inventory:Object.freeze(inventory), facts:Object.freeze(facts), placements:Object.freeze(placements), quests:Object.freeze(quests), party, bestiary});
+}
+
+/**
+ * `incoming` merged into `current` (decision 0017 M5.5d), checked against the kinds and tags the game defines; null
+ * when it names something unknown. Levels are kept once each, in AFFINITY_LEVELS order; broken stays once true.
+ */
+export function mergeBestiary(current: Bestiary, incoming: unknown, kinds: Readonly<Record<string, readonly string[]>>): Bestiary | null {
+  const plain = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+  if (!plain(incoming)) return null;
+  const result: Record<string, BestiaryRecord> = { ...current };
+  for (const [kind, record] of Object.entries(incoming)) {
+    const tags = kinds[kind];
+    if (!tags || !plain(record) || Object.keys(record).length !== 2 || !plain(record.affinities) || typeof record.broken !== 'boolean') return null;
+    const affinities: Record<string, Affinity[]> = Object.fromEntries(Object.entries(result[kind]?.affinities ?? {}).map(([tag, levels]) => [tag, [...levels]]));
+    for (const [tag, levels] of Object.entries(record.affinities)) {
+      if (!tags.includes(tag) || !Array.isArray(levels) || !levels.length || !levels.every(level => AFFINITY_LEVELS.includes(level as Affinity))) return null;
+      const merged = new Set([...(affinities[tag] ?? []), ...levels as Affinity[]]);
+      affinities[tag] = AFFINITY_LEVELS.filter(level => merged.has(level));
+    }
+    const sorted = Object.fromEntries(Object.keys(affinities).sort().map(tag => [tag, Object.freeze(affinities[tag]!)]));
+    result[kind] = Object.freeze({ affinities: Object.freeze(sorted), broken: (result[kind]?.broken ?? false) || record.broken });
+  }
+  return Object.freeze(Object.fromEntries(Object.keys(result).sort().map(kind => [kind, result[kind]!])));
 }
 
 export function conditionDependencies(condition: Condition, selfId?: string): ReadonlySet<DependencyKey> {
@@ -122,6 +174,8 @@ export class SessionState {
   private readonly factDefaults: Readonly<Record<string, boolean>>;
   private readonly questIds: ReadonlySet<string>;
   private readonly memberIds: ReadonlySet<string>;
+  /** Each enemy kind and the tags its discoveries may name (decision 0017 M5.5d); empty for a game without them. */
+  readonly bestiaryKinds: Readonly<Record<string, readonly string[]>>;
   /** Play time in milliseconds; advanced by the caller's frame deltas, never by a clock (not a transaction). */
   private playMs = 0;
   readonly roster: PartyRoster | null;
@@ -137,6 +191,7 @@ export class SessionState {
     this.questIds=new Set(this.questCatalog.map(quest=>quest.id));
     this.roster=normalized.party?structuredClone(normalized.party):null;
     this.memberIds=new Set(this.roster?.members.map(member=>member.id)??[]);
+    this.bestiaryKinds=Object.freeze(structuredClone(normalized.bestiary??{}));
     this.items = new Map(this.catalog.items.map(item => [item.id,item]));
     const factIds = new Set(this.factCatalog.facts.map(fact => fact.id));
     if (!Number.isSafeInteger(this.catalog.capacity) || this.catalog.capacity < 1 || this.catalog.capacity > 64 ||
@@ -144,7 +199,7 @@ export class SessionState {
         this.catalog.items.some(item => !Number.isSafeInteger(item.maxStack) || item.maxStack < 1 || item.maxStack > 9999)||this.questIds.size!==this.questCatalog.length) throw new Error('Invalid definitions for session state');
     this.factDefaults = Object.freeze(Object.fromEntries(this.factCatalog.facts.map(fact => [fact.id,fact.default])));
     const checked = this.validateData(data ?? {inventory:{},facts:this.factDefaults,placements:{}});
-    this.state = freezeSnapshot(0,checked.inventory,checked.facts,checked.placements,checked.quests,checked.party);
+    this.state = freezeSnapshot(0,checked.inventory,checked.facts,checked.placements,checked.quests,checked.party,checked.bestiary);
     this.playMs = checked.playTime * 1000;
     if (this.roster) { for (const member of this.roster.members) { Object.freeze(member.cell); Object.freeze(member); } Object.freeze(this.roster.members); Object.freeze(this.roster.active); Object.freeze(this.roster); }
     for (const item of this.catalog.items) Object.freeze(item);
@@ -154,7 +209,9 @@ export class SessionState {
     for(const quest of this.questCatalog)Object.freeze(quest);Object.freeze(this.questCatalog);
   }
   snapshot(): SessionSnapshot { return this.state; }
-  data(): SessionData { return Object.freeze({inventory:this.state.inventory,facts:this.state.facts,placements:this.state.placements,quests:this.state.quests,...(this.state.party?{party:this.state.party}:{}),playTime:this.playTime()}); }
+  data(): SessionData { return Object.freeze({inventory:this.state.inventory,facts:this.state.facts,placements:this.state.placements,quests:this.state.quests,...(this.state.party?{party:this.state.party}:{}),playTime:this.playTime(),bestiary:this.state.bestiary}); }
+  /** What the party knows about an enemy kind, if anything. */
+  discoveries(kind: string): BestiaryRecord | undefined { return this.state.bestiary[kind]; }
   /** Whole seconds played. */
   playTime(): number { return Math.min(MAX_PLAY_SECONDS, Math.floor(this.playMs / 1000)); }
   /** Count `ms` more play time. The caller decides when time counts (decision 0016 Q3: while the page is visible). */
@@ -200,6 +257,7 @@ export class SessionState {
     const placements: Record<string,{readonly opened:true}> = {...this.state.placements};
     const quests:Record<string,QuestState>={...this.state.quests};
     let party=this.state.party;
+    let bestiary=this.state.bestiary;
     if(marker)placements[marker]=Object.freeze({opened:true});
     const changed = new Set<DependencyKey>();
     for (const action of transaction.actions) {
@@ -227,6 +285,10 @@ export class SessionState {
         const next={active:party.active,cells:action.cells};
         if(partyProblem(next,this.memberIds))return reject('invalid');
         party=freezeParty(next);
+      } else if(action.type==='recordDiscoveries'){
+        const merged=mergeBestiary(bestiary,action.discoveries,this.bestiaryKinds);
+        if(!merged)return reject('invalid');
+        bestiary=merged;
       } else return reject('invalid');
     }
     for (const [id,count] of Object.entries(inventory)) {
@@ -241,8 +303,9 @@ export class SessionState {
     for(const id of Object.keys(quests))if(this.state.quests[id]!==quests[id])changed.add(`quest:${id}`);
     if(party&&this.state.party&&party.active.some(id=>party!.cells[id]!.lane!==this.state.party!.cells[id]!.lane||party!.cells[id]!.depth!==this.state.party!.cells[id]!.depth))changed.add('party:formation');
     else party=this.state.party;
+    for(const kind of Object.keys(bestiary))if(JSON.stringify(bestiary[kind])!==JSON.stringify(this.state.bestiary[kind]))changed.add(`bestiary:${kind}`);
     if (changed.size === 0) return {kind:'unchanged',revision:this.state.revision,changed:noChanges};
-    this.state = freezeSnapshot(this.state.revision+1,inventory,facts,placements,quests,party);
+    this.state = freezeSnapshot(this.state.revision+1,inventory,facts,placements,quests,party,bestiary);
     return {kind:'committed',revision:this.state.revision,changed:Object.freeze(changed) as ReadonlySet<DependencyKey>};
   }
   claim(placement: Placement): TransactionResult {
@@ -250,7 +313,7 @@ export class SessionState {
     if (!chest) return {kind:'rejected',reason:'invalid',revision:this.state.revision,changed:noChanges};
     return this.transact({actions:[{type:'changeItem',itemId:chest.itemId,delta:chest.quantity}],idempotencyMarker:'self'},placement.id);
   }
-  private validateData(data: SessionData): {inventory:Record<string,number>;facts:Record<string,boolean>;placements:Record<string,{readonly opened:true}>;quests:Record<string,QuestState>;party:PartyState|null;playTime:number} {
+  private validateData(data: SessionData): {inventory:Record<string,number>;facts:Record<string,boolean>;placements:Record<string,{readonly opened:true}>;quests:Record<string,QuestState>;party:PartyState|null;playTime:number;bestiary:Bestiary} {
     const inventory: Record<string,number> = {};
     for (const [id,count] of Object.entries(data.inventory)) { const item=this.items.get(id); if(!item||!Number.isSafeInteger(count)||count<1||count>item.maxStack)throw new Error(`Invalid saved inventory entry: ${id}`);inventory[id]=count; }
     if (Object.keys(inventory).length > this.catalog.capacity) throw new Error('Saved inventory exceeds capacity');
@@ -266,6 +329,8 @@ export class SessionState {
     if(partyError)throw new Error(`Invalid saved party: ${partyError}`);
     const playTime=data.playTime??0;
     if(!Number.isSafeInteger(playTime)||playTime<0||playTime>MAX_PLAY_SECONDS)throw new Error('Invalid saved play time');
-    return {inventory,facts,placements,quests,party:party&&freezeParty(party),playTime};
+    const bestiary=mergeBestiary(Object.freeze({}),data.bestiary??{},this.bestiaryKinds);
+    if(!bestiary)throw new Error('Invalid saved bestiary');
+    return {inventory,facts,placements,quests,party:party&&freezeParty(party),playTime,bestiary};
   }
 }

@@ -154,7 +154,7 @@ class SaveScreen implements MenuScreen {
     if (slot.error) { this.detail.set({ heading, lines: [`Invalid: ${slot.error}`, ...(slot.recoverable ? ['A previous revision can be recovered.'] : [])] }); return; }
     if (!slot.record) { this.detail.set({ heading, lines: ['Empty.', 'Load and Export are unavailable.'] }); return; }
     const record = slot.record.current;
-    const played = record.schemaVersion === 3 ? [`Play time ${formatPlayTime(record.session.playTime ?? 0)}`] : [];
+    const played = record.schemaVersion >= 3 ? [`Play time ${formatPlayTime(record.session.playTime ?? 0)}`] : [];
     this.detail.set({ heading, lines: [this.place(slot), ...played, `Saved ${new Date(record.savedAt).toLocaleString()}`, `Revision ${record.storageRevision}`, ...(slot.recoverable ? ['A previous revision can be recovered.'] : [])] });
   }
 

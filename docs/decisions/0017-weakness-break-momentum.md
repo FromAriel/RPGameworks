@@ -161,6 +161,33 @@ What was built:
 - **Floating text:** every floating word and number now stays on the stage floor. On the top lane it starts lower and rises less instead of crossing the turn timeline; this covers BREAK! and ordinary damage numbers too.
 - **Runtime snapshot:** each battler's `points`, `broken` and `alpha` (in `art`), and the battle's `momentum` and `round`.
 
+## Execution notes (M5.5d, November 19)
+
+Ariel's choices:
+- **Links:** each enemy has a `kind` ID, and Codex creature entries name the same kind. A creature catalog file was not added.
+- **What is remembered:** every affinity a hit has shown (weak, resist, immune, absorb), not only weaknesses, and whether the kind has ever been broken.
+- **When:** at every end of a battle attempt (victory, escape, defeat), once per attempt. Retry is a new attempt, so a lost fight keeps what it found.
+- **Codex:** creature entries stay listed; they gain discovery lines.
+
+What was built:
+- **Content:**
+  - **Enemies:** may have `kind` (`<game>:creature.<name>`). Validation keeps it on enemies and requires every enemy of one kind to have the same affinities, shield and phases, so a discovery holds everywhere.
+  - **Codex entries:** may have `kind`: a kind some enemy has, at most one entry each.
+  - **Demo:** `demo:creature.bat`, `demo:creature.clay-golem` and `demo:creature.two-headed-ogre`, on every demo enemy and Codex creature entry.
+- **Save version 4:**
+  - **State index:** gains `bestiary`, each kind and the tags it has any affinity to (`bestiaryKinds`). A save may record only those.
+  - **Saves:** gain `session.bestiary`, for example `{"demo:creature.clay-golem": {"affinities": {"blunt": ["weak"]}, "broken": true}}`. Levels are listed once each, in the order weak, resist, immune, absorb.
+  - **Older saves:** versions 1–3 load into version 4 by the existing legacy rule (save version and compatibility N, content M), with nothing discovered.
+  - **Compatibility:** the demo's save compatibility is now 4.
+- **Session:**
+  - **Recording:** a `recordDiscoveries` action merges discoveries. It only adds, never removes; a repeat is `unchanged`, and an unknown kind, tag or level rejects the whole transaction.
+  - **Change keys:** `bestiary:<kind>`.
+- **Kernel:** each enemy carries its `kind`, `seen` (for each tag behind a hit's affinity, the levels shown, in any phase) and `everBroken`. `discoveriesOf(snapshot)` groups them by kind.
+- **Battle:** the scene records an attempt's discoveries when it ends.
+  - **Help line:** counts a weakness as known if it was found this battle or is in the bestiary, and only while it applies in the enemy's current phase. So the Ogre's pierce weakness shows only in its second phase.
+- **Codex:** creature entries add "Weak: …. Resists: …." (also "Immune", "Absorbs") and "Broken in battle.", or "Affinities: none found yet." (`describeDiscoveries`).
+- **Fix:** the save screen showed play time only for version 3 saves; it now shows it for version 3 and later.
+
 ## 10. Not in M5.5
 
 - Skills, elements, spending MP and combos: M5.9 and later (the data model allows multi-actor actions, as 0006 asks).

@@ -20,6 +20,8 @@ export interface MenuContext {
   readonly opening?: Opening;
   /** The battle's action catalog, for the active member's skills under Special (decision 0018 M5.5b). */
   readonly actions?: ReadonlyMap<string, BattleAction>;
+  /** The tags the bestiary knows an enemy kind is weak to, from earlier battles (decision 0017 M5.5d). */
+  readonly knownWeak?: (kind: string) => readonly string[];
 }
 export type MenuLevel = 'root' | 'item' | 'skill' | 'target' | 'move' | 'end';
 export interface MenuEntry {
@@ -225,8 +227,10 @@ export class BattleMenu {
    */
   private weaknessNote(target: CombatantSnapshot, pending: Pending): string {
     if (target.side !== 'enemy') return '';
-    const known = target.revealed.filter(tag => target.affinities[tag] === 'weak');
     const context = this.context!;
+    // Found this battle, or remembered from earlier ones (decision 0017 M5.5d), and weak in the enemy's current phase.
+    const remembered = target.kind ? context.knownWeak?.(target.kind) ?? [] : [];
+    const known = [...new Set([...target.revealed, ...remembered])].filter(tag => target.affinities[tag] === 'weak');
     const actor = context.combatants.find(c => c.id === context.active);
     const tags = pending.type === 'attack' ? actor?.weapon?.tags ?? [] : pending.type === 'skill' ? context.actions?.get(pending.action)?.tags ?? [] : [];
     const weakHit = affinityOf(target.affinities, tags) === 'weak' && tags.some(tag => known.includes(tag));

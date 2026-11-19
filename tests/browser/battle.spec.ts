@@ -101,7 +101,12 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');
   await expect(page.locator('#stage')).toBeFocused();
   const after = await snapshot(page);
-  expect(after.session).toEqual(before.session);
+  // Since M5.5d a finished battle records what it showed in the bestiary (one transaction); nothing else changes.
+  const { bestiary, revision, ...rest } = after.session;
+  const { bestiary: _before, revision: start, ...restBefore } = before.session;
+  expect(rest).toEqual(restBefore);
+  expect(revision).toBe(start + 1);
+  expect(bestiary['demo:creature.bat']?.affinities.pierce).toEqual(['weak']); // The Archer's arrow found the Bat's weakness.
   expect(after.displayObjects).toBe(before.displayObjects); // Every window, number and tween was released.
   expect(after.textureCount).toBe(before.textureCount);
 });

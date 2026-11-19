@@ -3,7 +3,7 @@ import { readFileSync, statSync, realpathSync, mkdirSync, mkdtempSync, writeFile
 import { dirname, resolve, relative, sep, join, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, readParty, readActions, readMenu, readCatalog, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
+import { readGame, readMap, readItems, readFacts, readQuests, readEncounters, readParty, readActions, readMenu, readCatalog, bestiaryKinds, validateMapFacts, validateMapDialogues, validateWorld } from '../src/content/validation.mjs';
 import { expandCatalog } from './library-credits.mjs';
 import { createAuthoringReport } from './authoring-report.mjs';
 import { readUiTheme, emitUiTheme, checkMapSkins } from './ui-theme.mjs';
@@ -74,7 +74,8 @@ try {
   const encounters=game.encountersFile?readEncounters(encountersData,game.encountersFile,frames,creatureIds,party,actionIds,tagNames):encountersData;
   // Unlock conditions in the menu and in catalogs may name facts, items, quests and placements from this game.
   const known = { facts: new Set(facts.facts.map(f => f.id)), items: new Set(catalog.items.map(i => i.id)),
-    quests: new Set(quests.quests.map(q => q.id)), placements: new Set([...maps.values()].flatMap(m => m.objects.map(o => o.id))) };
+    quests: new Set(quests.quests.map(q => q.id)), placements: new Set([...maps.values()].flatMap(m => m.objects.map(o => o.id))),
+    kinds: new Set(Object.keys(bestiaryKinds(encounters))) };
   // Data-only menu screens (decision 0016 U2.4): checked as written, then with library credits expanded and checked again.
   const catalogs = (game.catalogs ?? []).map(entry => {
     const file = realpathSync(join(source, entry.file)); const rel = relative(source, file);
@@ -174,10 +175,11 @@ try {
         console.log(`Baked ${Object.keys(first.table.creatures).length} creature(s) into ${image} (${Object.keys(first.table.frames).length} frames).`);
       }
       // Save schema 3 (decision 0014 M5.4d) when the game has a party roster: saves keep the party and play time.
+      // Schema 4 (decision 0017 M5.5d) adds the bestiary: each enemy kind and the tags a save may record about it.
       const partyDefaults=party&&{active:[...party.active],cells:Object.fromEntries(party.active.map(id=>{const cell=party.members.find(m=>m.id===id).cell;return[id,{lane:cell.lane,depth:cell.depth}];}))};
-      const stateIndex={schemaVersion:party?3:game.questsFile?2:1,gameId:game.id,saveCompatibilityVersion:game.saveCompatibilityVersion??1,
+      const stateIndex={schemaVersion:party?4:game.questsFile?2:1,gameId:game.id,saveCompatibilityVersion:game.saveCompatibilityVersion??1,
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
-        itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile||party?{questIds:quests.quests.map(quest=>quest.id)}:{}),...(party?{party:{memberIds:party.members.map(m=>m.id),defaults:partyDefaults}}:{})};
+        itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile||party?{questIds:quests.quests.map(quest=>quest.id)}:{}),...(party?{party:{memberIds:party.members.map(m=>m.id),defaults:partyDefaults},bestiary:bestiaryKinds(encounters)}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
       writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(partyFile?{partyFile}:{}),...(actionsFile?{actionsFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(menuFile?{menuFile}:{}),...(catalogEntries.length?{catalogs:catalogEntries}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});

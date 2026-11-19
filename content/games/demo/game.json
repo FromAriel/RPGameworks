@@ -3,7 +3,7 @@
   "id": "demo:game.foundation",
   "tileSize": 32,
   "view": {"width": 640, "height": 360},
-  "saveCompatibilityVersion": 3,
+  "saveCompatibilityVersion": 4,
   "start": {
     "mapId": "demo:map.workshop",
     "spawnId": "start"

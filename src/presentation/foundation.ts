@@ -8,7 +8,7 @@ import { uiTextScale, viewportScale } from '../domain/viewport';
 import { InputController } from '../platform/input';
 import { MessageSession } from '../domain/interaction';
 import { DialogueSession } from '../domain/dialogue';
-import { BattleSession } from '../domain/battle';
+import { BattleSession, discoveriesOf } from '../domain/battle';
 import { battleEncounter } from '../domain/party';
 import { loadActions } from '../platform/action-loader';
 import { formatPlayTime } from '../domain/save';
@@ -132,6 +132,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     /** Builds commands for the battle; remembers each character's last choices for the whole battle. */
     private battleMenu = new BattleMenu();
     private battleLoad: AbortController | null = null;
+    /** Whether this battle attempt's discoveries are recorded (decision 0017 M5.5d: once per attempt, at its end). */
+    private battleRecorded = false;
     transitionError: string | null = null;
     private sceneLifetime: AbortController | null = null;
     private transfer = new TransitionTask<LoadedMap>();
@@ -305,7 +307,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         layer.element.id = 'game-menu';
         // The menu key closes the menu from inside it too, like the controller's Menu button.
         layer.element.addEventListener('keydown', event => { if (event.code === 'KeyI' && !event.repeat) { event.preventDefault(); this.resume(); } }, { signal: this.sceneLifetime.signal });
-        this.hub = new MenuController(layer, registry, { holds: condition => elements.session.evaluate(condition as Condition) }, elements.windowskin(), () => this.hubClosed());
+        this.hub = new MenuController(layer, registry, { holds: condition => elements.session.evaluate(condition as Condition), discoveries: kind => elements.session.current.discoveries(kind) }, elements.windowskin(), () => this.hubClosed());
         this.inputOwner = new InputController(elements.stage, elements.controls, elements.burst,
           elements.gamepad, elements.canPlay, elements.dialog, layer.element);
         starts += 1;
@@ -451,7 +453,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         const uses=new Map<string,BattleItemUse>();
         for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
         const session=elements.session.current;
-        this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses,actions);this.battleLoad=null;this.battleMenu=new BattleMenu();
+        this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses,actions);this.battleLoad=null;this.battleMenu=new BattleMenu();this.battleRecorded=false;
         const opening=this.battle.snapshot();
         this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,creatures,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});
@@ -465,10 +467,23 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
     /** Replay the events behind `state` on the battle stage, then offer the next choices. */
     private playBattle(state:BattleSnapshot):void{
+      if(state.phase!=='command')this.recordDiscoveries(state);
       const view=this.battleView;
       if(!view||state.events.length===0){this.showBattle();return;}
       view.play(state,()=>{if(this.battleView===view)this.showBattle();});
       this.showBattle();
+    }
+    /**
+     * At the end of a battle attempt (victory, escape or defeat; Ariel, M5.5d), add what it showed to the bestiary in one
+     * session transaction. Retry starts a new attempt, so a lost fight's discoveries are kept.
+     */
+    private recordDiscoveries(state:BattleSnapshot):void{
+      if(this.battleRecorded)return;
+      this.battleRecorded=true;
+      const discoveries=discoveriesOf(state);
+      if(!Object.keys(discoveries).length)return;
+      const result=elements.session.transact({actions:[{type:'recordDiscoveries',discoveries}]});
+      if(result.kind==='rejected')console.warn('[RPGameworks] Battle discoveries were not recorded:',result.reason);
     }
     private endBattleView():void{this.battleView?.destroy();this.battleView=null;}
     private battleItemName(itemId:string):string{
@@ -479,7 +494,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const battle=this.battle!,state=battle.snapshot(),session=elements.session.current;
       const items:MenuItemInfo[]=session.catalog.items.filter(item=>item.battleUse?.type==='heal').map(item=>({id:item.id,name:this.battleItemName(item.id),
         count:session.count(item.id),help:`Restores ${item.battleUse!.amount} HP.`}));
-      return{phase:state.phase,active:state.active,combatants:state.combatants,items,opening:state.opening,actions:battle.actions,validate:command=>battle.validate(command)};
+      return{phase:state.phase,active:state.active,combatants:state.combatants,items,opening:state.opening,actions:battle.actions,validate:command=>battle.validate(command),
+        knownWeak:kind=>Object.entries(session.discoveries(kind)?.affinities??{}).filter(([,levels])=>levels.includes('weak')).map(([tag])=>tag)};
     }
     /**
      * Classic battle windows (decision 0009): the stage draws them; the dialogue becomes an invisible layer whose
@@ -562,7 +578,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private endBattleChoice(choice:EndChoice):void{
       const battle=this.battle;if(!battle)return;
       const phase=battle.snapshot().phase;
-      if(phase==='defeat'&&choice==='retry'){const opening=battle.retry();this.battleView?.render(opening);this.playBattle(opening);}
+      if(phase==='defeat'&&choice==='retry'){this.battleRecorded=false;const opening=battle.retry();this.battleView?.render(opening);this.playBattle(opening);}
       else if(phase!=='command')this.resume();
     }
     /** Playback controls; the outcome is already decided, so these never change it. */
@@ -578,7 +594,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if(!this.sceneLifetime||this.transfer.pending)return;const old=this.room!;this.leaveHub();this.hubEntry=null;this.setMode('transition');
       this.dialog.show('Loading save','Preparing and validating the saved room. You can cancel and keep the current session.','',null,'Cancel load');
       const current=elements.session.current;
-      const candidate=new SessionState({items:current.catalog,facts:current.factCatalog,quests:current.questCatalog,...(current.roster?{party:current.roster}:{})},envelope.session);
+      const candidate=new SessionState({items:current.catalog,facts:current.factCatalog,quests:current.questCatalog,...(current.roster?{party:current.roster}:{}),bestiary:current.bestiaryKinds},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
         const prepared=new MapView(this,next,candidate,characterArt??undefined);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;

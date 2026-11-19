@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { readEncounters, readFacts, readItems, readParty, readQuests } from '../../src/content/validation.mjs';
+import { bestiaryKinds, readEncounters, readFacts, readItems, readParty, readQuests } from '../../src/content/validation.mjs';
 import { BattleSession } from '../../src/domain/battle';
 import type { Encounter } from '../../src/domain/battle';
 import { battleEncounter, defaultParty } from '../../src/domain/party';
@@ -16,23 +16,24 @@ const demo = (file: string) => json(`content/games/demo/${file}`);
 const roster = readParty(demo('party.json'), 'party.json', ['hero-left', 'archer-left', 'lancer-left', 'mage-left']);
 const encounters = readEncounters(demo('encounters.json'), 'encounters.json', undefined, undefined, roster).encounters;
 const authored = readEncounters(json('tests/fixtures/encounters/authored-party.json')).encounters;
-const definitions = () => ({ items: readItems(demo('items.json')), facts: readFacts(demo('facts.json')), quests: readQuests(demo('quests.json')).quests as readonly QuestDefinition[], party: roster });
+const definitions = () => ({ items: readItems(demo('items.json')), facts: readFacts(demo('facts.json')), quests: readQuests(demo('quests.json')).quests as readonly QuestDefinition[], party: roster,
+  bestiary: bestiaryKinds(readEncounters(demo('encounters.json'))) });
 const issues = (run: () => unknown): string[] => {
   try { run(); return []; } catch (error) {
     return ((error as { issues?: { path: string; message: string }[] }).issues ?? [{ path: '', message: String(error) }]).map(i => `${i.path}: ${i.message}`);
   }
 };
 
-/** The demo's save state index, derived from content as the build does. */
+/** The demo's save state index, derived from content as the build does (version 4 since M5.5d adds the bestiary). */
 function context(): SaveContext {
   const game = demo('game.json') as { maps: { file: string }[]; saveCompatibilityVersion: number };
   const maps = game.maps.map(entry => demo(entry.file)) as { id: string; name: string; width: number; height: number; spawns: { id: string }[]; objects: { id: string }[] }[];
   const defs = definitions();
   const index = validateStateIndex({
-    schemaVersion: 3, gameId: 'demo:game.foundation', saveCompatibilityVersion: game.saveCompatibilityVersion,
+    schemaVersion: 4, gameId: 'demo:game.foundation', saveCompatibilityVersion: game.saveCompatibilityVersion,
     maps: maps.map(map => ({ id: map.id, name: map.name, width: map.width, height: map.height, spawns: map.spawns.map(s => s.id) })),
     itemIds: defs.items.items.map(i => i.id), factIds: defs.facts.facts.map(f => f.id), placementIds: maps.flatMap(m => m.objects.map(o => o.id)),
-    questIds: defs.quests.map(q => q.id), party: { memberIds: roster.members.map(m => m.id), defaults: defaultParty(roster) },
+    questIds: defs.quests.map(q => q.id), party: { memberIds: roster.members.map(m => m.id), defaults: defaultParty(roster) }, bestiary: defs.bestiary,
   });
   return { gameId: 'demo:game.foundation', saveCompatibilityVersion: game.saveCompatibilityVersion, index };
 }
@@ -65,8 +66,8 @@ describe('the party roster', () => {
 describe('the party in battle', () => {
   it('plays the Formation Drill exactly as when its party was authored in the encounter', () => {
     // Since M5.4f the Drill's Golem and Ogre also have area attacks; without them, the roster's party plays as before.
-    // The fixture predates enemy patterns (M5.4f) and the M5.5c kit (affinities, shields, phases), so those are left out.
-    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ pattern: _p, affinities: _a, shield: _s, phases: _ph, ...enemy }) => enemy) };
+    // The fixture predates enemy patterns (M5.4f), the M5.5c kit (affinities, shields, phases) and kinds (M5.5d), so those are left out.
+    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ pattern: _p, affinities: _a, shield: _s, phases: _ph, kind: _k, ...enemy }) => enemy) };
     const drill = battleEncounter(plain, roster, defaultParty(roster));
     // Since M5.5b members also carry a weapon, MP and skills; the rest of each member is as authored.
     expect({ ...drill, party: drill.party.map(({ weapon: _w, mp: _m, skills: _s, ...member }) => member) }).toEqual(authored[1]);
@@ -120,7 +121,7 @@ describe('the formation in the session', () => {
   });
 });
 
-describe('save version 3', () => {
+describe('saves since version 3 (now version 4)', () => {
   const checkpoint = { mapId: 'demo:map.workshop', tile: { x: 10, y: 7 }, facing: 'down' as const };
 
   it('keeps the formation and play time through a save and a load', () => {
@@ -128,15 +129,16 @@ describe('save version 3', () => {
     session.transact({ actions: [{ type: 'setFormation', cells: { ...defaultParty(roster).cells, mage: { lane: 1, depth: 3 } } }] });
     session.advancePlayTime(4_000_500);
     const envelope = createEnvelope('slot-1', 1, context(), checkpoint, session);
-    expect(envelope).toMatchObject({ schemaVersion: 3, saveCompatibilityVersion: 3, session: { playTime: 4000, party: { active: ['hero', 'archer', 'lancer', 'mage'] } } });
+    expect(envelope).toMatchObject({ schemaVersion: 4, saveCompatibilityVersion: 4, session: { bestiary: {}, playTime: 4000, party: { active: ['hero', 'archer', 'lancer', 'mage'] } } });
     const restored = new SessionState(definitions(), validateSaveEnvelope(JSON.parse(JSON.stringify(envelope)), context()).session);
     expect(restored.party()!.cells.mage).toEqual({ lane: 1, depth: 3 });
     expect(restored.playTime()).toBe(4000);
   });
 
-  it('matches the v3 fixture, and rejects a damaged party or play time', () => {
+  it('loads the v3 fixture into version 4 with nothing discovered, and rejects a damaged party or play time', () => {
     const fixture = json('tests/fixtures/saves/v3-formation-moved.json') as Record<string, any>;
     const loaded = validateSaveEnvelope(fixture, context());
+    expect(loaded).toMatchObject({ schemaVersion: 4, saveCompatibilityVersion: 4, session: { bestiary: {}, playTime: fixture.session.playTime } });
     expect(loaded.session.party).toEqual({ active: ['hero', 'archer', 'lancer', 'mage'], cells: { hero: { lane: 1, depth: 1 }, archer: { lane: 2, depth: 2 }, lancer: { lane: 3, depth: 1 }, mage: { lane: 2, depth: 3 } } });
     const damaged = (session: Record<string, unknown>) => () => validateSaveEnvelope({ ...fixture, session: { ...fixture.session, ...session } }, context());
     expect(damaged({ party: { ...fixture.session.party, cells: { ...fixture.session.party.cells, mage: { lane: 1, depth: 1 } } } })).toThrow('two members share lane 1, depth 1');
@@ -152,7 +154,7 @@ describe('save version 3', () => {
       const old = json(`tests/fixtures/saves/${file}`);
       const original = JSON.stringify(old);
       const loaded = validateSaveEnvelope(old, context());
-      expect(loaded).toMatchObject({ schemaVersion: 3, saveCompatibilityVersion: 3, session: { party: defaultParty(roster), playTime: 0, quests: expect.any(Object) } });
+      expect(loaded).toMatchObject({ schemaVersion: 4, saveCompatibilityVersion: 4, session: { party: defaultParty(roster), playTime: 0, bestiary: {}, quests: expect.any(Object) } });
       expect(JSON.stringify(old)).toBe(original);
       expect(new SessionState(definitions(), loaded.session).party()).toEqual(defaultParty(roster));
     }

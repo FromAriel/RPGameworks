@@ -4,6 +4,49 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.5d discoveries remembered: the bestiary, save version 4 and the Codex — November 19, 2026, local
+
+[Decision 0017](decisions/0017-weakness-break-momentum.md), last packet. With it, **M5.5 is done locally**; Ariel's play review is open.
+
+- **Enemy kinds:** every demo enemy has a kind:
+  - `demo:creature.bat`;
+  - `demo:creature.clay-golem`;
+  - `demo:creature.two-headed-ogre`.
+
+  Each Codex creature entry names its kind. One kind must have the same affinities, shield and phases in every encounter; validation checks this.
+- **What is remembered:** every affinity a hit showed (weak, resist, immune or absorb, per tag), and whether the kind was ever broken.
+  - **When:** recorded once at the end of each battle attempt (victory, escape or defeat), in one session transaction.
+  - **Retry:** keeps what a lost attempt found.
+- **Save version 4:** saves keep the bestiary.
+  - **Older saves:** versions 1–3 load with nothing discovered.
+  - **Content compatibility:** the demo's is 4.
+  - **Validation:** a save can only record the kinds and tags the content defines.
+  - **Fixture:** a version 4 save (`tests/fixtures/saves/v4-bestiary.json`).
+- **In battle:** a weakness found in an earlier fight shows in the targeting help line from the first turn ("Weak: blunt  Weak!"), but only in the phase where it applies.
+- **Codex:** creature entries add, for example, "Weak: blunt. Resists: slash." and "Broken in battle.", or "Affinities: none found yet.". `docs/MENU-SCREENS.md` documents the `kind` field.
+- **Fix:** the save screen now shows play time for version 4 saves (it checked for version 3 exactly).
+- **Tests:**
+  - **Unit:** `bestiary.test.ts` (11):
+    - **Content:** kinds and the state index's list; kind validation (party, mismatched kits, Codex kinds).
+    - **Bestiary:** merging and its order; rejecting bad records; the transaction (repeat unchanged, a bad record rejects the whole transaction).
+    - **Text:** the Codex lines.
+    - **Saves:** a version 4 round trip; the version 4 fixture with damaged or missing bestiaries.
+    - **Battle:** the drill's discoveries (the Mage's weak hits, the Hero's resisted hit, the break); remembered weaknesses in the help line only in their phase; the drill unchanged by kinds.
+  - **Updated:** `party.test.ts`:
+    - the save index at version 4;
+    - version 1–3 saves load with an empty bestiary;
+    - the authored-party comparison also ignores `kind`.
+  - **Browser:** `bestiary.spec.ts` (1):
+    - break the Golem, then run;
+    - the Codex shows "Weak: blunt." and "Broken in battle." for the Golem, and nothing for the Bat;
+    - the next fight's help line names the weakness before the first hit.
+  - **Local results:**
+    - typecheck, `npm run validate`, the production build, `check:test-tags` (210 tagged) and `check:external-art` passed;
+    - unit tests **622/622**;
+    - browser suite **209/210** on the full run. The one failure was a deliberate change: the first battle test expected a finished battle to leave the session untouched, but a battle now records its discoveries. It now checks that only the bestiary changed (one revision) and that the Bat's pierce weakness was recorded, and it passed on rerun.
+- **Migration:** save version 4. Older saves upgrade on load with an empty bestiary; no data is lost.
+- **Next:** Ariel's play review of M5.5 (weakness, break and momentum feel; the screen); then **M5.6**.
+
 ## M5.5c-2 weakness, break and momentum on screen — November 18, 2026, local
 
 [Decision 0017](decisions/0017-weakness-break-momentum.md), second half. With M5.5c-1, **M5.5c is done locally**.

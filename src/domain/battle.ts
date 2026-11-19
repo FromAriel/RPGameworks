@@ -92,6 +92,11 @@ export interface CombatantSnapshot {
   readonly shield: number; readonly maxShield: number; readonly broken: boolean; readonly stunned: boolean;
   /** Enemies: the phase it is in (0 until its first threshold), and the tags this battle has found it weak to. */
   readonly phase: number; readonly revealed: readonly string[];
+  /**
+   * Enemies (decision 0017 M5.5d): its kind for the bestiary, every affinity a hit has shown this battle (tag to
+   * levels, in any phase), and whether it has broken this battle.
+   */
+  readonly kind: string | null; readonly seen: Readonly<Record<string, readonly Affinity[]>>; readonly everBroken: boolean;
 }
 export interface TurnPreview { readonly actor: string; readonly tick: number }
 export interface BattleSnapshot {
@@ -134,9 +139,25 @@ export function actionDelay(speed: number, weight: number): number {
   return Math.ceil((TIMELINE_BASE * weight) / (100 * speed));
 }
 
-interface Fighter extends Omit<CombatantSnapshot, 'nextTick' | 'guarding' | 'hp' | 'lane' | 'depth' | 'mp' | 'affinities' | 'shield' | 'maxShield' | 'broken' | 'stunned' | 'phase' | 'revealed'> {
+interface Fighter extends Omit<CombatantSnapshot, 'nextTick' | 'guarding' | 'hp' | 'lane' | 'depth' | 'mp' | 'affinities' | 'shield' | 'maxShield' | 'broken' | 'stunned' | 'phase' | 'revealed' | 'seen' | 'everBroken'> {
   hp: number; mp: number; nextTick: number; guarding: boolean; lane: number; depth: number;
   affinities: Readonly<Record<string, Affinity>>; shield: number; maxShield: number; broken: boolean; stunned: boolean; phase: number; revealed: string[];
+  seen: Record<string, Affinity[]>; everBroken: boolean;
+}
+
+/**
+ * A battle's discoveries for the bestiary (decision 0017 M5.5d): for each enemy kind, every affinity its enemies showed
+ * and whether one broke. Enemies without a kind, and kinds nothing was learned about, are left out.
+ */
+export function discoveriesOf(snapshot: BattleSnapshot): Record<string, { affinities: Record<string, Affinity[]>; broken: boolean }> {
+  const result: Record<string, { affinities: Record<string, Affinity[]>; broken: boolean }> = {};
+  for (const enemy of snapshot.combatants) {
+    if (enemy.side !== 'enemy' || !enemy.kind || (!enemy.everBroken && !Object.keys(enemy.seen).length)) continue;
+    const record = result[enemy.kind] ??= { affinities: {}, broken: false };
+    record.broken ||= enemy.everBroken;
+    for (const [tag, levels] of Object.entries(enemy.seen)) record.affinities[tag] = [...new Set([...(record.affinities[tag] ?? []), ...levels])];
+  }
+  return result;
 }
 
 /** Every fighter's grid placement by side and slot (decision 0014). Content validation has already checked them. */
@@ -187,7 +208,7 @@ export class BattleSession {
     const active = this.phase === 'command' ? this.next()?.id ?? null : null;
     return {
       encounterId: this.encounter.id, opening: this.opening, phase: this.phase, turn: this.turn, active,
-      combatants: this.fighters.map(fighter => ({ ...fighter, revealed: [...fighter.revealed] })),
+      combatants: this.fighters.map(fighter => ({ ...fighter, revealed: [...fighter.revealed], seen: Object.fromEntries(Object.entries(fighter.seen).map(([tag, levels]) => [tag, [...levels]])) })),
       timeline: this.phase === 'command' ? this.preview() : [],
       events: [...this.events],
       momentum: this.momentum, round: this.round,
@@ -294,6 +315,7 @@ export class BattleSession {
       ...placements[side][slot]!, reach: combatant.reach ?? 'melee', creature: combatant.creature ?? null, faces: combatant.faces ?? 'left', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
       mp: combatant.mp ?? 0, maxMp: combatant.mp ?? 0, weapon: combatant.weapon ?? null, skills: combatant.skills ?? [], affinities: combatant.affinities ?? {},
       shield: combatant.shield ?? 0, maxShield: combatant.shield ?? 0, broken: false, stunned: false, phase: 0, revealed: [],
+      kind: combatant.kind ?? null, seen: {}, everBroken: false,
     });
     this.fighters = [...this.encounter.party.map(build('party')), ...this.encounter.enemies.map(build('enemy'))];
     this.plans = new Map(this.encounter.enemies.flatMap(e => (e.pattern ? [[e.id, { pattern: e.pattern, actions: 0 }] as const] : [])));
@@ -408,6 +430,8 @@ export class BattleSession {
    * Follow-up events (phase, break) go to `follow`; the returned field joins the hit's own record.
    */
   private consequences(actor: Fighter, target: Fighter, affinity: Affinity | null, tags: readonly string[], follow: BattleEvent[]): { shieldLeft?: number } {
+    // What the hit showed (decision 0017 M5.5d): the tags behind its affinity, in the phase it landed in.
+    if (affinity) for (const tag of tags) if (target.affinities[tag] === affinity && !(target.seen[tag] ??= []).includes(affinity)) target.seen[tag]!.push(affinity);
     if (affinity === 'weak') {
       this.gain(MOMENTUM.weak);
       for (const tag of tags) if (target.affinities[tag] === 'weak' && !target.revealed.includes(tag)) target.revealed.push(tag);
@@ -429,7 +453,7 @@ export class BattleSession {
     if (affinity !== 'weak' || target.shield <= 0 || target.broken) return {};
     target.shield -= 1;
     if (target.shield === 0) {
-      target.broken = true; target.stunned = true;
+      target.broken = true; target.stunned = true; target.everBroken = true;
       target.nextTick += actionDelay(target.speed, BREAK.pushBackWeight);
       this.gain(MOMENTUM.break);
       follow.push({ kind: 'break', actor: target.id, by: actor.id });

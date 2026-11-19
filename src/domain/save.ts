@@ -1,37 +1,43 @@
 import type { SessionData,SessionState } from './session';
 import { partyProblem } from './party';
 import type { PartyState } from './party';
-export const SAVE_FORMAT='rpgameworks-save';export const SAVE_SCHEMA_VERSION=3;
-/** Session keys by save schema version: 2 added quests; 3 added the party and play time (decision 0014 M5.4d). */
-const SESSION_KEYS={1:['inventory','facts','placements'],2:['inventory','facts','placements','quests'],3:['inventory','facts','placements','quests','party','playTime']} as const;
+import { mergeBestiary } from './session';
+export const SAVE_FORMAT='rpgameworks-save';export const SAVE_SCHEMA_VERSION=4;
+/** Session keys by save schema version: 2 added quests; 3 the party and play time (decision 0014 M5.4d); 4 the bestiary (decision 0017 M5.5d). */
+const SESSION_KEYS={1:['inventory','facts','placements'],2:['inventory','facts','placements','quests'],3:['inventory','facts','placements','quests','party','playTime'],4:['inventory','facts','placements','quests','party','playTime','bestiary']} as const;
+type SaveVersion=1|2|3|4;
 export const MAX_PLAY_TIME=359_999_999;
 /** Play time as hours and minutes, for example 12:05. */
 export const formatPlayTime=(seconds:number):string=>`${Math.floor(seconds/3600)}:${String(Math.floor(seconds/60)%60).padStart(2,'0')}`;export const MAX_IMPORT_BYTES=256*1024;
 export const SLOT_IDS=['slot-1','slot-2','slot-3'] as const;export type SaveSlotId=typeof SLOT_IDS[number];
 export interface SaveCheckpoint{readonly mapId:string;readonly tile:{readonly x:number;readonly y:number};readonly facing:'up'|'down'|'left'|'right'}
 /** Retained name for callers; validation returns the current envelope and accepts legacy v1. */
-export interface SaveEnvelopeV1{readonly format:typeof SAVE_FORMAT;readonly schemaVersion:1|2|3;readonly gameId:string;readonly saveCompatibilityVersion:number;readonly slotId:SaveSlotId;readonly storageRevision:number;readonly savedAt:string;readonly checkpoint:SaveCheckpoint;readonly session:SessionData}
+export interface SaveEnvelopeV1{readonly format:typeof SAVE_FORMAT;readonly schemaVersion:SaveVersion;readonly gameId:string;readonly saveCompatibilityVersion:number;readonly slotId:SaveSlotId;readonly storageRevision:number;readonly savedAt:string;readonly checkpoint:SaveCheckpoint;readonly session:SessionData}
 /** Version 3 adds the roster's member IDs and the default party, which older saves take when they load. */
 export interface StateIndexParty{readonly memberIds:readonly string[];readonly defaults:PartyState}
-export interface StateIndex{readonly schemaVersion:1|2|3;readonly gameId:string;readonly saveCompatibilityVersion:number;readonly maps:readonly{readonly id:string;readonly name:string;readonly width:number;readonly height:number;readonly spawns:readonly string[]}[];readonly itemIds:readonly string[];readonly factIds:readonly string[];readonly placementIds:readonly string[];readonly questIds?:readonly string[];readonly party?:StateIndexParty}
+export interface StateIndex{readonly schemaVersion:SaveVersion;readonly gameId:string;readonly saveCompatibilityVersion:number;readonly maps:readonly{readonly id:string;readonly name:string;readonly width:number;readonly height:number;readonly spawns:readonly string[]}[];readonly itemIds:readonly string[];readonly factIds:readonly string[];readonly placementIds:readonly string[];readonly questIds?:readonly string[];readonly party?:StateIndexParty;
+  /** Version 4: each enemy kind and the damage tags a save may record about it. */
+  readonly bestiary?:Readonly<Record<string,readonly string[]>>}
 export interface SaveContext{readonly gameId:string;readonly saveCompatibilityVersion:number;readonly index:StateIndex}
 const plain=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==='object'&&!Array.isArray(value);
 const exact=(value:Record<string,unknown>,keys:readonly string[]):boolean=>Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 export function validateStateIndex(value:unknown):StateIndex{
   const version=plain(value)?Number(value.schemaVersion):0;
-  if(!plain(value)||![1,2,3].includes(version)||!exact(value,['schemaVersion','gameId','saveCompatibilityVersion','maps','itemIds','factIds','placementIds',...(version>=2?['questIds']:[]),...(version===3?['party']:[])])||typeof value.gameId!=='string'||!Number.isSafeInteger(value.saveCompatibilityVersion)||(value.saveCompatibilityVersion as number)<1||!Array.isArray(value.maps)||!Array.isArray(value.itemIds)||!Array.isArray(value.factIds)||!Array.isArray(value.placementIds)||(version>=2&&!Array.isArray(value.questIds)))throw new Error('Invalid save state index');
-  if(version===3){const party=value.party;if(!plain(party)||!exact(party,['memberIds','defaults'])||!Array.isArray(party.memberIds)||!party.memberIds.every(id=>typeof id==='string')||new Set(party.memberIds).size!==party.memberIds.length||partyProblem(party.defaults,new Set(party.memberIds as string[])))throw new Error('Invalid save state index party');}
+  if(!plain(value)||![1,2,3,4].includes(version)||!exact(value,['schemaVersion','gameId','saveCompatibilityVersion','maps','itemIds','factIds','placementIds',...(version>=2?['questIds']:[]),...(version>=3?['party']:[]),...(version>=4?['bestiary']:[])])||typeof value.gameId!=='string'||!Number.isSafeInteger(value.saveCompatibilityVersion)||(value.saveCompatibilityVersion as number)<1||!Array.isArray(value.maps)||!Array.isArray(value.itemIds)||!Array.isArray(value.factIds)||!Array.isArray(value.placementIds)||(version>=2&&!Array.isArray(value.questIds)))throw new Error('Invalid save state index');
+  if(version>=4){const bestiary=value.bestiary;if(!plain(bestiary)||!Object.values(bestiary).every(tags=>Array.isArray(tags)&&tags.every(tag=>typeof tag==='string')&&new Set(tags).size===tags.length))throw new Error('Invalid save state index bestiary');}
+  if(version>=3){const party=value.party;if(!plain(party)||!exact(party,['memberIds','defaults'])||!Array.isArray(party.memberIds)||!party.memberIds.every(id=>typeof id==='string')||new Set(party.memberIds).size!==party.memberIds.length||partyProblem(party.defaults,new Set(party.memberIds as string[])))throw new Error('Invalid save state index party');}
   const mapIds=new Set<string>();for(const map of value.maps){if(!plain(map)||!exact(map,['id','name','width','height','spawns'])||typeof map.id!=='string'||typeof map.name!=='string'||!Number.isSafeInteger(map.width)||!Number.isSafeInteger(map.height)||(map.width as number)<1||(map.height as number)<1||!Array.isArray(map.spawns)||!map.spawns.every(spawn=>typeof spawn==='string')||mapIds.has(map.id))throw new Error('Invalid save state index map');mapIds.add(map.id);}
   for(const ids of [value.itemIds,value.factIds,value.placementIds,...(Array.isArray(value.questIds)?[value.questIds]:[])])if(!ids.every(id=>typeof id==='string')||new Set(ids).size!==ids.length)throw new Error('Invalid save state index identifiers');
   return structuredClone(value) as unknown as StateIndex;
 }
 export function validateSaveEnvelope(value:unknown,context:SaveContext):SaveEnvelopeV1{
   if(!plain(value)||!exact(value,['format','schemaVersion','gameId','saveCompatibilityVersion','slotId','storageRevision','savedAt','checkpoint','session']))throw new Error('Save envelope has an invalid shape');
-  if(value.format!==SAVE_FORMAT||(value.schemaVersion!==1&&value.schemaVersion!==2&&value.schemaVersion!==3))throw new Error('Unsupported save format or version');
-  const version=value.schemaVersion as 1|2|3;
+  if(value.format!==SAVE_FORMAT||![1,2,3,4].includes(value.schemaVersion as number))throw new Error('Unsupported save format or version');
+  const version=value.schemaVersion as SaveVersion;
   if(value.gameId!==context.gameId)throw new Error('Save belongs to a different game');
   // An older save loads into newer content when both moved together (save version N with compatibility N, content now
-  // at version and compatibility M > N): missing sections take their defaults (no quests, the default party, no time).
+  // at version and compatibility M > N): missing sections take their defaults (no quests, the default party, no time,
+  // nothing discovered).
   const legacy=version<context.index.schemaVersion&&value.saveCompatibilityVersion===version&&context.saveCompatibilityVersion===context.index.schemaVersion;
   if(value.saveCompatibilityVersion!==context.saveCompatibilityVersion&&!legacy)throw new Error('Save is not compatible with this content version');
   if(value.schemaVersion!==context.index.schemaVersion&&!legacy)throw new Error('Save schema is not compatible with this content version');
@@ -47,13 +53,14 @@ export function validateSaveEnvelope(value:unknown,context:SaveContext):SaveEnve
   for(const[id,state]of Object.entries(session.placements))if(!placements.has(id)||!plain(state)||!exact(state,['opened'])||state.opened!==true)throw new Error(`Invalid saved placement: ${id}`);
   const questIds=new Set(context.index.questIds??[]);
   if(version>=2)for(const[id,state]of Object.entries(session.quests as Record<string,unknown>))if(!questIds.has(id)||(state!=='active'&&state!=='completed'))throw new Error(`Invalid saved quest: ${id}`);
-  if(version===3){
+  if(version>=3){
     const problem=partyProblem(session.party,new Set(context.index.party?.memberIds??[]));if(problem)throw new Error(`Invalid saved party: ${problem}`);
     if(!Number.isSafeInteger(session.playTime)||(session.playTime as number)<0||(session.playTime as number)>MAX_PLAY_TIME)throw new Error('Invalid saved play time');
   }
+  if(version>=4&&!mergeBestiary({},session.bestiary,context.index.bestiary??{}))throw new Error('Invalid saved bestiary');
   if(legacy){
     const target=context.index.schemaVersion;
-    const upgraded={...session,quests:session.quests??{},...(target===3?{party:structuredClone(context.index.party!.defaults),playTime:0}:{})};
+    const upgraded={...session,quests:session.quests??{},...(target>=3&&version<3?{party:structuredClone(context.index.party!.defaults),playTime:0}:{}),...(target>=4?{bestiary:{}}:{})};
     return structuredClone({...value,schemaVersion:target,saveCompatibilityVersion:context.saveCompatibilityVersion,session:upgraded}) as SaveEnvelopeV1;
   }
   return structuredClone(value) as unknown as SaveEnvelopeV1;

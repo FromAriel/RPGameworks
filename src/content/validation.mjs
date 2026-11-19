@@ -256,6 +256,7 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
       if (side !== 'enemies' && combatant.affinities) at(`${path}/affinities`, 'Only enemies have affinities for now', null);
       for (const tag of Object.keys(combatant.affinities ?? {})) if (catalog && !catalog.tags.has(tag)) at(`${path}/affinities/${tag}`, 'Unknown damage tag (declare it in the action catalog)', tag);
       // Shields and phases (decision 0017): enemies only; phases in order of falling HP, with declared tags.
+      if (side !== 'enemies' && combatant.kind) at(`${path}/kind`, 'Only enemies have a kind', combatant.kind);
       if (side !== 'enemies') for (const field of /** @type {const} */ (['shield', 'phases'])) { if (combatant[field] !== undefined) at(`${path}/${field}`, 'Only enemies have shields and phases', null); }
       (combatant.phases ?? []).forEach((phase, p) => {
         const previous = p === 0 ? 100 : combatant.phases?.[p - 1]?.below ?? 100;
@@ -284,8 +285,38 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
       }
     }
   });
+  // Decision 0017 M5.5d: what is discovered about a kind must hold for every enemy of that kind.
+  /** @type {Map<string, string>} */ const kits = new Map();
+  data.encounters.forEach((encounter, index) => encounter.enemies.forEach((enemy, slot) => {
+    if (!enemy.kind) return;
+    const kit = JSON.stringify({ affinities: sortKeys(enemy.affinities ?? {}), shield: enemy.shield ?? 0, phases: (enemy.phases ?? []).map(p => ({ ...p, affinities: p.affinities && sortKeys(p.affinities) })) });
+    const first = kits.get(enemy.kind);
+    if (first === undefined) kits.set(enemy.kind, kit);
+    else if (first !== kit) issues.push({file,id:encounter.id,path:`/encounters/${index}/enemies/${slot}/kind`,message:'Every enemy of one kind needs the same affinities, shield and phases',value:enemy.kind});
+  }));
   if (issues.length) throw new ContentError(issues.slice(0, MAX_ISSUES));
   return freezeCopy(data);
+}
+
+/** A copy of a record with its keys in order, so equal records compare equal. @param {Record<string, string>} record */
+function sortKeys(record) { return Object.fromEntries(Object.entries(record).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))); }
+
+/**
+ * The bestiary's shape for the save state index (decision 0017 M5.5d): each enemy kind and the damage tags it has any
+ * affinity to, in any phase (what a save may record about it), sorted.
+ * @param {{ encounters: readonly { enemies: readonly { kind?: string, affinities?: Record<string, string>, phases?: readonly { affinities?: Record<string, string> }[] }[] }[] }} data
+ * @returns {Record<string, string[]>}
+ */
+export function bestiaryKinds(data) {
+  /** @type {Map<string, Set<string>>} */ const kinds = new Map();
+  for (const encounter of data.encounters) for (const enemy of encounter.enemies) {
+    if (!enemy.kind) continue;
+    const tags = kinds.get(enemy.kind) ?? new Set();
+    for (const tag of Object.keys(enemy.affinities ?? {})) tags.add(tag);
+    for (const phase of enemy.phases ?? []) for (const tag of Object.keys(phase.affinities ?? {})) tags.add(tag);
+    kinds.set(enemy.kind, tags);
+  }
+  return Object.fromEntries([...kinds].sort(([a], [b]) => (a < b ? -1 : 1)).map(([kind, tags]) => [kind, [...tags].sort()]));
 }
 
 /**
@@ -326,7 +357,7 @@ function checkConditionRefs(c, path, known, at) {
  * A data-only menu screen (decision 0016 U2.4): entry IDs unique, categories declared and used consistently, art
  * libraries named once, and unlock conditions naming things the game defines.
  * @param {unknown} value @param {string} file
- * @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string> }} [known]
+ * @param {{ facts?: ReadonlySet<string>, items?: ReadonlySet<string>, quests?: ReadonlySet<string>, placements?: ReadonlySet<string>, kinds?: ReadonlySet<string> }} [known]
  * @returns {import('./generated/catalog.js').CatalogDefinition}
  */
 export function readCatalog(value, file = 'catalog.json', known = {}) {
@@ -339,13 +370,17 @@ export function readCatalog(value, file = 'catalog.json', known = {}) {
     if (categories.has(category.id)) at(`/categories/${index}/id`, 'Duplicate category ID', category.id);
     categories.add(category.id);
   });
-  const ids = new Set();
+  const ids = new Set(), kinds = new Set();
   catalog.entries.forEach((entry, index) => {
     if (ids.has(entry.id)) at(`/entries/${index}/id`, 'Duplicate entry ID', entry.id);
     ids.add(entry.id);
     if (catalog.categories && !entry.category) at(`/entries/${index}/category`, 'This catalog has categories: name one', undefined);
     if (entry.category && !categories.has(entry.category)) at(`/entries/${index}/category`, 'Unknown category', entry.category);
     if (entry.when) checkConditionRefs(entry.when, `/entries/${index}/when`, known, at);
+    // Creature entries (decision 0017 M5.5d): a kind the encounters use, each at most once.
+    if (entry.kind && known.kinds && !known.kinds.has(entry.kind)) at(`/entries/${index}/kind`, 'Unknown creature kind: no enemy in the encounters has it', entry.kind);
+    if (entry.kind && kinds.has(entry.kind)) at(`/entries/${index}/kind`, 'Each kind may have one entry', entry.kind);
+    if (entry.kind) kinds.add(entry.kind);
   });
   const libraries = new Set();
   (catalog.libraryCredits ?? []).forEach((library, index) => {

@@ -47,6 +47,7 @@ An entry whose screen is not registered appears greyed, with "Arrives later." `n
 - **Categories** become tabs, stepped with Q/E or the shoulder buttons. Leave them out for a single list.
 - **`text`** holds the paragraphs of the detail window: up to 12, of up to 400 characters each.
 - **`when`** keeps an entry as **???** until its condition holds. The top window then counts what has been found ("Found 2 / 3").
+- **`kind`** makes a creature entry. It names an enemy kind from the encounters, for example `"mygame:creature.wolf"`. The detail window then adds what the party has learned about that kind, from the bestiary saved since save version 4: "Weak: fire. Resists: slash." and "Broken in battle." Before anything is learned it shows "Affinities: none found yet." Each kind may have one entry, and `npm run validate` rejects a kind that no enemy has.
 - **`libraryCredits`** (credits catalogs) names art libraries, for example `["stone-soup"]`. The content build reads each library's own credit file and adds a category with one entry about the library and one per artist. Credits therefore cannot drift from the art you ship. Libraries are listed in `tools/library-credits.mjs`.
 
 The schema is `schemas/catalog.schema.json`.

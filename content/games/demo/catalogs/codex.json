@@ -6,11 +6,11 @@
     {"id": "lore", "label": "Lore"}
   ],
   "entries": [
-    {"id": "demo:codex.clay-golem", "category": "creatures", "title": "Clay Golem",
+    {"id": "demo:codex.clay-golem", "category": "creatures", "title": "Clay Golem", "kind": "demo:creature.clay-golem",
       "text": ["A figure of fired clay, slow but sturdy.", "Fought in the Practice Sigil and the Formation Drill.", "Placeholder entry: fuller notes arrive as the bestiary grows."]},
-    {"id": "demo:codex.bat", "category": "creatures", "title": "Bat",
+    {"id": "demo:codex.bat", "category": "creatures", "title": "Bat", "kind": "demo:creature.bat",
       "text": ["Quick and frail, it strikes before slower foes can act.", "Fought in the Practice Sigil and the Formation Drill.", "Placeholder entry: fuller notes arrive as the bestiary grows."]},
-    {"id": "demo:codex.two-headed-ogre", "category": "creatures", "title": "Two-Headed Ogre",
+    {"id": "demo:codex.two-headed-ogre", "category": "creatures", "title": "Two-Headed Ogre", "kind": "demo:creature.two-headed-ogre",
       "text": ["A huge brute that fills two lanes and two rows of the battle grid.", "Fought in the Formation Drill.", "Placeholder entry: fuller notes arrive as the bestiary grows."]},
     {"id": "demo:codex.workshop", "category": "lore", "title": "The Workshop",
       "text": ["Where the journey begins. Mara, the Workshop caretaker, keeps it in order.", "Placeholder entry."]},

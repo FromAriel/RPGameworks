@@ -4,6 +4,29 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## Plan: permissive LPC party art (decision 0019) — November 19, 2026
+
+Ariel approved [decision 0019](decisions/0019-permissive-lpc-art.md), which amends 0007 for LPC character art. Planning only; nothing is imported yet.
+
+- **The rule:** LPC sheets may be committed when every file used offers CC0, CC-BY 3.0/4.0 or OGA-BY 3.0, never share-alike or GPL only.
+  - **Scope:** only the sheets our recipes use, at the pinned revision.
+  - **Records:** a manifest, per-file credits and the licence chosen.
+  - **Enforcement:** the import tool checks each file.
+- **Why per file:** licences vary inside a part. The base body is OGA-BY for the male, female, teen and child bodies, but share-alike only for the muscular and pregnant ones.
+- **The Lancer:** every LPC polearm is CC-BY-SA only. The Lancer is drawn with the arming sword and slash animation for now (the rules still treat the weapon as a Spear: pierce, reach). Ariel is drawing an original spear layer to replace it; the decision links the spear and combat animations for reference.
+- **The plan:** roadmap S1.5 is replanned as S1.5a–e:
+  - **a:** import and tools;
+  - **b:** design previews;
+  - **c:** bake and credits;
+  - **d:** battle and menus;
+  - **e:** the spear.
+- **Public builds:** the committed characters will show on the public site, so S1.7 is settled for them.
+- **Open:**
+  - whether the map hero becomes the LPC Hero;
+  - the looks (chosen from the S1.5b previews);
+  - the project licence.
+- **Next:** **S1.5a**.
+
 ## M5.5d discoveries remembered: the bestiary, save version 4 and the Codex — November 19, 2026, local
 
 [Decision 0017](decisions/0017-weakness-break-momentum.md), last packet. With it, **M5.5 is done locally**; Ariel's play review is open.

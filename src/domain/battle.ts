@@ -42,17 +42,29 @@ export type BattleEvent =
    * it; an absorbed hit's `damage` is what it healed. `reports` are the hit pipeline's records (decision 0018).
    */
   | { readonly kind: 'attack'; readonly actor: string; readonly target: string; readonly damage: number; readonly guarded: boolean; readonly defeated: boolean; readonly shields: number;
-      readonly action?: string; readonly name?: string; readonly affinity?: Affinity; readonly reports: readonly HitReport[] }
+      readonly action?: string; readonly name?: string; readonly affinity?: Affinity; readonly reports: readonly HitReport[];
+      /** Decision 0017: the target's shield points left, when this hit (a weakness) removed one. */
+      readonly shieldLeft?: number }
   | { readonly kind: 'guard'; readonly actor: string }
   | { readonly kind: 'heal'; readonly actor: string; readonly target: string; readonly itemId: string; readonly amount: number }
   | { readonly kind: 'move'; readonly actor: string; readonly from: Cell; readonly to: Cell; readonly swapped: string | null }
   | { readonly kind: 'escape'; readonly actor: string }
   /** An area attack (decision 0014 M5.4f): an enemy ability or a party skill, every fighter it hits resolved together. */
-  | { readonly kind: 'area'; readonly actor: string; readonly ability: string; readonly name: string; readonly shape: AreaShape; readonly centre: Cell; readonly hits: readonly AreaHit[] };
+  | { readonly kind: 'area'; readonly actor: string; readonly ability: string; readonly name: string; readonly shape: AreaShape; readonly centre: Cell; readonly hits: readonly AreaHit[] }
+  /** Decision 0017: `actor`'s shield reached zero from `by`'s weakness hit. It is stunned, pushed back and takes extra damage. */
+  | { readonly kind: 'break'; readonly actor: string; readonly by: string }
+  /** A broken enemy's stunned turn: it does nothing. */
+  | { readonly kind: 'stunned'; readonly actor: string }
+  /** A broken enemy's second turn after the break: its shield is back in full and it acts as usual. */
+  | { readonly kind: 'recover'; readonly actor: string; readonly shield: number }
+  /** An enemy's HP fell to a phase threshold: new affinities and a full new shield (phase 1 is the first change). */
+  | { readonly kind: 'phase'; readonly actor: string; readonly phase: number; readonly shield: number }
+  /** A round ended and each living member recovered MP for the full momentum pips (only when someone recovered). */
+  | { readonly kind: 'round'; readonly round: number; readonly recovered: Readonly<Record<string, number>> };
 export type { AreaShape } from './actions';
 /** One member hit by an area attack: its damage after guard, shields and falloff (`percent`). */
 export interface AreaHit { readonly target: string; readonly damage: number; readonly percent: number; readonly shields: number; readonly guarded: boolean; readonly defeated: boolean;
-  readonly affinity?: Affinity; readonly reports: readonly HitReport[] }
+  readonly affinity?: Affinity; readonly reports: readonly HitReport[]; readonly shieldLeft?: number }
 export type RejectReason = 'phase' | 'unknown-command' | 'invalid-target' | 'out-of-reach' | 'invalid-cell' | 'not-usable' | 'full-hp' | 'unknown-skill' | 'not-enough-mp';
 export interface BattleItemUse { readonly heal: number }
 export interface CombatantSnapshot {
@@ -71,8 +83,15 @@ export interface CombatantSnapshot {
   /** Party: the weapon a basic Attack uses, and the skills under Special (decision 0018). */
   readonly weapon: { readonly name: string; readonly tags: readonly string[] } | null;
   readonly skills: readonly string[];
-  /** Enemies: how each damage tag affects it. */
+  /** Enemies: how each damage tag affects it (in its current phase). */
   readonly affinities: Readonly<Record<string, Affinity>>;
+  /**
+   * Enemies (decision 0017): shield points now and at most (0 for one that cannot break). Not the M5.4 lane shields,
+   * which are allies standing ahead. Broken: taking extra damage; stunned: its next turn is skipped.
+   */
+  readonly shield: number; readonly maxShield: number; readonly broken: boolean; readonly stunned: boolean;
+  /** Enemies: the phase it is in (0 until its first threshold), and the tags this battle has found it weak to. */
+  readonly phase: number; readonly revealed: readonly string[];
 }
 export interface TurnPreview { readonly actor: string; readonly tick: number }
 export interface BattleSnapshot {
@@ -88,6 +107,10 @@ export interface BattleSnapshot {
   readonly timeline: readonly TurnPreview[];
   /** Everything resolved by the latest command, in order, for presentation playback. */
   readonly events: readonly BattleEvent[];
+  /** The party's shared momentum gauge (decision 0017): 0 to MOMENTUM.pips × MOMENTUM.pip points. */
+  readonly momentum: number;
+  /** Rounds completed: one every ROUND_TICKS ticks. */
+  readonly round: number;
 }
 
 /** Ticks per action at speed 1 and weight 100. */
@@ -96,11 +119,25 @@ export const TIMELINE_BASE = 1000;
 export const ACTION_WEIGHT = { attack: CORE_ACTIONS.attack.weight, guard: CORE_ACTIONS.guard.weight, item: CORE_ACTIONS.item.weight, move: 60 } as const;
 export const TIMELINE_LENGTH = 8;
 
+/**
+ * Break (decision 0017 §5, Ariel's Q3): a broken enemy's next turn is skipped, it is pushed back one action of this
+ * weight, and it takes BREAK_PERCENT damage until its second turn after the break, when its shield comes back in full.
+ * Starting values, tuned by play.
+ */
+export const BREAK = Object.freeze({ pushBackWeight: 100 });
+/** Momentum (decision 0017 §6): five pips of 100 points; gains and losses per event. Starting values, tuned by play. */
+export const MOMENTUM = Object.freeze({ pip: 100, pips: 5, weak: 25, break: 100, guard: 10, fallen: -50 });
+/** A round ends every this many ticks (one ordinary Attack at speed 10); each full momentum pip then restores 1 MP. */
+export const ROUND_TICKS = 100;
+
 export function actionDelay(speed: number, weight: number): number {
   return Math.ceil((TIMELINE_BASE * weight) / (100 * speed));
 }
 
-interface Fighter extends Omit<CombatantSnapshot, 'nextTick' | 'guarding' | 'hp' | 'lane' | 'depth' | 'mp'> { hp: number; mp: number; nextTick: number; guarding: boolean; lane: number; depth: number }
+interface Fighter extends Omit<CombatantSnapshot, 'nextTick' | 'guarding' | 'hp' | 'lane' | 'depth' | 'mp' | 'affinities' | 'shield' | 'maxShield' | 'broken' | 'stunned' | 'phase' | 'revealed'> {
+  hp: number; mp: number; nextTick: number; guarding: boolean; lane: number; depth: number;
+  affinities: Readonly<Record<string, Affinity>>; shield: number; maxShield: number; broken: boolean; stunned: boolean; phase: number; revealed: string[];
+}
 
 /** Every fighter's grid placement by side and slot (decision 0014). Content validation has already checked them. */
 function gridPlacements(encounter: Encounter): Record<Side, Placement[]> {
@@ -131,6 +168,8 @@ export class BattleSession {
   private readonly opening: Opening;
   /** Enemies with an action pattern: their abilities and how many actions they have taken (decision 0014 M5.4f). */
   private plans = new Map<string, { readonly pattern: readonly string[]; actions: number }>();
+  private momentum = 0;
+  private round = 0;
 
   /**
    * @param items what each usable item does in battle
@@ -148,9 +187,10 @@ export class BattleSession {
     const active = this.phase === 'command' ? this.next()?.id ?? null : null;
     return {
       encounterId: this.encounter.id, opening: this.opening, phase: this.phase, turn: this.turn, active,
-      combatants: this.fighters.map(fighter => ({ ...fighter })),
+      combatants: this.fighters.map(fighter => ({ ...fighter, revealed: [...fighter.revealed] })),
       timeline: this.phase === 'command' ? this.preview() : [],
       events: [...this.events],
+      momentum: this.momentum, round: this.round,
     };
   }
 
@@ -230,7 +270,7 @@ export class BattleSession {
     } else this.perform(hero, CORE_ACTIONS.item, this.find(command.target)!, command.itemId);
     hero.nextTick += actionDelay(hero.speed, this.weightOf(command));
     this.turn += 1;
-    this.settle();
+    this.endAction();
     while (this.phase === 'command') {
       const actor = this.next()!;
       if (actor.side === 'party') { actor.guarding = false; break; }
@@ -253,6 +293,7 @@ export class BattleSession {
       nextTick: actionDelay(combatant.speed, ACTION_WEIGHT.attack), guarding: false,
       ...placements[side][slot]!, reach: combatant.reach ?? 'melee', creature: combatant.creature ?? null, faces: combatant.faces ?? 'left', flank: side === 'enemy' && this.opening === 'pincer' ? combatant.flank ?? 'front' : null,
       mp: combatant.mp ?? 0, maxMp: combatant.mp ?? 0, weapon: combatant.weapon ?? null, skills: combatant.skills ?? [], affinities: combatant.affinities ?? {},
+      shield: combatant.shield ?? 0, maxShield: combatant.shield ?? 0, broken: false, stunned: false, phase: 0, revealed: [],
     });
     this.fighters = [...this.encounter.party.map(build('party')), ...this.encounter.enemies.map(build('enemy'))];
     this.plans = new Map(this.encounter.enemies.flatMap(e => (e.pattern ? [[e.id, { pattern: e.pattern, actions: 0 }] as const] : [])));
@@ -260,6 +301,8 @@ export class BattleSession {
     this.phase = 'command';
     this.turn = 0;
     this.events = [];
+    this.momentum = 0;
+    this.round = 0;
     // A battle that opens on enemy turns resolves them before the first hero decision.
     while (this.next()?.side === 'enemy') {
       this.enemyAct(this.next()!);
@@ -272,6 +315,20 @@ export class BattleSession {
    * party member the enemy would attack, using the action's reach.
    */
   private enemyAct(actor: Fighter): void {
+    // Decision 0017: a broken enemy loses its next turn, and recovers its full shield on the turn after.
+    if (actor.stunned) {
+      actor.stunned = false;
+      this.events.push({ kind: 'stunned', actor: actor.id });
+      actor.nextTick += actionDelay(actor.speed, ACTION_WEIGHT.attack);
+      this.turn += 1;
+      this.endAction();
+      return;
+    }
+    if (actor.broken) {
+      actor.broken = false;
+      actor.shield = actor.maxShield;
+      this.events.push({ kind: 'recover', actor: actor.id, shield: actor.shield });
+    }
     const plan = this.plans.get(actor.id);
     const step = plan ? plan.pattern[plan.actions % plan.pattern.length]! : 'attack';
     if (plan) plan.actions += 1;
@@ -280,7 +337,7 @@ export class BattleSession {
     if (target) this.perform(actor, action, target);
     actor.nextTick += actionDelay(actor.speed, ACTION_WEIGHT.attack);
     this.turn += 1;
-    this.settle();
+    this.endAction();
   }
 
   /**
@@ -297,9 +354,11 @@ export class BattleSession {
     });
     // An absorbed hit records what it actually healed.
     for (const hit of hits) hit.damage = this.apply(hit.target, hit.damage, hit.affinity);
+    const tags = this.tagsOf(actor, action), follow: BattleEvent[] = [];
+    const outcomes = hits.map(h => this.consequences(actor, h.target, h.affinity, tags, follow));
     this.events.push({ kind: 'area', actor: actor.id, ability: action.id, name: action.name, shape: action.shape!, centre: { lane: centre.lane, depth: centre.depth },
-      hits: hits.map(h => ({ target: h.target.id, damage: h.damage, percent: h.percent, shields: h.shields, guarded: h.guarded, defeated: h.target.hp === 0,
-        ...(h.affinity ? { affinity: h.affinity } : {}), reports: h.reports })) });
+      hits: hits.map((h, i) => ({ target: h.target.id, damage: h.damage, percent: h.percent, shields: h.shields, guarded: h.guarded, defeated: h.target.hp === 0,
+        ...(h.affinity ? { affinity: h.affinity } : {}), reports: h.reports, ...outcomes[i]! })) }, ...follow);
   }
 
   /**
@@ -307,7 +366,11 @@ export class BattleSession {
    * one. Every hit goes through the hit pipeline.
    */
   private perform(actor: Fighter, action: BattleAction, target: Fighter, itemId?: string): void {
-    if (action.effects.includes('guard')) { actor.guarding = true; this.events.push({ kind: 'guard', actor: actor.id }); }
+    if (action.effects.includes('guard')) {
+      actor.guarding = true;
+      this.events.push({ kind: 'guard', actor: actor.id });
+      if (actor.side === 'party') this.gain(MOMENTUM.guard);
+    }
     if (action.effects.includes('heal') && itemId) {
       const amount = Math.min(this.items.get(itemId)!.heal, target.maxHp - target.hp);
       target.hp += amount;
@@ -325,10 +388,58 @@ export class BattleSession {
    */
   private hit(actor: Fighter, target: Fighter, action: BattleAction, shields: number, areaPercent = 100) {
     const variance = this.roll();
-    const tags = action === CORE_ACTIONS.attack ? actor.weapon?.tags ?? [] : action.tags ?? [];
     return resolveHit({ formula: action.power!.formula, attack: actor.attack, defense: target.defense, variance,
       ...(action.power!.percent !== undefined ? { powerPercent: action.power!.percent } : {}), guarded: target.guarding, shields, areaPercent,
-      affinity: affinityOf(target.affinities, tags) });
+      affinity: affinityOf(target.affinities, this.tagsOf(actor, action)), broken: target.broken });
+  }
+
+  /** A hit's damage tags: the action's own, or for a basic Attack the user's weapon's (decision 0018). */
+  private tagsOf(actor: Fighter, action: BattleAction): readonly string[] {
+    return action === CORE_ACTIONS.attack ? actor.weapon?.tags ?? [] : action.tags ?? [];
+  }
+
+  /**
+   * What a landed hit does beyond damage (decision 0017), in this order:
+   * - a weakness hit adds momentum and reveals the tags the target is weak to;
+   * - a living enemy that falls to a phase threshold starts that phase (new affinities, a full new shield), and the
+   *   hit does nothing more;
+   * - otherwise a weakness hit removes a shield point, and at zero the enemy breaks: stunned for its next turn, pushed
+   *   back on the timeline, and taking extra damage until it recovers.
+   * Follow-up events (phase, break) go to `follow`; the returned field joins the hit's own record.
+   */
+  private consequences(actor: Fighter, target: Fighter, affinity: Affinity | null, tags: readonly string[], follow: BattleEvent[]): { shieldLeft?: number } {
+    if (affinity === 'weak') {
+      this.gain(MOMENTUM.weak);
+      for (const tag of tags) if (target.affinities[tag] === 'weak' && !target.revealed.includes(tag)) target.revealed.push(tag);
+    }
+    if (target.hp <= 0 || target.side !== 'enemy') return {};
+    const phases = this.encounter.enemies[target.slot]?.phases ?? [];
+    let next = target.phase;
+    for (let i = target.phase; i < phases.length; i++) if (target.hp * 100 <= phases[i]!.below * target.maxHp) next = i + 1;
+    if (next > target.phase) {
+      const phase = phases[next - 1]!;
+      target.phase = next;
+      if (phase.affinities) target.affinities = phase.affinities;
+      if (phase.shield !== undefined) target.maxShield = phase.shield;
+      target.shield = target.maxShield;
+      target.broken = false; target.stunned = false;
+      follow.push({ kind: 'phase', actor: target.id, phase: next, shield: target.shield });
+      return {};
+    }
+    if (affinity !== 'weak' || target.shield <= 0 || target.broken) return {};
+    target.shield -= 1;
+    if (target.shield === 0) {
+      target.broken = true; target.stunned = true;
+      target.nextTick += actionDelay(target.speed, BREAK.pushBackWeight);
+      this.gain(MOMENTUM.break);
+      follow.push({ kind: 'break', actor: target.id, by: actor.id });
+    }
+    return { shieldLeft: target.shield };
+  }
+
+  /** Add (or take) momentum, kept between empty and full. */
+  private gain(points: number): void {
+    this.momentum = Math.max(0, Math.min(MOMENTUM.pips * MOMENTUM.pip, this.momentum + points));
   }
 
   /** Allies shielding the target from this attacker, less any the action pierces. */
@@ -340,6 +451,7 @@ export class BattleSession {
   private apply(target: Fighter, damage: number, affinity: Affinity | null): number {
     const before = target.hp;
     target.hp = affinity === 'absorb' ? Math.min(target.maxHp, target.hp + damage) : Math.max(0, target.hp - damage);
+    if (target.side === 'party' && before > 0 && target.hp === 0) this.gain(MOMENTUM.fallen);
     return affinity === 'absorb' ? target.hp - before : damage;
   }
 
@@ -356,7 +468,9 @@ export class BattleSession {
     // An absorbed hit records what it actually healed.
     const damage = this.apply(target, dealt, affinity);
     const named = action === CORE_ACTIONS.attack ? {} : { action: action.id, name: action.name };
-    this.events.push({ kind: 'attack', actor: actor.id, target: target.id, damage, guarded: target.guarding, defeated: target.hp === 0, shields, ...named, ...(affinity ? { affinity } : {}), reports });
+    const follow: BattleEvent[] = [];
+    const outcome = this.consequences(actor, target, affinity, this.tagsOf(actor, action), follow);
+    this.events.push({ kind: 'attack', actor: actor.id, target: target.id, damage, guarded: target.guarding, defeated: target.hp === 0, shields, ...named, ...(affinity ? { affinity } : {}), reports, ...outcome }, ...follow);
   }
 
   /** Move to an empty cell of the actor's grid, or swap with the ally standing there. */
@@ -396,6 +510,25 @@ export class BattleSession {
     const reachable = this.living('party').map(f => ({ f, ahead: this.ahead(f, actor) })).filter(({ ahead }) => canReach(reach, ahead));
     reachable.sort((a, b) => a.ahead - b.ahead || a.f.lane - b.f.lane || a.f.depth - b.f.depth || a.f.slot - b.f.slot);
     return reachable[0]?.f;
+  }
+
+  /** After every action: check for the end of the battle, then end any rounds the timeline has passed. */
+  private endAction(): void {
+    this.settle();
+    if (this.phase !== 'command') return;
+    const time = this.next()?.nextTick ?? 0;
+    while (time >= (this.round + 1) * ROUND_TICKS) {
+      this.round += 1;
+      // Each full momentum pip restores 1 MP to every living member, up to their maximum. Momentum is not spent.
+      const pips = Math.floor(this.momentum / MOMENTUM.pip);
+      if (!pips) continue;
+      const recovered: Record<string, number> = {};
+      for (const member of this.living('party')) {
+        const gain = Math.min(pips, member.maxMp - member.mp);
+        if (gain > 0) { member.mp += gain; recovered[member.id] = gain; }
+      }
+      if (Object.keys(recovered).length) this.events.push({ kind: 'round', round: this.round, recovered });
+    }
   }
 
   private settle(): void {

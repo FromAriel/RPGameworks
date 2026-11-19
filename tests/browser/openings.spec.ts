@@ -79,5 +79,5 @@ test('pincer: the party stands between two flanks and each member faces the flan
   expect(battle.art.hero!.shields).toBe(1);
   await page.screenshot({ path: info.outputPath('pincer-turned.png') });
   for (let turns = 0; turns < 16 && (await snapshot(page)).battle?.phase === 'command'; turns++) await attackFirst(page, order);
-  expect((await snapshot(page)).battle).toMatchObject({ phase: 'victory', turn: 19 }); // The kernel's trace for these choices.
+  expect((await snapshot(page)).battle).toMatchObject({ phase: 'victory', turn: 18 }); // The kernel's trace for these choices (18 since M5.5c's weaknesses).
 });

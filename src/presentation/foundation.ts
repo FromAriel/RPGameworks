@@ -490,6 +490,12 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const state=battle.snapshot();
       const names=new Map(state.combatants.map(c=>[c.id,c.name]));
       const feedback=state.events.map(event=>event.kind==='guard'?`${names.get(event.actor)} guards.`:
+        // Decision 0017: break, the stunned turn, recovery, phases and the MP restored at a round's end.
+        event.kind==='break'?`${names.get(event.actor)} is broken by ${names.get(event.by)}!`:
+        event.kind==='stunned'?`${names.get(event.actor)} is stunned and loses its turn.`:
+        event.kind==='recover'?`${names.get(event.actor)} recovers; its shield is back (${event.shield}).`:
+        event.kind==='phase'?`${names.get(event.actor)} changes! Its shield is back (${event.shield}).`:
+        event.kind==='round'?`End of round ${event.round}: ${Object.entries(event.recovered).map(([id,mp])=>`${names.get(id)} +${mp} MP`).join(', ')}.`:
         event.kind==='heal'?`${names.get(event.actor)} uses ${this.battleItemName(event.itemId)}: ${names.get(event.target)} recovers ${event.amount} HP.`:
         event.kind==='escape'?`${names.get(event.actor)} gets away.`:
         event.kind==='move'?`${names.get(event.actor)} moves${event.swapped?` and swaps places with ${names.get(event.swapped)}`:''}.`:

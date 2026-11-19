@@ -4,6 +4,67 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.5c-1 shields, break, phases, momentum and MP recovery (rules) — November 18, 2026, local
+
+[Decision 0017](decisions/0017-weakness-break-momentum.md) on the 0018 action model, first half: the rules and the demo content. The screen (shield pips, BREAK, the momentum gauge, weakness icons and previews) is M5.5c-2.
+
+- **Demo enemies (Ariel's table):**
+  - Bat: weak to pierce, shield 2.
+  - Clay Golem: weak to blunt, resists slash, shield 3.
+  - Two-Headed Ogre: weak to fire, shield 4.
+    - At half HP it changes: weak to pierce, resists fire, shield 4.
+
+  This applies in every demo fight. "Weak!" and "Resist" now appear in normal play.
+- **Break:** each weakness hit removes a shield point. At zero the enemy breaks:
+  - it is pushed back one Attack's delay;
+  - it takes ×1.5 damage (×1.875 from a weakness);
+  - it loses its next turn;
+  - on the turn after that, its shield comes back in full.
+
+  Resist, immune, absorb and untagged hits never touch the shield.
+- **Phases:** at an HP threshold an enemy takes new affinities and a full shield, and any break ends.
+- **Momentum:** +25 per weakness hit, +100 per break, +10 per Guard, −50 when a member falls, between 0 and 5 pips.
+- **Rounds and MP:** a round ends every 100 ticks of the timeline. Each full pip then restores 1 MP to each living member.
+- **On screen, for now:**
+  - **Action line:** "Break!", "Stunned", "Shield restored", "Phase 2" or "End of round N: MP restored".
+  - **Battle text:**
+    - "is broken by…";
+    - "is stunned and loses its turn";
+    - "recovers; its shield is back";
+    - "changes!";
+    - "End of round N: Hero +1 MP".
+  - **Action line for skills:** a single-target skill's line now names the skill instead of "Attack".
+- **Kernel snapshot additions:** each enemy's shield, break and stun state, phase and revealed weaknesses; the battle's momentum and round.
+- **What changed in recorded fights:** fights with nothing authored are unchanged: every older unit trace passed untouched. Weaknesses now speed up the demo fights; these assertions were re-pinned on purpose:
+  - **Formation Drill:** won at turn 29 instead of 31. The two area attacks are identical. Nothing breaks under those choices: the Bat falls to two pierce hits first, and the Ogre's second phase is weak to pierce.
+  - **Pincer Drill:** won at turn 18 instead of 19.
+  - **Practice fight:** the Archer's first hit on the Bat does 7 instead of 5 (5 × 1.25, rounded up).
+- **Other test changes:** the pipeline test's step list gained `break`. The authored-party comparison now ignores the enemies' new kit, as it already ignored patterns. Four test lines that read `event.actor` now allow the round event, which has no actor.
+- **Tests:**
+  - **New:** `break-momentum.test.ts` (12):
+    - shield points and reveal;
+    - break with push-back and momentum;
+    - ×1.5, the stunned turn and recovery;
+    - which affinities touch the shield;
+    - ×1.875 rounding;
+    - phases, including one that ends a break;
+    - momentum gains, the cap and the −50;
+    - rounds restoring MP up to the maximum;
+    - no round events at zero pips;
+    - Retry resetting everything;
+    - the Mage breaking the demo Clay Golem (three hits, stunned turn, recovery);
+    - content errors.
+  - **Local results:**
+    - typecheck, `npm run validate` and the production build passed;
+    - unit tests **609/609**;
+    - browser suite **206/208** on the last full run. The 2 failures were timing under full parallel load: the playback-speed test only reached 2× before playback ended, and a formation test's page closed mid-test. Both passed 6/6 when repeated three times with 4 workers. The playback-speed test also failed under full load before M5.5c. The earlier full run's 4 failures were the re-pins above (and the speed test); after re-pinning, area, battle and openings passed 10/10 on 1 worker.
+- **Migration:** none. Saves are unchanged; discoveries are saved in M5.5d.
+- **Next:** **M5.5c-2**, the screen:
+  - shield pips and weakness icons in the enemy window;
+  - BREAK on the stage;
+  - the momentum gauge;
+  - the "Weak!" preview for a revealed weakness.
+
 ## M5.5b-2 the Special menu, MP on screen, and affinity feedback — November 18, 2026, local
 
 [Decision 0018](decisions/0018-actions-and-hit-pipeline.md) M5.5b, second half. With M5.5b-1, **M5.5b is done locally**.

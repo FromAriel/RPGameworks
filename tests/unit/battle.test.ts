@@ -41,7 +41,7 @@ describe('turn timeline', () => {
     ];
     const trace = steps.map(step => {
       const state = battle.command(step);
-      return [state.phase, ...state.combatants.map(c => c.hp), state.events.map(e => e.kind === 'attack' ? `${e.actor}>${e.target}:${e.damage}` : `${e.actor}:${e.kind}`).join(' ')];
+      return [state.phase, ...state.combatants.map(c => c.hp), state.events.map(e => e.kind === 'attack' ? `${e.actor}>${e.target}:${e.damage}` : `${'actor' in e ? e.actor : ''}:${e.kind}`).join(' ')];
     });
     expect(trace).toEqual([
       ['command', 25, 20, 4, 'hero>shard:6 sigil>hero:2 shard>hero:2'],
@@ -75,7 +75,7 @@ describe('turn timeline', () => {
         expect(nextHero).toBeGreaterThan(0);
         const defeated = new Set(after.combatants.filter(c => c.hp === 0).map(c => c.id));
         const expected = preview.slice(0, nextHero).map(turn => turn.actor).filter((actor, index) => index === 0 || !defeated.has(actor));
-        const executed = after.events.map(event => event.actor);
+        const executed = after.events.map(event => ('actor' in event ? event.actor : ''));
         if (after.phase === 'command') {
           expect(executed).toEqual(expected);
           expect(after.active).toBe('hero');

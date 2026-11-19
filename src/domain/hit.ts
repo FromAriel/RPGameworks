@@ -4,6 +4,8 @@ import { scaleDamage, shieldPercent } from './battle-grid.mjs';
 export type Affinity = 'weak' | 'resist' | 'immune' | 'absorb';
 /** Damage percentages for the scaling affinities. Starting values, tuned by play. */
 export const AFFINITY_PERCENT = Object.freeze({ weak: 125, resist: 50 });
+/** Damage while broken (decision 0017 §5): ×1.5, so a weakness hit on a broken enemy is ×1.875. Tuned by play. */
+export const BREAK_PERCENT = 150;
 
 /**
  * The affinity that applies to a hit with these tags (Ariel, decision 0018): absorb on any tag, else immune on any tag,
@@ -38,6 +40,8 @@ export interface HitInput {
   readonly areaPercent?: number;
   /** The target's affinity to this hit's tags (`affinityOf`), if any. */
   readonly affinity?: Affinity | null;
+  /** The target is broken (decision 0017): it takes extra damage until its shield comes back. */
+  readonly broken?: boolean;
 }
 /** One step's record of what it did, for playback, previews, the screen reader and tests. */
 export interface HitReport { readonly step: string; readonly percent?: number; readonly affinity?: Affinity }
@@ -78,6 +82,7 @@ export const HIT_STEPS: readonly HitStep[] = Object.freeze([
       state.reports.push({ step: 'affinity', affinity, ...(affinity === 'weak' || affinity === 'resist' ? { percent: AFFINITY_PERCENT[affinity] } : {}) });
     },
   },
+  percentStep('break', input => (input.broken ? BREAK_PERCENT : 100)),
   percentStep('guard', input => (input.guarded ? 50 : 100)),
   percentStep('shield', input => shieldPercent(input.shields)),
   percentStep('falloff', input => input.areaPercent ?? 100),

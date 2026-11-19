@@ -87,7 +87,7 @@ test('classic battle windows play resolved turns and restore exploration focus',
   await page.screenshot({ path: info.outputPath('battle-target.png') });
   await button(page, 'Bat').click();
   await skip(page);
-  expect((await snapshot(page)).battle).toMatchObject({ active: 'hero', hp: { hero: 29, shard: 5 } });
+  expect((await snapshot(page)).battle).toMatchObject({ active: 'hero', hp: { hero: 29, shard: 3 } }); // The Bat is weak to the Archer's pierce (M5.5c): 5 × 1.25, rounded up.
   await command(page, 'Attack', 'Bat'); // The target is remembered, so a keyboard player would press Enter twice.
   await expect(dialog).toContainText('Bat is defeated.');
   await button(page, 'Attack').click();

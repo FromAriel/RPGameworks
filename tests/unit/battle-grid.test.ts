@@ -180,7 +180,7 @@ describe('the battle kernel on the grid', () => {
     const run = (enc: Encounter, commands: BattleCommand[]) => {
       const battle = new BattleSession(enc);
       const lines = [battle.snapshot(), ...commands.map(c => battle.command(c))].map(s => s.events.map(e =>
-        e.kind === 'attack' ? `${e.actor}>${e.target}:${e.damage}${e.shields ? `/${e.shields}` : ''}` : e.kind === 'move' ? `${e.actor}~${e.to.lane}${e.to.depth}${e.swapped ? `<>${e.swapped}` : ''}` : `${e.actor}:${e.kind}`).join(' '));
+        e.kind === 'attack' ? `${e.actor}>${e.target}:${e.damage}${e.shields ? `/${e.shields}` : ''}` : e.kind === 'move' ? `${e.actor}~${e.to.lane}${e.to.depth}${e.swapped ? `<>${e.swapped}` : ''}` : `${'actor' in e ? e.actor : ''}:${e.kind}`).join(' '));
       return [...lines, battle.snapshot().combatants.map(c => `${c.id}=${c.hp}`).join(' ')];
     };
     const four = encounter(

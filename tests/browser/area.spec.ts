@@ -46,7 +46,7 @@ test('Shard Burst lights the party grid and hits everyone with falloff; Ogre Swe
   await expect(page.locator('#interaction-dialog')).toContainText('Two-Headed Ogre uses Ogre Sweep: Hero 6, Archer 6.');
   expect((await snapshot(page)).battle).toMatchObject({ turn: 24, hp: { hero: 1, archer: 13, lancer: 22, mage: 18 } });
   for (let i = 0; i < 10 && (await snapshot(page)).battle!.phase === 'command'; i++) await attack(page);
-  expect((await snapshot(page)).battle).toMatchObject({ phase: 'victory', turn: 31 }); // The kernel's pinned trace.
+  expect((await snapshot(page)).battle).toMatchObject({ phase: 'victory', turn: 29 }); // The kernel's pinned trace (29 since M5.5c's weaknesses).
   // Every lit cell and number was released.
   await button(page, 'Finish').click();
   await expect.poll(async () => (await snapshot(page)).inputMode).toBe('exploration');

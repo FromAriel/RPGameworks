@@ -92,6 +92,47 @@ These are starting values in one table in the kernel, tuned by play (as the M5.4
 
 Each ends with tests (kernel traces, browser play to a break, atomic discovery) and Ariel's play review.
 
+## Execution notes (M5.5c-1, November 18)
+
+Ariel's choices for M5.5c:
+- **Split:** c-1 is the rules and demo content, with battle text only; c-2 is the screen.
+- **Weakness icons and the "Weak!" preview:** show weaknesses revealed in the current battle. M5.5d keeps them across battles and saves.
+- **Phases:** built now, with the Two-Headed Ogre as the example.
+- **Demo table:**
+
+| Enemy | Weak | Resists | Shield |
+| --- | --- | --- | --- |
+| Bat | pierce | | 2 |
+| Clay Golem | blunt | slash | 3 |
+| Two-Headed Ogre | fire | | 4 |
+| Two-Headed Ogre at half HP | pierce | fire | 4 |
+
+The same creature has the same affinities and shield in every demo fight.
+
+What was built:
+- **Content:** enemies may have `shield` (1–9) and `phases`. Each phase has a `below` HP percent, which must fall from one phase to the next, and optional `affinities` and `shield`. Validation keeps both on enemies and checks phase tags against the catalog.
+- **Pipeline:** a `break` step (×1.5) after the affinity step, so a weakness hit on a broken enemy is ×1.875, rounded up once.
+- **Order of a landed hit's effects:**
+  1. A weakness hit adds momentum and reveals the tag.
+  2. A living enemy at a phase threshold starts that phase: new affinities, a full shield, and any break ends. That hit does not also remove a shield point.
+  3. Otherwise a weakness hit removes a shield point; at zero the enemy breaks.
+- **Break:**
+  - The enemy is stunned and pushed back one Attack's delay.
+  - Its next turn is a `stunned` event: it takes no action, and its pattern does not advance.
+  - On the following turn its shield is restored (a `recover` event), and it then acts as usual.
+- **Momentum:**
+  - **Gains and losses:** `MOMENTUM` in the kernel: +25 per weakness hit (each area hit counts), +100 per break, +10 per party Guard, −50 per fallen member.
+  - **Range:** kept between 0 and 500.
+- **Rounds:** one every `ROUND_TICKS` (100) ticks of the timeline, checked after every action. Each full pip restores 1 MP to every living member, up to their maximum. Momentum is not spent.
+  - A `round` event is recorded only when someone recovered MP, so fights without momentum keep their exact events.
+- **Snapshots:**
+  - **Combatants:** `shield`, `maxShield`, `broken`, `stunned`, `phase` and `revealed` (tags found weak this battle).
+  - **Battle:** `momentum` and `round`.
+- **Events:**
+  - new kinds `break`, `stunned`, `recover`, `phase` and `round`;
+  - a hit that removed a shield point carries `shieldLeft`.
+- **Not yet:** party weaknesses, and stage effects for these events (M5.5c-2).
+
 ## 10. Not in M5.5
 
 - Skills, elements, spending MP and combos: M5.9 and later (the data model allows multi-actor actions, as 0006 asks).

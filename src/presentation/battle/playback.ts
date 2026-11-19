@@ -8,7 +8,9 @@ import { areaPercent } from '../../domain/battle-grid.mjs';
 export const PLAYBACK_SPEEDS = [1, 2, 4] as const;
 export type PlaybackSpeed = typeof PLAYBACK_SPEEDS[number];
 
-const BASE_MS: Record<BattleEvent['kind'], number> = { attack: 560, guard: 380, heal: 460, move: 420, escape: 520, area: 760 };
+// Break, stun, recovery, phase and round are told by the action line for now; M5.5c-2 gives them their own effects.
+const BASE_MS: Record<BattleEvent['kind'], number> = { attack: 560, guard: 380, heal: 460, move: 420, escape: 520, area: 760,
+  break: 620, stunned: 420, recover: 420, phase: 620, round: 420 };
 
 export function stepDuration(event: BattleEvent, speed: PlaybackSpeed): number {
   return Math.ceil(BASE_MS[event.kind] / speed);

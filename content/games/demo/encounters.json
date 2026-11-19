@@ -5,19 +5,19 @@
     "name": "Practice Sigil",
     "seed": 1776,
     "enemies": [
-      {"id": "sigil", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
-      {"id": "shard", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
+      {"id": "sigil", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "affinities": {"blunt": "weak", "slash": "resist"}, "shield": 3, "hp": 20, "attack": 5, "defense": 1, "speed": 8},
+      {"id": "shard", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "affinities": {"pierce": "weak"}, "shield": 2, "hp": 10, "attack": 3, "defense": 0, "speed": 14}
     ]
   }, {
     "id": "demo:encounter.formation-drill",
     "name": "Formation Drill",
     "seed": 2604,
     "enemies": [
-      {"id": "ogre", "name": "Two-Headed Ogre", "frame": "sigil", "creature": "dcss/monster/two_headed_ogre_new", "cell": {"lane": 2, "depth": 2}, "size": {"lanes": 2, "depths": 2}, "hp": 60, "attack": 9, "defense": 2, "speed": 6,
+      {"id": "ogre", "name": "Two-Headed Ogre", "frame": "sigil", "creature": "dcss/monster/two_headed_ogre_new", "affinities": {"fire": "weak"}, "shield": 4, "phases": [{"below": 50, "affinities": {"pierce": "weak", "fire": "resist"}, "shield": 4}], "cell": {"lane": 2, "depth": 2}, "size": {"lanes": 2, "depths": 2}, "hp": 60, "attack": 9, "defense": 2, "speed": 6,
         "pattern": ["attack", "attack", "demo:action.ogre-sweep"]},
-      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "cell": {"lane": 1, "depth": 1}, "hp": 24, "attack": 6, "defense": 2, "speed": 8,
+      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "affinities": {"blunt": "weak", "slash": "resist"}, "shield": 3, "cell": {"lane": 1, "depth": 1}, "hp": 24, "attack": 6, "defense": 2, "speed": 8,
         "pattern": ["attack", "demo:action.shard-burst"]},
-      {"id": "bat", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "cell": {"lane": 1, "depth": 2}, "hp": 12, "attack": 4, "defense": 0, "speed": 14}
+      {"id": "bat", "name": "Bat", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "affinities": {"pierce": "weak"}, "shield": 2, "cell": {"lane": 1, "depth": 2}, "hp": 12, "attack": 4, "defense": 0, "speed": 14}
     ]
   }, {
     "id": "demo:encounter.ambush-drill",
@@ -25,9 +25,9 @@
     "seed": 3141,
     "opening": "back-attack",
     "enemies": [
-      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8},
-      {"id": "bat-a", "name": "Bat A", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14},
-      {"id": "bat-b", "name": "Bat B", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14}
+      {"id": "golem", "name": "Clay Golem", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "affinities": {"blunt": "weak", "slash": "resist"}, "shield": 3, "hp": 20, "attack": 5, "defense": 1, "speed": 8},
+      {"id": "bat-a", "name": "Bat A", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "affinities": {"pierce": "weak"}, "shield": 2, "hp": 10, "attack": 3, "defense": 0, "speed": 14},
+      {"id": "bat-b", "name": "Bat B", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "affinities": {"pierce": "weak"}, "shield": 2, "hp": 10, "attack": 3, "defense": 0, "speed": 14}
     ]
   }, {
     "id": "demo:encounter.pincer-drill",
@@ -35,10 +35,10 @@
     "seed": 5926,
     "opening": "pincer",
     "enemies": [
-      {"id": "golem-a", "name": "Clay Golem A", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8, "flank": "front"},
-      {"id": "bat-a", "name": "Bat A", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14, "flank": "front"},
-      {"id": "bat-b", "name": "Bat B", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "hp": 10, "attack": 3, "defense": 0, "speed": 14, "flank": "rear"},
-      {"id": "golem-b", "name": "Clay Golem B", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "hp": 20, "attack": 5, "defense": 1, "speed": 8, "flank": "rear"}
+      {"id": "golem-a", "name": "Clay Golem A", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "affinities": {"blunt": "weak", "slash": "resist"}, "shield": 3, "hp": 20, "attack": 5, "defense": 1, "speed": 8, "flank": "front"},
+      {"id": "bat-a", "name": "Bat A", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "affinities": {"pierce": "weak"}, "shield": 2, "hp": 10, "attack": 3, "defense": 0, "speed": 14, "flank": "front"},
+      {"id": "bat-b", "name": "Bat B", "frame": "sigil-lit", "creature": "dcss/monster/animals/bat", "affinities": {"pierce": "weak"}, "shield": 2, "hp": 10, "attack": 3, "defense": 0, "speed": 14, "flank": "rear"},
+      {"id": "golem-b", "name": "Clay Golem B", "frame": "sigil", "creature": "dcss/monster/nonliving/clay_golem", "affinities": {"blunt": "weak", "slash": "resist"}, "shield": 3, "hp": 20, "attack": 5, "defense": 1, "speed": 8, "flank": "rear"}
     ]
   }]
 }

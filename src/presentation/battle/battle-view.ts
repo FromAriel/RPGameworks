@@ -318,7 +318,8 @@ export class BattleView {
     if (!event) { this.finishPending(); return; }
     pending.index += 1;
     const duration = stepDuration(event, this.currentSpeed);
-    this.active = event.actor;
+    // Who is acting stays highlighted through a break or a round's end, which are not anyone's own action.
+    if (event.kind !== 'round' && event.kind !== 'break' && event.kind !== 'phase') this.active = event.actor;
     this.banner = this.actionLine(event);
     this.refreshWindows();
     this.animate(event, duration, pending.target.turn * 8 + pending.index);
@@ -337,8 +338,13 @@ export class BattleView {
 
   /** FF-style action line: who acts and with what. */
   private actionLine(event: BattleEvent): string {
+    if (event.kind === 'round') return `End of round ${event.round}: MP restored`;
     const actor = this.battlers.get(event.actor)?.combatant.name ?? '';
-    const action = event.kind === 'attack' ? 'Attack' : event.kind === 'guard' ? 'Guard' : event.kind === 'escape' ? 'Run'
+    if (event.kind === 'break') return `${actor}: Break!`;
+    if (event.kind === 'stunned') return `${actor}: Stunned`;
+    if (event.kind === 'recover') return `${actor}: Shield restored`;
+    if (event.kind === 'phase') return `${actor}: Phase ${event.phase + 1}`;
+    const action = event.kind === 'attack' ? event.name ?? 'Attack' : event.kind === 'guard' ? 'Guard' : event.kind === 'escape' ? 'Run'
       : event.kind === 'move' ? 'Move' : event.kind === 'area' ? event.name : this.options.itemName(event.itemId);
     return `${actor}: ${action}`;
   }
@@ -363,6 +369,8 @@ export class BattleView {
   }
 
   private animate(event: BattleEvent, duration: number, seed: number): void {
+    // Decision 0017 events have no stage effect until M5.5c-2; the action line names them.
+    if (event.kind === 'round' || event.kind === 'break' || event.kind === 'stunned' || event.kind === 'recover' || event.kind === 'phase') return;
     const actor = this.battlers.get(event.actor);
     if (!actor) return;
     if (event.kind === 'escape') {

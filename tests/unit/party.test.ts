@@ -65,7 +65,8 @@ describe('the party roster', () => {
 describe('the party in battle', () => {
   it('plays the Formation Drill exactly as when its party was authored in the encounter', () => {
     // Since M5.4f the Drill's Golem and Ogre also have area attacks; without them, the roster's party plays as before.
-    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ pattern: _p, ...enemy }) => enemy) };
+    // The fixture predates enemy patterns (M5.4f) and the M5.5c kit (affinities, shields, phases), so those are left out.
+    const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ pattern: _p, affinities: _a, shield: _s, phases: _ph, ...enemy }) => enemy) };
     const drill = battleEncounter(plain, roster, defaultParty(roster));
     // Since M5.5b members also carry a weapon, MP and skills; the rest of each member is as authored.
     expect({ ...drill, party: drill.party.map(({ weapon: _w, mp: _m, skills: _s, ...member }) => member) }).toEqual(authored[1]);

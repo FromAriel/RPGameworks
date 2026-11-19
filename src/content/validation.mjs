@@ -255,6 +255,13 @@ export function readEncounters(value, file = 'encounters.json', frames, creature
       else checkKit(combatant, path, catalog, at);
       if (side !== 'enemies' && combatant.affinities) at(`${path}/affinities`, 'Only enemies have affinities for now', null);
       for (const tag of Object.keys(combatant.affinities ?? {})) if (catalog && !catalog.tags.has(tag)) at(`${path}/affinities/${tag}`, 'Unknown damage tag (declare it in the action catalog)', tag);
+      // Shields and phases (decision 0017): enemies only; phases in order of falling HP, with declared tags.
+      if (side !== 'enemies') for (const field of /** @type {const} */ (['shield', 'phases'])) { if (combatant[field] !== undefined) at(`${path}/${field}`, 'Only enemies have shields and phases', null); }
+      (combatant.phases ?? []).forEach((phase, p) => {
+        const previous = p === 0 ? 100 : combatant.phases?.[p - 1]?.below ?? 100;
+        if (phase.below >= previous) at(`${path}/phases/${p}/below`, 'Each phase must start at a lower HP share than the one before', phase.below);
+        for (const tag of Object.keys(phase.affinities ?? {})) if (catalog && !catalog.tags.has(tag)) at(`${path}/phases/${p}/affinities/${tag}`, 'Unknown damage tag (declare it in the action catalog)', tag);
+      });
       (combatant.pattern ?? []).forEach((step, p) => {
         if (step !== 'attack' && actions && !actions.has(step)) issues.push({file,id:encounter.id,path:`${path}/pattern/${p}`,message:'Unknown action: use "attack" or an action from the game\'s action catalog',value:step});
       });

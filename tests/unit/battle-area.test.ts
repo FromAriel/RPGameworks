@@ -56,10 +56,10 @@ describe('enemy area attacks', () => {
     const kinds: string[] = [];
     let state = battle.snapshot();
     for (let i = 0; i < 80 && state.phase === 'command'; i++) {
-      kinds.push(...state.events.filter(e => e.actor === 'caster').map(e => e.kind));
+      kinds.push(...state.events.filter(e => 'actor' in e && e.actor === 'caster').map(e => e.kind));
       state = battle.command({ type: 'guard' });
     }
-    kinds.push(...state.events.filter(e => e.actor === 'caster').map(e => e.kind));
+    kinds.push(...state.events.filter(e => 'actor' in e && e.actor === 'caster').map(e => e.kind));
     expect(kinds.slice(0, 6)).toEqual(['attack', 'area', 'area', 'attack', 'area', 'area']);
     expect(state.phase).toBe('defeat');
     const first = fight(caster(['attack', 'burst', 'burst'], 'radius', { attack: 16 })).snapshot();
@@ -127,6 +127,8 @@ describe('the Formation Drill', () => {
       '12 Shard Burst @1,0: hero 3 100% s0, archer 3 80% s1, lancer 4 80% s0, mage 2 50% s1',
       '24 Ogre Sweep @1,0: hero 6 100% s0, archer 6 100% s1',
     ]);
-    expect(state).toMatchObject({ phase: 'victory', turn: 31 });
+    // Since M5.5c weaknesses add damage: the Bat (weak to pierce) falls to two hits, and the Ogre's second phase is weak
+    // to pierce, so the same choices win at turn 29 instead of 31. Nothing breaks; the two area attacks above are unchanged.
+    expect(state).toMatchObject({ phase: 'victory', turn: 29 });
   });
 });

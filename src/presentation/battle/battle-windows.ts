@@ -25,7 +25,11 @@ export interface WindowsView {
   readonly help: string;
   /** Short hint on the right of the help line, such as playback controls. */
   readonly hint: string;
-  readonly enemies: readonly { readonly id: string; readonly name: string; readonly defeated: boolean; readonly hp: number; readonly maxHp: number }[];
+  /** Enemy rows; `shield`/`maxShield` are its own shield points (decision 0017), drawn as pips after the name. */
+  readonly enemies: readonly { readonly id: string; readonly name: string; readonly defeated: boolean; readonly hp: number; readonly maxHp: number;
+    readonly shield?: number; readonly maxShield?: number; readonly broken?: boolean }[];
+  /** The party's momentum gauge (Ariel, M5.5c-2: the bottom row of the party window). */
+  readonly momentum?: { readonly points: number; readonly pip: number; readonly pips: number };
   /** MP is drawn as a number after HP (Ariel, M5.5b-2: HP and MP columns); blank for a member without MP. */
   readonly party: readonly { readonly id: string; readonly name: string; readonly hp: number; readonly maxHp: number; readonly mp?: number; readonly maxMp?: number; readonly active: boolean }[];
   /** The combatant being targeted; its name gets the pointer too, as in FF. */
@@ -39,6 +43,9 @@ export interface WindowsView {
   readonly showCommands: boolean;
 }
 
+/** Pip width with its gap; shield pips are light blue, momentum gold (a partly filled pip is darker gold). */
+const PIP = 8;
+const SHIELD_PIP = 0x9fd0ff, MOMENTUM_PIP = 0xffd25e, MOMENTUM_PIP_PART = 0x8a6d2a;
 /** Characters kept for the MP number at the right of each party row. */
 const MP_COLUMN = 3;
 
@@ -74,7 +81,13 @@ export class BattleWindows {
     view.enemies.forEach((enemy, index) => {
       const y = L.enemies.y + i.top + index * ROW;
       if (enemy.id === view.target) this.cursor(L.enemies.x + i.left - 4, y, false);
-      this.text(L.enemies.x + i.left + CURSOR_W, y, fit(enemy.name, L.enemies.w - i.left - i.right - CURSOR_W), enemy.defeated ? PANEL_STYLE.disabled : PANEL_STYLE.text);
+      const pips = enemy.defeated ? 0 : enemy.maxShield ?? 0, pipsWidth = pips ? pips * PIP + 4 : 0;
+      this.text(L.enemies.x + i.left + CURSOR_W, y, fit(enemy.name, L.enemies.w - i.left - i.right - CURSOR_W - pipsWidth), enemy.defeated ? PANEL_STYLE.disabled : PANEL_STYLE.text);
+      // Shield pips at the right of the name row: full ones bright, spent ones hollow; a broken enemy's are all spent.
+      for (let p = 0; p < pips; p++) {
+        const x = L.enemies.x + L.enemies.w - i.right - (pips - p) * PIP;
+        this.pip(x, y + 5, !enemy.broken && p < (enemy.shield ?? 0), SHIELD_PIP);
+      }
       if (!enemy.defeated) this.gauge(L.enemies.x + i.left + CURSOR_W, y + 16, L.enemies.w - i.left - i.right - CURSOR_W, enemy.hp, enemy.maxHp);
     });
 
@@ -90,6 +103,16 @@ export class BattleWindows {
       this.text(right - mpWidth - 16 - hp.length * 8, y, hp, color);
       if (member.maxMp) this.text(right - mpWidth, y, String(member.mp ?? 0).padStart(MP_COLUMN), member.hp <= 0 ? PANEL_STYLE.disabled : PANEL_STYLE.text);
     });
+
+    // Momentum on the party window's last row: a label and one pip per 100 points, the one being filled shown dimmer.
+    if (view.momentum) {
+      const { points, pip, pips } = view.momentum, y = L.party.y + i.top + 5 * ROW, x = L.party.x + i.left + CURSOR_W;
+      this.text(x, y, 'Momentum', PANEL_STYLE.muted);
+      for (let p = 0; p < pips; p++) {
+        const filled = points >= (p + 1) * pip, building = !filled && points > p * pip;
+        this.pip(x + 80 + 8 + p * (PIP + 4), y + 5, filled || building, building ? MOMENTUM_PIP_PART : MOMENTUM_PIP);
+      }
+    }
 
     // The command window stays as an empty panel while actions play, so the band never shows a hole.
     this.panel(L.commands);
@@ -189,6 +212,20 @@ export class BattleWindows {
     const filled = maxHp > 0 ? Math.max(1, Math.round(w * Math.max(0, hp) / maxHp)) : 0;
     g.fillStyle(PANEL_STYLE.outline, 1).fillRect(x, y, w, 2);
     g.fillStyle(hp * 4 <= maxHp ? 0xd9705f : 0x6fbf73, 1).fillRect(x, y, filled, 2);
+  }
+
+  /** A 7 × 7 diamond pip (one pixel apart at PIP), outlined: filled in `color`, or hollow (outline and a dark centre). */
+  private pip(x: number, y: number, filled: boolean, color: number): void {
+    const g = this.add(this.scene.add.graphics());
+    for (let row = 0; row < 7; row += 1) {
+      const half = 3 - Math.abs(3 - row);
+      g.fillStyle(PANEL_STYLE.outline, 1).fillRect(x + 3 - half, y + row, half * 2 + 1, 1);
+    }
+    for (let row = 1; row < 6; row += 1) {
+      const half = 2 - Math.abs(3 - row);
+      if (half < 0) continue;
+      g.fillStyle(filled ? color : 0x1a2340, 1).fillRect(x + 3 - half, y + row, half * 2 + 1, 1);
+    }
   }
 
   /** The ▶ pointer, drawn in whole pixels (7 × 11). An inactive cursor marks the parent entry of an open sub-menu. */

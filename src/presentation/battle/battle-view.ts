@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { AreaShape, BattleEvent, BattleSnapshot, Cell, CombatantSnapshot, Opening } from '../../domain/battle';
+import { MOMENTUM } from '../../domain/battle';
 import type { MenuEntry } from '../../domain/battle-menu';
 import { STAGE_GRID, areaPercentAt, battlerPosition, gridSpacing, hpBefore, stepDuration } from './playback';
 import type { StageFloor } from './playback';
@@ -28,6 +29,9 @@ const DEPTH = { backdrop: 1.5, floor: 1.51, battler: 1.6, ui: 1.7, windows: 1.8,
 const BAR_WIDTH = 48;
 /** Hit text colours by affinity (decision 0018): weak gold, resist grey-blue, immune grey, absorb green. */
 export const AFFINITY_COLOR = { weak: 0xffd25e, resist: 0x9fb4d8, immune: 0xb7c9d0, absorb: 0x8fe08f } as const;
+/** MP restored at a round's end, and the dimming of a broken enemy (decision 0017). */
+const MP_COLOR = 0x8fb8ff;
+const BROKEN_ALPHA = 0.55;
 const TIMELINE_ICONS = 8;
 /** Idle loops advance on this tick; each creature keeps its own loop time and a phase offset by slot (decision 0015). */
 const IDLE_TICK_MS = 50;
@@ -53,6 +57,11 @@ interface Battler {
   /** Stone Soup creature frames when this battler is drawn as a creature (decision 0015 C3). */
   readonly creature: CreatureFrames | null;
   flashing: boolean;
+  /**
+   * An enemy's own shield (decision 0017), as shown: points left and at most, and whether it is broken. Kept apart from
+   * the lane shields above; updated by each playback event, and from the snapshot when playback ends.
+   */
+  points: number; maxPoints: number; broken: boolean;
 }
 
 /** What the command windows should show; built by the scene from the battle-menu model. */
@@ -104,6 +113,8 @@ export class BattleView {
   private readonly font: string | null;
   private menu: StageMenu | null = null;
   private active: string | null = null;
+  /** The party's momentum (decision 0017) as of the last snapshot shown; it updates when playback ends. */
+  private momentum = 0;
   private banner = '';
   private currentSpeed: PlaybackSpeed = 1;
   private idleLoop: Phaser.Time.TimerEvent | null = null;
@@ -147,7 +158,8 @@ export class BattleView {
         bar = this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x6fbf73).setOrigin(0).setDepth(DEPTH.ui));
       }
       const shields = this.own(scene.add.graphics().setDepth(DEPTH.ui));
-      this.battlers.set(combatant.id, { combatant, sprite, bar, barBack, barHold: false, barWidth, home, shields, shieldCount: 0, creature, flashing: false });
+      this.battlers.set(combatant.id, { combatant, sprite, bar, barBack, barHold: false, barWidth, home, shields, shieldCount: 0, creature, flashing: false,
+        points: combatant.shield, maxPoints: combatant.maxShield, broken: combatant.broken });
       this.face(this.battlers.get(combatant.id)!);
     }
     // Creatures breathe on their own idle loops; reduced motion keeps each one still (decision 0015 C3).
@@ -175,14 +187,16 @@ export class BattleView {
   render(snapshot: BattleSnapshot): void {
     if (this.disposed) return;
     this.active = snapshot.active;
+    this.momentum = snapshot.momentum;
     for (const combatant of snapshot.combatants) {
       this.hp.set(combatant.id, combatant.hp);
       const battler = this.battlers.get(combatant.id);
       if (!battler) continue;
       battler.combatant = combatant;
+      battler.points = combatant.shield; battler.maxPoints = combatant.maxShield; battler.broken = combatant.broken;
       battler.home = battlerPosition(combatant.side, combatant, this.floor, this.opening);
       battler.sprite.setPosition(battler.home.x, battler.home.y).setDepth(DEPTH.battler + battler.home.y / 10000).clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
-      battler.sprite.setAlpha(combatant.hp > 0 ? 1 : 0.25);
+      battler.sprite.setAlpha(this.restAlpha(battler));
       this.drawHp(combatant.id);
     }
     for (const event of snapshot.events) this.noteFacing(event);
@@ -221,8 +235,8 @@ export class BattleView {
   }
 
   /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
-  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean }> {
-    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left', bar: !!b.bar?.visible }]));
+  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean; points: number; broken: boolean; alpha: number }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left', bar: !!b.bar?.visible, points: b.points, broken: b.broken, alpha: Math.round(b.sprite.alpha * 100) / 100 }]));
   }
 
   /** Whether a battler should face right: enemies face the party, and in a pincer a member faces the flank it last fought. */
@@ -285,7 +299,7 @@ export class BattleView {
     this.finishPending();
     const events = target.events;
     for (const [id, value] of hpBefore(target, events)) { this.hp.set(id, value); this.drawHp(id); }
-    for (const battler of this.battlers.values()) battler.sprite.setAlpha((this.hp.get(battler.combatant.id) ?? 0) > 0 ? 1 : 0.25);
+    for (const battler of this.battlers.values()) battler.sprite.setAlpha(this.restAlpha(battler));
     this.pending = { target, events, index: 0, done };
     this.step();
   }
@@ -357,7 +371,9 @@ export class BattleView {
       help: playing ? this.banner : menu?.help ?? '',
       hint: playing ? `Speed ${this.currentSpeed}x` : '',
       target: playing ? null : menu?.target ?? null,
-      enemies: all.filter(b => b.combatant.side === 'enemy').map(b => ({ id: b.combatant.id, name: b.combatant.name, defeated: (this.hp.get(b.combatant.id) ?? 0) <= 0, hp: this.hp.get(b.combatant.id) ?? 0, maxHp: b.combatant.maxHp })),
+      enemies: all.filter(b => b.combatant.side === 'enemy').map(b => ({ id: b.combatant.id, name: b.combatant.name, defeated: (this.hp.get(b.combatant.id) ?? 0) <= 0, hp: this.hp.get(b.combatant.id) ?? 0, maxHp: b.combatant.maxHp,
+        shield: b.points, maxShield: b.maxPoints, broken: b.broken })),
+      momentum: { points: this.momentum, pip: MOMENTUM.pip, pips: MOMENTUM.pips },
       party: all.filter(b => b.combatant.side === 'party').map(b => ({ id: b.combatant.id, name: b.combatant.name, hp: this.hp.get(b.combatant.id) ?? 0,
         maxHp: b.combatant.maxHp, mp: b.combatant.mp, maxMp: b.combatant.maxMp, active: b.combatant.id === this.active })),
       commands: menu?.commands ?? [],
@@ -369,8 +385,11 @@ export class BattleView {
   }
 
   private animate(event: BattleEvent, duration: number, seed: number): void {
-    // Decision 0017 events have no stage effect until M5.5c-2; the action line names them.
-    if (event.kind === 'round' || event.kind === 'break' || event.kind === 'stunned' || event.kind === 'recover' || event.kind === 'phase') return;
+    if (event.kind === 'round') {
+      for (const [id, mp] of Object.entries(event.recovered)) { const member = this.battlers.get(id); if (member) this.float(member, `+${mp} MP`, MP_COLOR, duration); }
+      return;
+    }
+    if (event.kind === 'break' || event.kind === 'stunned' || event.kind === 'recover' || event.kind === 'phase') { this.animateBreak(event, duration); return; }
     const actor = this.battlers.get(event.actor);
     if (!actor) return;
     if (event.kind === 'escape') {
@@ -413,19 +432,11 @@ export class BattleView {
     }
     this.after(lead, () => {
       this.hp.set(event.target, this.afterHit(event.target, event.damage, event.affinity));
+      if (event.shieldLeft !== undefined) target.points = event.shieldLeft;
       this.drawHp(event.target);
       this.holdBar(event.target, duration - lead + 700);
       this.refreshWindows();
-      const flashMs = Math.max(40, Math.round(duration * 0.15));
-      if (target.creature) {
-        // The baked flash lights the body only; the shadow stays on the floor.
-        target.flashing = true;
-        target.sprite.setFrame(target.creature.flash);
-        this.after(flashMs, () => { target.flashing = false; target.sprite.setFrame(this.restFrame(target)); });
-      } else {
-        target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-        this.after(flashMs, () => target.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
-      }
+      this.flash(target, Math.max(40, Math.round(duration * 0.15)));
       this.floatHit(target, event.damage, event.guarded, event.affinity, duration - lead);
       this.options.impact({ x: target.home.x, y: target.home.y }, seed);
       if (event.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
@@ -452,6 +463,7 @@ export class BattleView {
         const target = this.battlers.get(hit.target);
         if (!target) continue;
         this.hp.set(hit.target, this.afterHit(hit.target, hit.damage, hit.affinity));
+        if (hit.shieldLeft !== undefined) target.points = hit.shieldLeft;
         this.floatHit(target, hit.damage, hit.guarded, hit.affinity, duration - lead);
         if (hit.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
       }
@@ -477,6 +489,48 @@ export class BattleView {
     }
   }
 
+  /** A white flash on a battler: a creature's baked flash frame (body only, not its shadow), or a fill tint. */
+  private flash(target: Battler, ms: number): void {
+    if (target.creature) {
+      target.flashing = true;
+      target.sprite.setFrame(target.creature.flash);
+      this.after(ms, () => { target.flashing = false; target.sprite.setFrame(this.restFrame(target)); });
+    } else {
+      target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+      this.after(ms, () => target.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
+    }
+  }
+
+  /** How opaque a battler is at rest: faded when defeated, dimmed while broken (Ariel, M5.5c-2), otherwise solid. */
+  private restAlpha(b: Battler): number {
+    return (this.hp.get(b.combatant.id) ?? b.combatant.hp) <= 0 ? 0.25 : b.broken ? BROKEN_ALPHA : 1;
+  }
+
+  /**
+   * Decision 0017 on the stage (Ariel, M5.5c-2): a break flashes the enemy, shouts BREAK! in gold and dims it while it
+   * stays broken; the stunned turn and recovery get small words, and recovery brightens it again; a new phase flashes
+   * and names the phase. The enemy window's pips follow each change.
+   */
+  private animateBreak(event: Extract<BattleEvent, { kind: 'break' | 'stunned' | 'recover' | 'phase' }>, duration: number): void {
+    const target = this.battlers.get(event.actor);
+    if (!target) return;
+    const settle = (alpha: number) => (this.options.reducedMotion ? target.sprite.setAlpha(alpha) : this.tween({ targets: target.sprite, alpha, duration: Math.round(duration * 0.5) }));
+    if (event.kind === 'break') {
+      target.points = 0; target.broken = true;
+      this.flash(target, Math.max(60, Math.round(duration * 0.25)));
+      this.float(target, 'BREAK!', AFFINITY_COLOR.weak, duration, -8, 16, 2);
+      settle(BROKEN_ALPHA);
+    } else if (event.kind === 'stunned') {
+      this.float(target, 'Stunned', 0xb7c9d0, duration);
+    } else {
+      target.points = event.shield; target.broken = false;
+      if (event.kind === 'phase') { target.maxPoints = event.shield; this.flash(target, Math.max(60, Math.round(duration * 0.25))); }
+      this.float(target, event.kind === 'phase' ? `Phase ${event.phase + 1}` : 'Recovered', event.kind === 'phase' ? AFFINITY_COLOR.weak : 0x9fd0ff, duration);
+      settle(1);
+    }
+    this.refreshWindows();
+  }
+
   /** HP after a hit: down by its damage, or up when the target absorbed it (decision 0018). */
   private afterHit(id: string, damage: number, affinity?: string): number {
     const hp = this.hp.get(id) ?? 0;
@@ -498,12 +552,17 @@ export class BattleView {
     } else this.float(target, String(damage), guarded ? 0xb7c9d0 : 0xffffff, duration);
   }
 
-  /** A label that rises `lift` pixels and fades; `offset` moves its start from 40 pixels above the battler's centre. */
-  private float(battler: Battler, text: string, color: number, duration: number, offset = 0, lift = 16): void {
-    const label = this.label(battler.home.x, battler.home.y - 40 + offset, text, color)
-      .setOrigin(0.5, 0).setDepth(DEPTH.numbers).setScrollFactor(0);
+  /**
+   * A label that rises `lift` pixels and fades; `offset` moves its start from 40 pixels above the battler's centre.
+   * `scale` enlarges it in whole pixels (BREAK! is drawn at 2×).
+   */
+  private float(battler: Battler, text: string, color: number, duration: number, offset = 0, lift = 16, scale = 1): void {
+    // Labels stay on the stage floor: on the top lane they start lower and rise less, never crossing the turn timeline.
+    const y = Math.max(this.floor.top, battler.home.y - 40 + offset), rise = Math.max(0, Math.min(lift, y - this.floor.top));
+    const label = this.label(battler.home.x, y, text, color)
+      .setOrigin(0.5, 0).setDepth(DEPTH.numbers).setScrollFactor(0).setScale(scale);
     this.transient.add(label);
-    this.tween({ targets: label, y: label.y - (this.options.reducedMotion ? 0 : lift), alpha: { from: 1, to: 0 }, duration, ease: 'Quad.easeIn',
+    this.tween({ targets: label, y: label.y - (this.options.reducedMotion ? 0 : rise), alpha: { from: 1, to: 0 }, duration, ease: 'Quad.easeIn',
       onComplete: () => { this.transient.delete(label); label.destroy(); } });
   }
 

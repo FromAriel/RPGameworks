@@ -4,6 +4,49 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## M5.5c-2 weakness, break and momentum on screen — November 18, 2026, local
+
+[Decision 0017](decisions/0017-weakness-break-momentum.md), second half. With M5.5c-1, **M5.5c is done locally**.
+
+- **Enemy window:**
+  - **Pips:** each enemy's shield points as pips after its name, light blue when full and hollow when spent; all hollow while broken.
+  - **Long names:** the Two-Headed Ogre's name shortens to "Two-Heade." beside its four pips.
+- **Momentum:** the bottom row of the party window, "Momentum" and five pips (gold when full, dark gold while filling). It updates when a turn's playback ends.
+- **Targeting help line:** for example "Clay Golem 24/24 HP  Weak: blunt  Weak!  Broken".
+  - It lists the weaknesses found this battle.
+  - It warns "Weak!" when the chosen hit would land on one.
+  - It says "Broken" while the enemy is broken.
+  - An affinity not yet found is never hinted at (a hidden absorb outranks a known weakness).
+- **Stage:**
+  - **Break:** a flash and a large gold "BREAK!"; the enemy is dimmed while broken.
+  - **Stunned and recovery:** "Stunned"; "Recovered" brightens it again.
+  - **New phase:** a flash and "Phase 2".
+  - **Round's end:** "+1 MP" over each member who recovered.
+- **Floating text:** words and numbers on top-lane enemies no longer cross the turn timeline. This includes damage numbers, which did before.
+- **Runtime snapshot:** shield points, broken and opacity per battler; momentum and round for the battle.
+- **Tests:**
+  - **Unit:** `special-menu.test.ts` (+2):
+    - the help line before and after a weakness is found, "Weak!" only for the weak weapon, and "Broken";
+    - no "Weak!" when a hidden absorb would win.
+  - **Browser:** `break.spec.ts` (1), the Formation Drill, with the Mage hitting the Golem and the others guarding:
+    - no hint before the first hit; "Weak: blunt  Weak!" before the next two;
+    - pips 3 → 0, then the break text, the dimmed Golem (`alpha` 0.55) and at least 175 momentum;
+    - the Golem recovers: 3 pips, full brightness;
+    - screenshots of the BREAK! moment and the broken state.
+  - **Local results:**
+    - typecheck, `npm run validate`, the production build, `check:test-tags` (209 tagged) and `check:external-art` passed;
+    - unit tests **611/611**. The Stone Soup library test timed out once in the full run and passed alone;
+    - browser suite **207/209** on the full run. The 2 failures were the timing-sensitive battle tests under full parallel load: the playback-speed test (only reached 2× before playback ended) and the authored-defeat Retry test (30 s limit). Both also failed under load before M5.5c-2. Repeated three times on 1 worker, both passed every time (15–18 s and 11–18 s), matching their times at M5.5c-1 (19 s and 13 s), so c-2 does not slow them.
+- **Not checked by Ariel yet:**
+  - the pip and gauge sizes;
+  - BREAK! and the dimming;
+  - the shortened Ogre name.
+- **Migration:** none.
+- **Next:** **M5.5d**:
+  - save version 4 with the bestiary (discovered weaknesses and breaks) and old-save fixtures;
+  - Codex entries showing discoveries;
+  - weaknesses found in earlier battles shown in the help line.
+
 ## M5.5c-1 shields, break, phases, momentum and MP recovery (rules) — November 18, 2026, local
 
 [Decision 0017](decisions/0017-weakness-break-momentum.md) on the 0018 action model, first half: the rules and the demo content. The screen (shield pips, BREAK, the momentum gauge, weakness icons and previews) is M5.5c-2.

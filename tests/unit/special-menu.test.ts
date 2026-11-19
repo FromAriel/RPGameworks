@@ -101,6 +101,36 @@ describe('the Special menu', () => {
     expect(entry(menu, 'special')).toMatchObject({ enabled: false, help: 'No specials yet.' });
   });
 
+  it('targeting names the weaknesses revealed this battle, warns "Weak!" before a weakness hit, and says "Broken"', () => {
+    const spear = { name: 'Spear', tags: ['pierce'] }, sword = { name: 'Sword', tags: ['slash'] };
+    const { battle, menu, context } = setup([member('lancer', 0, 0, { weapon: spear, speed: 30 }), member('hero', 1, 0, { weapon: sword, speed: 29 })],
+      [foe('bat', 0, 0, { affinities: { pierce: 'weak' }, shield: 1, hp: 200 })]);
+    menu.choose('attack');
+    expect(menu.state().help).toBe('Bat  200/200 HP'); // Nothing revealed yet, so nothing hinted.
+    battle.command({ type: 'attack', target: 'bat' }); // The Lancer's pierce: weak, and its one shield point breaks.
+    menu.begin(context());
+    expect(battle.snapshot().active).toBe('hero');
+    menu.choose('attack');
+    expect(menu.state().help).toMatch(/^Bat {2}\d+\/200 HP {2}Weak: pierce {2}Broken$/); // The Hero's slash is not a weakness hit.
+    for (let i = 0; i < 4 && battle.snapshot().active !== 'lancer'; i++) battle.command({ type: 'guard' }); // Guard is light: the Hero may go twice.
+    menu.begin(context());
+    expect(battle.snapshot().active).toBe('lancer');
+    expect(battle.snapshot().combatants.find(c => c.id === 'bat')!.broken).toBe(true);
+    menu.choose('attack');
+    expect(menu.state().help).toMatch(/Weak: pierce {2}Weak! {2}Broken$/);
+  });
+
+  it('never hints at an affinity the party has not revealed: a hidden absorb outranks a known weakness', () => {
+    const spear = { name: 'Fire spear', tags: ['pierce', 'fire'] };
+    const { battle, menu, context } = setup([member('lancer', 0, 0, { weapon: { name: 'Spear', tags: ['pierce'] }, speed: 30 }), member('mage', 1, 0, { weapon: spear, speed: 29 })],
+      [foe('slime', 0, 0, { affinities: { pierce: 'weak', fire: 'absorb' } })]);
+    battle.command({ type: 'attack', target: 'slime' }); // Reveals pierce.
+    menu.begin(context());
+    menu.choose('attack');
+    expect(menu.state().help).toContain('Weak: pierce');
+    expect(menu.state().help).not.toContain('Weak!'); // Pierce and fire together would be absorbed.
+  });
+
   it('opens its list where the Item list opens', () => {
     const layout = battleLayout(null);
     expect(entryRect(layout, 'skill', 2)).toEqual(entryRect(layout, 'item', 2));

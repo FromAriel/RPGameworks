@@ -133,6 +133,34 @@ What was built:
   - a hit that removed a shield point carries `shieldLeft`.
 - **Not yet:** party weaknesses, and stage effects for these events (M5.5c-2).
 
+## Execution notes (M5.5c-2, November 18)
+
+Ariel's choices for the screen:
+- **Momentum:** the bottom row of the party window: "Momentum" and five pips.
+- **Enemy information:** shield pips at the right of each name in the enemy window. Weaknesses go in the targeting help line rather than as icons in the window.
+- **Break:** a flash, "BREAK!" in gold, and the enemy dimmed while broken. The stunned turn and recovery get small words.
+
+What was built:
+- **Enemy window:**
+  - **Pips:** one per shield point, full ones light blue and spent ones hollow; all hollow while broken.
+  - **Long names:** a name shortens to make room ("Two-Heade." beside four pips).
+- **Party window:** the momentum row.
+  - **Pips:** a full pip is gold; the one being filled is dark gold.
+  - **Timing:** the gauge shows the last snapshot's value, so it updates when playback ends.
+- **Targeting help line:**
+  - **Known weaknesses:** "Weak: blunt" lists the weaknesses revealed this battle that apply in the enemy's current phase.
+  - **"Weak!":** shown when the chosen attack or skill would land on one of them.
+  - **"Broken":** shown while the enemy is broken.
+  - **No hints:** an affinity not yet revealed is never suggested. "Weak!" needs the real outcome to be weak (a hidden absorb or immune outranks it) and a revealed tag behind it.
+- **Stage:**
+  - **Break:** a white flash and a 2× gold "BREAK!"; the enemy fades to 55% while broken.
+  - **Stunned and recovery:** "Stunned" in grey; "Recovered" in light blue, and the enemy brightens.
+  - **New phase:** a flash and "Phase 2"; the pips refill to the new maximum.
+  - **Round's end:** "+N MP" rises over each member who recovered.
+  - **Pips during playback:** each hit's `shieldLeft` and each break, recovery or phase update the pips as the event plays.
+- **Floating text:** every floating word and number now stays on the stage floor. On the top lane it starts lower and rises less instead of crossing the turn timeline; this covers BREAK! and ordinary damage numbers too.
+- **Runtime snapshot:** each battler's `points`, `broken` and `alpha` (in `art`), and the battle's `momentum` and `round`.
+
 ## 10. Not in M5.5
 
 - Skills, elements, spending MP and combos: M5.9 and later (the data model allows multi-actor actions, as 0006 asks).

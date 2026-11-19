@@ -2,6 +2,7 @@ import type { AreaShape, BattleCommand, BattlePhase, Cell, CombatantSnapshot, Op
 import { GRID, alliesAhead } from './battle-grid.mjs';
 import { describeAction } from './actions';
 import type { BattleAction } from './actions';
+import { affinityOf } from './hit';
 
 /**
  * Classic battle command menu (decision 0009), independent of Phaser and the DOM. It only builds a command: nothing
@@ -217,6 +218,21 @@ export class BattleMenu {
     return order.filter(candidate => candidate.hp > 0 && context.validate(commandFor(pending, candidate.id)) === null);
   }
 
+  /**
+   * What the party knows about an enemy target (decision 0017, Ariel's M5.5c answers): the weaknesses revealed this
+   * battle, "Weak!" when this hit would land on one of them, and "Broken" while it is. An affinity the party has not
+   * revealed is never hinted at: "Weak!" needs both the real outcome and a revealed tag behind it.
+   */
+  private weaknessNote(target: CombatantSnapshot, pending: Pending): string {
+    if (target.side !== 'enemy') return '';
+    const known = target.revealed.filter(tag => target.affinities[tag] === 'weak');
+    const context = this.context!;
+    const actor = context.combatants.find(c => c.id === context.active);
+    const tags = pending.type === 'attack' ? actor?.weapon?.tags ?? [] : pending.type === 'skill' ? context.actions?.get(pending.action)?.tags ?? [] : [];
+    const weakHit = affinityOf(target.affinities, tags) === 'weak' && tags.some(tag => known.includes(tag));
+    return `${known.length ? `  Weak: ${known.join(', ')}` : ''}${weakHit ? '  Weak!' : ''}${target.broken ? '  Broken' : ''}`;
+  }
+
   /** The active member's skills, in their listed order, with their catalog actions. */
   private skills(): { readonly id: string; readonly action: BattleAction }[] {
     const context = this.context!;
@@ -248,7 +264,7 @@ export class BattleMenu {
       const note = unreachable.length ? `  Out of reach: ${unreachable.join(', ')}.` : '';
       return this.targets(pending).map(candidate => ({
         id: `target:${candidate.id}`, label: candidate.name, name: candidate.name, enabled: true,
-        help: `${candidate.name}  ${candidate.hp}/${candidate.maxHp} HP${note}`,
+        help: `${candidate.name}  ${candidate.hp}/${candidate.maxHp} HP${this.weaknessNote(candidate, pending)}${note}`,
       }));
     }
     if (level === 'move') return this.moveEntries();

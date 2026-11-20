@@ -1,0 +1,1183 @@
+{
+ "schemaVersion": 1,
+ "about": "Decision 0019: LPC sheets our character recipes use, written by tools/lpc/import.mjs. Do not edit; rerun the import.",
+ "generator": "Universal LPC Spritesheet Character Generator",
+ "repository": "https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator",
+ "revision": "4963a69795255fb15a934c47f478a8bdcf3668f5",
+ "directions": [
+  "up",
+  "left",
+  "down",
+  "right"
+ ],
+ "files": {
+  "body/bodies/male/hurt.png": {
+   "sha256": "417684c67b26467347953542069791af43a607008ddcb9f444a53aca3e10b820",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Benjamin K. Smith (BenCreating)",
+    "Evert",
+    "Eliza Wyatt (ElizaWy)",
+    "TheraHedwig",
+    "MuffinElZangano",
+    "Durrani",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)",
+   "reference": {
+    "reducedRgbaSha256": "aeb67ff3183b61b67cd43bdba347c0073e573c78051610816c9ccfb1104cba72"
+   }
+  },
+  "body/bodies/male/idle.png": {
+   "sha256": "9c3d17def9bd0574e25ce3162a243f18654479e38c04164bc12607429b013fa2",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Benjamin K. Smith (BenCreating)",
+    "Evert",
+    "Eliza Wyatt (ElizaWy)",
+    "TheraHedwig",
+    "MuffinElZangano",
+    "Durrani",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)",
+   "reference": {
+    "reducedRgbaSha256": "d24a354295a2e460dd593a9cd84cfa8228c35f11fb81830f07298e605a6275de"
+   }
+  },
+  "body/bodies/male/slash.png": {
+   "sha256": "662e208502b0f060041cd3e8c65b6445117f174e9435b68e619b874e36b0069d",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Benjamin K. Smith (BenCreating)",
+    "Evert",
+    "Eliza Wyatt (ElizaWy)",
+    "TheraHedwig",
+    "MuffinElZangano",
+    "Durrani",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)",
+   "reference": {
+    "reducedRgbaSha256": "4e4bb34c5dd1a11c6572a5e1b8c80f30563a67597e753e2fd78f2c218b033ba7"
+   }
+  },
+  "body/bodies/male/walk.png": {
+   "sha256": "1e0e8f0c11ba5f4f7b3d4439fc416802b4227da2fe146c13de3de254d9f87f77",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Benjamin K. Smith (BenCreating)",
+    "Evert",
+    "Eliza Wyatt (ElizaWy)",
+    "TheraHedwig",
+    "MuffinElZangano",
+    "Durrani",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)",
+   "reference": {
+    "reducedRgbaSha256": "565c922ed2ced6a86e4c8d44f11027e67bb79cbe20ae31ff9c37fe3b9c855b49"
+   }
+  },
+  "feet/boots/basic/male/hurt.png": {
+   "sha256": "4cf70ec2e4f496f5fd5a27be37ea58dc2e1ff57956ddd58700b3c7bb9d4708ae",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "bluecarrot16",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by Nila122, edited for male and v3 bases by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "c4e64ca45a1891d69aa7590701a37a46537c26a6a56a3570e3a9f6aea7a87400"
+   }
+  },
+  "feet/boots/basic/male/idle.png": {
+   "sha256": "6a454e19edabc7ca95f00073d3bb6fa9e528bd7c8c7860e4df5a6d2612579cf0",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "bluecarrot16",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by Nila122, edited for male and v3 bases by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "eb2fa9792fb4638aa5e973a83598864ed2a40818bdcaef023318c6de9bbed3bd"
+   }
+  },
+  "feet/boots/basic/male/slash.png": {
+   "sha256": "ac90bfe3e272ac6c404c43f249006421e823a44ae747efc9ac01a53ad06abeef",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "bluecarrot16",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by Nila122, edited for male and v3 bases by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "fb685fc43bc69211ae144df56f26966b9acc92d366ce6dfc9cb6e662f8f0eff4"
+   }
+  },
+  "feet/boots/basic/male/walk.png": {
+   "sha256": "13521e96fe8c6033c54622a8137cc1a05964a9db3bd1f5a115028951e5cecf18",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "bluecarrot16",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by Nila122, edited for male and v3 bases by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "e0672859b830f67affda3aedcbb2442823e07f03dc8070f4e8ccfbfc6d0aa4cd"
+   }
+  },
+  "head/heads/human/male/hurt.png": {
+   "sha256": "f1efa6975eed037351ff274abc195f69fb0b62fc2b9faa9cb89d0a025f463d0d",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "6ca0c6de1ef40567b84671a13e87a854385ac135a1d22a01d2dba18da1f7c4ef"
+   }
+  },
+  "head/heads/human/male/idle.png": {
+   "sha256": "10d58c1dd05592dfb436da42e4d6e582058306e1b6c98c85697ad97d1a5b82f4",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "12ca33ea5d90f34dd333138dcc512003a443acd4045fe170546fc392a24f9701"
+   }
+  },
+  "head/heads/human/male/slash.png": {
+   "sha256": "cf804e711fe210351eccd474297c25dbc99ddbf64cf5384b129d044fb93f6fc4",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "6d0cb73e254847c6eed0151b7ce77c4aafdae878e214159f5518677a22f1dd0f"
+   }
+  },
+  "head/heads/human/male/walk.png": {
+   "sha256": "7e863954dc8c3c748d0727415c39888106bdd3779beb2e3b18011a3a9ef3e53c",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "b9d3ff3160b6ef8d759567dba38d8d55c9fc3eb410e8e12d58a35d3c88873ab0"
+   }
+  },
+  "legs/pants/male/hurt.png": {
+   "sha256": "c9eac3fcea709049bd85e10b0bfb9ad73c557c423ebf4211995af1c6b917e9c5",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "GPL 3.0",
+    "CC-BY-SA 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised",
+   "reference": {
+    "reducedRgbaSha256": "3f77e5f5899cb42d0c6b7024a7fba35d640058d88cf12d8f463d36c9ae223de7"
+   }
+  },
+  "legs/pants/male/idle.png": {
+   "sha256": "717a5133533ccf18ccb3cced5653702be1d21a9ac6002dc9a84f3e1fb80087b3",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "GPL 3.0",
+    "CC-BY-SA 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised",
+   "reference": {
+    "reducedRgbaSha256": "3c2362b18d56ec5401d77c47a414625fd62a5e3584545ff9e394c0a06653d014"
+   }
+  },
+  "legs/pants/male/slash.png": {
+   "sha256": "0c324cb85970493872400e1e161ef8a246fda5013967253b6933cea909674c9a",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "GPL 3.0",
+    "CC-BY-SA 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised",
+   "reference": {
+    "reducedRgbaSha256": "01eb19e2a8eb8e04d8eee49e4b4166067ebfe494fb5f272a907a60810ba3f84e"
+   }
+  },
+  "legs/pants/male/walk.png": {
+   "sha256": "2de5a3247743ffa37febdf3464cc0a83e79f64d1028aed410832ee29bea850b6",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "GPL 3.0",
+    "CC-BY-SA 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised",
+   "reference": {
+    "reducedRgbaSha256": "f1b31f496bf97452b50b75868bd3b38d55248d873f04bb941974edcdac97348f"
+   }
+  },
+  "torso/armour/leather/male/hurt.png": {
+   "sha256": "8dd2bddf981d0a92158dba761f0a9bc95e18bafb18625c502d23d795a747fc48",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "45f1069bb91e1e5af2b492c80ac9a816ef00e64b1ecc919c8bcb9dcae4919b8a"
+   }
+  },
+  "torso/armour/leather/male/idle.png": {
+   "sha256": "fc3c6c52ccaf07041d6b51dba201299b00996e87888f18a54ae6db372388c226",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "e9fc9123596f285e7bc895a05c9ad317a537ee9a740e715ae884e108b65e5a4e"
+   }
+  },
+  "torso/armour/leather/male/slash.png": {
+   "sha256": "9a7d2d8daf8a0ef4a69c555327b84b64ddace6e37f4ba98bdeb4cd2ea024f2a0",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "dbcbd48c9a15bff39f5ad8f47bfa6348901310f5508d474da3719efc64991546"
+   }
+  },
+  "torso/armour/leather/male/walk.png": {
+   "sha256": "160490073860adb9bc702716f5df0f8e01e2fb8f3a6a2b2aaa0343d131c7477c",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "c31fa20f11e4d34816ce6a6ebafed02c6e5157599232fefb38bf4a26adecf67b"
+   }
+  },
+  "weapon/sword/arming/attack_slash/bg/iron.png": {
+   "sha256": "a4998a9916a239f6a8e35deb211d02872115ec85fb61a352ffe63f646428628d",
+   "width": 768,
+   "height": 512,
+   "cell": 128,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "5dad6dfd0992e970f69d49cf82c8a1408a2932551886c2d4452cd7435fa292d2"
+   }
+  },
+  "weapon/sword/arming/attack_slash/fg/iron.png": {
+   "sha256": "8091dd98e7a450207967b592a81d24ac833394457ccb6aa1504bd8ed9c2f3707",
+   "width": 768,
+   "height": 512,
+   "cell": 128,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "116271e3f2292ac2c3395c01127bb730af645523b60de275aa7572a1aff281b3"
+   }
+  },
+  "weapon/sword/arming/universal/bg/hurt/iron.png": {
+   "sha256": "1d5e30a8ea3588a1ee63db8e32cf0dfc0bd892db5b14255e1268f3d63b77fea6",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "4e37aeed881bbe4c2489ac86633f63e47bf7a38370b0fc5626cbcd255cf511bf"
+   }
+  },
+  "weapon/sword/arming/universal/bg/idle/iron.png": {
+   "sha256": "8bfe353daa295ef937fdd72f5a128bba5c99529a677c53e486eb64e1ff5e34dd",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "c20b0577736fd392b561063822868c4505496af1c169fb15b2fbc28879c1ae63"
+   }
+  },
+  "weapon/sword/arming/universal/bg/walk/iron.png": {
+   "sha256": "a72c1b8a835f553a9fd2af59ab197584738cb4d63da97c3a19dfb39f242e5f10",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "6a677259f0fba1a6a17befd9d3c57c0bd0c719e75cbbaa1ee0deaa255ef844a9"
+   }
+  },
+  "weapon/sword/arming/universal/fg/hurt/iron.png": {
+   "sha256": "f5d9333039de0ea936c66b59b38ff6afe6249717f3e3831f06190152014363aa",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "94bd25e9acd127015340c377b9d01673e3d41db049a62cc9187513fcd6ae79ab"
+   }
+  },
+  "weapon/sword/arming/universal/fg/idle/iron.png": {
+   "sha256": "304e2e72eea780bea44d79de23f2c08376ebd1dca4987acf8d7ea0e9c343ba3d",
+   "width": 128,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "c579e89f9c185ffaa01003f076dfee692831a3e2f321bd9e7a6063b2df22d61d"
+   }
+  },
+  "weapon/sword/arming/universal/fg/walk/iron.png": {
+   "sha256": "acfa58fd2bab0257b74ed6e76b1988079ead60c538e7ca146d8ed5684aace89e",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "92cebbffa1aea836ed3c4b639dfa0763746120a058eca8afe3ba3ccb5a483ece"
+   }
+  }
+ },
+ "ramps": [
+  {
+   "source": [
+    "#271920",
+    "#99423c",
+    "#cc8665",
+    "#E4A47C",
+    "#F9D5BA",
+    "#FAECE7"
+   ],
+   "target": [
+    "#271920",
+    "#442725",
+    "#7F4C31",
+    "#AE6B3F",
+    "#D38B59",
+    "#E4A47C"
+   ]
+  },
+  {
+   "source": [
+    "#281820",
+    "#4D4A5D",
+    "#958080",
+    "#C4B59F",
+    "#E5E6C7",
+    "#FFFFFF"
+   ],
+   "target": [
+    "#1d131e",
+    "#400B1F",
+    "#551C22",
+    "#682121",
+    "#832121",
+    "#AE424A"
+   ]
+  }
+ ],
+ "characters": {
+  "probe": {
+   "bodyType": "male",
+   "selections": [
+    {
+     "id": "body",
+     "recolors": {
+      "color_1": "olive"
+     }
+    },
+    {
+     "id": "heads_human_male"
+    },
+    {
+     "id": "torso_armour_leather"
+    },
+    {
+     "id": "legs_pants",
+     "recolors": {
+      "color_1": "maroon"
+     }
+    },
+    {
+     "id": "feet_boots_basic"
+    },
+    {
+     "id": "weapon_sword_arming",
+     "variant": "iron"
+    }
+   ],
+   "actions": {
+    "idle": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 4,
+     "cycle": [
+      0,
+      0,
+      1
+     ],
+     "layers": [
+      {
+       "file": "weapon/sword/arming/universal/bg/idle/iron.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/male/idle.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "legs/pants/male/idle.png",
+       "ramps": [
+        1
+       ]
+      },
+      {
+       "file": "feet/boots/basic/male/idle.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/armour/leather/male/idle.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/male/idle.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "weapon/sword/arming/universal/fg/idle/iron.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "left:0": "72bfc0862f17a76cbcb5a699d36ba3d4aec96bfd5994775345a8b01c9462f568",
+       "left:1": "72bfc0862f17a76cbcb5a699d36ba3d4aec96bfd5994775345a8b01c9462f568",
+       "left:2": "8c2fb5713895678699133d87b8f4f2e213f7d7b5b54bbb404bf351f1afc4c997",
+       "right:0": "30b244e7a27f0825dbed42adfc5b6d1afae708f7ece8e511e44bf287c9d39dc9",
+       "right:1": "30b244e7a27f0825dbed42adfc5b6d1afae708f7ece8e511e44bf287c9d39dc9",
+       "right:2": "4aa3d67322a1b235549f139f6ae56648d78c3a1b2dc57e13f05f55ebce01c7c3"
+      }
+     }
+    },
+    "walk": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 4,
+     "cycle": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "layers": [
+      {
+       "file": "weapon/sword/arming/universal/bg/walk/iron.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/male/walk.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "legs/pants/male/walk.png",
+       "ramps": [
+        1
+       ]
+      },
+      {
+       "file": "feet/boots/basic/male/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/armour/leather/male/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/male/walk.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "weapon/sword/arming/universal/fg/walk/iron.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "left:0": "80af740100ba85a886b3869f1763121465214a62fdf33e5e6bf442e64aa7c39f",
+       "left:1": "c10c2ad3bf61dbbc2272e3036feb8a93f5cdefcd29aa773b1aed6b40f4c5e2f9",
+       "left:2": "5b7b0757bd4198ed3461cd85ea5e38394dfa9139ab7a267bfec3cef46ae3a6f5",
+       "left:3": "aa5575cd8a36d45137ab136408756f626dfc4c1d05abb4ede4f5f96ff0af5829",
+       "left:4": "7c1506b8f362d48e64b2267c0cdd21221e1c5067e1a2d2ac35c6a2cb1a991abd",
+       "left:5": "886348537dbd56659e454ac4832865a741a5385659d3c7af19c17a5c95937698",
+       "left:6": "16f2803290164b032885c9fa1434f019780a89fff0605fa6fbcc54ec02bc45da",
+       "left:7": "79eddb660f28f438c358de8973622eec62c87b7f0975a24bd990649af017f551",
+       "right:0": "54ad07955a8c8da5f88ccbefddafcedcb1dd595bcc84fcd3a553942d892981ee",
+       "right:1": "b195e65f5ce4b06a03149fe40c130d764396046f8258b4714248811904c0fe7d",
+       "right:2": "7a917acfaccd95e20634ba7be0feec7cde34dad5caf75ea19b8fb5699bafc24e",
+       "right:3": "b8040c40fbe15fd8a7599895b2d458bef36d37b284b7fac7fbbdab0c7ef90d44",
+       "right:4": "918fc0ce449126a9970a9d37b93a9b88860dceabeae808f0c26d9068fb347f99",
+       "right:5": "928a5d8e8bc4bffa483f8509b3fbef4f68fe37126cede651c53c7cdef0752702",
+       "right:6": "1cecb90d98e0d5c66ad2fc2583b35962f4628f79c910dd1b81ae39e44f331978",
+       "right:7": "f131bdd046aba8cd0dfd482e5f3495e5c0175587be242f6266feeb9688811eef"
+      }
+     }
+    },
+    "hurt": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 1,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "layers": [
+      {
+       "file": "weapon/sword/arming/universal/bg/hurt/iron.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/male/hurt.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "legs/pants/male/hurt.png",
+       "ramps": [
+        1
+       ]
+      },
+      {
+       "file": "feet/boots/basic/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/armour/leather/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/male/hurt.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "weapon/sword/arming/universal/fg/hurt/iron.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "up:0": "5422a2f03cc87081667dcd7d3dab13b8e73ab83c8a99ae9c4cd0619dc450d958",
+       "up:1": "e9c8f47d009e30466146069ab0493006803f646eb11de5398e0bf020dfaf57fa",
+       "up:2": "c809557c6362cee12f1f08255ad38d34d3a4f28e017ff0af247cb5af2793582c",
+       "up:3": "0b7e97994cefc02f98db0bdf1646f28510f2d7a838731881042adbbac71e27ec",
+       "up:4": "1f38de4a0eb07a678aac4e58b371c2d8bacdbf3aea010560cae1285667e07d28",
+       "up:5": "92adf354f6f66cbeebb66d3adb648654a7ebc03a5fdd9e005ec945d3609b5a35"
+      }
+     }
+    },
+    "slash_128": {
+     "kind": "custom",
+     "size": 96,
+     "sourceSingleAnimation": false,
+     "frames": [
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ],
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ],
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ],
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ]
+     ],
+     "layers": {
+      "slash": [
+       {
+        "file": "weapon/sword/arming/attack_slash/bg/iron.png",
+        "ramps": []
+       },
+       {
+        "file": "body/bodies/male/slash.png",
+        "ramps": [
+         0
+        ],
+        "base": true
+       },
+       {
+        "file": "legs/pants/male/slash.png",
+        "ramps": [
+         1
+        ],
+        "base": true
+       },
+       {
+        "file": "feet/boots/basic/male/slash.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "torso/armour/leather/male/slash.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "head/heads/human/male/slash.png",
+        "ramps": [
+         0
+        ],
+        "base": true
+       },
+       {
+        "file": "weapon/sword/arming/attack_slash/fg/iron.png",
+        "ramps": []
+       }
+      ]
+     },
+     "reference": {
+      "frames": {
+       "left:0": "1be9616c9d8ef7c4bef3d035781597764ee816c38d3578beb88495030c111116",
+       "left:1": "85a203a6c229f246e1bc6c2e7822a74d7ed85bc739061b473cfa9101b1457c93",
+       "left:2": "faca54d96344ef35efa2dfdb28b9bde1d3ed27d70c1aa961dac0fef4b28183cb",
+       "left:3": "42f5202b60c3549018d3b98e5abad598a174fc30a44c1250448fb0db5d59d313",
+       "left:4": "dbfa93eaf3e4189f48885d7d555062d3af61a310a5cf162366a4d6f3a2e81269",
+       "left:5": "a46f0201c8abe83ce36a6809d59d97e3598f91a31e6023011153e4d461a4f81c",
+       "right:0": "02ae7577b5aa5f2e53ce700113f50dc8833e726cfeb1219e74177e81ac4ab4a1",
+       "right:1": "bbd1675662ff3f5ccbd99b2c6cfc32fcabe0b6303b95268e80f74bd902045a1c",
+       "right:2": "c5a02416004c114b84a473e0a9e698f5b9dfdfba7c7d23dd3ae0e50e00062aaf",
+       "right:3": "905d972f0ed88e35403e9b3629540c7325cc1194ed6b6529ae09b3c2f5f90eb1",
+       "right:4": "44716dd17ddb2c8bd6346f3199174279104d2f231585a74a2bc3601414df2b9e",
+       "right:5": "eedc2534b5f367eccc591b536ee34ad77f5b2c2982fa6b825494be10f8c9a4db"
+      }
+     }
+    }
+   }
+  }
+ }
+}

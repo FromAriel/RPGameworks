@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "about": "Decision 0019: character recipes for tools/lpc/import.mjs (run it after any change). Part IDs and colours from the Universal LPC Spritesheet Character Generator. The probe is a test character for S1.5a; the party's own designs arrive in S1.5b.",
+  "characters": [
+    {
+      "id": "probe",
+      "bodyType": "male",
+      "selections": [
+        { "id": "body", "recolors": { "color_1": "olive" } },
+        { "id": "heads_human_male" },
+        { "id": "torso_armour_leather" },
+        { "id": "legs_pants", "recolors": { "color_1": "maroon" } },
+        { "id": "feet_boots_basic" },
+        { "id": "weapon_sword_arming", "variant": "iron" }
+      ],
+      "actions": ["idle", "walk", "hurt", "slash_128"]
+    }
+  ]
+}

@@ -4,6 +4,31 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## S1.5a LPC import and tools — November 19, 2026, local
+
+[Decision 0019](decisions/0019-permissive-lpc-art.md), first packet. No change in the game.
+
+- **Ariel's choice:** the LPC generator's part definitions are GPL-3.0 data, so recipes are resolved at import. The ported generator runs only in the import tool, against the local LPC checkout; the repository keeps what our recipes resolve to.
+- **Import:** `npm run lpc:import` (`tools/lpc/import.mjs`) resolves `assets/source/lpc/recipes.json` with DanJen's recipe rules (copied unchanged).
+  - **Licence check:** each file must have a CC0, CC-BY or OGA-BY option in the generator's per-file credits, or nothing is written.
+  - **Output:** the sheets used (byte for byte, checked against the pinned hashes), `manifest.json` (licence and authors per file, resolved layers and colour ramps per action) and `CREDITS.md`.
+- **Ports:**
+  - **Reducer:** the PixiPPL reducer (DanJen's bundle, byte for byte, with a provenance header).
+  - **Bake:** `src/content/lpc/bake.mjs` reduces sheets, recolours, composites and assembles frames, including oversized actions.
+- **The probe:** a test character, 28 sheets (124 KB), all OGA-BY 3.0, with idle, walk, hurt and the oversized slash. It is replaced by the party's designs in S1.5b.
+- **Finding:** a sword's attacks are oversized. The arming sword's slash uses 128-pixel cells, reduced to 96-pixel frames, so the battle must place 96-pixel frames by the feet; the bow and staff are standard. Decision 0019 is corrected.
+- **Tests:** `lpc.test.ts` (6):
+  - **Licences:** the licence choice and refusals; the per-file credit parsing and lookups.
+  - **Committed sheets:** each one's hash, licence, authors and credit; every layer and ramp reference valid; no generator definitions kept.
+  - **Reduction:** every committed sheet reduced exactly as DanJen's cache did.
+  - **Frames:** all 40 reference frames composited exactly as DanJen's generator did.
+- **Local results:**
+  - typecheck, `npm run validate`, the production build and `check:external-art` passed;
+  - unit tests **628/628**;
+  - the browser suite was not run, since the game is unchanged.
+- **Also:** `.gitattributes` marks the sheets as binary; `assets/source/lpc/README.md` explains the folder.
+- **Next:** **S1.5b**, preview sheets of candidate designs for the four members, and Ariel's choices as recipes.
+
 ## Plan: permissive LPC party art (decision 0019) — November 19, 2026
 
 Ariel approved [decision 0019](decisions/0019-permissive-lpc-art.md), which amends 0007 for LPC character art. Planning only; nothing is imported yet.

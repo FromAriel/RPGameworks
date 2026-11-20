@@ -7,3 +7,6 @@ assets/source/ui/skins/*/*.json text eol=lf
 assets/source/creatures/stone-soup/**/*.png binary
 assets/source/creatures/stone-soup/*.json text eol=lf
 assets/source/creatures/*.json text eol=lf
+assets/source/lpc/sheets/**/*.png binary
+assets/source/lpc/*.json text eol=lf
+assets/source/lpc/*.md text eol=lf

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "about": "Decision 0019 (and 0008): LPC cells reduced by Ariel's PixiPPL reducer, 64 to 41 pixels inside a 48-pixel frame at (3, 0). Each layer keeps its alpha until the layers are composited; the finished character then takes binary alpha at 128. Copied from DanJen Delver (vendor/pixippl-resizer/current-settings.json sha256 60fdeb86ed9cf2db8e932b39cbdc8cd22ad67a979b72eebd11fbd29aeab61ba5, assets/lpc/derivative-settings.json version 2), so the output matches its reduced cache.",
+  "geometry": { "sourceCell": 64, "reducedCell": 41, "frame": 48, "offset": [3, 0] },
+  "layerAlphaMode": "preserve",
+  "finalAlphaThreshold": 128,
+  "reducer": {
+    "schemaVersion": 1,
+    "name": "Current 64 to 41 in 48 preset",
+    "expectedSource": { "width": 64, "height": 64 },
+    "nominalScale": { "numerator": 32, "denominator": 50, "rounded_cell_size": 41 },
+    "canvas": { "enabled": true, "size": 48, "x": 3, "y": 0 },
+    "recipe": {
+      "name": "LPC_REDUCTION_FULLCELL_48_BODY32_V2",
+      "version": 1,
+      "target": { "size": 41, "mode": "square" },
+      "baseFilter": "area",
+      "layers": [{ "enabled": true, "filter": "nearest", "blend": "darkenMap", "opacity": 50, "threshold": 0 }],
+      "tone": { "contrast": 100, "brightness": 0, "gamma": 1, "saturation": 100 },
+      "outline": { "enabled": true, "strength": 50, "width": 1 },
+      "palette": { "method": "source", "maxColors": 32, "distance": "oklab", "minPopulation": 1, "alphaMode": "binary", "alphaThreshold": 128 }
+    }
+  }
+}

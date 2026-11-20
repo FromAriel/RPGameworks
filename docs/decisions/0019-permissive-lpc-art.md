@@ -29,7 +29,7 @@
 
 ## Animations for battle
 
-All use the standard 64-pixel LPC cells (reduced to 48), facing left and right (both are needed in a pincer). The oversized-frame question from S1.5 is avoided for now.
+Facing left and right (both are needed in a pincer). Most use the standard 64-pixel LPC cells, reduced to 48. **Correction (S1.5a):** a sword's attacks exist only as oversized actions. The arming sword's slash is `slash_128`, 128-pixel cells reduced to 96. So the Hero, and the Lancer for now, need 96-pixel frames placed by the feet. The bow's shoot and the staff's spellcast are standard. LPC's hurt animation has a single row.
 
 | Use | LPC animation |
 | --- | --- |
@@ -61,6 +61,20 @@ All use the standard 64-pixel LPC cells (reduced to 48), facing left and right (
   - timeline icons;
   - portraits on the hub cards, Status and Formation.
 - **S1.5e — The Lancer's spear:** Ariel's original spear layer (thrust, plus walk and hurt if needed) replaces the temporary sword.
+
+## Execution notes (S1.5a, November 19)
+
+- **Resolve at import (Ariel's choice):** the generator's part definitions (layers, paths, z-order, colour options) are GPL-3.0, so they stay in the local LPC checkout. DanJen's recipe rules (`tools/lpc/rules.mjs`, unchanged) run only in the import tool. The repository keeps what our recipes resolve to: each action's ordered layers, the colour ramps (lists of hex colours), and per-file credits.
+- **Import:** `npm run lpc:import` reads a prepared LPC folder in DanJen Delver's layout (default `J:/Dungeonminusdelver/assets/lpc` or `$LPC_SOURCE`) and `assets/source/lpc/recipes.json`.
+  - **Licence check:** every file must have an allowed licence in the generator's per-file `CREDITS.csv`, or nothing is written.
+  - **Credit lookup:** a file's own row; else, for a colour variant, its animation sheet's row; else, for an oversized action's variant, its folder's rows, only when they all agree.
+  - **Source check:** each file is checked against DanJen's pinned import hashes.
+  - **Output:** `sheets/` (byte for byte), `manifest.json` and `CREDITS.md`.
+- **Ports:**
+  - **Reducer:** `src/content/lpc/pixippl-reducer.mjs` is DanJen's esbuild bundle of the PixiPPL reducer, byte for byte below a provenance header. It is excluded from type checking and must not be edited here.
+  - **Bake:** `src/content/lpc/bake.mjs` ports DanJen's bake worker (sheet reduction, frame reuse, oversized cells and their offsets), recolouring, compositing, binary alpha, and the generator's frame assembly for standard and oversized actions.
+- **Verification:** the import records references from DanJen's own reduced cache (per file, the RGBA hash) and generator (every frame of each action, left and right). The tests reduce and composite from the committed files alone and match every reference. The probe gives 28 files and 40 reference frames: idle, walk, hurt and the oversized slash, with a recoloured body and pants.
+- **The probe:** a test character (male body, head, leather armour, pants, boots, arming sword). It is replaced by the party's designs in S1.5b.
 
 ## Still open
 

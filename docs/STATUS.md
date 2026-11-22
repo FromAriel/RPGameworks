@@ -4,6 +4,41 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## S1.5b the party's LPC designs — November 22, 2026, local
+
+[Decision 0019](decisions/0019-permissive-lpc-art.md), second packet. No change in the game yet (S1.5c bakes it).
+
+- **Ariel's choices** from 12 previewed candidates:
+  - **Hero:** the Captain (maroon tabard over white).
+  - **Archer:** the Ranger (green hood, leather armour, quiver).
+  - **Lancer:** the Guard (full steel plate, armet helm, blue tabard; sword until Ariel's spear).
+  - **Mage:** the Sorceress (purple dress, moon hat, white hair).
+
+  They are now `assets/source/lpc/recipes.json`, imported as 113 sheets (559 KB) with credits. The probe is removed.
+- **Previews:**
+  - **Tool:** `npm run lpc:preview` renders `candidates.json` into one self-contained page (`external/lpc-preview/index.html`, ignored).
+  - **Checks:** a shared `tools/lpc/resolve.mjs` gives the import and the preview the same recipe and licence checks.
+- **What the art allows:**
+  - **No idle:** each chosen design wears a part without an idle (tabard, belt, quiver, robe belt), so all four stand on their walk's first frame.
+  - **Actions:** a walk (the bow's is the oversized `walk_128`), the attack (sword slash oversized; bow shoot and staff spellcast standard) and hurt.
+- **Bug found:**
+  - **The fault:** DanJen's reduced cache records the bow's `walk_128` sheets as 64-pixel cells, though their frames are 128. That threw the bow above the archer's head, in DanJen's generator too.
+  - **The fix:** the import now takes cell sizes from the action, so the bow stays in hand.
+  - **Those two sheets:** they have no DanJen reference, and the tests check their geometry and the bow's position instead.
+  - **DanJen itself:** untouched.
+- **Tests:** `lpc.test.ts` (7, was 6):
+  - **Coverage:** every frame of every action bakes; the bow sits within the figure's area of the frame.
+  - **Exceptions:** only the two bow-walk sheets lack references.
+  - **Reference checks:** 111 sheets and 136 frames still match DanJen exactly.
+- **Local results:**
+  - typecheck, `npm run validate` and `check:external-art` passed;
+  - unit tests **629/629**;
+  - the browser suite was not run, since the game is unchanged.
+- **Next:** **S1.5c**:
+  - battle sheets and portraits baked by the content build;
+  - LPC credits in the Credits screen;
+  - the placeholder fallback.
+
 ## S1.5a LPC import and tools — November 19, 2026, local
 
 [Decision 0019](decisions/0019-permissive-lpc-art.md), first packet. No change in the game.

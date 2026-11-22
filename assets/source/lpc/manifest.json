@@ -11,6 +11,251 @@
   "right"
  ],
  "files": {
+  "arms/armour/plate/male/hurt.png": {
+   "sha256": "b07a53d7f08c446db084839a8da6fdaa9f1014f43b23c4122c40890dcffc7669",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, recolors by bigbeargames; adapted to v3 bases and further recolors by bluecarrot16, climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "bb758d778839fa813cc8c4a246ce50ac2b77a68d31fd922ec3437ecdb7f5c8b5"
+   }
+  },
+  "arms/armour/plate/male/slash.png": {
+   "sha256": "a16599c4f9723260f5049d84f45c035391d77d677ef681ae93ce64d18406a5c8",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, recolors by bigbeargames; adapted to v3 bases and further recolors by bluecarrot16, climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "7fe8ff06e6bc6929a4c937bf8ed61c7d6d577532df1059d019f10849e2d43fa2"
+   }
+  },
+  "arms/armour/plate/male/walk.png": {
+   "sha256": "cc4b91aa86528f86cab723575c7e301a952467ec45be669bad430dc1294351f4",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, recolors by bigbeargames; adapted to v3 bases and further recolors by bluecarrot16, climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "aefdd75d61b958039aceb6a19d2ffc0dba00747520ba8da12a912ccdbcfe4cfa"
+   }
+  },
+  "body/bodies/female/hurt.png": {
+   "sha256": "28c1b8127c0e5d75821f8428f3b23a45b9065aac2c2a80ba0e2522026727bc99",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Benjamin K. Smith (BenCreating)",
+    "bluecarrot16",
+    "TheraHedwig",
+    "Evert",
+    "MuffinElZangano",
+    "Durrani",
+    "Pierre Vigier (pvigier)",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-ladies",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://gitlab.com/vagabondgame/lpc-characters",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases",
+   "reference": {
+    "reducedRgbaSha256": "7f9098fc4ebc7b51437ba1c4010b3deff9a5d28d689f8504b33d26513da7d2d5"
+   }
+  },
+  "body/bodies/female/shoot.png": {
+   "sha256": "45787c3f7830dadd121b9752f74e6e8cac387ad1e0be1fb958fe5a187e474ab4",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Benjamin K. Smith (BenCreating)",
+    "bluecarrot16",
+    "TheraHedwig",
+    "Evert",
+    "MuffinElZangano",
+    "Durrani",
+    "Pierre Vigier (pvigier)",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-ladies",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://gitlab.com/vagabondgame/lpc-characters",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases",
+   "reference": {
+    "reducedRgbaSha256": "d90a239468f5cbd0f9253e0487a5f9f01ce73705e6996d175fc4dd687d426c86"
+   }
+  },
+  "body/bodies/female/spellcast.png": {
+   "sha256": "f02ad3ac5024d9693c430827d6f1efb0c75eeb705cb319e767a49c56cdc506c6",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Benjamin K. Smith (BenCreating)",
+    "bluecarrot16",
+    "TheraHedwig",
+    "Evert",
+    "MuffinElZangano",
+    "Durrani",
+    "Pierre Vigier (pvigier)",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-ladies",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://gitlab.com/vagabondgame/lpc-characters",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases",
+   "reference": {
+    "reducedRgbaSha256": "a890d5b41e48b17c2446b8d367026357b2324e73a25841a86cb53c5d92e42c9e"
+   }
+  },
+  "body/bodies/female/walk.png": {
+   "sha256": "594cb64a032d06d560f23b17f77b572e2dc8ba61df490cfca43f15316c85cfcf",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Benjamin K. Smith (BenCreating)",
+    "bluecarrot16",
+    "TheraHedwig",
+    "Evert",
+    "MuffinElZangano",
+    "Durrani",
+    "Pierre Vigier (pvigier)",
+    "ElizaWy",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-ladies",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "https://opengameart.org/content/lpc-jump-expanded",
+    "https://opengameart.org/content/lpc-be-seated",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://gitlab.com/vagabondgame/lpc-characters",
+    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle"
+   ],
+   "notes": "see details at https://opengameart.org/content/lpc-character-bases",
+   "reference": {
+    "reducedRgbaSha256": "2b664dd82a6c27e684d7a9d8bb21e93ac43ce559e8a5d33cb025470782853b07"
+   }
+  },
   "body/bodies/male/hurt.png": {
    "sha256": "417684c67b26467347953542069791af43a607008ddcb9f444a53aca3e10b820",
    "width": 384,
@@ -48,45 +293,6 @@
    "notes": "see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)",
    "reference": {
     "reducedRgbaSha256": "aeb67ff3183b61b67cd43bdba347c0073e573c78051610816c9ccfb1104cba72"
-   }
-  },
-  "body/bodies/male/idle.png": {
-   "sha256": "9c3d17def9bd0574e25ce3162a243f18654479e38c04164bc12607429b013fa2",
-   "width": 128,
-   "height": 256,
-   "cell": 64,
-   "licence": "OGA-BY 3.0",
-   "offered": [
-    "OGA-BY 3.0",
-    "CC-BY-SA 3.0",
-    "GPL 3.0"
-   ],
-   "authors": [
-    "bluecarrot16",
-    "JaidynReiman",
-    "Benjamin K. Smith (BenCreating)",
-    "Evert",
-    "Eliza Wyatt (ElizaWy)",
-    "TheraHedwig",
-    "MuffinElZangano",
-    "Durrani",
-    "Johannes Sjölund (wulax)",
-    "Stephen Challener (Redshrike)"
-   ],
-   "urls": [
-    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
-    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
-    "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
-    "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle",
-    "https://opengameart.org/content/lpc-revised-character-basics",
-    "https://opengameart.org/content/lpc-be-seated",
-    "https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads",
-    "https://opengameart.org/content/lpc-jump-expanded",
-    "https://opengameart.org/content/lpc-character-bases"
-   ],
-   "notes": "see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)",
-   "reference": {
-    "reducedRgbaSha256": "d24a354295a2e460dd593a9cd84cfa8228c35f11fb81830f07298e605a6275de"
    }
   },
   "body/bodies/male/slash.png": {
@@ -167,6 +373,153 @@
     "reducedRgbaSha256": "565c922ed2ced6a86e4c8d44f11027e67bb79cbe20ae31ff9c37fe3b9c855b49"
    }
   },
+  "dress/slit/female/hurt/purple.png": {
+   "sha256": "d859a2044f5164841db7d17afc002c66f8c3322a1dac403355e0130f0e03c96a",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Nila122",
+    "ElizaWy",
+    "bluecarrot16"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original **TightDress** by Nila122, by ElizaWy, extended to all animation frames and edited for v3 bases by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "ce6e4a920634d2eb55992ea6df6c877f44e14a19173f12f7c0f49ce910733a9a"
+   }
+  },
+  "dress/slit/female/spellcast/purple.png": {
+   "sha256": "67bacf0953d317e36ad2a339343f46089d24be42e0e4435b8691eb1c230e4119",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Nila122",
+    "ElizaWy",
+    "bluecarrot16"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original **TightDress** by Nila122, by ElizaWy, extended to all animation frames and edited for v3 bases by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "28a22869cf0b5583c9c90210a2349a2c658179bf36063bd507e987566f2234c8"
+   }
+  },
+  "dress/slit/female/walk/purple.png": {
+   "sha256": "7ee1f1fec46533c9fbee392114f7bc0e294bd88435d390da76c5cdce0961e477",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Nila122",
+    "ElizaWy",
+    "bluecarrot16"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original **TightDress** by Nila122, by ElizaWy, extended to all animation frames and edited for v3 bases by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "8856d4f00a5799314e47f11d5d6d9c7e49722ce4025d9eb2d9fdbe2ac1868cc8"
+   }
+  },
+  "feet/armour/plate/male/hurt.png": {
+   "sha256": "c3afc4bc1fbee1449359cf73d79f0f127ae1b2b341e34718a4503e5c3b32fd0a",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "notes": "original by wulax, recolors by bigbeargames, edits for v3 base and recolors by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "fe2a921dbe5222f4e5230e1acbf37632e08fcc99b4746e44e3f2571c6fa3371f"
+   }
+  },
+  "feet/armour/plate/male/slash.png": {
+   "sha256": "d4f417bcf317db59f3f1de1e9851313af4edb5916c947a63e175619070d1fb2d",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "notes": "original by wulax, recolors by bigbeargames, edits for v3 base and recolors by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "9033d105749051dcaa6577d146191c838a58f2e2e37413215247bb87cb3cc965"
+   }
+  },
+  "feet/armour/plate/male/walk.png": {
+   "sha256": "fbd88f84d611310acecd313f0094aeb7678097464cbedf2ee49e446025d672a6",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "notes": "original by wulax, recolors by bigbeargames, edits for v3 base and recolors by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "8e34a89d395fa3d1a6efe686055178cdd8cfd53c96e74cd2f8a1722292f8c986"
+   }
+  },
   "feet/boots/basic/male/hurt.png": {
    "sha256": "4cf70ec2e4f496f5fd5a27be37ea58dc2e1ff57956ddd58700b3c7bb9d4708ae",
    "width": 384,
@@ -191,32 +544,6 @@
    "notes": "original by Nila122, edited for male and v3 bases by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
    "reference": {
     "reducedRgbaSha256": "c4e64ca45a1891d69aa7590701a37a46537c26a6a56a3570e3a9f6aea7a87400"
-   }
-  },
-  "feet/boots/basic/male/idle.png": {
-   "sha256": "6a454e19edabc7ca95f00073d3bb6fa9e528bd7c8c7860e4df5a6d2612579cf0",
-   "width": 128,
-   "height": 256,
-   "cell": 64,
-   "licence": "OGA-BY 3.0",
-   "offered": [
-    "OGA-BY 3.0",
-    "CC-BY-SA 3.0",
-    "GPL 2.0",
-    "GPL 3.0"
-   ],
-   "authors": [
-    "JaidynReiman",
-    "bluecarrot16",
-    "Nila122"
-   ],
-   "urls": [
-    "https://opengameart.org/content/lpc-clothes-and-hair",
-    "https://opengameart.org/content/lpc-expanded-socks-shoes"
-   ],
-   "notes": "original by Nila122, edited for male and v3 bases by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
-   "reference": {
-    "reducedRgbaSha256": "eb2fa9792fb4638aa5e973a83598864ed2a40818bdcaef023318c6de9bbed3bd"
    }
   },
   "feet/boots/basic/male/slash.png": {
@@ -271,6 +598,754 @@
     "reducedRgbaSha256": "e0672859b830f67affda3aedcbb2442823e07f03dc8070f4e8ccfbfc6d0aa4cd"
    }
   },
+  "feet/boots/fold/thin/hurt.png": {
+   "sha256": "56f18021e248b276e0cefc473b5b9e51643d6a01a8b89896b8017b91e39b4205",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "CC-BY 3.0+",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-kimono-relm",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "6c45b18f1c3c59abf4a0776b2a719ac0bd02773d1a9e30da282a8129f6456f96"
+   }
+  },
+  "feet/boots/fold/thin/shoot.png": {
+   "sha256": "318dfcd96ddcf7997b086007470ea91094778ff02005afdf706af2e60b8812d8",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "CC-BY 3.0+",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-kimono-relm",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "924cde092af32e248a78994f2e417cab7881fff9db8820a138eca211be5037bf"
+   }
+  },
+  "feet/boots/fold/thin/walk.png": {
+   "sha256": "a65ea28b654b74957c1159d51ee476b7121b92c7ffe95157e99fdc9d22e4334d",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "CC-BY 3.0+",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-kimono-relm",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "9450c44df96b43224e4008b1fb089bba5cbfc651671d99a5384c32334196676d"
+   }
+  },
+  "feet/shoes/basic/thin/hurt.png": {
+   "sha256": "3b8f295d2df74091f58a5a9a6484f8b95e07e46fc3b0bbf6ae8bc383699cd840",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Joe White",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by wulax, edited for female base by Joe White, edited for v3 base by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "b6c62b54421e87cfbfc7955e6d164b304c8a0f7ee8f781d44aa0391e82a52175"
+   }
+  },
+  "feet/shoes/basic/thin/spellcast.png": {
+   "sha256": "f659a5bd941918e692952d663996b9773d7c2e77ab7b70309d323f7f96215610",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Joe White",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by wulax, edited for female base by Joe White, edited for v3 base by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "8a5d2477e7c22b44f8b9ab23a8e358cf19fe3aa41e00dd1b7c3b04ccb83f5cc1"
+   }
+  },
+  "feet/shoes/basic/thin/walk.png": {
+   "sha256": "b8cb7d702e03637a9207b3544a20909a287e1bde93b4208a6544a0b2b9d3c12a",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Joe White",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-socks-shoes"
+   ],
+   "notes": "original by wulax, edited for female base by Joe White, edited for v3 base by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "1bd0cac0ca54ed23c44ffab70e0e83cf004664e8cf4f997cb891de88da1ff156"
+   }
+  },
+  "hair/long_straight/adult/hurt.png": {
+   "sha256": "016653f5abb8e93cd4d2faf5dd004bf7010f6e970d5d70919799e3895950302a",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "thecilekli",
+    "bluecarrot16"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-long-straight-hair-with-12-colors",
+    "https://opengameart.org/content/lpc-hair",
+    "https://opengameart.org/content/lpc-expanded-hair"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "117cf3436de880bb73101b1eea222fee76b358f2ef37d3fafd09ed94351b75c1"
+   }
+  },
+  "hair/long_straight/adult/shoot.png": {
+   "sha256": "f209bd4937c66fe6e2cd141fce1a2f19edc271154c2026c661751acab1cdeae4",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "thecilekli",
+    "bluecarrot16"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-long-straight-hair-with-12-colors",
+    "https://opengameart.org/content/lpc-hair",
+    "https://opengameart.org/content/lpc-expanded-hair"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "19411a52dc1876badd4ea55eee7926289903ade0077e7970095a98a9bdf73e4f"
+   }
+  },
+  "hair/long_straight/adult/walk.png": {
+   "sha256": "44f89b96fd7fb08e13a3d449ba0f10f879c8bd261c4f09880e829463afa497ef",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "thecilekli",
+    "bluecarrot16"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-long-straight-hair-with-12-colors",
+    "https://opengameart.org/content/lpc-hair",
+    "https://opengameart.org/content/lpc-expanded-hair"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "f1a98a052b0d21f744ae2773311abe8122527a13c52b3928ea23be4a3316d3d3"
+   }
+  },
+  "hair/swoop_side/adult/hurt.png": {
+   "sha256": "e1b871d8982c2a50ee10885b1c9c67ff5e5914a141fba9831445903ff324becb",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "CC-BY 3.0+",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-1-hairstyle-2-hair-extensions-3-previously-unofficially-released-hairstyles",
+    "https://github.com/jrconway3/Universal-LPC-spritesheet/commit/46ddcf05a0e43e7aa6ffd47d350eef0eb529ac24"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "8da54e7bcd1d6a841348e19082fd31e2f486b923050233cf01f55e22bbcdd8cd"
+   }
+  },
+  "hair/swoop_side/adult/slash.png": {
+   "sha256": "d4c550df9852a3c21d9df913dbc52f73b3ea63127810b0c381c39946539b758e",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "CC-BY 3.0+",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-1-hairstyle-2-hair-extensions-3-previously-unofficially-released-hairstyles",
+    "https://github.com/jrconway3/Universal-LPC-spritesheet/commit/46ddcf05a0e43e7aa6ffd47d350eef0eb529ac24"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "6a0ccd3c2ccd6a4d04281c17b0b6b5826ba2dfbebeccff7c358c96a7df6604a1"
+   }
+  },
+  "hair/swoop_side/adult/walk.png": {
+   "sha256": "ff3d111e53b0cb8bf3c54f82ffe30d1330a705c35ef36d8815430eb9fcbcd90b",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "CC-BY 3.0+",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-1-hairstyle-2-hair-extensions-3-previously-unofficially-released-hairstyles",
+    "https://github.com/jrconway3/Universal-LPC-spritesheet/commit/46ddcf05a0e43e7aa6ffd47d350eef0eb529ac24"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "750508c75a0811dd63c326d0ed3d5beb1e237153b9f8331ae336b7828b90deeb"
+   }
+  },
+  "hair/xlong/adult/bg/hurt.png": {
+   "sha256": "c82988597bc4ce5df6cc76024440e7309eb915d89ddd7b3065e1f3b4f09a8934",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-xlong-hair"
+   ],
+   "notes": "Original by Nila122; cleaned up, resplit into separate layers, and added jump/run/sit/revised combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "0e566c683e3e9b7214199d3fd325838ff61b83f1b543a8ab5544eeee49f757a8"
+   }
+  },
+  "hair/xlong/adult/bg/spellcast.png": {
+   "sha256": "74fd475e682eb047aef757afe7b2ce0add2b56e8dc2ea836fe63eb49fc4265bd",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-xlong-hair"
+   ],
+   "notes": "Original by Nila122; cleaned up, resplit into separate layers, and added jump/run/sit/revised combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "b4383c4bfbad99f29f3d5fed8121ef1b92958a46e473917403623c1fd44ab5f1"
+   }
+  },
+  "hair/xlong/adult/bg/walk.png": {
+   "sha256": "ca238b84b9334e1bd1a37db4715a25467529eecadaad83b7d428840f0e01e7a0",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-xlong-hair"
+   ],
+   "notes": "Original by Nila122; cleaned up, resplit into separate layers, and added jump/run/sit/revised combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "d20d5724655afe8f56b6f225672645ce061c3886581016502e190ea63d94bcd3"
+   }
+  },
+  "hair/xlong/adult/fg/hurt.png": {
+   "sha256": "da3c2509315bc4a674c3321599858c3eea532871f1ffab27d9bc6c9c9d27f35a",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-xlong-hair"
+   ],
+   "notes": "Original by Nila122; cleaned up, resplit into separate layers, and added jump/run/sit/revised combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "52f76ff69a12c1af2213d2762001f1b34f9b844d0032ebe8e6874061ebfd4cff"
+   }
+  },
+  "hair/xlong/adult/fg/spellcast.png": {
+   "sha256": "2d360e233c21fa9ba328e2ab1831d8cd769b65f4b1a8cb1e7029f4f295c378a4",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-xlong-hair"
+   ],
+   "notes": "Original by Nila122; cleaned up, resplit into separate layers, and added jump/run/sit/revised combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "96a8b6fd1dbf84d94c2079beea9eece07a8117b35f838b072daff563573af605"
+   }
+  },
+  "hair/xlong/adult/fg/walk.png": {
+   "sha256": "4956ad1787f54ba05472f0b43c1dfaef50f8eb0e4bb78b0a54a8f91411731233",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 2.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Nila122"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-clothes-and-hair",
+    "https://opengameart.org/content/lpc-expanded-xlong-hair"
+   ],
+   "notes": "Original by Nila122; cleaned up, resplit into separate layers, and added jump/run/sit/revised combat by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "310cc1771788f9b819350e6bccf4f01a954df6023b466378da8af53c8e7f0338"
+   }
+  },
+  "hat/cloth/hood/adult/hurt.png": {
+   "sha256": "6687ca529792986cbcab783849f2cf8559b7bf9b1f428fda7794f8a0b048828b",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "Brown hood by Wulax, original black/white recolors by ??, mapped to idle/run/jump/revised combat by JaidynReiman, along with additional recolors.",
+   "reference": {
+    "reducedRgbaSha256": "0759c11003fafe8a8464bbec61064e179ea3c14b233bb312dbbcdd520503948d"
+   }
+  },
+  "hat/cloth/hood/adult/shoot.png": {
+   "sha256": "06ddd84ae6dda3b65858e71e9495b83151bb8855e63fc2aab8b45c12336ada62",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "Brown hood by Wulax, original black/white recolors by ??, mapped to idle/run/jump/revised combat by JaidynReiman, along with additional recolors.",
+   "reference": {
+    "reducedRgbaSha256": "9fb7c233324ee36151d809bd583c0d36da952a1897ac794ebf370697045a7e51"
+   }
+  },
+  "hat/cloth/hood/adult/walk.png": {
+   "sha256": "9fdab38441d1489abfcabfaf87a80ac902179cd1a56efa8d3104344e0f710acb",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "Brown hood by Wulax, original black/white recolors by ??, mapped to idle/run/jump/revised combat by JaidynReiman, along with additional recolors.",
+   "reference": {
+    "reducedRgbaSha256": "94844d81438ed5cb5fb2223eccef32bec2fc954b2b7c2d464309094dbf3d19f4"
+   }
+  },
+  "hat/helmet/armet/adult/hurt.png": {
+   "sha256": "15607d08919566cb3862baf10618d59e13340e88c0f196893149e2a89bb84e81",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "previously called helmet/armor, original version by Johannes Sjölund (wulax), adjustments by bluecarrot16, color reduction by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "b833cf2fb6c494f82d94a4d4461340a06700c5ead286da0578de6e291d514f8f"
+   }
+  },
+  "hat/helmet/armet/adult/slash.png": {
+   "sha256": "1a94705bb395e4a58f9082da1c5630cf0f7dd2dd816b2a0a33c8f2a0a9f0886e",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "previously called helmet/armor, original version by Johannes Sjölund (wulax), adjustments by bluecarrot16, color reduction by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "12c7c2438e89be179d782cf2287bb8bc9079bc84befbe1f94db9ad609230d197"
+   }
+  },
+  "hat/helmet/armet/adult/walk.png": {
+   "sha256": "6be54856a2742d56cf88c2a2f9eb62ce4de0682f3314357eeeec8d72a7da9f9b",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "previously called helmet/armor, original version by Johannes Sjölund (wulax), adjustments by bluecarrot16, color reduction by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "8f97b2191dd7e37905d97fa578a487df49f16ad52adbfe4fef6f44893d9ae10d"
+   }
+  },
+  "hat/magic/celestial_moon/adult/hurt/purple.png": {
+   "sha256": "e96f303e0adfd6e9f40190e5e344a3f94273af6125ea1f30d088c90ae1723ccc",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "CC-BY 3.0",
+   "offered": [
+    "CC-BY 3.0"
+   ],
+   "authors": [
+    "Napsio (Vitruvian Studio)",
+    "Michael Whitlock (bigbeargames)",
+    "Tracy"
+   ],
+   "urls": [
+    "https:/opengameart.org/content/lpc-celestial-wizard-hats",
+    "https:/opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "sheet_definitions/hat_magic_celestial.json",
+   "reference": {
+    "reducedRgbaSha256": "c25759178549244078ffaaaae855dd411522b56f0bf6ebaf75eaecabecaf62bd"
+   }
+  },
+  "hat/magic/celestial_moon/adult/spellcast/purple.png": {
+   "sha256": "43519da5203e7360c0744975ba3f07dcbe3206882af945b332e8a890ececf217",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC-BY 3.0",
+   "offered": [
+    "CC-BY 3.0"
+   ],
+   "authors": [
+    "Napsio (Vitruvian Studio)",
+    "Michael Whitlock (bigbeargames)",
+    "Tracy"
+   ],
+   "urls": [
+    "https:/opengameart.org/content/lpc-celestial-wizard-hats",
+    "https:/opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "sheet_definitions/hat_magic_celestial.json",
+   "reference": {
+    "reducedRgbaSha256": "5cb9c124b66b4ed03da843005b0b2751cf8e42bea16c451db94b2f29f76daf2f"
+   }
+  },
+  "hat/magic/celestial_moon/adult/walk/purple.png": {
+   "sha256": "73e5235cce9de3dce8c9c511d0a268a8207f69d435f045151644997c1ed925c4",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC-BY 3.0",
+   "offered": [
+    "CC-BY 3.0"
+   ],
+   "authors": [
+    "Napsio (Vitruvian Studio)",
+    "Michael Whitlock (bigbeargames)",
+    "Tracy"
+   ],
+   "urls": [
+    "https:/opengameart.org/content/lpc-celestial-wizard-hats",
+    "https:/opengameart.org/content/lpc-expanded-hats-facial-helmets"
+   ],
+   "notes": "sheet_definitions/hat_magic_celestial.json",
+   "reference": {
+    "reducedRgbaSha256": "67043534530c53e3ba1458b2e93d64daf4d2417b4b376c90184610f002d692ab"
+   }
+  },
+  "head/heads/human/female/hurt.png": {
+   "sha256": "69b59075fc69ad2a639fa2682730c4f12e7b9152edc84ae6fc82a198d4cdf664",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "1fdf064db38a8d113308eb45a08fc39aa15209aba3af9c7146726aed5d2a1510"
+   }
+  },
+  "head/heads/human/female/shoot.png": {
+   "sha256": "304e158047b1969891304cfcb41708b986fad4c4a8da1cea0f6aedea2cbd2af3",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "45db4188bc43f62c69946f73adbe5d709c1439985f23ed0d916d0a21826d1a1d"
+   }
+  },
+  "head/heads/human/female/spellcast.png": {
+   "sha256": "d24e003041fb79a56a19887a7827f52d641827ac588ca1549e5e9152f45c721f",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "a33de9bc3a9fb1bc26aa77b8cc7aae0a795b9230695212e035e7048f51577c56"
+   }
+  },
+  "head/heads/human/female/walk.png": {
+   "sha256": "7ac84c09c9e126e5fd0b648c180901e24ddb116c7965cd3db6f2f653947b90bd",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Benjamin K. Smith (BenCreating)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/",
+    "https://opengameart.org/content/lpc-character-bases"
+   ],
+   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "0087ad7f403f26af887088545ac7a537279aec926765213e66938a902d2cf3ec"
+   }
+  },
   "head/heads/human/male/hurt.png": {
    "sha256": "f1efa6975eed037351ff274abc195f69fb0b62fc2b9faa9cb89d0a025f463d0d",
    "width": 384,
@@ -294,31 +1369,6 @@
    "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
    "reference": {
     "reducedRgbaSha256": "6ca0c6de1ef40567b84671a13e87a854385ac135a1d22a01d2dba18da1f7c4ef"
-   }
-  },
-  "head/heads/human/male/idle.png": {
-   "sha256": "10d58c1dd05592dfb436da42e4d6e582058306e1b6c98c85697ad97d1a5b82f4",
-   "width": 128,
-   "height": 256,
-   "cell": 64,
-   "licence": "OGA-BY 3.0",
-   "offered": [
-    "OGA-BY 3.0",
-    "CC-BY-SA 3.0",
-    "GPL 3.0"
-   ],
-   "authors": [
-    "bluecarrot16",
-    "Benjamin K. Smith (BenCreating)",
-    "Stephen Challener (Redshrike)"
-   ],
-   "urls": [
-    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
-    "https://opengameart.org/content/lpc-character-bases"
-   ],
-   "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
-   "reference": {
-    "reducedRgbaSha256": "12ca33ea5d90f34dd333138dcc512003a443acd4045fe170546fc392a24f9701"
    }
   },
   "head/heads/human/male/slash.png": {
@@ -371,6 +1421,168 @@
     "reducedRgbaSha256": "b9d3ff3160b6ef8d759567dba38d8d55c9fc3eb410e8e12d58a35d3c88873ab0"
    }
   },
+  "legs/armour/plate/male/hurt.png": {
+   "sha256": "7f8b1922a3a67281a4be8f19ade931af7ba7045bc87919cc58558f81ebdbb5fc",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "notes": "reduced to 7 colors an adapted to v3 bases by bluecarrot16, climb/jump/sit/emote/run by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "938085916fb368075159a3525ce421124392105bbb548078b466d2568619ef7e"
+   }
+  },
+  "legs/armour/plate/male/slash.png": {
+   "sha256": "afac8cf1db05af8869cbd4d0d50b581d6a6b0bd951fd7478d680105e0eb2909a",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "notes": "reduced to 7 colors an adapted to v3 bases by bluecarrot16, climb/jump/sit/emote/run by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "1ea05c946281d02fd69a85ff20b630ecd2bea40517c4cd610009f60b2d17f726"
+   }
+  },
+  "legs/armour/plate/male/walk.png": {
+   "sha256": "4bc6b60aa84d52eb258cd0083843d566f8b89b30e2b31e8ea00401e95faa7f0a",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "JaidynReiman",
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "notes": "reduced to 7 colors an adapted to v3 bases by bluecarrot16, climb/jump/sit/emote/run by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "c04634d545e4729c89fd6e5945967616b6fbea4f210112b7efd54e28c0394e21"
+   }
+  },
+  "legs/leggings/thin/hurt.png": {
+   "sha256": "6aff1f23426d9e268c20385b94bdb388464ee82635fbc79fb16a9a0eef905579",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "ElizaWy",
+    "JaidynReiman",
+    "Mandi Paugh",
+    "William.Thompsonj",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "http://opengameart.org/content/sara-wizard",
+    "https://opengameart.org/content/lpc-sara",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "Original bases by Redshrike, thrust/shoot bases by Wulax, adapted from sara's leggings to v3 bases by bluecarrot16, jump/run/sit by JaidynReiman based on ElizaWy's and modified to match",
+   "reference": {
+    "reducedRgbaSha256": "fd883343eafd7d6c7e97e4e3cb9676d0d92769f4ec8f3ead560a7cbcb5d8d7cf"
+   }
+  },
+  "legs/leggings/thin/shoot.png": {
+   "sha256": "a9bc8f970a2ec343c66865bd8e907ca311abafdeeccf23835dcdb1b69d28bbdf",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "ElizaWy",
+    "JaidynReiman",
+    "Mandi Paugh",
+    "William.Thompsonj",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "http://opengameart.org/content/sara-wizard",
+    "https://opengameart.org/content/lpc-sara",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "Original bases by Redshrike, thrust/shoot bases by Wulax, adapted from sara's leggings to v3 bases by bluecarrot16, jump/run/sit by JaidynReiman based on ElizaWy's and modified to match",
+   "reference": {
+    "reducedRgbaSha256": "d1762d4cb84e5a56f1353e549745db42f47e57fc304267e4589d29304ebfe228"
+   }
+  },
+  "legs/leggings/thin/walk.png": {
+   "sha256": "4747e97d5d3f82824cedd960b68abe2e9f8d1a85f84ea355c7733eac40872f6d",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "ElizaWy",
+    "JaidynReiman",
+    "Mandi Paugh",
+    "William.Thompsonj",
+    "Johannes Sjölund (wulax)",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "http://opengameart.org/content/sara-wizard",
+    "https://opengameart.org/content/lpc-sara",
+    "https://opengameart.org/content/lpc-expanded-pants"
+   ],
+   "notes": "Original bases by Redshrike, thrust/shoot bases by Wulax, adapted from sara's leggings to v3 bases by bluecarrot16, jump/run/sit by JaidynReiman based on ElizaWy's and modified to match",
+   "reference": {
+    "reducedRgbaSha256": "f80c5fc4fcf32394b5a588cf343ecf8bc51c599afbeb940c4f3d615409534a38"
+   }
+  },
   "legs/pants/male/hurt.png": {
    "sha256": "c9eac3fcea709049bd85e10b0bfb9ad73c557c423ebf4211995af1c6b917e9c5",
    "width": 384,
@@ -398,35 +1610,6 @@
    "notes": "original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised",
    "reference": {
     "reducedRgbaSha256": "3f77e5f5899cb42d0c6b7024a7fba35d640058d88cf12d8f463d36c9ae223de7"
-   }
-  },
-  "legs/pants/male/idle.png": {
-   "sha256": "717a5133533ccf18ccb3cced5653702be1d21a9ac6002dc9a84f3e1fb80087b3",
-   "width": 128,
-   "height": 256,
-   "cell": 64,
-   "licence": "OGA-BY 3.0",
-   "offered": [
-    "OGA-BY 3.0",
-    "GPL 3.0",
-    "CC-BY-SA 3.0"
-   ],
-   "authors": [
-    "bluecarrot16",
-    "JaidynReiman",
-    "ElizaWy",
-    "Matthew Krohn (makrohn)",
-    "Johannes Sjölund (wulax)",
-    "Stephen Challener (Redshrike)"
-   ],
-   "urls": [
-    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
-    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
-    "https://opengameart.org/content/lpc-expanded-pants"
-   ],
-   "notes": "original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised",
-   "reference": {
-    "reducedRgbaSha256": "3c2362b18d56ec5401d77c47a414625fd62a5e3584545ff9e394c0a06653d014"
    }
   },
   "legs/pants/male/slash.png": {
@@ -487,8 +1670,632 @@
     "reducedRgbaSha256": "f1b31f496bf97452b50b75868bd3b38d55248d873f04bb941974edcdac97348f"
    }
   },
-  "torso/armour/leather/male/hurt.png": {
-   "sha256": "8dd2bddf981d0a92158dba761f0a9bc95e18bafb18625c502d23d795a747fc48",
+  "quiver/hurt/quiver.png": {
+   "sha256": "7eb1f60cbdaf9a8eeff8641016449e5ab5a4a84836abbc6ffca2665250b69362",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "8c604ca81a0ebcece993a5958d08834bfb919badd61be02ab250a942119d9b19"
+   }
+  },
+  "quiver/shoot/quiver.png": {
+   "sha256": "6501afed698174d0dc6c598063d626360be05e9be39bc55e3da416bbfe677a9c",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "a0ad8cf55a65244fe113a5c44bfa3e79eced25574e7f87bd5f0aa2df1441e3f8"
+   }
+  },
+  "quiver/walk/quiver.png": {
+   "sha256": "76783a51acaefcaa350106ce4b948eacb604de589058dd7aaf04f3670a970d6c",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "a12918f5718a109ea31eca68090486d644cbf6e3c268edae56f0b6379cec29d3"
+   }
+  },
+  "torso/armour/leather/female/hurt.png": {
+   "sha256": "56e5c218fde7ee0a5f30348e7229dc3a8c4b8ca8d8fd0d04e28b7d04a75a68cf",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-combat-armor-for-women",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "recolor of torso/armour/leather/female/brown.png, adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "8c0e012f2f2935d2fecae7bc12f4e15d1ee3887d9db643b578eff60078bffad5"
+   }
+  },
+  "torso/armour/leather/female/shoot.png": {
+   "sha256": "7d3cb6d5f77ede59c85421c2ad76af4c80eaaaa4cf65f7916bf651431bf519ea",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-combat-armor-for-women",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "recolor of torso/armour/leather/female/brown.png, adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "abdc18576e6d6f66a6d35da493173ec80523dcdd74bf661dcb065108b237cfde"
+   }
+  },
+  "torso/armour/leather/female/walk.png": {
+   "sha256": "7e6d6f5fceb9cc4dde163b1827bc056c2777960ce5d72a9795d067ddb070567a",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Michael Whitlock (bigbeargames)",
+    "Matthew Krohn (makrohn)",
+    "Johannes Sjölund (wulax)",
+    "bluecarrot16",
+    "JaidynReiman"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-combat-armor-for-women",
+    "https://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-expanded-armor"
+   ],
+   "notes": "recolor of torso/armour/leather/female/brown.png, adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "d583c685e7cf959ce372595b45699cde966936f26efbdac94ebf9c9167730af8"
+   }
+  },
+  "torso/armour/plate/male/hurt.png": {
+   "sha256": "240cec967f141f10ccba591a427728f582f4125135331bb161114a718965d295",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Napsio (Vitruvian Studio)",
+    "JaidynReiman",
+    "bluecarrot16",
+    "Michael Whitlock (bigbeargames)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-combat-armor-for-women"
+   ],
+   "notes": "original by wulax, recolor by bigbeargames, color reduced to 7 colors and adapted to v3 bases by bluecarrot16, run/jump/sit/climb/revised combat by JaidynReiman, reduced colors to 6 (based on Napsio's Vitruvian)",
+   "reference": {
+    "reducedRgbaSha256": "6301ae9d643dbaaf66a089c154687dc04c6125fd4094b4a27ff31ba0f5fd4e75"
+   }
+  },
+  "torso/armour/plate/male/slash.png": {
+   "sha256": "545015e4127f4100d3023b6fa447c724ae70c9aa9b949a37e8ae84bfc94b94ef",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Napsio (Vitruvian Studio)",
+    "JaidynReiman",
+    "bluecarrot16",
+    "Michael Whitlock (bigbeargames)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-combat-armor-for-women"
+   ],
+   "notes": "original by wulax, recolor by bigbeargames, color reduced to 7 colors and adapted to v3 bases by bluecarrot16, run/jump/sit/climb/revised combat by JaidynReiman, reduced colors to 6 (based on Napsio's Vitruvian)",
+   "reference": {
+    "reducedRgbaSha256": "0c0810fc5c1069e7e287b554712e5679aa72aaf143eb50082fb5a3c475b986c1"
+   }
+  },
+  "torso/armour/plate/male/walk.png": {
+   "sha256": "4ef811417e7c1163b8da47aa48afd80b398302b18d4ee90c6fbb79667b9cc046",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "Napsio (Vitruvian Studio)",
+    "JaidynReiman",
+    "bluecarrot16",
+    "Michael Whitlock (bigbeargames)",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-combat-armor-for-women"
+   ],
+   "notes": "original by wulax, recolor by bigbeargames, color reduced to 7 colors and adapted to v3 bases by bluecarrot16, run/jump/sit/climb/revised combat by JaidynReiman, reduced colors to 6 (based on Napsio's Vitruvian)",
+   "reference": {
+    "reducedRgbaSha256": "05a86f5a2be39ef8d16eacbca50517e1e6ac731558bb557bc50b8aa88ac3d533"
+   }
+  },
+  "torso/clothes/longsleeve/longsleeve/female/hurt.png": {
+   "sha256": "f93944a6bc93be794bf939cdb36233de43a2f0a857f20919399c93fe3e103847",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "ElizaWy",
+    "JaidynReiman",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+    "https://opengameart.org/content/lpc-expanded-simple-shirts"
+   ],
+   "notes": "original by ElizaWy, edited to v3 bases by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "224ca52ab42002a6d20fffa4241014804cf22aa39299343e4bb5c583c552b26a"
+   }
+  },
+  "torso/clothes/longsleeve/longsleeve/female/shoot.png": {
+   "sha256": "ddc5b41293c196fb41eb3ae93e69da7741f0056336a9c2481b1a45367e7f12fd",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "ElizaWy",
+    "JaidynReiman",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+    "https://opengameart.org/content/lpc-expanded-simple-shirts"
+   ],
+   "notes": "original by ElizaWy, edited to v3 bases by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "80bd5d2b2629e61c7d46bf8fc6b13f33ba23ce5c5981cd3041db8b0d698aa779"
+   }
+  },
+  "torso/clothes/longsleeve/longsleeve/female/walk.png": {
+   "sha256": "6833ea1facfa45d07356a3b85ac022742db916f677c0a20474719aad61a13bc8",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "ElizaWy",
+    "JaidynReiman",
+    "Stephen Challener (Redshrike)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+    "https://opengameart.org/content/lpc-7-womens-shirts",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+    "https://opengameart.org/content/lpc-expanded-simple-shirts"
+   ],
+   "notes": "original by ElizaWy, edited to v3 bases by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "1ce83e84ea899eef585cd8d40e3d7d41ae1751cff26b9b871be4e78b05137c05"
+   }
+  },
+  "torso/clothes/longsleeve/longsleeve/male/hurt.png": {
+   "sha256": "137e28434f07cb35ac06c0f79e8c9e4fe2a65b4c3250d7a0ed6a3b754b13cd74",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+    "https://opengameart.org/content/lpc-expanded-simple-shirts"
+   ],
+   "notes": "original by wulax; tweaks and further recolors by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "bf73dcdbf133a6ceb375eed77dff0828bc8d8f59be9d88cd0cab56bdaf460f55"
+   }
+  },
+  "torso/clothes/longsleeve/longsleeve/male/slash.png": {
+   "sha256": "2a2a872196d4636f00bdda8ef642a2acac0c463f1b29c228f97696d3ffff08e3",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+    "https://opengameart.org/content/lpc-expanded-simple-shirts"
+   ],
+   "notes": "original by wulax; tweaks and further recolors by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "fb1999f699f73f529f3426eaaf36668e553644ac6a2eab82bcc83309fd6e1842"
+   }
+  },
+  "torso/clothes/longsleeve/longsleeve/male/walk.png": {
+   "sha256": "8b1c79d535d7a233371c9398ca51b196aa8fdf06117bd0eafd7fbcbf438d711b",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "JaidynReiman",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates",
+    "https://opengameart.org/content/lpc-revised-character-basics",
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+    "https://opengameart.org/content/lpc-expanded-simple-shirts"
+   ],
+   "notes": "original by wulax; tweaks and further recolors by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+   "reference": {
+    "reducedRgbaSha256": "99c17c64dc699b94f89ce25535ee3b95c4e7cff3ba7679b4ba8a5af855ddafd6"
+   }
+  },
+  "torso/jacket/tabard/male/hurt/blue.png": {
+   "sha256": "34c732bfd587d17ecd16d0dddc85a18d583f819f8ae73c6bde3b18388b47cb51",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, edited to v3 base by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "18dedb9f90d045dadb62f3c010bf86951dbe2f9994793374122ed37a3910589c"
+   }
+  },
+  "torso/jacket/tabard/male/hurt/maroon.png": {
+   "sha256": "5f81d4c4fd40f6b21cb2b4bba29a4e0d16239bc3aca1de38b256d9169796c343",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, edited to v3 base by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "c80d2ab9eea1eb7570cfcfa6c0797d120ac9465191fd398aaf6db7bbc863a480"
+   }
+  },
+  "torso/jacket/tabard/male/slash/blue.png": {
+   "sha256": "ae79407b818b9d0a0e4c508fdb47fbbafd914ee5f9803922909420e25c7f53e4",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, edited to v3 base by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "663d55f81b739600acd727dc3fd30803d168f4af5247385aae5f529386502cb9"
+   }
+  },
+  "torso/jacket/tabard/male/slash/maroon.png": {
+   "sha256": "2650f15146dd092b7fbf0696bd30d89b42b67879a5fcc5b3b0a6b64378428655",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, edited to v3 base by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "09dc0480baf727aa22e2fdae1fd6147d4726e2a048a9e601df3bb44611be48dd"
+   }
+  },
+  "torso/jacket/tabard/male/walk/blue.png": {
+   "sha256": "505e12b8ec7f1e28f488eab6e3a0c8e5e697f5cc47b2cc26fc666e4db986b2ee",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, edited to v3 base by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "03a0079ddf15ea8cbc55fc2463a408eb476b5facc877c997e7a96e0102454806"
+   }
+  },
+  "torso/jacket/tabard/male/walk/maroon.png": {
+   "sha256": "a78a7744c38753d30873aadd2d1658d3c3f9f9a92aee148a97321c7b144be2db",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "http://opengameart.org/content/lpc-clothing-updates"
+   ],
+   "notes": "original by wulax, edited to v3 base by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "42c861f0d0f83a20e7ff40330865952daab666a9a70b12f25a8c955b136d3f55"
+   }
+  },
+  "torso/waist/belt_leather/male/hurt/brown.png": {
+   "sha256": "b67c4ef10e044c05ddfc42e8292fed64fc0140c64b5118f2ece0306eb4d69e17",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)",
+    "Matthew Krohn (makrohn)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-combat-armor-for-women",
+    "https://opengameart.org/content/lpc-pirates"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "6394f82bf1a0056e3973139b35332bfe3924de6474d9e102edff8061b55e6424"
+   }
+  },
+  "torso/waist/belt_leather/male/slash/brown.png": {
+   "sha256": "322945095ebaaaa1205dfaa5a321fc2ebee4f49590d80453b6439519433d6c2a",
+   "width": 384,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)",
+    "Matthew Krohn (makrohn)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-combat-armor-for-women",
+    "https://opengameart.org/content/lpc-pirates"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "5536f46289f29f728bcb90eec517757dd504d3a68fe884189d1a760634b6e04e"
+   }
+  },
+  "torso/waist/belt_leather/male/walk/brown.png": {
+   "sha256": "21c697fcd697a9e60ba634498ea9eefac4cdc2a25706b4352100a7f933113c7c",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Johannes Sjölund (wulax)",
+    "Matthew Krohn (makrohn)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-combat-armor-for-women",
+    "https://opengameart.org/content/lpc-pirates"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "cdf9499c9f0b7154c21f6d0b02ab35f3c4d07734a91dd47af18aba6299b35793"
+   }
+  },
+  "torso/waist/belt_robe/female/hurt/teal.png": {
+   "sha256": "0a585d297f1d732b293627fa6700a006bd814f210680e117088a4753ee940997",
    "width": 384,
    "height": 64,
    "cell": 64,
@@ -500,22 +2307,18 @@
    ],
    "authors": [
     "Johannes Sjölund (wulax)",
-    "bluecarrot16",
-    "JaidynReiman"
+    "Matthew Krohn (makrohn)"
    ],
    "urls": [
-    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
-    "https://opengameart.org/content/lpc-clothing-updates",
-    "https://opengameart.org/content/lpc-expanded-armor"
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
    ],
-   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
    "reference": {
-    "reducedRgbaSha256": "45f1069bb91e1e5af2b492c80ac9a816ef00e64b1ecc919c8bcb9dcae4919b8a"
+    "reducedRgbaSha256": "e97614ca5390a8a9b38d9f50bc6256b6f3b9ee331116e236b6ea0e84b557f6c5"
    }
   },
-  "torso/armour/leather/male/idle.png": {
-   "sha256": "fc3c6c52ccaf07041d6b51dba201299b00996e87888f18a54ae6db372388c226",
-   "width": 128,
+  "torso/waist/belt_robe/female/spellcast/teal.png": {
+   "sha256": "387cbd5870ceeafa06e9279b2a9485ac1a85c73a873117fbad333e8e75301706",
+   "width": 448,
    "height": 256,
    "cell": 64,
    "licence": "OGA-BY 3.0",
@@ -526,47 +2329,17 @@
    ],
    "authors": [
     "Johannes Sjölund (wulax)",
-    "bluecarrot16",
-    "JaidynReiman"
+    "Matthew Krohn (makrohn)"
    ],
    "urls": [
-    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
-    "https://opengameart.org/content/lpc-clothing-updates",
-    "https://opengameart.org/content/lpc-expanded-armor"
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
    ],
-   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
    "reference": {
-    "reducedRgbaSha256": "e9fc9123596f285e7bc895a05c9ad317a537ee9a740e715ae884e108b65e5a4e"
+    "reducedRgbaSha256": "dfb5a2139874c374a29d6c387d017e95ad75ebf181e2ba7813c9b8ec6d16ea59"
    }
   },
-  "torso/armour/leather/male/slash.png": {
-   "sha256": "9a7d2d8daf8a0ef4a69c555327b84b64ddace6e37f4ba98bdeb4cd2ea024f2a0",
-   "width": 384,
-   "height": 256,
-   "cell": 64,
-   "licence": "OGA-BY 3.0",
-   "offered": [
-    "OGA-BY 3.0",
-    "CC-BY-SA 3.0",
-    "GPL 3.0"
-   ],
-   "authors": [
-    "Johannes Sjölund (wulax)",
-    "bluecarrot16",
-    "JaidynReiman"
-   ],
-   "urls": [
-    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
-    "https://opengameart.org/content/lpc-clothing-updates",
-    "https://opengameart.org/content/lpc-expanded-armor"
-   ],
-   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
-   "reference": {
-    "reducedRgbaSha256": "dbcbd48c9a15bff39f5ad8f47bfa6348901310f5508d474da3719efc64991546"
-   }
-  },
-  "torso/armour/leather/male/walk.png": {
-   "sha256": "160490073860adb9bc702716f5df0f8e01e2fb8f3a6a2b2aaa0343d131c7477c",
+  "torso/waist/belt_robe/female/walk/teal.png": {
+   "sha256": "17e3716d5068b9ef99a32ad7b9e2ebda3f5b2348bfc2105061bc5b8b27535232",
    "width": 576,
    "height": 256,
    "cell": 64,
@@ -578,17 +2351,283 @@
    ],
    "authors": [
     "Johannes Sjölund (wulax)",
+    "Matthew Krohn (makrohn)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "64f525b32d2347abb8e5b0f0e343eac9e84bf3a734f4ab0307c825d5d7a50ccb"
+   }
+  },
+  "weapon/magic/simple/background/hurt/simple.png": {
+   "sha256": "d9390c89dac2c00e6953417977f0cd8dfe1642de9b6fc5f762d348f8310b7584",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
     "bluecarrot16",
-    "JaidynReiman"
+    "Dr. Jamgo"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-simple-staff"
+   ],
+   "notes": "original by DrJamgo, hands switched and split into to layers by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "b495e54a6572068455b6fc6c537fefc4839eb522bf35ee4af2ca57824f808993"
+   }
+  },
+  "weapon/magic/simple/background/spellcast/simple.png": {
+   "sha256": "a64ffeed557977174292983b28821e6e437cb35c3e4fa60b9f4026fd47586bd2",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Dr. Jamgo"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-simple-staff"
+   ],
+   "notes": "original by DrJamgo, hands switched and split into to layers by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "2478d6079db59724a910813f38ae42902e922a6d8144b2d6e01ca6f0eac7c5bd"
+   }
+  },
+  "weapon/magic/simple/background/walk/simple.png": {
+   "sha256": "355575e5028ffcc3491884462e41a0be621ae5a1f8516de6639375d578ec6fbc",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Dr. Jamgo"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-simple-staff"
+   ],
+   "notes": "original by DrJamgo, hands switched and split into to layers by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "901564859c5b2c685d52dbba46476eff1d81364b034118b3e329e91963113aac"
+   }
+  },
+  "weapon/magic/simple/foreground/hurt/simple.png": {
+   "sha256": "19400d8642cefa7c23d9ce1cbf9bc8525989d5fedc130830d983fee34f5217e6",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Dr. Jamgo"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-simple-staff"
+   ],
+   "notes": "original by DrJamgo, hands switched and split into to layers by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "b0a29562a98eaf4f0c5055d8ba8544927651551466ca16f3e2f5536c505918a2"
+   }
+  },
+  "weapon/magic/simple/foreground/spellcast/simple.png": {
+   "sha256": "596d05f486631c27240fb0a4b9de71c35c42b4459e9f0fb583b5114215dfc8ad",
+   "width": 448,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Dr. Jamgo"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-simple-staff"
+   ],
+   "notes": "original by DrJamgo, hands switched and split into to layers by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "b9ab7ad582c11906fcdcb307dfa3e8e32ae0b4f4472d664e09cd0059431a8d53"
+   }
+  },
+  "weapon/magic/simple/foreground/walk/simple.png": {
+   "sha256": "0ae97f66d5c81bdc246fd7dad5556523a8699b658e6a4ce46f0ecdcdf901e4f9",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "CC0",
+   "offered": [
+    "CC0"
+   ],
+   "authors": [
+    "bluecarrot16",
+    "Dr. Jamgo"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-simple-staff"
+   ],
+   "notes": "original by DrJamgo, hands switched and split into to layers by bluecarrot16",
+   "reference": {
+    "reducedRgbaSha256": "e63eb571a2d54839901985ee1c965c845290e5b532a9cc4e73e4fe3f05f7acfb"
+   }
+  },
+  "weapon/ranged/bow/normal/universal/background/hurt/medium.png": {
+   "sha256": "3f38bb93c83cc029fd87e76b5b818330cbd32060569c2ed33d0a2f5e8edebe03",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "GPL 3.0",
+    "CC-BY 4.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "Pierre Vigier (pvigier)"
    ],
    "urls": [
     "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
-    "https://opengameart.org/content/lpc-clothing-updates",
-    "https://opengameart.org/content/lpc-expanded-armor"
+    "https://opengameart.org/content/lpc-walk-animations-for-bows"
    ],
-   "notes": "adapted to v3 bases by bluecarrot16, reduced colors and climb/emote/jump by JaidynReiman",
+   "notes": "original by wulax, walk animations by pvigier, split into layers and tweaked for v3 character bases by bluecarrot16. pvigier has agreed to license this sheet as OGA-BY 3.0+.",
    "reference": {
-    "reducedRgbaSha256": "c31fa20f11e4d34816ce6a6ebafed02c6e5157599232fefb38bf4a26adecf67b"
+    "reducedRgbaSha256": "c6ef17d9e3df16f915d69fd0515552c9c4f30196a9e8a8cc0f9d3cf13713985b"
+   }
+  },
+  "weapon/ranged/bow/normal/universal/background/shoot/medium.png": {
+   "sha256": "5b89596656a3522ce879070b381c09d1e494db33867303693906c8ffe3ed8224",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "GPL 3.0",
+    "CC-BY 4.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "Pierre Vigier (pvigier)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-walk-animations-for-bows"
+   ],
+   "notes": "original by wulax, walk animations by pvigier, split into layers and tweaked for v3 character bases by bluecarrot16. pvigier has agreed to license this sheet as OGA-BY 3.0+.",
+   "reference": {
+    "reducedRgbaSha256": "4465ead57732b3ae5f38c1d4f0b69c9cf926e5ad57a8a02cf9f8887f47b51bab"
+   }
+  },
+  "weapon/ranged/bow/normal/universal/foreground/hurt/medium.png": {
+   "sha256": "dda9197c7a8ce0dfabb18f64c96226fbe400376a1b46a207fa46b5d45b2039c7",
+   "width": 384,
+   "height": 64,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "GPL 3.0",
+    "CC-BY 4.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "Pierre Vigier (pvigier)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-walk-animations-for-bows"
+   ],
+   "notes": "original by wulax, walk animations by pvigier, split into layers and tweaked for v3 character bases by bluecarrot16. pvigier has agreed to license this sheet as OGA-BY 3.0+.",
+   "reference": {
+    "reducedRgbaSha256": "7e64b70d9a8e292cec4b77532433eac207073b9d1bf3fba1b9ebfb638eacb0b1"
+   }
+  },
+  "weapon/ranged/bow/normal/universal/foreground/shoot/medium.png": {
+   "sha256": "82f2b01320f9f6dfde8ea9f5a1a7294ea5a75feb9c499da385dcf91ce28d5b5e",
+   "width": 832,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "GPL 3.0",
+    "CC-BY 4.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "Pierre Vigier (pvigier)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-walk-animations-for-bows"
+   ],
+   "notes": "original by wulax, walk animations by pvigier, split into layers and tweaked for v3 character bases by bluecarrot16. pvigier has agreed to license this sheet as OGA-BY 3.0+.",
+   "reference": {
+    "reducedRgbaSha256": "cedfa83486971277b5f06dafaff10096415830be09d2267301db361cde78098f"
+   }
+  },
+  "weapon/ranged/bow/normal/walk/background/medium.png": {
+   "sha256": "99ab86973b6a6d58182baecef176b5d435a25f2185dd033ea13651b7e21dcc27",
+   "width": 1664,
+   "height": 512,
+   "cell": 128,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "GPL 3.0",
+    "CC-BY 4.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "Pierre Vigier (pvigier)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-walk-animations-for-bows"
+   ],
+   "notes": "original by wulax, walk animations by pvigier, split into layers and tweaked for v3 character bases by bluecarrot16. pvigier has agreed to license this sheet as OGA-BY 3.0+.",
+   "reference": {
+    "note": "DanJen's cache reduced this sheet as 64-pixel cells, but its frames are 128 pixels; no cache reference"
+   }
+  },
+  "weapon/ranged/bow/normal/walk/foreground/medium.png": {
+   "sha256": "f7034d32c838a7e6fe0bf883be2af44f343a149c7c83e10f5a7d02a44461d1b5",
+   "width": 1664,
+   "height": 512,
+   "cell": 128,
+   "licence": "OGA-BY 3.0+",
+   "offered": [
+    "OGA-BY 3.0+",
+    "GPL 3.0",
+    "CC-BY 4.0"
+   ],
+   "authors": [
+    "Johannes Sjölund (wulax)",
+    "Pierre Vigier (pvigier)"
+   ],
+   "urls": [
+    "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+    "https://opengameart.org/content/lpc-walk-animations-for-bows"
+   ],
+   "notes": "original by wulax, walk animations by pvigier, split into layers and tweaked for v3 character bases by bluecarrot16. pvigier has agreed to license this sheet as OGA-BY 3.0+.",
+   "reference": {
+    "note": "DanJen's cache reduced this sheet as 64-pixel cells, but its frames are 128 pixels; no cache reference"
    }
   },
   "weapon/sword/arming/attack_slash/bg/iron.png": {
@@ -611,6 +2650,26 @@
     "reducedRgbaSha256": "5dad6dfd0992e970f69d49cf82c8a1408a2932551886c2d4452cd7435fa292d2"
    }
   },
+  "weapon/sword/arming/attack_slash/bg/steel.png": {
+   "sha256": "51ceabbb583527f2c3b310ff34d4abc0db35c9cf75a34b8c9855be0890386f22",
+   "width": 768,
+   "height": 512,
+   "cell": 128,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "3112f5a5417b21ff0541112a091ab04da3044a1825a3bec26c6b2fd744972c38"
+   }
+  },
   "weapon/sword/arming/attack_slash/fg/iron.png": {
    "sha256": "8091dd98e7a450207967b592a81d24ac833394457ccb6aa1504bd8ed9c2f3707",
    "width": 768,
@@ -629,6 +2688,26 @@
    ],
    "reference": {
     "reducedRgbaSha256": "116271e3f2292ac2c3395c01127bb730af645523b60de275aa7572a1aff281b3"
+   }
+  },
+  "weapon/sword/arming/attack_slash/fg/steel.png": {
+   "sha256": "7f9dc95ee8c48284384510e191c51a02fe6325f7c9d37c2933aa0ff22d40bec2",
+   "width": 768,
+   "height": 512,
+   "cell": 128,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "ff2ae326f28acac265f76e479f76f920afd592f5fa4231804595bc22f7932418"
    }
   },
   "weapon/sword/arming/universal/bg/hurt/iron.png": {
@@ -651,10 +2730,10 @@
     "reducedRgbaSha256": "4e37aeed881bbe4c2489ac86633f63e47bf7a38370b0fc5626cbcd255cf511bf"
    }
   },
-  "weapon/sword/arming/universal/bg/idle/iron.png": {
-   "sha256": "8bfe353daa295ef937fdd72f5a128bba5c99529a677c53e486eb64e1ff5e34dd",
-   "width": 128,
-   "height": 256,
+  "weapon/sword/arming/universal/bg/hurt/steel.png": {
+   "sha256": "2f53f9f1ab18758bc22e4c9f4e63f2383fc7c3ca9b6c9060d38b5192150404a5",
+   "width": 384,
+   "height": 64,
    "cell": 64,
    "licence": "OGA-BY 3.0",
    "offered": [
@@ -668,7 +2747,7 @@
     "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
    ],
    "reference": {
-    "reducedRgbaSha256": "c20b0577736fd392b561063822868c4505496af1c169fb15b2fbc28879c1ae63"
+    "reducedRgbaSha256": "e9c9c165b84c627a8d013d72293dfb68ecc91891b5c9d335e28e29328c107f7a"
    }
   },
   "weapon/sword/arming/universal/bg/walk/iron.png": {
@@ -691,6 +2770,26 @@
     "reducedRgbaSha256": "6a677259f0fba1a6a17befd9d3c57c0bd0c719e75cbbaa1ee0deaa255ef844a9"
    }
   },
+  "weapon/sword/arming/universal/bg/walk/steel.png": {
+   "sha256": "71257c6808917c0d4887f446d4d2db6e82b16cc7de8a24c88986ca9bc633d589",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "8f571d5431823aaa9f5dc5705269175460fc1cb66e3df1df8a988002e58b52cb"
+   }
+  },
   "weapon/sword/arming/universal/fg/hurt/iron.png": {
    "sha256": "f5d9333039de0ea936c66b59b38ff6afe6249717f3e3831f06190152014363aa",
    "width": 384,
@@ -711,10 +2810,10 @@
     "reducedRgbaSha256": "94bd25e9acd127015340c377b9d01673e3d41db049a62cc9187513fcd6ae79ab"
    }
   },
-  "weapon/sword/arming/universal/fg/idle/iron.png": {
-   "sha256": "304e2e72eea780bea44d79de23f2c08376ebd1dca4987acf8d7ea0e9c343ba3d",
-   "width": 128,
-   "height": 256,
+  "weapon/sword/arming/universal/fg/hurt/steel.png": {
+   "sha256": "1ed63971f5212c26be873418844be0e0a3f0b42923701df54fc8d3dcfef1ba27",
+   "width": 384,
+   "height": 64,
    "cell": 64,
    "licence": "OGA-BY 3.0",
    "offered": [
@@ -728,7 +2827,7 @@
     "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
    ],
    "reference": {
-    "reducedRgbaSha256": "c579e89f9c185ffaa01003f076dfee692831a3e2f321bd9e7a6063b2df22d61d"
+    "reducedRgbaSha256": "5d5f22873260c8d67d18f7b82e545bfea8f733bb3da4a0bfee457e2e9a4428f2"
    }
   },
   "weapon/sword/arming/universal/fg/walk/iron.png": {
@@ -750,6 +2849,26 @@
    "reference": {
     "reducedRgbaSha256": "92cebbffa1aea836ed3c4b639dfa0763746120a058eca8afe3ba3ccb5a483ece"
    }
+  },
+  "weapon/sword/arming/universal/fg/walk/steel.png": {
+   "sha256": "d1ce1d2499af5ab8f07610881b9a4a49c88537525456991f76a3bce1841d3ac0",
+   "width": 576,
+   "height": 256,
+   "cell": 64,
+   "licence": "OGA-BY 3.0",
+   "offered": [
+    "OGA-BY 3.0"
+   ],
+   "authors": [
+    "ElizaWy; walk and down by JaidynReiman"
+   ],
+   "urls": [
+    "https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword",
+    "https://opengameart.org/content/lpc-expanded-sit-run-jump-more"
+   ],
+   "reference": {
+    "reducedRgbaSha256": "958b3bfba30107cbabc3dbfc21aab179ec6ea14ee9ab104658c035bd57c4cf3e"
+   }
   }
  },
  "ramps": [
@@ -763,12 +2882,30 @@
     "#FAECE7"
    ],
    "target": [
-    "#271920",
+    "#1A1213",
     "#442725",
+    "#644133",
     "#7F4C31",
     "#AE6B3F",
-    "#D38B59",
-    "#E4A47C"
+    "#D38B59"
+   ]
+  },
+  {
+   "source": [
+    "#281820",
+    "#4D4A5D",
+    "#958080",
+    "#C4B59F",
+    "#E5E6C7",
+    "#FFFFFF"
+   ],
+   "target": [
+    "#000000",
+    "#130D14",
+    "#1C2222",
+    "#2A3034",
+    "#4A5057",
+    "#6E7675"
    ]
   },
   {
@@ -782,38 +2919,1069 @@
    ],
    "target": [
     "#1d131e",
-    "#400B1F",
-    "#551C22",
-    "#682121",
-    "#832121",
-    "#AE424A"
+    "#411E05",
+    "#4B2B13",
+    "#62351C",
+    "#744B30",
+    "#996B4A"
+   ]
+  },
+  {
+   "source": [
+    "#260D14",
+    "#6A1108",
+    "#A42600",
+    "#BF4000",
+    "#E55600",
+    "#FF8A00"
+   ],
+   "target": [
+    "#000000",
+    "#080A0A",
+    "#101414",
+    "#1C2222",
+    "#31313E",
+    "#4A5057"
+   ]
+  },
+  {
+   "source": [
+    "#281820",
+    "#4D4A5D",
+    "#958080",
+    "#C4B59F",
+    "#E5E6C7",
+    "#FFFFFF"
+   ],
+   "target": [
+    "#101820",
+    "#192832",
+    "#0B5C2F",
+    "#214437",
+    "#2F8136",
+    "#64A42C"
+   ]
+  },
+  {
+   "source": [
+    "#2b1c1d",
+    "#311210",
+    "#4B2B13",
+    "#704325",
+    "#75502D",
+    "#9A6F37"
+   ],
+   "target": [
+    "#1d131e",
+    "#411E05",
+    "#4B2B13",
+    "#62351C",
+    "#744B30",
+    "#996B4A"
+   ]
+  },
+  {
+   "source": [
+    "#260D14",
+    "#6A1108",
+    "#A42600",
+    "#BF4000",
+    "#E55600",
+    "#FF8A00"
+   ],
+   "target": [
+    "#1A0E04",
+    "#301B07",
+    "#60350F",
+    "#7D4513",
+    "#AE682A",
+    "#C88D58"
+   ]
+  },
+  {
+   "source": [
+    "#281820",
+    "#4D4A5D",
+    "#958080",
+    "#C4B59F",
+    "#E5E6C7",
+    "#FFFFFF"
+   ],
+   "target": [
+    "#09131d",
+    "#07391D",
+    "#0B1F25",
+    "#0B2B28",
+    "#134507",
+    "#1B5502"
+   ]
+  },
+  {
+   "source": [
+    "#260D14",
+    "#6A1108",
+    "#A42600",
+    "#BF4000",
+    "#E55600",
+    "#FF8A00"
+   ],
+   "target": [
+    "#1D1D21",
+    "#484E57",
+    "#8B9498",
+    "#B8BBBC",
+    "#D8DCDC",
+    "#FFFFFF"
+   ]
+  },
+  {
+   "source": [
+    "#281820",
+    "#4D4A5D",
+    "#958080",
+    "#C4B59F",
+    "#E5E6C7",
+    "#FFFFFF"
+   ],
+   "target": [
+    "#180716",
+    "#13112D",
+    "#261044",
+    "#411357",
+    "#621E78",
+    "#813089"
    ]
   }
  ],
  "characters": {
-  "probe": {
+  "hero": {
    "bodyType": "male",
    "selections": [
     {
      "id": "body",
      "recolors": {
-      "color_1": "olive"
+      "color_1": "bronze"
      }
     },
     {
      "id": "heads_human_male"
     },
     {
-     "id": "torso_armour_leather"
+     "id": "hair_swoop_side",
+     "recolors": {
+      "color_1": "black"
+     }
+    },
+    {
+     "id": "torso_clothes_longsleeve",
+     "recolors": {
+      "color_1": "white"
+     }
+    },
+    {
+     "id": "torso_jacket_tabard",
+     "variant": "maroon"
+    },
+    {
+     "id": "belt_leather",
+     "variant": "brown"
     },
     {
      "id": "legs_pants",
      "recolors": {
-      "color_1": "maroon"
+      "color_1": "charcoal"
      }
     },
     {
-     "id": "feet_boots_basic"
+     "id": "feet_boots_basic",
+     "recolors": {
+      "color_1": "brown"
+     }
+    },
+    {
+     "id": "weapon_sword_arming",
+     "variant": "steel"
+    }
+   ],
+   "actions": {
+    "walk": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 4,
+     "cycle": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "layers": [
+      {
+       "file": "weapon/sword/arming/universal/bg/walk/steel.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/male/walk.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "legs/pants/male/walk.png",
+       "ramps": [
+        1
+       ]
+      },
+      {
+       "file": "feet/boots/basic/male/walk.png",
+       "ramps": [
+        2
+       ]
+      },
+      {
+       "file": "torso/clothes/longsleeve/longsleeve/male/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/jacket/tabard/male/walk/maroon.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/waist/belt_leather/male/walk/brown.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/male/walk.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "hair/swoop_side/adult/walk.png",
+       "ramps": [
+        3
+       ]
+      },
+      {
+       "file": "weapon/sword/arming/universal/fg/walk/steel.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "left:0": "eb4d84d4c031a33c4f7ecf8cb92c77f34c97aa89cc1835186a8bb8c9e51a5373",
+       "left:1": "5ead7e0dce2faa41751ed8eb6f340013d17e81437d6f85b1ebb179fbb9e3d561",
+       "left:2": "e555f07303f7b6098b8696ec22018c215dc7844965b6e1832eaa804fb0526a5c",
+       "left:3": "a7e9b9af995a5d79683231c584ea54340182bb65e85722f68d520b9148bb5c0e",
+       "left:4": "e3d4354207c5bdfe47bc698994bc91ad536b16e272cf692ffb2adc90c11e9db0",
+       "left:5": "976c612c229bf8f839f9489221499f1e1d8843e0ed18f184d7eee03e8aa39d66",
+       "left:6": "866c1055955ca42e1543a56a0c52c94d10373df7aa698b1bdc7d52169020fdfe",
+       "left:7": "84ebe47fac9ee99ebd31e26c307ccb31e99df64532947fc2c534a2c1e715bf1b",
+       "right:0": "29919b47073d6cca6e613899123e6f58dc6e55b961baead8b01bdbb61cc57e9c",
+       "right:1": "d49eb41da2b165be58d2fa9004f8a4d6def500df57ebe8e2a2c41a34ac7afd91",
+       "right:2": "8ee71032514f65e1da65c6a6b13484e0e17b25aa0fe41336af1efc7b3497caf9",
+       "right:3": "dcd3c9f228aa1b92554629cb95b57d57d357c4462d21b80ac3f780f71e6c2eaf",
+       "right:4": "cad15d2da1002276c9bb1f8f60e9605043aa43da44075ebda519606d12f83ba2",
+       "right:5": "e51e818ed64dd4040b4d556a80a7fc2bdb9a847cf26da4dd6d44f427c308cd1c",
+       "right:6": "fe15207f28f8a4b48ff803c7f54d2c9d58fb89ec7e22085cb32c48cd1526d61d",
+       "right:7": "8eb418f84804ce58d7c497df3a5c55397787a453151909242313db4cc34a2faa"
+      }
+     }
+    },
+    "slash_128": {
+     "kind": "custom",
+     "size": 96,
+     "sourceSingleAnimation": false,
+     "frames": [
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ],
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ],
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ],
+      [
+       [
+        "slash",
+        0
+       ],
+       [
+        "slash",
+        1
+       ],
+       [
+        "slash",
+        2
+       ],
+       [
+        "slash",
+        3
+       ],
+       [
+        "slash",
+        4
+       ],
+       [
+        "slash",
+        5
+       ]
+      ]
+     ],
+     "layers": {
+      "slash": [
+       {
+        "file": "weapon/sword/arming/attack_slash/bg/steel.png",
+        "ramps": []
+       },
+       {
+        "file": "body/bodies/male/slash.png",
+        "ramps": [
+         0
+        ],
+        "base": true
+       },
+       {
+        "file": "legs/pants/male/slash.png",
+        "ramps": [
+         1
+        ],
+        "base": true
+       },
+       {
+        "file": "feet/boots/basic/male/slash.png",
+        "ramps": [
+         2
+        ],
+        "base": true
+       },
+       {
+        "file": "torso/clothes/longsleeve/longsleeve/male/slash.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "torso/jacket/tabard/male/slash/maroon.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "torso/waist/belt_leather/male/slash/brown.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "head/heads/human/male/slash.png",
+        "ramps": [
+         0
+        ],
+        "base": true
+       },
+       {
+        "file": "hair/swoop_side/adult/slash.png",
+        "ramps": [
+         3
+        ],
+        "base": true
+       },
+       {
+        "file": "weapon/sword/arming/attack_slash/fg/steel.png",
+        "ramps": []
+       }
+      ]
+     },
+     "reference": {
+      "frames": {
+       "left:0": "39b6bc8bd92a2275b403ffdfff1973d88f74719926ce88e6cdc2e57fa0615f40",
+       "left:1": "3af8c03b60436a4ddbbd0c466aa4fdcd716371b053520328bec920517fea6f47",
+       "left:2": "0bf80785b511ec2bce77b5f7b52accd341ce9e6b8e3356f5ba37ce23221c8f13",
+       "left:3": "014473ca0d9c2ac207079a56ac38e5602f07b9fd7502288502e7a7f6aec1fb26",
+       "left:4": "5edfb9fa0ad9e42a7aa0376d39876580fef4c6315f86e682428f8d1664c04bf5",
+       "left:5": "2f939174b90afac0f80c338bba3f4097b9866641bcb801eced84fcf371a6d9ca",
+       "right:0": "70f8d394c80440ffd4f4dfd121eb4d22d212f5d4df3a853f9a3c02993cf62945",
+       "right:1": "2b8c4d5ee3fbe7bda48516f25bf70fe71dd7f96cada24b9ec4ba3b2dbf3c6f24",
+       "right:2": "10173c3b4290c0227f6a6069348c05d587e0831db4a2e094778972f888abea86",
+       "right:3": "bf3434784e6a716ce33e3214714f59805c56fdc7b9ac7b43d47c9cebd3e1ae4f",
+       "right:4": "25e9a57b8bfbd8cc6d84b7dc11a8d3e4f4ec06c5adb8abb64aa50986fe981c7f",
+       "right:5": "acc047264d43a1a20d7b5e8ef6d29038022cda6b0d1ab3ed077c94451d9108c1"
+      }
+     }
+    },
+    "hurt": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 1,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "layers": [
+      {
+       "file": "weapon/sword/arming/universal/bg/hurt/steel.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/male/hurt.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "legs/pants/male/hurt.png",
+       "ramps": [
+        1
+       ]
+      },
+      {
+       "file": "feet/boots/basic/male/hurt.png",
+       "ramps": [
+        2
+       ]
+      },
+      {
+       "file": "torso/clothes/longsleeve/longsleeve/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/jacket/tabard/male/hurt/maroon.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/waist/belt_leather/male/hurt/brown.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/male/hurt.png",
+       "ramps": [
+        0
+       ]
+      },
+      {
+       "file": "hair/swoop_side/adult/hurt.png",
+       "ramps": [
+        3
+       ]
+      },
+      {
+       "file": "weapon/sword/arming/universal/fg/hurt/steel.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "up:0": "c815b11747b5ea837e2088ca99a8cdae668363e307d6fde707a5b58af5f5bd43",
+       "up:1": "d1f07f009c71e45c5d3b3e26b793d81874c1182eca7ad73ed26cf31c5e1fe064",
+       "up:2": "429be0511d64ea8bb7a28fbfbc8d0956091859131be2ecf3c6c9865df7c4ce5b",
+       "up:3": "2c85d3db9ec7c4edab2abae1dfda7f276bd32142004b003160a89298b46ede2d",
+       "up:4": "eb023c9433f6f64bcb8b0fa56e2fee89d3bc274ae10dbae16fd08c7a9f54a569",
+       "up:5": "cb6af13d2c226f3e190b7a8d7149c3b36dc299d41f705daa8008851b1574aeb2"
+      }
+     }
+    }
+   }
+  },
+  "archer": {
+   "bodyType": "female",
+   "selections": [
+    {
+     "id": "body",
+     "recolors": {
+      "color_1": "light"
+     }
+    },
+    {
+     "id": "heads_human_female"
+    },
+    {
+     "id": "hair_long_straight",
+     "recolors": {
+      "color_1": "light_brown"
+     }
+    },
+    {
+     "id": "hat_hood_cloth",
+     "recolors": {
+      "color_1": "forest"
+     }
+    },
+    {
+     "id": "torso_clothes_longsleeve",
+     "recolors": {
+      "color_1": "green"
+     }
+    },
+    {
+     "id": "torso_armour_leather",
+     "recolors": {
+      "color_1": "brown"
+     }
+    },
+    {
+     "id": "legs_leggings",
+     "recolors": {
+      "color_1": "brown"
+     }
+    },
+    {
+     "id": "feet_boots_fold",
+     "recolors": {
+      "color_1": "brown"
+     }
+    },
+    {
+     "id": "quiver",
+     "variant": "quiver"
+    },
+    {
+     "id": "weapon_ranged_bow_normal",
+     "variant": "medium"
+    }
+   ],
+   "actions": {
+    "walk_128": {
+     "kind": "custom",
+     "size": 96,
+     "sourceSingleAnimation": false,
+     "frames": [
+      [
+       [
+        "walk",
+        0
+       ],
+       [
+        "walk",
+        1
+       ],
+       [
+        "walk",
+        2
+       ],
+       [
+        "walk",
+        3
+       ],
+       [
+        "walk",
+        4
+       ],
+       [
+        "walk",
+        5
+       ],
+       [
+        "walk",
+        6
+       ],
+       [
+        "walk",
+        7
+       ],
+       [
+        "walk",
+        8
+       ]
+      ],
+      [
+       [
+        "walk",
+        0
+       ],
+       [
+        "walk",
+        1
+       ],
+       [
+        "walk",
+        2
+       ],
+       [
+        "walk",
+        3
+       ],
+       [
+        "walk",
+        4
+       ],
+       [
+        "walk",
+        5
+       ],
+       [
+        "walk",
+        6
+       ],
+       [
+        "walk",
+        7
+       ],
+       [
+        "walk",
+        8
+       ]
+      ],
+      [
+       [
+        "walk",
+        0
+       ],
+       [
+        "walk",
+        1
+       ],
+       [
+        "walk",
+        2
+       ],
+       [
+        "walk",
+        3
+       ],
+       [
+        "walk",
+        4
+       ],
+       [
+        "walk",
+        5
+       ],
+       [
+        "walk",
+        6
+       ],
+       [
+        "walk",
+        7
+       ],
+       [
+        "walk",
+        8
+       ]
+      ],
+      [
+       [
+        "walk",
+        0
+       ],
+       [
+        "walk",
+        1
+       ],
+       [
+        "walk",
+        2
+       ],
+       [
+        "walk",
+        3
+       ],
+       [
+        "walk",
+        4
+       ],
+       [
+        "walk",
+        5
+       ],
+       [
+        "walk",
+        6
+       ],
+       [
+        "walk",
+        7
+       ],
+       [
+        "walk",
+        8
+       ]
+      ]
+     ],
+     "layers": {
+      "walk": [
+       {
+        "file": "weapon/ranged/bow/normal/walk/background/medium.png",
+        "ramps": []
+       },
+       {
+        "file": "quiver/walk/quiver.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "body/bodies/female/walk.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "legs/leggings/thin/walk.png",
+        "ramps": [
+         2
+        ],
+        "base": true
+       },
+       {
+        "file": "feet/boots/fold/thin/walk.png",
+        "ramps": [
+         2
+        ],
+        "base": true
+       },
+       {
+        "file": "torso/clothes/longsleeve/longsleeve/female/walk.png",
+        "ramps": [
+         4
+        ],
+        "base": true
+       },
+       {
+        "file": "torso/armour/leather/female/walk.png",
+        "ramps": [
+         5
+        ],
+        "base": true
+       },
+       {
+        "file": "head/heads/human/female/walk.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "hair/long_straight/adult/walk.png",
+        "ramps": [
+         6
+        ],
+        "base": true
+       },
+       {
+        "file": "hat/cloth/hood/adult/walk.png",
+        "ramps": [
+         7
+        ],
+        "base": true
+       },
+       {
+        "file": "weapon/ranged/bow/normal/walk/foreground/medium.png",
+        "ramps": []
+       }
+      ]
+     },
+     "reference": {
+      "note": "uses weapon/ranged/bow/normal/walk/background/medium.png, which DanJen's cache and generator handle at the wrong cell size; no generator reference"
+     }
+    },
+    "shoot": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 4,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "layers": [
+      {
+       "file": "weapon/ranged/bow/normal/universal/background/shoot/medium.png",
+       "ramps": []
+      },
+      {
+       "file": "quiver/shoot/quiver.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/female/shoot.png",
+       "ramps": []
+      },
+      {
+       "file": "legs/leggings/thin/shoot.png",
+       "ramps": [
+        2
+       ]
+      },
+      {
+       "file": "feet/boots/fold/thin/shoot.png",
+       "ramps": [
+        2
+       ]
+      },
+      {
+       "file": "torso/clothes/longsleeve/longsleeve/female/shoot.png",
+       "ramps": [
+        4
+       ]
+      },
+      {
+       "file": "torso/armour/leather/female/shoot.png",
+       "ramps": [
+        5
+       ]
+      },
+      {
+       "file": "head/heads/human/female/shoot.png",
+       "ramps": []
+      },
+      {
+       "file": "hair/long_straight/adult/shoot.png",
+       "ramps": [
+        6
+       ]
+      },
+      {
+       "file": "hat/cloth/hood/adult/shoot.png",
+       "ramps": [
+        7
+       ]
+      },
+      {
+       "file": "weapon/ranged/bow/normal/universal/foreground/shoot/medium.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "left:0": "960abfd067b0e2fb903c49e27d22295b019bdc625c7e7bcf1367cea2f437d3a9",
+       "left:1": "ebe8e4c1922f24ebda6e16762cc04ebb505ea4e462995542e86c4ad6a34a8855",
+       "left:2": "56ff082ebdb960e50e43736eef15e1855d3bc490b0302f8634a6586cab62dcdc",
+       "left:3": "b518e4bf3dbc82bba2a85814870bd22f5adba46b2e31f0c2db1b08d1d4e498bf",
+       "left:4": "7a1c9826d8e6beeae1bbd41049905297c22a6239671840bd01ab1eee95076bb9",
+       "left:5": "896ce81e7953c75b003e1e65c5816ecff0b14d5ce79a91894e4ca577cd4878e5",
+       "left:6": "0725d3f98cde3d804cd3ed838901609291e90bebc45be79b04f8907122dc11fd",
+       "left:7": "7d725ac770e002f9d32e972fca3adf6275a62623bdd5b60c59aa2a7ad9173813",
+       "left:8": "0db9b643a82de1d2d273a4b102d6279cfc3cee0b4b2145dcae5ae71f31efe75a",
+       "left:9": "23bac877efeeb76dae92ecc8edf23f60340bcea8639be781ac1f017c5ffb5636",
+       "left:10": "3c2d76c9e35a6d28a7174bd3a02db865fa75361e67fda2833e164bf50a430087",
+       "left:11": "d7122a10ef066525255129824493933288c189e38547e22a05c0b09d10fba10b",
+       "left:12": "747c45490e2a4dcbc999db56936665bdc837381319c2ffba9d12aa675f55e800",
+       "right:0": "8903103d11c129d56e90fbd420f5fa01c3f9dfc4cb57be9b613a103fdeb4121f",
+       "right:1": "516317d00dbdda62a326d9253ace9759c323247c8e6e0addb0130c6c497eaecc",
+       "right:2": "dbfed895b5c18d9a708535b7d8c932998665b25ac4d044dd67a39bca1329cb97",
+       "right:3": "053681d2d7ed68fbeee112b0e827803c1a96120340d963c2333820835ba30a86",
+       "right:4": "a7d29dec4958482b3cbaae5f84b45261d83819df0117bf1587d05febd189b981",
+       "right:5": "5a9f121ac1e121b3e56e3d124d7e110da415ada579cb46f375e228e28275c759",
+       "right:6": "375679f2075a5272cf31853619a57595dd626d718514d82cef042b0d4144a8e2",
+       "right:7": "ffc61cbcc00cfe8389ca5afecf97c192e6e4a09d4256213ede790f36ec44b18a",
+       "right:8": "6929159418e4b5f538f0285cd5024430690cb0c681dd852110f9cf6c95c8d31c",
+       "right:9": "7801260f624906eadcafee1daedae1e0b8e3a3f4053a05112c95e35967b0207f",
+       "right:10": "81a9744b3bb1b45ade5544b5d8cd6f0076712a9ab9e41fb7c225cba2ce1c8ca0",
+       "right:11": "346242a3a6157fb560416f22206a6dc8dd3dfc8963ff15f0d01bc349d1e44b4d",
+       "right:12": "91ec5bc3b96b929a8475e8601f89abc76b6e6d54c493575a17d4a210bcdb9227"
+      }
+     }
+    },
+    "hurt": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 1,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "layers": [
+      {
+       "file": "weapon/ranged/bow/normal/universal/background/hurt/medium.png",
+       "ramps": []
+      },
+      {
+       "file": "quiver/hurt/quiver.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/female/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "legs/leggings/thin/hurt.png",
+       "ramps": [
+        2
+       ]
+      },
+      {
+       "file": "feet/boots/fold/thin/hurt.png",
+       "ramps": [
+        2
+       ]
+      },
+      {
+       "file": "torso/clothes/longsleeve/longsleeve/female/hurt.png",
+       "ramps": [
+        4
+       ]
+      },
+      {
+       "file": "torso/armour/leather/female/hurt.png",
+       "ramps": [
+        5
+       ]
+      },
+      {
+       "file": "head/heads/human/female/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "hair/long_straight/adult/hurt.png",
+       "ramps": [
+        6
+       ]
+      },
+      {
+       "file": "hat/cloth/hood/adult/hurt.png",
+       "ramps": [
+        7
+       ]
+      },
+      {
+       "file": "weapon/ranged/bow/normal/universal/foreground/hurt/medium.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "up:0": "103c4498b47a75da4424cc46969349232217bad8c8d6e9b7925bd22ccdeb07ca",
+       "up:1": "affe413fb6516713b4b082755f73bcfcf54b320ba0cd0ce19e5ea8ce2157edc6",
+       "up:2": "04a33b911951b93007d0a04caaa46f9328b98d94e3a237df132c62dd09b385d2",
+       "up:3": "da42fc189cafdac877ea697efa7c90b0c029ef358b27593e7caab7a41db87e90",
+       "up:4": "0b18b120a3713ebddf90835ac629fdd184852da7e4dd08c377b7366dd256aebc",
+       "up:5": "0e282d49b000a85bc0f773a010d65f1b8c25e0e2352b249260217a2a571eaabd"
+      }
+     }
+    }
+   }
+  },
+  "lancer": {
+   "bodyType": "male",
+   "selections": [
+    {
+     "id": "body",
+     "recolors": {
+      "color_1": "light"
+     }
+    },
+    {
+     "id": "heads_human_male"
+    },
+    {
+     "id": "hat_helmet_armet",
+     "recolors": {
+      "color_1": "steel"
+     }
+    },
+    {
+     "id": "torso_armour_plate",
+     "recolors": {
+      "color_1": "steel"
+     }
+    },
+    {
+     "id": "torso_jacket_tabard",
+     "variant": "blue"
+    },
+    {
+     "id": "arms_armour",
+     "recolors": {
+      "color_1": "steel"
+     }
+    },
+    {
+     "id": "legs_armour",
+     "recolors": {
+      "color_1": "steel"
+     }
+    },
+    {
+     "id": "feet_armour",
+     "recolors": {
+      "color_1": "steel"
+     }
     },
     {
      "id": "weapon_sword_arming",
@@ -821,62 +3989,6 @@
     }
    ],
    "actions": {
-    "idle": {
-     "kind": "standard",
-     "size": 48,
-     "rows": 4,
-     "cycle": [
-      0,
-      0,
-      1
-     ],
-     "layers": [
-      {
-       "file": "weapon/sword/arming/universal/bg/idle/iron.png",
-       "ramps": []
-      },
-      {
-       "file": "body/bodies/male/idle.png",
-       "ramps": [
-        0
-       ]
-      },
-      {
-       "file": "legs/pants/male/idle.png",
-       "ramps": [
-        1
-       ]
-      },
-      {
-       "file": "feet/boots/basic/male/idle.png",
-       "ramps": []
-      },
-      {
-       "file": "torso/armour/leather/male/idle.png",
-       "ramps": []
-      },
-      {
-       "file": "head/heads/human/male/idle.png",
-       "ramps": [
-        0
-       ]
-      },
-      {
-       "file": "weapon/sword/arming/universal/fg/idle/iron.png",
-       "ramps": []
-      }
-     ],
-     "reference": {
-      "frames": {
-       "left:0": "72bfc0862f17a76cbcb5a699d36ba3d4aec96bfd5994775345a8b01c9462f568",
-       "left:1": "72bfc0862f17a76cbcb5a699d36ba3d4aec96bfd5994775345a8b01c9462f568",
-       "left:2": "8c2fb5713895678699133d87b8f4f2e213f7d7b5b54bbb404bf351f1afc4c997",
-       "right:0": "30b244e7a27f0825dbed42adfc5b6d1afae708f7ece8e511e44bf287c9d39dc9",
-       "right:1": "30b244e7a27f0825dbed42adfc5b6d1afae708f7ece8e511e44bf287c9d39dc9",
-       "right:2": "4aa3d67322a1b235549f139f6ae56648d78c3a1b2dc57e13f05f55ebce01c7c3"
-      }
-     }
-    },
     "walk": {
      "kind": "standard",
      "size": 48,
@@ -898,29 +4010,35 @@
       },
       {
        "file": "body/bodies/male/walk.png",
-       "ramps": [
-        0
-       ]
-      },
-      {
-       "file": "legs/pants/male/walk.png",
-       "ramps": [
-        1
-       ]
-      },
-      {
-       "file": "feet/boots/basic/male/walk.png",
        "ramps": []
       },
       {
-       "file": "torso/armour/leather/male/walk.png",
+       "file": "feet/armour/plate/male/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "legs/armour/plate/male/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/jacket/tabard/male/walk/blue.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/armour/plate/male/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "arms/armour/plate/male/walk.png",
        "ramps": []
       },
       {
        "file": "head/heads/human/male/walk.png",
-       "ramps": [
-        0
-       ]
+       "ramps": []
+      },
+      {
+       "file": "hat/helmet/armet/adult/walk.png",
+       "ramps": []
       },
       {
        "file": "weapon/sword/arming/universal/fg/walk/iron.png",
@@ -929,81 +4047,22 @@
      ],
      "reference": {
       "frames": {
-       "left:0": "80af740100ba85a886b3869f1763121465214a62fdf33e5e6bf442e64aa7c39f",
-       "left:1": "c10c2ad3bf61dbbc2272e3036feb8a93f5cdefcd29aa773b1aed6b40f4c5e2f9",
-       "left:2": "5b7b0757bd4198ed3461cd85ea5e38394dfa9139ab7a267bfec3cef46ae3a6f5",
-       "left:3": "aa5575cd8a36d45137ab136408756f626dfc4c1d05abb4ede4f5f96ff0af5829",
-       "left:4": "7c1506b8f362d48e64b2267c0cdd21221e1c5067e1a2d2ac35c6a2cb1a991abd",
-       "left:5": "886348537dbd56659e454ac4832865a741a5385659d3c7af19c17a5c95937698",
-       "left:6": "16f2803290164b032885c9fa1434f019780a89fff0605fa6fbcc54ec02bc45da",
-       "left:7": "79eddb660f28f438c358de8973622eec62c87b7f0975a24bd990649af017f551",
-       "right:0": "54ad07955a8c8da5f88ccbefddafcedcb1dd595bcc84fcd3a553942d892981ee",
-       "right:1": "b195e65f5ce4b06a03149fe40c130d764396046f8258b4714248811904c0fe7d",
-       "right:2": "7a917acfaccd95e20634ba7be0feec7cde34dad5caf75ea19b8fb5699bafc24e",
-       "right:3": "b8040c40fbe15fd8a7599895b2d458bef36d37b284b7fac7fbbdab0c7ef90d44",
-       "right:4": "918fc0ce449126a9970a9d37b93a9b88860dceabeae808f0c26d9068fb347f99",
-       "right:5": "928a5d8e8bc4bffa483f8509b3fbef4f68fe37126cede651c53c7cdef0752702",
-       "right:6": "1cecb90d98e0d5c66ad2fc2583b35962f4628f79c910dd1b81ae39e44f331978",
-       "right:7": "f131bdd046aba8cd0dfd482e5f3495e5c0175587be242f6266feeb9688811eef"
-      }
-     }
-    },
-    "hurt": {
-     "kind": "standard",
-     "size": 48,
-     "rows": 1,
-     "cycle": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5
-     ],
-     "layers": [
-      {
-       "file": "weapon/sword/arming/universal/bg/hurt/iron.png",
-       "ramps": []
-      },
-      {
-       "file": "body/bodies/male/hurt.png",
-       "ramps": [
-        0
-       ]
-      },
-      {
-       "file": "legs/pants/male/hurt.png",
-       "ramps": [
-        1
-       ]
-      },
-      {
-       "file": "feet/boots/basic/male/hurt.png",
-       "ramps": []
-      },
-      {
-       "file": "torso/armour/leather/male/hurt.png",
-       "ramps": []
-      },
-      {
-       "file": "head/heads/human/male/hurt.png",
-       "ramps": [
-        0
-       ]
-      },
-      {
-       "file": "weapon/sword/arming/universal/fg/hurt/iron.png",
-       "ramps": []
-      }
-     ],
-     "reference": {
-      "frames": {
-       "up:0": "5422a2f03cc87081667dcd7d3dab13b8e73ab83c8a99ae9c4cd0619dc450d958",
-       "up:1": "e9c8f47d009e30466146069ab0493006803f646eb11de5398e0bf020dfaf57fa",
-       "up:2": "c809557c6362cee12f1f08255ad38d34d3a4f28e017ff0af247cb5af2793582c",
-       "up:3": "0b7e97994cefc02f98db0bdf1646f28510f2d7a838731881042adbbac71e27ec",
-       "up:4": "1f38de4a0eb07a678aac4e58b371c2d8bacdbf3aea010560cae1285667e07d28",
-       "up:5": "92adf354f6f66cbeebb66d3adb648654a7ebc03a5fdd9e005ec945d3609b5a35"
+       "left:0": "48772e1ea0e2c3c1d6ff4af6643fcab1f26170ea9c5d9f498c0475b06a43abe6",
+       "left:1": "30bfe128af2fc4d73a12a04ea92781fd0d1401baff84327ef25e369e1515b28f",
+       "left:2": "743217ef740c2660e8d7295fc02ac23b4b6848cbc02dc6d4f5f50771405be531",
+       "left:3": "29ffaac5e028241edc62c0d4b40c69d59143c826782002292448df88c372f2fd",
+       "left:4": "e98184325e6e3dfea68d22ddb31e1c2f0dfc78fdf8fc770218be7a91e5a79810",
+       "left:5": "39ab5d5ee17306682eea656e4ba18d35b37317b8a753142ba825567c8f874103",
+       "left:6": "f4a5c64d04239f80589f61d39fea3e2536bbeab003ce912de63e1c0bcf64aa6f",
+       "left:7": "746a0c6116b62333218977bd5e151333c28e6929ebfa02f57bd2d9ad934bf1f6",
+       "right:0": "274392fc7b6708e8188ae63f5c235a1df613b9f28f68a8159b2a2cc97ffeaf14",
+       "right:1": "ae93449fa1ed4504276cbd8e2c81075229f073239a4acaf09a87571c63062412",
+       "right:2": "bed4ce09d9283acd8fc3b9bbae3d18d19076cf8742c2fbd2526049171c382abe",
+       "right:3": "d38b6c2f9035243516893a6505844c1e41d72e6725e38f1825381868b126f8a9",
+       "right:4": "5a7b16ee74c94f4e93e9bdbaf7d6100ba9000a231a5c1b53d1b97ce3eb3f2811",
+       "right:5": "7c7ba43c73e77100231102e4a6450f5dbba927d1c2f2591bc2a291436ea8486c",
+       "right:6": "b580624d807421829ddc1b6e0296558a4c45882fd9aed25571b93e2044ae29c2",
+       "right:7": "d3c2558d03cbadb98e9a774d3f98c99c04ba41b5da9795a4b30d7368bb1f68a1"
       }
      }
     },
@@ -1125,33 +4184,42 @@
        },
        {
         "file": "body/bodies/male/slash.png",
-        "ramps": [
-         0
-        ],
-        "base": true
-       },
-       {
-        "file": "legs/pants/male/slash.png",
-        "ramps": [
-         1
-        ],
-        "base": true
-       },
-       {
-        "file": "feet/boots/basic/male/slash.png",
         "ramps": [],
         "base": true
        },
        {
-        "file": "torso/armour/leather/male/slash.png",
+        "file": "feet/armour/plate/male/slash.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "legs/armour/plate/male/slash.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "torso/jacket/tabard/male/slash/blue.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "torso/armour/plate/male/slash.png",
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "arms/armour/plate/male/slash.png",
         "ramps": [],
         "base": true
        },
        {
         "file": "head/heads/human/male/slash.png",
-        "ramps": [
-         0
-        ],
+        "ramps": [],
+        "base": true
+       },
+       {
+        "file": "hat/helmet/armet/adult/slash.png",
+        "ramps": [],
         "base": true
        },
        {
@@ -1162,18 +4230,361 @@
      },
      "reference": {
       "frames": {
-       "left:0": "1be9616c9d8ef7c4bef3d035781597764ee816c38d3578beb88495030c111116",
-       "left:1": "85a203a6c229f246e1bc6c2e7822a74d7ed85bc739061b473cfa9101b1457c93",
-       "left:2": "faca54d96344ef35efa2dfdb28b9bde1d3ed27d70c1aa961dac0fef4b28183cb",
-       "left:3": "42f5202b60c3549018d3b98e5abad598a174fc30a44c1250448fb0db5d59d313",
-       "left:4": "dbfa93eaf3e4189f48885d7d555062d3af61a310a5cf162366a4d6f3a2e81269",
-       "left:5": "a46f0201c8abe83ce36a6809d59d97e3598f91a31e6023011153e4d461a4f81c",
-       "right:0": "02ae7577b5aa5f2e53ce700113f50dc8833e726cfeb1219e74177e81ac4ab4a1",
-       "right:1": "bbd1675662ff3f5ccbd99b2c6cfc32fcabe0b6303b95268e80f74bd902045a1c",
-       "right:2": "c5a02416004c114b84a473e0a9e698f5b9dfdfba7c7d23dd3ae0e50e00062aaf",
-       "right:3": "905d972f0ed88e35403e9b3629540c7325cc1194ed6b6529ae09b3c2f5f90eb1",
-       "right:4": "44716dd17ddb2c8bd6346f3199174279104d2f231585a74a2bc3601414df2b9e",
-       "right:5": "eedc2534b5f367eccc591b536ee34ad77f5b2c2982fa6b825494be10f8c9a4db"
+       "left:0": "bf2df6c2f79988f52c989c92ce216ce2de504d5613ff864596526abc35d6267f",
+       "left:1": "e05dc33eb0cda6b144345c327a86a4dc970ed4b55a03aa6e08a58d9cfd5e08bf",
+       "left:2": "abaf9914b24b94bc9c914ab9964cf6644c27083ac73a166c56157f96401cbd67",
+       "left:3": "fb411b10e477a843bba2855561e026199ffa12706f73b0120675702829d61621",
+       "left:4": "6268cc8d25e59c7c8b7749ab84882e26b8099c97d2842a480283b14ea4992070",
+       "left:5": "4b8adcd19f71073b0ef410fdb49d2403992994f9f18c6898649be2237333b952",
+       "right:0": "ccbe67d7385f3d2b9f41aeebba16d58073462bb805d95262f01b7654df29e55a",
+       "right:1": "1b584f08d78f801cea76aca81893a8184101d7b7c73d99cabd13bc0731fc0d90",
+       "right:2": "283e84c466db12ef7ce42e3557857b4f3396a270789eb8689dd6c9bd996677de",
+       "right:3": "b88b0982a6854bdd503277044db01a23b5b7b9055383b14407e200c1530b6cd6",
+       "right:4": "4eb33a0fad31124fc8b026368990b8b00ad1f2f7c5bc4e31becfe5454ad56619",
+       "right:5": "49274e5260665ac119d8b005f32ac9fa92cc0ada1d53802cee5595aef6f00f71"
+      }
+     }
+    },
+    "hurt": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 1,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "layers": [
+      {
+       "file": "weapon/sword/arming/universal/bg/hurt/iron.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "feet/armour/plate/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "legs/armour/plate/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/jacket/tabard/male/hurt/blue.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/armour/plate/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "arms/armour/plate/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/male/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "hat/helmet/armet/adult/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "weapon/sword/arming/universal/fg/hurt/iron.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "up:0": "7008bb386afc690f0999d6a0b49ea2667ee5ebe2e7a8c00adb2196ce8558733a",
+       "up:1": "b1e854494aac2e353d58764da041080f512cc8a8097da2d80f0f2638db17a6d1",
+       "up:2": "ac11e805d08ab922adef18801fb47aee66c1873d36aed537f3c0fcac9839897b",
+       "up:3": "eb00ac3c6337b6f293a2b6510a9b0885e0987dadb0fdb5cd060e403a2639363e",
+       "up:4": "51bcf9a98bca1c1c1b2235d6d309426bae91f6df2928c76562ed0e7e0d76c459",
+       "up:5": "81609b1f1a1e7be5984e8c171b4a064877702b877e3bac5a4fcbe945fa7a2da9"
+      }
+     }
+    }
+   }
+  },
+  "mage": {
+   "bodyType": "female",
+   "selections": [
+    {
+     "id": "body",
+     "recolors": {
+      "color_1": "light"
+     }
+    },
+    {
+     "id": "heads_human_female"
+    },
+    {
+     "id": "hair_xlong",
+     "recolors": {
+      "color_1": "white"
+     }
+    },
+    {
+     "id": "hat_magic_celestial_moon",
+     "variant": "purple"
+    },
+    {
+     "id": "dress_slit",
+     "variant": "purple"
+    },
+    {
+     "id": "belt_robe",
+     "variant": "teal"
+    },
+    {
+     "id": "feet_shoes_basic",
+     "recolors": {
+      "color_1": "purple"
+     }
+    },
+    {
+     "id": "weapon_magic_simple",
+     "variant": "simple"
+    }
+   ],
+   "actions": {
+    "walk": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 4,
+     "cycle": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "layers": [
+      {
+       "file": "hair/xlong/adult/bg/walk.png",
+       "ramps": [
+        8
+       ]
+      },
+      {
+       "file": "weapon/magic/simple/background/walk/simple.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/female/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "feet/shoes/basic/thin/walk.png",
+       "ramps": [
+        9
+       ]
+      },
+      {
+       "file": "dress/slit/female/walk/purple.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/waist/belt_robe/female/walk/teal.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/female/walk.png",
+       "ramps": []
+      },
+      {
+       "file": "hair/xlong/adult/fg/walk.png",
+       "ramps": [
+        8
+       ]
+      },
+      {
+       "file": "hat/magic/celestial_moon/adult/walk/purple.png",
+       "ramps": []
+      },
+      {
+       "file": "weapon/magic/simple/foreground/walk/simple.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "left:0": "58eb333fa4bbad50c7526a544bbe2c9549ecf14982022f99f23f904c4c9167e8",
+       "left:1": "2440ee25c2d59310747bb5c4b2b42281fe14d261a8dd3e864c7f63444eb574a9",
+       "left:2": "123466191c06283ae801c91657f0b7535472dee700e0450a9f1204420af2ecde",
+       "left:3": "acc6e8f1e7bedd0e9bb88f4e04f33418752128cf537a154f312cf4d6bc90ec1b",
+       "left:4": "642679baf173ca6f3f0593d605666cf3a4a5795bf197c14bcceb0a5c93eccd22",
+       "left:5": "b73448c056793c35a2507facba1decaa99693760feab8d7e2f405cfc4803365c",
+       "left:6": "be46aeae75528096be785fffb817831fa425b2d8d11a55451c79d714fd53caaf",
+       "left:7": "c1f7a4348e8e622c240ee6daa1c832fad45b674ec229abf0f4fcbb63de6529fb",
+       "right:0": "b7c74e3b5a6e3f971068ebe2e9afdedcc4ad3b56634fc52e028a43f7add2d7e6",
+       "right:1": "1450c37ee047681009e2e43d2803470f1e8cf0beefb4495bd973d82b80114111",
+       "right:2": "19c04afabdff1bd40b484984816ca0770347b096dca094f67c34d75d286783c8",
+       "right:3": "1cd18e319ba449ca82bef0804c4eace4d010036ab1da6d0a2c6ff9bad0487494",
+       "right:4": "e280204e818ae18dd2c8ccdb253b83ee8ebe94a495a2258f9fbcbc20917404e6",
+       "right:5": "6ec0eb17a42053266139652dd69c12ad6ee14bd256ccf417f22ea8af667660ad",
+       "right:6": "fe369d89ef74eb735d54a8d5548fac9f36bbc6670b22a98f2b737ae0de9ea3a7",
+       "right:7": "42b52c5a27eaabdeac13ec2e236ac4068cd066c49cfc93e6181b511367a29d68"
+      }
+     }
+    },
+    "spellcast": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 4,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "layers": [
+      {
+       "file": "hair/xlong/adult/bg/spellcast.png",
+       "ramps": [
+        8
+       ]
+      },
+      {
+       "file": "weapon/magic/simple/background/spellcast/simple.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/female/spellcast.png",
+       "ramps": []
+      },
+      {
+       "file": "feet/shoes/basic/thin/spellcast.png",
+       "ramps": [
+        9
+       ]
+      },
+      {
+       "file": "dress/slit/female/spellcast/purple.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/waist/belt_robe/female/spellcast/teal.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/female/spellcast.png",
+       "ramps": []
+      },
+      {
+       "file": "hair/xlong/adult/fg/spellcast.png",
+       "ramps": [
+        8
+       ]
+      },
+      {
+       "file": "hat/magic/celestial_moon/adult/spellcast/purple.png",
+       "ramps": []
+      },
+      {
+       "file": "weapon/magic/simple/foreground/spellcast/simple.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "left:0": "dcfb05dc3dd74ceb738ba066a58ad06de9f201ab10ffbcde1198e1b744640a15",
+       "left:1": "03c9635583bbf64f6babe0f896df20edcd63dff3cd16db8ac47ab4b2aa33f7df",
+       "left:2": "e4ba9cafabfae52e98658d2988902d07b08cc14d6ecc5b5fc490792a90ddec97",
+       "left:3": "7b38c961cb5b08e40e3ceadd66ce2fed25edb943662e93c60cf442effd32d572",
+       "left:4": "86f3dafc860e1e431dae1ccdfe2eefd7c02f5b637f2607942caf97fadbe8c3e0",
+       "left:5": "56f9811525bc16279f48029a8a1e2826eb2cdf8c0ed4a917a18334f6be1524f3",
+       "left:6": "d9aea0e2e518a88f25503c052981ead81086246997cfa1d84d4bcbdc1616ea6f",
+       "right:0": "9082b3fb53547df25a8ed96d6a2339a0f61773276809e263daf99dbb6271c225",
+       "right:1": "78335826b3dbacc6e22baf338a9c30c0fcca1294177a6ef61f6af017e7fb71b0",
+       "right:2": "01186801c9468af1c678f73969e486b936ed0df30e14af611b0244074c16c69f",
+       "right:3": "bd82c3b97d6f35b7ddf7c3d02d6a2f959cbffae80eea1ae577e4d209076b56cd",
+       "right:4": "d54d582e58cb22faa343f85e61350af2a6d10246077fd4bac85d280dcf89afef",
+       "right:5": "bc65b8a400d63b59ded2deb5d9dc078512610ea6b1421a03681c963f634eae37",
+       "right:6": "2e09da19a9647e51aac4eb12817859ecaa9a3c4901ddf7ee26fb59376af92f6a"
+      }
+     }
+    },
+    "hurt": {
+     "kind": "standard",
+     "size": 48,
+     "rows": 1,
+     "cycle": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "layers": [
+      {
+       "file": "hair/xlong/adult/bg/hurt.png",
+       "ramps": [
+        8
+       ]
+      },
+      {
+       "file": "weapon/magic/simple/background/hurt/simple.png",
+       "ramps": []
+      },
+      {
+       "file": "body/bodies/female/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "feet/shoes/basic/thin/hurt.png",
+       "ramps": [
+        9
+       ]
+      },
+      {
+       "file": "dress/slit/female/hurt/purple.png",
+       "ramps": []
+      },
+      {
+       "file": "torso/waist/belt_robe/female/hurt/teal.png",
+       "ramps": []
+      },
+      {
+       "file": "head/heads/human/female/hurt.png",
+       "ramps": []
+      },
+      {
+       "file": "hair/xlong/adult/fg/hurt.png",
+       "ramps": [
+        8
+       ]
+      },
+      {
+       "file": "hat/magic/celestial_moon/adult/hurt/purple.png",
+       "ramps": []
+      },
+      {
+       "file": "weapon/magic/simple/foreground/hurt/simple.png",
+       "ramps": []
+      }
+     ],
+     "reference": {
+      "frames": {
+       "up:0": "d13e68ffb53e6c88dae40c975ae49a23574e71f0ad45a88dd1161aee08b54faa",
+       "up:1": "4dd19303ad627421fe28a6ba4e6a921eb625ef6291bf0a09c6fb87012aae5347",
+       "up:2": "d1adc43e65cdbd927c707b3875b8dbdfcc2216232e9c5b251cc6be197261b0ff",
+       "up:3": "18ffead774d8ebb605292e05c045e6acd93c1664a33831cb3a56adc910c8930c",
+       "up:4": "8c25449e7fb695860691e0591991cf387485df08a9d3cc7acb98ea862762d4b7",
+       "up:5": "27cd6dbfeac50aea92ac5936c290c1e0c2a676fc5a72cbc98bada6a70888409e"
       }
      }
     }

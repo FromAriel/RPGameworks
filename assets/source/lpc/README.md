@@ -4,7 +4,8 @@ The LPC character sheets this project uses, under [decision 0019](../../../docs/
 
 ## What is here
 
-- `recipes.json`: each character as LPC parts and colours. This is the file to edit.
+- `recipes.json`: the party as LPC parts and colours, chosen by Ariel (S1.5b). This is the file to edit.
+- `candidates.json`: design candidates for `npm run lpc:preview`, which renders them into `external/lpc-preview/index.html` (ignored) with the same recipe and licence checks as the import.
 - `sheets/`: the source sheets those recipes use, byte for byte from the [Universal LPC Spritesheet Character Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) at revision `4963a69795255fb15a934c47f478a8bdcf3668f5`. Only these files are kept, never the whole library.
 - `manifest.json`: written by the import tool.
   - **Per file:** its hash, its cell size, the licence we use and its authors.

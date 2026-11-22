@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "about": "Decision 0019 S1.5b: candidate designs for the party, rendered by tools/lpc/preview.mjs for Ariel to choose from. Not imported; the chosen ones move to recipes.json. Every file a candidate uses must pass the same licence check as the import. The Lancer carries the arming sword until Ariel's spear is ready. A member's walk is its own when its weapon needs it: the bow walks only as the oversized walk_128. Only the simple staff (CC0) has a spellcast; the tunic is female only.",
+  "members": [
+    {
+      "member": "hero", "name": "Hero", "role": "Sword: slash", "attack": "slash_128",
+      "candidates": [
+        { "id": "a", "label": "Wanderer: leather over a navy shirt, red cape",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_male" },
+            { "id": "hair_spiked", "recolors": { "color_1": "chestnut" } },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "navy" } },
+            { "id": "torso_armour_leather", "recolors": { "color_1": "brown" } },
+            { "id": "belt_leather", "variant": "brown" },
+            { "id": "cape_solid", "recolors": { "color_1": "red" } },
+            { "id": "legs_pants", "recolors": { "color_1": "navy" } },
+            { "id": "feet_boots_basic", "recolors": { "color_1": "brown" } },
+            { "id": "weapon_sword_arming", "variant": "steel" } ] },
+        { "id": "b", "label": "Knight-errant: steel plate, blue cape",
+          "bodyType": "female", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_female" },
+            { "id": "hair_bob", "recolors": { "color_1": "blonde" } },
+            { "id": "torso_armour_plate", "recolors": { "color_1": "steel" } },
+            { "id": "arms_armour", "recolors": { "color_1": "steel" } },
+            { "id": "cape_solid", "recolors": { "color_1": "blue" } },
+            { "id": "legs_armour", "recolors": { "color_1": "steel" } },
+            { "id": "feet_armour", "recolors": { "color_1": "steel" } },
+            { "id": "weapon_sword_arming", "variant": "steel" } ] },
+        { "id": "c", "label": "Captain: maroon tabard over white, dark trousers",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "bronze" } }, { "id": "heads_human_male" },
+            { "id": "hair_swoop_side", "recolors": { "color_1": "black" } },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "white" } },
+            { "id": "torso_jacket_tabard", "variant": "maroon" },
+            { "id": "belt_leather", "variant": "brown" },
+            { "id": "legs_pants", "recolors": { "color_1": "charcoal" } },
+            { "id": "feet_boots_basic", "recolors": { "color_1": "brown" } },
+            { "id": "weapon_sword_arming", "variant": "steel" } ] }
+      ]
+    },
+    {
+      "member": "archer", "name": "Archer", "role": "Bow: shoot", "attack": "shoot", "walk": "walk_128",
+      "candidates": [
+        { "id": "a", "label": "Ranger: green hood, leather armour, quiver",
+          "bodyType": "female", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_female" },
+            { "id": "hair_long_straight", "recolors": { "color_1": "light_brown" } },
+            { "id": "hat_hood_cloth", "recolors": { "color_1": "forest" } },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "green" } },
+            { "id": "torso_armour_leather", "recolors": { "color_1": "brown" } },
+            { "id": "legs_leggings", "recolors": { "color_1": "brown" } },
+            { "id": "feet_boots_fold", "recolors": { "color_1": "brown" } },
+            { "id": "quiver", "variant": "quiver" },
+            { "id": "weapon_ranged_bow_normal", "variant": "medium" } ] },
+        { "id": "b", "label": "Hunter: forest shirt, leather armour, tied hair",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "olive" } }, { "id": "heads_human_male" },
+            { "id": "hair_long_tied", "recolors": { "color_1": "dark_brown" } },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "forest" } },
+            { "id": "torso_armour_leather", "recolors": { "color_1": "walnut" } },
+            { "id": "belt_leather", "variant": "leather" },
+            { "id": "legs_pants", "recolors": { "color_1": "tan" } },
+            { "id": "feet_boots_basic", "recolors": { "color_1": "brown" } },
+            { "id": "quiver", "variant": "quiver" },
+            { "id": "weapon_ranged_bow_normal", "variant": "light" } ] },
+        { "id": "c", "label": "Scout: red ponytail, teal top, mantle",
+          "bodyType": "female", "selections": [
+            { "id": "body", "recolors": { "color_1": "amber" } }, { "id": "heads_human_female" },
+            { "id": "hair_high_ponytail", "recolors": { "color_1": "redhead" } },
+            { "id": "torso_clothes_sleeveless2", "recolors": { "color_1": "teal" } },
+            { "id": "shoulders_mantal", "recolors": { "color_1": "leather" } },
+            { "id": "legs_leggings", "recolors": { "color_1": "charcoal" } },
+            { "id": "feet_boots_fold", "recolors": { "color_1": "leather" } },
+            { "id": "quiver", "variant": "quiver" },
+            { "id": "weapon_ranged_bow_normal", "variant": "dark" } ] }
+      ]
+    },
+    {
+      "member": "lancer", "name": "Lancer", "role": "Spear (sword for now): slash", "attack": "slash_128",
+      "candidates": [
+        { "id": "a", "label": "Guard: full steel, armet helm, blue tabard",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_male" },
+            { "id": "hat_helmet_armet", "recolors": { "color_1": "steel" } },
+            { "id": "torso_armour_plate", "recolors": { "color_1": "steel" } },
+            { "id": "torso_jacket_tabard", "variant": "blue" },
+            { "id": "arms_armour", "recolors": { "color_1": "steel" } },
+            { "id": "legs_armour", "recolors": { "color_1": "steel" } },
+            { "id": "feet_armour", "recolors": { "color_1": "steel" } },
+            { "id": "weapon_sword_arming", "variant": "iron" } ] },
+        { "id": "b", "label": "Legionary: bronze armour and helm, maroon cape",
+          "bodyType": "female", "selections": [
+            { "id": "body", "recolors": { "color_1": "brown" } }, { "id": "heads_human_female" },
+            { "id": "hair_bangs_bun", "recolors": { "color_1": "black" } },
+            { "id": "hat_helmet_barbuta", "recolors": { "color_1": "bronze" } },
+            { "id": "torso_armour_legion", "recolors": { "color_1": "bronze" } },
+            { "id": "shoulders_legion", "recolors": { "color_1": "bronze" } },
+            { "id": "cape_solid", "recolors": { "color_1": "maroon" } },
+            { "id": "legs_pants", "recolors": { "color_1": "maroon" } },
+            { "id": "feet_boots_rim", "recolors": { "color_1": "brown" } },
+            { "id": "weapon_sword_arming", "variant": "iron" } ] },
+        { "id": "c", "label": "Sentinel: nasal helm, dark leather, tattered cape",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "taupe" } }, { "id": "heads_human_male" },
+            { "id": "hat_helmet_nasal", "recolors": { "color_1": "iron" } },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "slate" } },
+            { "id": "torso_armour_leather", "recolors": { "color_1": "black" } },
+            { "id": "shoulders_pauldrons", "recolors": { "color_1": "leather" } },
+            { "id": "cape_tattered", "recolors": { "color_1": "gray" } },
+            { "id": "legs_pants", "recolors": { "color_1": "black" } },
+            { "id": "feet_boots_basic", "recolors": { "color_1": "black" } },
+            { "id": "weapon_sword_arming", "variant": "iron" } ] }
+      ]
+    },
+    {
+      "member": "mage", "name": "Mage", "role": "Staff: spellcast", "attack": "spellcast",
+      "candidates": [
+        { "id": "a", "label": "Star mage: navy celestial hat, robe belt and cape",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_male" },
+            { "id": "hat_magic_celestial", "variant": "navy" },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "navy" } },
+            { "id": "belt_robe", "variant": "white" },
+            { "id": "cape_solid", "recolors": { "color_1": "navy" } },
+            { "id": "legs_pants", "recolors": { "color_1": "navy" } },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "brown" } },
+            { "id": "weapon_magic_simple", "variant": "simple" } ] },
+        { "id": "b", "label": "Sorceress: purple dress, moon hat, white hair",
+          "bodyType": "female", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_female" },
+            { "id": "hair_xlong", "recolors": { "color_1": "white" } },
+            { "id": "hat_magic_celestial_moon", "variant": "purple" },
+            { "id": "dress_slit", "variant": "purple" },
+            { "id": "belt_robe", "variant": "teal" },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "purple" } },
+            { "id": "weapon_magic_simple", "variant": "simple" } ] },
+        { "id": "c", "label": "Sage: elder with a white beard, maroon robe",
+          "bodyType": "male", "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } }, { "id": "heads_human_male_elderly" },
+            { "id": "hair_balding", "recolors": { "color_1": "white" } },
+            { "id": "beards_winter", "recolors": { "color_1": "white" } },
+            { "id": "torso_clothes_longsleeve", "recolors": { "color_1": "maroon" } },
+            { "id": "belt_robe", "variant": "white" },
+            { "id": "cape_solid", "recolors": { "color_1": "tan" } },
+            { "id": "legs_pants", "recolors": { "color_1": "brown" } },
+            { "id": "feet_sandals", "recolors": { "color_1": "brown" } },
+            { "id": "weapon_magic_simple", "variant": "simple" } ] }
+      ]
+    }
+  ]
+}

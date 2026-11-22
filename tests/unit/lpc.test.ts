@@ -84,17 +84,46 @@ describe('the committed LPC sheets', () => {
 });
 
 describe('reduction and compositing (ports of DanJen Delver\'s)', () => {
-  it('reduces every committed sheet exactly as DanJen\'s cache did', () => {
-    for (const [file, entry] of Object.entries(manifest.files) as [string, { reference: { reducedRgbaSha256: string } }][]) {
-      expect(rgbaHash(reduced(file)), file).toBe(entry.reference.reducedRgbaSha256);
+  it('reduces every committed sheet exactly as DanJen\'s cache did, except the two DanJen reduced at the wrong cell size', () => {
+    const unreferenced: string[] = [];
+    for (const [file, entry] of Object.entries(manifest.files) as [string, { cell: number; width: number; height: number; reference: { reducedRgbaSha256?: string } }][]) {
+      const sheet = reduced(file);
+      if (entry.reference.reducedRgbaSha256) { expect(rgbaHash(sheet), file).toBe(entry.reference.reducedRgbaSha256); continue; }
+      // No cache reference: the sheet still reduces at its own cell size, 128 to 96 here, to the right geometry.
+      unreferenced.push(file);
+      const out = entry.cell / 64 * 48;
+      expect([sheet.cellOut, sheet.width, sheet.height], file).toEqual([out, entry.width / entry.cell * out, entry.height / entry.cell * out]);
+    }
+    // DanJen's cache records the bow's walk_128 sheets (128-pixel frames) as 64-pixel cells; they are the only exceptions.
+    expect(unreferenced).toEqual(['weapon/ranged/bow/normal/walk/background/medium.png', 'weapon/ranged/bow/normal/walk/foreground/medium.png']);
+  }, 120_000);
+
+  it('bakes every frame of every action; the archer\'s walk keeps the bow in hand, close to the body', () => {
+    for (const [id, character] of Object.entries(manifest.characters) as [string, { actions: Record<string, { kind: string; rows: number; cycle: number[]; frames: unknown[][] }> }][]) {
+      for (const [action, spec] of Object.entries(character.actions)) {
+        const rows = spec.kind === 'standard' ? spec.rows : spec.frames.length;
+        const count = spec.kind === 'standard' ? spec.cycle.length : spec.frames[1]!.length;
+        for (const direction of rows >= 4 ? ['left', 'right'] : ['up']) for (let phase = 0; phase < count; phase++) {
+          const frame = bakeFrame(manifest, id, action, direction, phase, reduced, reduction.finalAlphaThreshold);
+          expect(frame.data.some((v: number, i: number) => i % 4 === 3 && v > 0), `${id} ${action} ${direction}:${phase}`).toBe(true);
+        }
+      }
+    }
+    // The mis-sized reduction scattered the bow far above the archer's head. Reduced at 128 pixels, every opaque pixel
+    // of the walk stays within the figure's area of the 96-pixel frame.
+    for (let phase = 0; phase < 9; phase++) {
+      const frame = bakeFrame(manifest, 'archer', 'walk_128', 'left', phase, reduced, reduction.finalAlphaThreshold);
+      let top = 96;
+      for (let y = 0; y < 96; y++) for (let x = 0; x < 96; x++) if (frame.data[(y * 96 + x) * 4 + 3]) top = Math.min(top, y);
+      expect(top, `walk_128 phase ${phase}`).toBeGreaterThanOrEqual(30);
     }
   }, 120_000);
 
   it('composites every reference frame exactly as DanJen\'s generator did, including recoloured and oversized ones', () => {
     let checked = 0;
-    for (const [id, character] of Object.entries(manifest.characters) as [string, { actions: Record<string, { reference: { frames: Record<string, string> } }> }][]) {
+    for (const [id, character] of Object.entries(manifest.characters) as [string, { actions: Record<string, { reference: { frames?: Record<string, string> } }> }][]) {
       for (const [action, spec] of Object.entries(character.actions)) {
-        for (const [key, expected] of Object.entries(spec.reference.frames)) {
+        for (const [key, expected] of Object.entries(spec.reference.frames ?? {})) {
           const [direction, phase] = key.split(':');
           expect(rgbaHash(bakeFrame(manifest, id, action, direction!, Number(phase), reduced, reduction.finalAlphaThreshold)), `${id} ${action} ${key}`).toBe(expected);
           checked++;
@@ -102,7 +131,11 @@ describe('reduction and compositing (ports of DanJen Delver\'s)', () => {
       }
     }
     expect(checked).toBeGreaterThan(20);
-    expect(manifest.ramps.length).toBeGreaterThan(0); // The probe is recoloured, so ramps are exercised.
-    expect(manifest.characters.probe.actions.slash_128).toMatchObject({ kind: 'custom', size: 96 });
+    expect(manifest.ramps.length).toBeGreaterThan(0); // The party is recoloured, so ramps are exercised.
+    // Ariel's party (S1.5b): oversized actions for the sword and the bow's walk; standard ones otherwise.
+    expect(Object.keys(manifest.characters)).toEqual(['hero', 'archer', 'lancer', 'mage']);
+    expect(manifest.characters.hero.actions.slash_128).toMatchObject({ kind: 'custom', size: 96 });
+    expect(manifest.characters.archer.actions.walk_128).toMatchObject({ kind: 'custom', size: 96 });
+    expect(manifest.characters.mage.actions.spellcast).toMatchObject({ kind: 'standard', size: 48 });
   }, 120_000);
 });

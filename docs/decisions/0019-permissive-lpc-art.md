@@ -76,6 +76,36 @@ Facing left and right (both are needed in a pincer). Most use the standard 64-pi
 - **Verification:** the import records references from DanJen's own reduced cache (per file, the RGBA hash) and generator (every frame of each action, left and right). The tests reduce and composite from the committed files alone and match every reference. The probe gives 28 files and 40 reference frames: idle, walk, hurt and the oversized slash, with a recoloured body and pants.
 - **The probe:** a test character (male body, head, leather armour, pants, boots, arming sword). It is replaced by the party's designs in S1.5b.
 
+## Execution notes (S1.5b, November 22)
+
+- **Previews:** `npm run lpc:preview` (`tools/lpc/preview.mjs`) renders the designs in `assets/source/lpc/candidates.json`.
+  - **The same checks as the import:** the shared `tools/lpc/resolve.mjs` applies the recipe rules and the per-file licence check.
+  - **Output:** a single self-contained `external/lpc-preview/index.html` (ignored by git), showing the animations at battle size.
+  - **Choices offered:** three designs per member.
+- **Ariel's choices**, now `recipes.json`:
+
+| Member | Design |
+| --- | --- |
+| Hero | C, the Captain: black hair, maroon tabard over white, dark trousers, arming sword |
+| Archer | A, the Ranger: green hood, green shirt under leather armour, leggings, quiver, bow |
+| Lancer | A, the Guard: full steel plate and armet helm, blue tabard, arming sword until Ariel's spear |
+| Mage | B, the Sorceress: white hair, purple dress, purple celestial moon hat, simple staff |
+
+- **What the catalog allows:**
+  - **No idle:** many older parts (belts, tunics, tabards, the quiver) have no idle animation, and each chosen design wears one. So all four stand on their walk's first frame; the actions are a walk, the attack and hurt.
+  - **Bow:** it walks only as the oversized `walk_128`.
+  - **Staffs:** only the simple staff (CC0) has a spellcast.
+  - **Tunic:** female only.
+- **A bug in DanJen's cache, worked around here:**
+  - **The fault:** the bow's `walk_128` sheets are 128-pixel frames, but DanJen's cache records and reduces them as 64-pixel cells. That scatters the bow above the archer's head, and DanJen's generator draws them the same way.
+  - **The fix here:** the import now takes a file's cell size from the action that uses it, not from DanJen's record.
+  - **References:** where the two disagree there is no DanJen reference, and the manifest says why. The tests check that sheet's geometry instead, and that the archer's walk keeps the bow close to the body.
+  - **DanJen itself** is unchanged (read only).
+- **Result:**
+  - **Files:** 113 sheets (559 KB, all OGA-BY 3.0, OGA-BY 3.0+, CC0 or CC-BY 3.0) and 10 colour ramps.
+  - **Checks:** 111 sheets reduce exactly as DanJen's cache did, and 136 frames match DanJen's generator.
+  - **The probe** is gone.
+
 ## Still open
 
 - **The map hero:** the walking hero on the map is the Cute Fantasy starter pack. Should it become the LPC Hero too, or stay as it is?

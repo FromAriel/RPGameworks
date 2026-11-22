@@ -1,19 +1,236 @@
 {
   "schemaVersion": 1,
-  "about": "Decision 0019: character recipes for tools/lpc/import.mjs (run it after any change). Part IDs and colours from the Universal LPC Spritesheet Character Generator. The probe is a test character for S1.5a; the party's own designs arrive in S1.5b.",
+  "about": "Decision 0019: the party's LPC recipes for tools/lpc/import.mjs (run it after any change). Part IDs and colours from the Universal LPC Spritesheet Character Generator. Chosen by Ariel from the S1.5b previews (candidates.json): the Hero is the Captain, the Archer the Ranger, the Lancer the Guard (with the arming sword until Ariel's spear), the Mage the Sorceress. Actions: a walk (the bow only walks oversized, walk_128), the weapon's attack, and hurt. None has an idle: each wears a part without one (tabard, belt, quiver, robe belt), so they stand on the walk's first frame.",
   "characters": [
     {
-      "id": "probe",
+      "id": "hero",
+      "label": "Hero: Captain: maroon tabard over white, dark trousers",
       "bodyType": "male",
       "selections": [
-        { "id": "body", "recolors": { "color_1": "olive" } },
-        { "id": "heads_human_male" },
-        { "id": "torso_armour_leather" },
-        { "id": "legs_pants", "recolors": { "color_1": "maroon" } },
-        { "id": "feet_boots_basic" },
-        { "id": "weapon_sword_arming", "variant": "iron" }
+        {
+          "id": "body",
+          "recolors": {
+            "color_1": "bronze"
+          }
+        },
+        {
+          "id": "heads_human_male"
+        },
+        {
+          "id": "hair_swoop_side",
+          "recolors": {
+            "color_1": "black"
+          }
+        },
+        {
+          "id": "torso_clothes_longsleeve",
+          "recolors": {
+            "color_1": "white"
+          }
+        },
+        {
+          "id": "torso_jacket_tabard",
+          "variant": "maroon"
+        },
+        {
+          "id": "belt_leather",
+          "variant": "brown"
+        },
+        {
+          "id": "legs_pants",
+          "recolors": {
+            "color_1": "charcoal"
+          }
+        },
+        {
+          "id": "feet_boots_basic",
+          "recolors": {
+            "color_1": "brown"
+          }
+        },
+        {
+          "id": "weapon_sword_arming",
+          "variant": "steel"
+        }
       ],
-      "actions": ["idle", "walk", "hurt", "slash_128"]
+      "actions": [
+        "walk",
+        "slash_128",
+        "hurt"
+      ]
+    },
+    {
+      "id": "archer",
+      "label": "Archer: Ranger: green hood, leather armour, quiver",
+      "bodyType": "female",
+      "selections": [
+        {
+          "id": "body",
+          "recolors": {
+            "color_1": "light"
+          }
+        },
+        {
+          "id": "heads_human_female"
+        },
+        {
+          "id": "hair_long_straight",
+          "recolors": {
+            "color_1": "light_brown"
+          }
+        },
+        {
+          "id": "hat_hood_cloth",
+          "recolors": {
+            "color_1": "forest"
+          }
+        },
+        {
+          "id": "torso_clothes_longsleeve",
+          "recolors": {
+            "color_1": "green"
+          }
+        },
+        {
+          "id": "torso_armour_leather",
+          "recolors": {
+            "color_1": "brown"
+          }
+        },
+        {
+          "id": "legs_leggings",
+          "recolors": {
+            "color_1": "brown"
+          }
+        },
+        {
+          "id": "feet_boots_fold",
+          "recolors": {
+            "color_1": "brown"
+          }
+        },
+        {
+          "id": "quiver",
+          "variant": "quiver"
+        },
+        {
+          "id": "weapon_ranged_bow_normal",
+          "variant": "medium"
+        }
+      ],
+      "actions": [
+        "walk_128",
+        "shoot",
+        "hurt"
+      ]
+    },
+    {
+      "id": "lancer",
+      "label": "Lancer: Guard: full steel, armet helm, blue tabard",
+      "bodyType": "male",
+      "selections": [
+        {
+          "id": "body",
+          "recolors": {
+            "color_1": "light"
+          }
+        },
+        {
+          "id": "heads_human_male"
+        },
+        {
+          "id": "hat_helmet_armet",
+          "recolors": {
+            "color_1": "steel"
+          }
+        },
+        {
+          "id": "torso_armour_plate",
+          "recolors": {
+            "color_1": "steel"
+          }
+        },
+        {
+          "id": "torso_jacket_tabard",
+          "variant": "blue"
+        },
+        {
+          "id": "arms_armour",
+          "recolors": {
+            "color_1": "steel"
+          }
+        },
+        {
+          "id": "legs_armour",
+          "recolors": {
+            "color_1": "steel"
+          }
+        },
+        {
+          "id": "feet_armour",
+          "recolors": {
+            "color_1": "steel"
+          }
+        },
+        {
+          "id": "weapon_sword_arming",
+          "variant": "iron"
+        }
+      ],
+      "actions": [
+        "walk",
+        "slash_128",
+        "hurt"
+      ]
+    },
+    {
+      "id": "mage",
+      "label": "Mage: Sorceress: purple dress, moon hat, white hair",
+      "bodyType": "female",
+      "selections": [
+        {
+          "id": "body",
+          "recolors": {
+            "color_1": "light"
+          }
+        },
+        {
+          "id": "heads_human_female"
+        },
+        {
+          "id": "hair_xlong",
+          "recolors": {
+            "color_1": "white"
+          }
+        },
+        {
+          "id": "hat_magic_celestial_moon",
+          "variant": "purple"
+        },
+        {
+          "id": "dress_slit",
+          "variant": "purple"
+        },
+        {
+          "id": "belt_robe",
+          "variant": "teal"
+        },
+        {
+          "id": "feet_shoes_basic",
+          "recolors": {
+            "color_1": "purple"
+          }
+        },
+        {
+          "id": "weapon_magic_simple",
+          "variant": "simple"
+        }
+      ],
+      "actions": [
+        "walk",
+        "spellcast",
+        "hurt"
+      ]
     }
   ]
 }

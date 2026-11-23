@@ -8,7 +8,8 @@ const focusSelector = 'button, input, select, textarea, summary, a[href], [tabin
 export class MenuNavigation {
   private readonly repeat = new DirectionRepeat();
   private readonly lifetime = new AbortController();
-  constructor(readonly root: HTMLElement, private readonly cancel: () => void) {
+  /** `sideways`: Left/Right that no control used; return true when it was taken (a menu screen stepping its tabs). */
+  constructor(readonly root: HTMLElement, private readonly cancel: () => void, private readonly sideways?: (delta: -1 | 1) => boolean) {
     root.addEventListener('keydown', event => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
@@ -71,6 +72,7 @@ export class MenuNavigation {
       if (next) this.focus(next);
       return;
     }
+    if ((direction === 'left' || direction === 'right') && this.sideways?.(direction === 'right' ? 1 : -1)) return;
     const index = nodes.indexOf(focused as HTMLElement);
     const next = index < 0 ? 0 : Math.max(0, Math.min(nodes.length-1,index+((direction === 'up' || direction === 'left') ? -1 : 1)));
     this.focus(nodes[next]!);

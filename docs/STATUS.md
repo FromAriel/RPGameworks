@@ -4,7 +4,18 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
-## S1.5g Mara and the archive clerk in their own LPC looks — November 23, 2026, local
+## Tabbed menu screens show how to switch tabs — November 23, 2026, local
+
+From Ariel's play review of S1.5: in the Codex there was no way to tell, without clicking, how to get from Creatures to Lore.
+
+- **Cause:** the help line said "Q/E: category" only until a row was highlighted, and a row is highlighted as soon as the screen opens, so the hint never showed. Items and Help had the same problem.
+- **Fix (Ariel's choice):** one change in the shared tab bar, so the Codex, Items and Help all have it.
+  - Q and E key caps stand either side of the tabs whenever there are two or more. They are hidden from screen readers, which hear a tablist.
+  - Left and Right also step the tabs on these three screens, whose lists use only Up and Down. A screen opts in with `sidewaysSteps`; Formation and Status do not, so their arrows are unchanged. Controls that use Left/Right themselves (selects, sliders, switches, grid cells) keep them.
+- **Tests:** a new catalog browser test checks the key caps, Left/Right in the Codex (with wrap-around, and Down still moving the list) and Right in Items. Local results: typecheck passed; browser suite 216/216; unit tests 605/605; `check:test-tags` passed (216). The look was checked in the dev server (Codex, Right to Lore).
+- **Next:** Ariel's play review of S1.5 continues. **S1.5e** (the Lancer's spear) waits for Ariel's art.
+
+## S1.5g Mara and the archive clerk in their own LPC looks — November 23, 2026, committed `ccdbe52`
 
 [Decision 0019](decisions/0019-permissive-lpc-art.md), map characters. **The two map characters no longer share one generic placeholder.**
 
@@ -26,7 +37,7 @@
     - unit tests 605/605 (the skin batch test timed out once under load and passed alone);
     - browser suite 214/215 in a parallel run; the one failure was the Gallery's display-object count, which the clerk's LPC figure raises from 348 to 349 (expectation updated, maps spec then passed).
 - **Not checked by Ariel yet:** the two looks on the map in play.
-- **Next:** **S1.5e**, Ariel's spear layer, whenever it is ready; then Ariel's play review of S1.5.
+- **Next:** **S1.5e**, Ariel's spear layer, whenever it is ready (skipped for now: no art yet); then Ariel's play review of S1.5.
 
 ## S1.5f the LPC hero walks the map; Cute Fantasy retired — November 23, 2026, local
 

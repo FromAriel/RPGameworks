@@ -106,6 +106,7 @@ export function itemsScreen(_context: ScreenContext, options: ItemsScreenOptions
     element,
     focusFirst: () => show(),
     step: delta => tabs.step(delta),
+    sidewaysSteps: true,
     secondary: () => setSort(nextSort(memory.sort)),
     dispose: () => element.remove(),
   };

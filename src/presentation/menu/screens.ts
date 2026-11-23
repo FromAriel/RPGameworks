@@ -39,6 +39,8 @@ export interface MenuScreen {
   focusFirst(): void;
   /** Q/E or the shoulder buttons: step through tabs or party members. */
   step?(delta: -1 | 1): void;
+  /** Left and Right also step, on a screen whose rows only use Up and Down (the tabbed lists). */
+  readonly sidewaysSteps?: boolean;
   /** The controller's Burst button: a screen's secondary action, such as changing the Items sort. */
   secondary?(): void;
   /**
@@ -110,7 +112,12 @@ export class MenuController {
     private readonly windowskin: WindowskinHandle | null,
     private readonly onClose: () => void = () => undefined,
   ) {
-    this.navigation = new MenuNavigation(layer.surface, () => this.cancel());
+    this.navigation = new MenuNavigation(layer.surface, () => this.cancel(), delta => {
+      const screen = this.top?.screen;
+      if (!screen?.sidewaysSteps || !screen.step) return false;
+      screen.step(delta);
+      return true;
+    });
     // Q and E step a screen's tabs (decision 0016). On a screen without tabs E confirms, like Enter (MenuNavigation).
     // Captured first, so E on a screen with tabs never also confirms the focused row.
     layer.surface.addEventListener('keydown', event => {

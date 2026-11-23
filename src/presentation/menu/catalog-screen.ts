@@ -63,7 +63,7 @@ export function catalogScreen(context: ScreenContext, catalogs: ReadonlyMap<stri
   return {
     element,
     focusFirst: () => show(tabs?.selected),
-    ...(tabs ? { step: (delta: -1 | 1) => tabs.step(delta) } : {}),
+    ...(tabs ? { step: (delta: -1 | 1) => tabs.step(delta), sidewaysSteps: true } : {}),
     dispose: () => element.remove(),
   };
 }

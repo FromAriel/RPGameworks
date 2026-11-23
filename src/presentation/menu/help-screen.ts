@@ -93,6 +93,7 @@ export function helpScreen(_context: ScreenContext, options: HelpOptions): MenuS
     element,
     focusFirst: () => { list.focus(topic); describe(); },
     step: delta => tabs.step(delta),
+    sidewaysSteps: true,
     dispose: () => element.remove(),
   };
 }

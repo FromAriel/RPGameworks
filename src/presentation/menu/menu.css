@@ -57,6 +57,8 @@
 .menu-tab[aria-selected="true"] { color: var(--ui-text-title); }
 .menu-tab[aria-selected="true"]::before { content: "▶"; position: absolute; left: 0; }
 .menu-tab:focus { outline: none; }
+/* The keys that switch tabs, either side of them. */
+.menu-tab-key { align-self: center; padding: 0 3px; border: 1px solid currentColor; border-radius: 2px; color: var(--ui-text-muted); line-height: 14px; }
 
 /* Items screen (U2.2): tabs on the left of the top window, the sort bar on the right. */
 .menu-items-top .menu-window-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; overflow: hidden; }

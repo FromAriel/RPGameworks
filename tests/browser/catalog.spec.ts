@@ -38,6 +38,34 @@ test('the Codex lists the creatures met, and lore stays ??? until it is discover
   await expect(screen(page).locator('.menu-detail')).toContainText("A polished lens once focused the gallery's light.");
 });
 
+test('the tab bar shows its Q and E keys, and Left/Right switch tabs from the list', { tag: ['@inventory', '@windows'] }, async ({ page }) => {
+  // Ariel's play review of S1.5: without clicking, there was no way to tell how to reach Lore.
+  await openRoom(page, '?map=demo:map.gallery');
+  await open(page, 'codex');
+  const tabs = screen(page).locator('.menu-tabs');
+  await expect(tabs.locator('.menu-tab-key')).toHaveText(['Q', 'E']);
+  await expect(tabs.locator('.menu-tab-key').first()).toBeVisible();
+  await expect(tabs.locator('.menu-tab-key').first()).toHaveAttribute('aria-hidden', 'true');
+  const selected = screen(page).locator('.menu-tab[aria-selected="true"]');
+  await page.keyboard.press('ArrowRight');
+  await expect(selected).toHaveText('Lore');
+  await expect(rows(page).first()).toHaveText('The Workshop');
+  await page.keyboard.press('ArrowRight'); // Wraps back to Creatures.
+  await expect(selected).toHaveText('Creatures');
+  await page.keyboard.press('ArrowLeft');
+  await expect(selected).toHaveText('Lore');
+  await page.keyboard.press('ArrowDown'); // Up and Down still move through the list.
+  await expect(selected).toHaveText('Lore');
+  await expect(screen(page).locator('.menu-detail')).toContainText('Not discovered yet.');
+  // Items and Help step the same way.
+  await page.keyboard.press('Escape');
+  await page.locator('#game-menu .menu-row[data-id="items"]').click();
+  await expect(page.locator('#game-menu .menu-tab[aria-selected="true"]')).toHaveText('All');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#game-menu .menu-tab[aria-selected="true"]')).toHaveText('Consumables');
+  await expect(page.locator('#game-menu .menu-tab-key')).toHaveText(['Q', 'E']);
+});
+
 test('Credits: the project, then the Stone Soup and LPC artists from their credit files, scrolling to the last', { tag: ['@inventory'] }, async ({ page }, info) => {
   await openRoom(page);
   await open(page, 'credits');

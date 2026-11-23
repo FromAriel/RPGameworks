@@ -163,7 +163,14 @@ export function createTabs({ label, tabs, onChange, initial }: { label: string; 
     button.addEventListener('click', () => handle.select(tab.id));
     return button;
   });
-  element.append(...buttons);
+  // Key caps either side say how to switch without clicking (Q/E, or Left/Right on a list's screen). Hidden from
+  // screen readers, which hear a tablist.
+  const key = (text: string) => {
+    const cap = document.createElement('span');
+    cap.className = 'menu-tab-key'; cap.textContent = text; cap.setAttribute('aria-hidden', 'true');
+    return cap;
+  };
+  element.append(...(tabs.length > 1 ? [key('Q'), ...buttons, key('E')] : buttons));
   const paint = () => { for (const b of buttons) b.setAttribute('aria-selected', String(b.dataset.id === selected)); };
   const handle: MenuTabs = {
     element,

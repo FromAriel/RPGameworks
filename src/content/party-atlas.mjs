@@ -25,7 +25,7 @@ import { bakeFrame } from './lpc/bake.mjs';
 /** Milliseconds per frame by LPC action. Starting values, tuned when the battle plays them (S1.5d). */
 export const FRAME_MS = Object.freeze({ walk: 110, walk_128: 110, slash_128: 90, shoot: 70, spellcast: 110, thrust: 90, hurt: 120 });
 /** The portrait's square crop of a 48-pixel front-facing frame: head and shoulders. */
-export const PORTRAIT = 28;
+export const PORTRAIT = 20; // Drawn at exactly 2× in the 40-pixel menu boxes (Ariel, S1.5d).
 /** The highest row a portrait crop may start at in a 48-pixel frame. */
 const PORTRAIT_TOP = 8;
 /** Feet within an LPC frame: 48-pixel frames stand at (24, 40); larger frames are centred on the same point. */

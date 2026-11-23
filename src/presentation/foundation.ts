@@ -24,6 +24,8 @@ import { nextSpeed } from './battle/playback';
 import { loadPixelFont } from './pixel-font';
 import { loadEncounter } from '../platform/encounter-loader';
 import { loadCreatureArt } from '../platform/creature-loader';
+import { addPartyTexture, loadPartyArt, memberArt } from '../platform/party-art-loader';
+import type { PartyArt } from '../platform/party-art-loader';
 import type { MapExit } from '../domain/interaction';
 import { TransitionTask } from '../runtime/transition';
 import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
@@ -132,6 +134,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
     /** Builds commands for the battle; remembers each character's last choices for the whole battle. */
     private battleMenu = new BattleMenu();
     private battleLoad: AbortController | null = null;
+    /** The party's LPC art (decision 0019 S1.5d), once loaded: menus draw portraits from it, battles a texture. */
+    private partyArt: PartyArt | null = null;
     /** Whether this battle attempt's discoveries are recorded (decision 0017 M5.5d: once per attempt, at its end). */
     private battleRecorded = false;
     transitionError: string | null = null;
@@ -192,13 +196,26 @@ export function createFoundation(elements: FoundationElements, onError: (message
     private atlasFrame(name: string): Phaser.Textures.Frame | null {
       return this.textures.exists(ATLAS) && this.textures.get(ATLAS).has(name) ? this.textures.getFrame(ATLAS, name) : null;
     }
-    /** A member's placeholder portrait: from its facing-down frame when there is one, otherwise its battle frame. */
+    /**
+     * A member's portrait: its LPC head and shoulders at 2× when the party art is loaded (decision 0019 S1.5d), else the
+     * placeholder from its facing-down frame when there is one, otherwise its battle frame.
+     */
     private portraitOf(id: string, battleFrame?: string): HTMLElement | null {
+      const art = memberArt(this.partyArt, id);
+      const cut = art && this.partyArt!.table.frames[art.portrait];
+      if (cut) return spriteImage(this.partyArt!.image, cut, 40, 40);
       const frame = this.atlasFrame(`${id}-down`) ?? (battleFrame ? this.atlasFrame(battleFrame) : null);
       return frame ? spritePortrait(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }) : null;
     }
-    /** A member's whole battle frame, facing the enemies as in battle, for the formation grid. */
-    private spriteOf(battleFrame: string): HTMLElement | null {
+    /**
+     * A member's whole figure, facing the enemies as in battle, for the formation grid: its LPC standing frame cut to the
+     * 40-pixel box around the figure (decision 0019 S1.5d), or its placeholder battle frame.
+     */
+    private spriteOf(battleFrame: string, id?: string): HTMLElement | null {
+      const art = id ? memberArt(this.partyArt, id) : null;
+      const stand = art && this.partyArt!.table.frames[art.stand.left];
+      // Centred on the feet anchor (24, 40 in a 48-pixel frame; centred the same in the bow's 96-pixel walk frames).
+      if (art && stand) return spriteImage(this.partyArt!.image, { x: stand.x + art.stand.size / 2 - 20, y: stand.y + art.stand.anchor.y - 38, w: 40, h: 40 }, 40, 40);
       const frame = this.atlasFrame(battleFrame);
       return frame ? spriteImage(frame.source.image as CanvasImageSource, { x: frame.cutX, y: frame.cutY, w: frame.cutWidth, h: frame.cutHeight }, 40, 40) : null;
     }
@@ -254,6 +271,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
         this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
         this.transfer = new TransitionTask<LoadedMap>();
+        // Decoration only (decision 0019 S1.5d): portraits use the placeholders until the party art arrives, or for good
+        // if it cannot load.
+        const artLifetime = this.sceneLifetime.signal;
+        loadPartyArt(elements.base, content.game, artLifetime).then(art => { if (!artLifetime.aborted) this.partyArt = art; })
+          .catch((cause: unknown) => { if (!artLifetime.aborted) console.warn('[RPGameworks] Party art unavailable; using placeholder frames:', cause); });
         this.mode = 'exploration'; this.message = null;this.dialogue=null;this.battle=null;this.battleView=null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
         characterArt ??= new CharacterArt(this.textures, import.meta.env.BASE_URL);
@@ -298,7 +320,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
           const party = () => elements.session.current.party()!;
           registry.register(STATUS_SCREEN, context => statusScreen(context, { members, party, portrait: id => this.portraitOf(id, this.member(id)?.frame) }));
           registry.register(FORMATION_SCREEN, context => formationScreen(context, {
-            members, party, picture: id => this.spriteOf(this.member(id)?.frame ?? ''),
+            members, party, picture: id => this.spriteOf(this.member(id)?.frame ?? '', id),
             commit: cells => elements.session.transact({ actions: [{ type: 'setFormation', cells }] }).kind === 'committed',
           }));
         }
@@ -445,17 +467,20 @@ export function createFoundation(elements: FoundationElements, onError: (message
       lifetime.addEventListener('abort',cancel,{once:true});
       this.setMode('battle');this.dialog.show('Preparing battle','Loading the practice encounter…','',null,'Leave');
       try{
-        const [encounter,,skin,creatures,actions]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL),elements.battleSkin(),
+        const [encounter,,skin,creatures,actions,partyArt]=await Promise.all([loadEncounter(elements.base,content.game,id,request.signal),loadPixelFont(import.meta.env.BASE_URL),elements.battleSkin(),
           // Decoration only (decision 0015 C3): if the creature art fails, every enemy keeps its frame and the battle goes on.
           loadCreatureArt(this.textures,elements.base,content.game,request.signal).catch((cause:unknown)=>{if(!request.signal.aborted)console.warn('[RPGameworks] Creature art unavailable; using battler frames:',cause);return null;}),
-          loadActions(elements.base,content.game,request.signal)]);
+          loadActions(elements.base,content.game,request.signal),
+          // Decoration only (decision 0019 S1.5d): without the party art, every member keeps its placeholder frame.
+          loadPartyArt(elements.base,content.game,request.signal).catch((cause:unknown)=>{if(!request.signal.aborted)console.warn('[RPGameworks] Party art unavailable; using placeholder frames:',cause);return null;})]);
         if(request.signal.aborted||lifetime.aborted||this.battleLoad!==request)return;
         const uses=new Map<string,BattleItemUse>();
         for(const item of elements.session.current.catalog.items)if(item.battleUse?.type==='heal')uses.set(item.id,{heal:item.battleUse.amount});
         const session=elements.session.current;
         this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses,actions);this.battleLoad=null;this.battleMenu=new BattleMenu();this.battleRecorded=false;
         const opening=this.battle.snapshot();
-        this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,creatures,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
+        const party=partyArt?{texture:addPartyTexture(this.textures,partyArt),members:new Map(Object.entries(partyArt.table.members))}:null;
+        this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,creatures,partyArt:party,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});
         this.playBattle(opening);
       }catch(cause){

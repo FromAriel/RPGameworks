@@ -4,6 +4,35 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## S1.5d the party drawn in its LPC art — November 22, 2026, local
+
+[Decision 0019](decisions/0019-permissive-lpc-art.md), fourth packet. **The tiny placeholder figures are replaced.**
+
+- **Ariel's choices:**
+  - a member steps in and strikes;
+  - a fallen member lies down, dimmed;
+  - portraits are a 20-pixel head-and-shoulders crop at exactly 2×.
+- **Battle:**
+  - **Standing and facing:** the Captain, Ranger, Guard and Sorceress stand facing the enemies, with their feet where the placeholders' were. In a pincer, a member faces the flank it last fought.
+  - **Actions:** they slash, shoot or cast while stepping in, flinch when hit, lie down when they fall, walk when they move and walk off when the party runs.
+  - **Timeline:** shows their portraits.
+- **Menus:** hub cards, Status and the Formation grid show the new art.
+- **Fallback:** without the art, every member keeps its placeholder, tested by blocking the atlas.
+- **Fixed while checking:** the Formation grid's crop now centres on the feet, so the Archer (whose standing frame is the bow's 96-pixel walk) no longer shows an empty cell.
+- **Tests:**
+  - **New:** `party-art.spec.ts` (3):
+    - 2× portraits on the hub; members drawn from the art;
+    - the archer's shot animating frame by frame and returning to standing;
+    - fallen members lying down and dimmed;
+    - the fallback.
+  - **Updated:** `creatures.spec.ts` and `formation.spec.ts` now expect LPC art for the party.
+  - **Local results:**
+    - typecheck, `check:test-tags` (213) and `check:external-art` passed;
+    - unit tests **633/633** (the skin-batch test timed out once in the full run and passed alone, as before);
+    - browser suite **210/213**. The 3 failures were timeouts under parallel load (playback speed, authored defeat, the formation save test). All 3 passed run alone. The same parallel run on the S1.5c commit, without this packet, failed the same tests the same way (8 of 8 timeouts), so the machine's parallel load, not S1.5d, is the cause.
+- **Not checked by Ariel yet:** the art in play (sizes, timing, the step-in, the fall).
+- **Next:** **S1.5e**, Ariel's original spear layer for the Lancer, when it is ready. Then the open question of the map hero.
+
 ## S1.5c the party's LPC art baked, and its credits — November 22, 2026, local
 
 [Decision 0019](decisions/0019-permissive-lpc-art.md), third packet. The art is built and credited, but nothing draws it yet (S1.5d); battles and menus still show the placeholders.

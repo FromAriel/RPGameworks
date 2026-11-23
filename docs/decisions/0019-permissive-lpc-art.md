@@ -128,6 +128,33 @@ Facing left and right (both are needed in a pincer). Most use the standard 64-pi
 - **Build time:** a content build now takes about 3 seconds (it reduces all 113 sheets). The authoring-report test, which runs three builds, has a 30-second limit.
 - **Not yet:** nothing draws the art yet. Battles, the timeline and the menus still show the placeholders, which stay the fallback when a member has no art or the atlas fails to load. S1.5d draws it.
 
+## Execution notes (S1.5d, November 22)
+
+Ariel's choices:
+- **Attacking:** a member steps in and strikes. The existing lunge stays, and the weapon's animation plays over it.
+- **A fallen member:** lies down (the hurt animation's last frame) and is dimmed, as defeated foes are.
+- **Portrait crop:** 20 pixels, not 28, so the 40-pixel menu boxes draw it at exactly 2×.
+
+What was built:
+- **Loading:** `src/platform/party-art-loader.ts` loads and checks the frame table and image once per build and caches them.
+  - **Menus:** draw from the image.
+  - **Battles:** add a texture they own and remove when they end.
+  - **Fallback:** if the art cannot load, or a member has no `art`, the member keeps its placeholder frame. The scene loads the art when it starts, so the menus have it before the first battle.
+- **Battle:**
+  - **Placement:** each frame stands its feet 28 pixels below the battler's centre, where the placeholders' feet are, using the anchor the bake records. Oversized frames (the sword's slash, the bow's walk) line up the same way.
+  - **Facing:** a member faces left, or right in a pincer when it last fought the rear flank, using LPC's own right-facing rows rather than a mirror image.
+  - **Animations:**
+    - **Attack and skills:** the attack animation plays over 70% of the step, the area skills included.
+    - **Hits:** a hit shows a flinch for a moment; a fall plays the hurt animation to lying down, then dims.
+    - **Move:** walks to the new cell.
+    - **Run:** walks away to the right.
+  - **Skipping playback:** ends the animations and shows each member's resting frame.
+- **Turn timeline:** a member with art shows its portrait, at 1×.
+- **Menus:**
+  - **Hub cards and Status:** the head-and-shoulders portrait at 2×.
+  - **Formation grid:** a 40-pixel cut of the standing figure facing the enemies, centred on its feet, so the bow's 96-pixel walk frame works too.
+- **Runtime snapshot:** the art `source` is `'lpc'` for these members.
+
 ## Still open
 
 - **The map hero:** the walking hero on the map is the Cute Fantasy starter pack. Should it become the LPC Hero too, or stay as it is?

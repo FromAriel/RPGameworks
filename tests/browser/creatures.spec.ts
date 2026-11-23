@@ -18,12 +18,13 @@ async function startPractice(page: Page): Promise<void> {
 }
 const art = async (page: Page) => (await snapshot(page)).battle!.art;
 
-test('the practice fight’s enemies are animated Stone Soup creatures; the hero keeps its frame', { tag: ['@battle'] }, async ({ page }) => {
+test('the practice fight’s enemies are animated Stone Soup creatures; the hero is drawn from the party’s LPC art', { tag: ['@battle'] }, async ({ page }) => {
   await startPractice(page);
   await expect.poll(async () => (await art(page)).sigil?.source).toBe('creature');
   const first = await art(page);
   expect(first.shard!.source).toBe('creature');
-  expect(first.hero).toMatchObject({ source: 'frame', frame: 'hero-left', shields: 0 });
+  expect(first.hero).toMatchObject({ source: 'lpc', shields: 0 }); // Decision 0019 S1.5d.
+  expect(first.hero!.frame.startsWith('hero/')).toBe(true); // Standing, or flinching from the bat's opening hit while it plays.
   expect(first.sigil!.frame).toMatch(/^dcss\/monster\/nonliving\/clay_golem@left\/(idle\/\d|still|flash)$/);
   // The bat floats on a 200 ms idle loop: its frame changes within a second.
   const seen = new Set<string>();
@@ -47,7 +48,7 @@ test('missing creature art falls back to the battler frames and the battle still
   await page.route('**/generated/content/creatures.*.png', (route) => route.abort());
   await startPractice(page);
   await expect.poll(async () => (await snapshot(page)).battle?.playing).toBe(false);
-  expect(await art(page)).toMatchObject({ hero: { source: 'frame', frame: 'hero-left', shields: 0 }, sigil: { source: 'frame', frame: 'sigil', shields: 0 }, shard: { source: 'frame', frame: 'sigil-lit', shields: 0 } });
+  expect(await art(page)).toMatchObject({ hero: { source: 'lpc', shields: 0 }, sigil: { source: 'frame', frame: 'sigil', shields: 0 }, shard: { source: 'frame', frame: 'sigil-lit', shields: 0 } });
   await page.getByRole('button', { name: 'Attack', exact: true }).click();
   await page.getByRole('button', { name: 'Bat', exact: true }).click();
   await expect.poll(async () => (await snapshot(page)).battle?.turn).toBeGreaterThan(1);

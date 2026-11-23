@@ -10,7 +10,7 @@ export interface RuntimeSnapshot {
   inputMode: 'exploration' | 'message' | 'dialogue' | 'battle' | 'transition' | 'transition-error' | 'menu';
   /** The menu (decision 0016): the top screen and the focused entry, or null when closed. */
   menu: { screen: string; focused: string | null } | null;
-  battle: { encounterId: string; opening: 'normal' | 'back-attack' | 'pincer'; phase: string; turn: number; active: string | null; playing: boolean; speed: number; windows: 'skin' | 'fallback'; menu: { level: string; cursor: number; target: string | null; area: string | null } | null; hp: Record<string, number>; mp: Record<string, number>; cells: Record<string, [number, number]>; timeline: string[]; art: Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean; points: number; broken: boolean; alpha: number }>; momentum: number; round: number } | null;
+  battle: { encounterId: string; opening: 'normal' | 'back-attack' | 'pincer'; phase: string; turn: number; active: string | null; playing: boolean; speed: number; windows: 'skin' | 'fallback'; menu: { level: string; cursor: number; target: string | null; area: string | null } | null; hp: Record<string, number>; mp: Record<string, number>; cells: Record<string, [number, number]>; timeline: string[]; art: Record<string, { source: 'creature' | 'lpc' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean; points: number; broken: boolean; alpha: number }>; momentum: number; round: number } | null;
   messageId: string | null;
   messagePage: number;
   interactionTarget: string | null;

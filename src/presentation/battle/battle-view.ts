@@ -12,6 +12,7 @@ import { PIXEL_FONT_BITMAP_SIZE, addPixelFont, releasePixelFont } from '../pixel
 import type { CreatureArt } from '../../platform/creature-loader';
 import type { CreatureFrames } from '../../content/creature-atlas.mjs';
 import { creatureKey } from '../../content/creature-atlas.mjs';
+import type { PartyAnimation, PartyMemberArt } from '../../content/party-atlas.mjs';
 import { alliesAhead } from '../../domain/battle-grid.mjs';
 
 /** Pixel labels use the UNSCII bitmap font; ordinary canvas text is only the fallback when that font is missing. */
@@ -27,6 +28,8 @@ const FALLBACK_TEXT = { fontFamily: 'ui-monospace, monospace', fontSize: '12px',
  */
 const DEPTH = { backdrop: 1.5, floor: 1.51, battler: 1.6, ui: 1.7, windows: 1.8, numbers: 3 } as const;
 const BAR_WIDTH = 48;
+/** Where a battler's feet are below its centre on the stage: the placeholders' (row 29 of 32, at 2×). LPC art matches it. */
+const LPC_FEET = 28;
 /** Hit text colours by affinity (decision 0018): weak gold, resist grey-blue, immune grey, absorb green. */
 export const AFFINITY_COLOR = { weak: 0xffd25e, resist: 0x9fb4d8, immune: 0xb7c9d0, absorb: 0x8fe08f } as const;
 /** MP restored at a round's end, and the dimming of a broken enemy (decision 0017). */
@@ -56,6 +59,8 @@ interface Battler {
   shieldCount: number;
   /** Stone Soup creature frames when this battler is drawn as a creature (decision 0015 C3). */
   readonly creature: CreatureFrames | null;
+  /** The member's LPC art when it is drawn from the party atlas (decision 0019 S1.5d). */
+  readonly lpc: PartyMemberArt | null;
   flashing: boolean;
   /**
    * An enemy's own shield (decision 0017), as shown: points left and at most, and whether it is broken. Kept apart from
@@ -88,6 +93,11 @@ export interface BattleViewOptions {
   readonly itemName: (itemId: string) => string;
   /** The theme's battle skin (decision 0011 W3.5), or null for the fallback panels. */
   readonly skin?: SkinPainter | null;
+  /**
+   * The party's baked LPC art (decision 0019 S1.5d): the battle's texture key and each member's art, or null to draw
+   * every member from its placeholder frame.
+   */
+  readonly partyArt?: { readonly texture: string; readonly members: ReadonlyMap<string, PartyMemberArt> } | null;
   /** Baked Stone Soup creature art (decision 0015 C3), or null to draw every battler from its frame. */
   readonly creatures?: CreatureArt | null;
 }
@@ -148,9 +158,11 @@ export class BattleView {
     for (const combatant of initial.combatants) {
       const home = battlerPosition(combatant.side, combatant, this.floor, this.opening);
       const creature = this.creatureOf(combatant);
+      const lpc = combatant.side === 'party' ? options.partyArt?.members.get(combatant.id) ?? null : null;
       const sprite = this.own(creature
         ? scene.add.image(home.x, home.y, options.creatures!.texture, creature.still).setFlipX(creature.faces === 'left')
-        : scene.add.image(home.x, home.y, options.atlas, combatant.frame)).setScale(home.scale).setDepth(DEPTH.battler + home.y / 10000);
+        : lpc ? scene.add.image(home.x, home.y, options.partyArt!.texture, lpc.stand.left)
+          : scene.add.image(home.x, home.y, options.atlas, combatant.frame)).setScale(home.scale).setDepth(DEPTH.battler + home.y / 10000);
       let bar: Phaser.GameObjects.Rectangle | null = null, barBack: Phaser.GameObjects.Rectangle | null = null;
       const barWidth = Math.round(BAR_WIDTH * home.scale / 2), barY = home.y + 19 * home.scale;
       if (combatant.side === 'enemy') {
@@ -158,7 +170,7 @@ export class BattleView {
         bar = this.own(scene.add.rectangle(home.x - barWidth / 2, barY, barWidth, 5, 0x6fbf73).setOrigin(0).setDepth(DEPTH.ui));
       }
       const shields = this.own(scene.add.graphics().setDepth(DEPTH.ui));
-      this.battlers.set(combatant.id, { combatant, sprite, bar, barBack, barHold: false, barWidth, home, shields, shieldCount: 0, creature, flashing: false,
+      this.battlers.set(combatant.id, { combatant, sprite, bar, barBack, barHold: false, barWidth, home, shields, shieldCount: 0, creature, lpc, flashing: false,
         points: combatant.shield, maxPoints: combatant.maxShield, broken: combatant.broken });
       this.face(this.battlers.get(combatant.id)!);
     }
@@ -208,6 +220,7 @@ export class BattleView {
       const icon = this.timeline[index]!;
       const battler = this.battlers.get(turn.actor);
       if (battler?.creature) icon.setTexture(this.options.creatures!.texture, battler.creature.still).setScale(0.6);
+      else if (battler?.lpc) icon.setTexture(this.options.partyArt!.texture, battler.lpc.portrait).setScale(1); // 20 pixels, whole.
       else icon.setTexture(this.options.atlas, battler?.combatant.frame ?? 'spark').setScale(0.75);
       icon.setVisible(true);
     });
@@ -235,8 +248,8 @@ export class BattleView {
   }
 
   /** How each battler is drawn and its current frame, for tests and the runtime snapshot. */
-  artState(): Record<string, { source: 'creature' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean; points: number; broken: boolean; alpha: number }> {
-    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left', bar: !!b.bar?.visible, points: b.points, broken: b.broken, alpha: Math.round(b.sprite.alpha * 100) / 100 }]));
+  artState(): Record<string, { source: 'creature' | 'lpc' | 'frame'; frame: string; shields: number; x: number; y: number; faces: 'left' | 'right'; bar: boolean; points: number; broken: boolean; alpha: number }> {
+    return Object.fromEntries([...this.battlers].map(([id, b]) => [id, { source: b.creature ? 'creature' : b.lpc ? 'lpc' : 'frame', frame: b.sprite.frame.name, shields: b.shieldCount, x: Math.round(b.sprite.x), y: Math.round(b.sprite.y), faces: this.facesRight(b) ? 'right' : 'left', bar: !!b.bar?.visible, points: b.points, broken: b.broken, alpha: Math.round(b.sprite.alpha * 100) / 100 }]));
   }
 
   /** Whether a battler should face right: enemies face the party, and in a pincer a member faces the flank it last fought. */
@@ -245,10 +258,52 @@ export class BattleView {
     if (c.side === 'party') return this.opening === 'pincer' && this.facing.get(c.id) === 'rear';
     return !(this.opening === 'pincer' && c.flank === 'rear'); // The rear flank stands to the party's right and faces left.
   }
-  /** Turn the sprite: party frames and creature stills are drawn facing left (a creature's own facing is baked in). */
+  /**
+   * Turn the sprite: party frames and creature stills are drawn facing left (a creature's own facing is baked in). LPC
+   * art has its own right-facing rows, so a member with it shows its resting frame for the side it faces.
+   */
   private face(b: Battler): void {
     const right = this.facesRight(b);
+    if (b.lpc) { b.sprite.setFlipX(false); this.showLpcRest(b); return; }
     b.sprite.setFlipX(b.creature ? right === (b.creature.faces === 'left') : right);
+  }
+
+  /**
+   * Show one LPC frame, its feet where a placeholder's would be: LPC_FEET pixels below the battler's centre on the stage.
+   * Frames of every size share the feet anchor the bake records (24, 40 in a 48-pixel frame, centred in larger ones).
+   */
+  private showLpc(b: Battler, name: string, size: number): void {
+    const anchorY = size / 2 + 16;
+    b.sprite.setTexture(this.options.partyArt!.texture, name).setOrigin(0.5, (anchorY - LPC_FEET / b.home.scale) / size);
+  }
+  /** A member at rest: standing toward the side it faces, or lying down (the hurt animation's last frame) once fallen. */
+  private showLpcRest(b: Battler): void {
+    const art = b.lpc!;
+    if ((this.hp.get(b.combatant.id) ?? b.combatant.hp) <= 0) {
+      const fallen = art.hurt.front!;
+      this.showLpc(b, fallen[fallen.length - 1]!, art.hurt.size);
+    } else this.showLpc(b, this.facesRight(b) ? art.stand.right : art.stand.left, art.stand.size);
+  }
+  /**
+   * Play an LPC animation's frames evenly over `ms` toward the side the member faces, then rest (or hold the last frame,
+   * for a fall). Timers belong to playback, so skipping ends them and render() shows the resting frame.
+   */
+  private playLpc(b: Battler, animation: PartyAnimation, ms: number, then: 'rest' | 'hold' = 'rest', direction?: 'left' | 'right'): void {
+    const side = direction ?? (this.facesRight(b) ? 'right' : 'left');
+    const frames = animation.front ?? (side === 'right' ? animation.right! : animation.left!);
+    const each = Math.max(16, ms / frames.length);
+    frames.forEach((name, i) => (i === 0 ? this.showLpc(b, name, animation.size) : this.after(Math.round(i * each), () => this.showLpc(b, name, animation.size))));
+    if (then === 'rest') this.after(Math.round(frames.length * each), () => this.showLpcRest(b));
+  }
+  /**
+   * A member with LPC art takes a hit (Ariel, S1.5d): a fall plays the hurt animation to lying down (then dims, as foes
+   * do); any other hit shows its first hurt frames for a moment.
+   */
+  private hurtLpc(b: Battler, defeated: boolean, ms: number): void {
+    const hurt = b.lpc!.hurt;
+    if (defeated) { this.playLpc(b, hurt, Math.round(ms * 0.6), 'hold'); return; }
+    this.showLpc(b, hurt.front![1] ?? hurt.front![0]!, hurt.size);
+    this.after(Math.min(220, ms), () => this.showLpcRest(b));
   }
   /** Pincer: remember which flank each party member last fought (hit, or was hit by). */
   private noteFacing(event: BattleEvent): void {
@@ -299,7 +354,7 @@ export class BattleView {
     this.finishPending();
     const events = target.events;
     for (const [id, value] of hpBefore(target, events)) { this.hp.set(id, value); this.drawHp(id); }
-    for (const battler of this.battlers.values()) battler.sprite.setAlpha(this.restAlpha(battler));
+    for (const battler of this.battlers.values()) { battler.sprite.setAlpha(this.restAlpha(battler)); if (battler.lpc) this.showLpcRest(battler); }
     this.pending = { target, events, index: 0, done };
     this.step();
   }
@@ -322,6 +377,9 @@ export class BattleView {
     // The creature texture belongs to this battle (decision 0015 C3); the next battle adds it again from the cache.
     const creatures = this.options.creatures;
     if (creatures && this.scene.textures.exists(creatures.texture)) this.scene.textures.remove(creatures.texture);
+    // So does the party atlas texture (decision 0019 S1.5d); the menus draw portraits from the image itself.
+    const party = this.options.partyArt;
+    if (party && this.scene.textures.exists(party.texture)) this.scene.textures.remove(party.texture);
     if (this.font) releasePixelFont(this.scene);
   }
 
@@ -393,8 +451,10 @@ export class BattleView {
     const actor = this.battlers.get(event.actor);
     if (!actor) return;
     if (event.kind === 'escape') {
-      for (const battler of this.battlers.values()) if (battler.combatant.side === 'party')
+      for (const battler of this.battlers.values()) if (battler.combatant.side === 'party') {
+        if (battler.lpc && (this.hp.get(battler.combatant.id) ?? 0) > 0) this.playLpc(battler, battler.lpc.walk, duration * 0.8, 'hold', 'right');
         this.tween({ targets: battler.sprite, x: battler.home.x + 96, alpha: 0, duration: duration * 0.8 });
+      }
       return;
     }
     if (event.kind === 'guard') {
@@ -405,6 +465,8 @@ export class BattleView {
       // The fighter slides to its new cell; a swapped ally slides into the cell it left (decision 0014 M5.4c).
       const slide = (battler: Battler, to: Cell): void => {
         const at = this.cellCentre(to);
+        // A member with LPC art walks there, facing the way it goes, then rests (decision 0019 S1.5d).
+        if (battler.lpc && at.x !== battler.sprite.x) this.playLpc(battler, battler.lpc.walk, Math.round(duration * 0.8), 'rest', at.x > battler.sprite.x ? 'right' : 'left');
         if (this.options.reducedMotion) battler.sprite.setPosition(at.x, at.y);
         else this.tween({ targets: battler.sprite, x: at.x, y: at.y, duration: Math.round(duration * 0.8), ease: 'Quad.easeInOut' });
         battler.sprite.setDepth(DEPTH.battler + at.y / 10000);
@@ -430,6 +492,8 @@ export class BattleView {
       const direction = target.home.x > actor.home.x ? 1 : -1;
       this.tween({ targets: actor.sprite, x: actor.home.x + direction * 18, duration: lead, yoyo: true, ease: 'Quad.easeOut' });
     }
+    // A member with LPC art steps in and strikes with its weapon's animation (Ariel, S1.5d).
+    if (actor.lpc) this.playLpc(actor, actor.lpc.attack, Math.round(duration * 0.7));
     this.after(lead, () => {
       this.hp.set(event.target, this.afterHit(event.target, event.damage, event.affinity));
       if (event.shieldLeft !== undefined) target.points = event.shieldLeft;
@@ -439,6 +503,7 @@ export class BattleView {
       this.flash(target, Math.max(40, Math.round(duration * 0.15)));
       this.floatHit(target, event.damage, event.guarded, event.affinity, duration - lead);
       this.options.impact({ x: target.home.x, y: target.home.y }, seed);
+      if (target.lpc && event.damage > 0 && event.affinity !== 'absorb') this.hurtLpc(target, event.defeated, duration - lead);
       if (event.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
     });
   }
@@ -457,7 +522,9 @@ export class BattleView {
     const struck = this.battlers.get(event.hits[0]?.target ?? '')?.combatant;
     this.drawArea(cells, event.shape, event.centre, struck?.side ?? (actor.combatant.side === 'party' ? 'enemy' : 'party'), struck?.flank ?? null);
     this.tween({ targets: cells, alpha: { from: 1, to: 0 }, delay: lead, duration: duration - lead, onComplete: () => { this.transient.delete(cells); cells.destroy(); } });
-    if (!this.options.reducedMotion) this.tween({ targets: actor.sprite, y: actor.home.y - 10, duration: Math.round(lead / 2), yoyo: true, ease: 'Quad.easeOut' });
+    // A member with LPC art casts its skill with its weapon's animation; others hop (decision 0019 S1.5d).
+    if (actor.lpc) this.playLpc(actor, actor.lpc.attack, Math.round(duration * 0.7));
+    else if (!this.options.reducedMotion) this.tween({ targets: actor.sprite, y: actor.home.y - 10, duration: Math.round(lead / 2), yoyo: true, ease: 'Quad.easeOut' });
     this.after(lead, () => {
       for (const hit of event.hits) {
         const target = this.battlers.get(hit.target);
@@ -465,6 +532,7 @@ export class BattleView {
         this.hp.set(hit.target, this.afterHit(hit.target, hit.damage, hit.affinity));
         if (hit.shieldLeft !== undefined) target.points = hit.shieldLeft;
         this.floatHit(target, hit.damage, hit.guarded, hit.affinity, duration - lead);
+        if (target.lpc && hit.damage > 0 && hit.affinity !== 'absorb') this.hurtLpc(target, hit.defeated, duration - lead);
         if (hit.defeated) this.tween({ targets: target.sprite, alpha: 0.25, delay: Math.round((duration - lead) * 0.4), duration: Math.round((duration - lead) * 0.5) });
       }
       this.refreshWindows();

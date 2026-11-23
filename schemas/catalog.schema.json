@@ -55,7 +55,8 @@
       "maxItems": 8,
       "items": {
         "enum": [
-          "stone-soup"
+          "stone-soup",
+          "lpc"
         ]
       },
       "description": "Art libraries whose credit files the content build turns into a category of entries (the library, then each artist). Each library at most once."

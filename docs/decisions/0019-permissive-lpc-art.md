@@ -106,6 +106,28 @@ Facing left and right (both are needed in a pincer). Most use the standard 64-pi
   - **Checks:** 111 sheets reduce exactly as DanJen's cache did, and 136 frames match DanJen's generator.
   - **The probe** is gone.
 
+## Execution notes (S1.5c, November 22)
+
+- **Portraits (Ariel's choice):** upper body, front-facing. Each is the walk's first frame facing the viewer, cut to a 28-pixel square from just above the figure's top. A tall hat is trimmed instead of pushing the face out: the crop never starts above row 8.
+- **Linking members to art:** a party member names its LPC character with `art` (`party.json`; the demo's four do). Battle rules never see it: `battleEncounter` drops it, and presentation looks it up by member ID.
+- **The bake** (`src/content/party-atlas.mjs`): the content build bakes, for each such member:
+  - **walk and attack:** facing left and right;
+  - **hurt:** a single row in LPC;
+  - **standing:** a frame each way, the walk's first, since there is no idle;
+  - **portrait:** as above.
+
+  **Output:**
+  - **Files:** one hashed `party-art.<hash>.png` and frame table `party-art.<hash>.json`, named in `game.json` as `partyArtFile`. That is 158 frames for the demo.
+  - **Layout:** frames are shelf-packed by size, with a 1-pixel gutter.
+  - **Placement:** each animation records its frame size, frame time and feet anchor, (24, 40) in a 48-pixel frame, centred the same way in larger ones.
+  - **Integrity:** every sheet is checked against its manifest hash before it is reduced.
+- **Credits:**
+  - **Credits screen:** gains an LPC tab: an About entry (licences used, never share-alike, the source) and the 23 artists. It is built from `assets/source/lpc/CREDITS.md`, which the import now writes with an introduction, a source link and an `## Artists` list above the per-file list.
+  - **Builds:** every build ships the per-file credits as `generated/content/lpc-credits.md`.
+  - **NOTICE:** lists the LPC sheets as third-party material.
+- **Build time:** a content build now takes about 3 seconds (it reduces all 113 sheets). The authoring-report test, which runs three builds, has a 30-second limit.
+- **Not yet:** nothing draws the art yet. Battles, the timeline and the menus still show the placeholders, which stay the fallback when a member has no art or the atlas fails to load. S1.5d draws it.
+
 ## Still open
 
 - **The map hero:** the walking hero on the map is the Cute Fantasy starter pack. Should it become the LPC Hero too, or stay as it is?

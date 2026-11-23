@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "members": [
-    {"id": "hero", "name": "Hero", "frame": "hero-left", "cell": {"lane": 2, "depth": 1}, "hp": 30, "attack": 7, "defense": 2, "speed": 10,
+    {"id": "hero", "art": "hero", "name": "Hero", "frame": "hero-left", "cell": {"lane": 2, "depth": 1}, "hp": 30, "attack": 7, "defense": 2, "speed": 10,
       "weapon": {"name": "Sword", "tags": ["slash"]}, "mp": 12, "skills": ["demo:action.cleave"]},
-    {"id": "archer", "name": "Archer", "frame": "archer-left", "cell": {"lane": 2, "depth": 2}, "reach": "ranged", "hp": 22, "attack": 6, "defense": 1, "speed": 11,
+    {"id": "archer", "art": "archer", "name": "Archer", "frame": "archer-left", "cell": {"lane": 2, "depth": 2}, "reach": "ranged", "hp": 22, "attack": 6, "defense": 1, "speed": 11,
       "weapon": {"name": "Bow", "tags": ["pierce"]}, "mp": 14, "skills": ["demo:action.volley"]},
-    {"id": "lancer", "name": "Lancer", "frame": "lancer-left", "cell": {"lane": 3, "depth": 1}, "reach": "reach", "hp": 26, "attack": 7, "defense": 2, "speed": 9,
+    {"id": "lancer", "art": "lancer", "name": "Lancer", "frame": "lancer-left", "cell": {"lane": 3, "depth": 1}, "reach": "reach", "hp": 26, "attack": 7, "defense": 2, "speed": 9,
       "weapon": {"name": "Spear", "tags": ["pierce"]}, "mp": 10, "skills": ["demo:action.pierce"]},
-    {"id": "mage", "name": "Mage", "frame": "mage-left", "cell": {"lane": 3, "depth": 3}, "reach": "ranged", "hp": 20, "attack": 6, "defense": 1, "speed": 8,
+    {"id": "mage", "art": "mage", "name": "Mage", "frame": "mage-left", "cell": {"lane": 3, "depth": 3}, "reach": "ranged", "hp": 20, "attack": 6, "defense": 1, "speed": 8,
       "weapon": {"name": "Staff", "tags": ["blunt"]}, "mp": 20, "skills": ["demo:action.fire-bolt"]}
   ],
   "active": ["hero", "archer", "lancer", "mage"]

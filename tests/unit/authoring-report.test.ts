@@ -77,7 +77,7 @@ describe('M3.5 authoring inventory',()=>{
       expect(run(demo,output).status).toBe(0);
       expect(packBytes(output)).toEqual(before);
     } finally {rmSync(temp,{recursive:true,force:true});}
-  });
+  },30_000); // Three demo content builds; each bakes the LPC party atlas since decision 0019 S1.5c (about 3 s a build).
 
   it.each(cases)('$name fixture has the expected severity and preserves prior output',testCase=>{
     const temp=mkdtempSync(join(tmpdir(),'rpgameworks-authoring-'));

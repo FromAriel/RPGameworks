@@ -6,9 +6,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** Libraries with a credit file, by the id a catalog uses. LPC joins when its art is committed (S1). */
+/**
+ * Libraries with a credit file, by the id a catalog uses. A library's licence comes from its library file, or, for LPC,
+ * whose files each carry their own (decision 0019), from a fixed line; LPC's full per-file credits ship with every build.
+ */
 export const LIBRARIES = Object.freeze({
   'stone-soup': { label: 'Stone Soup', credits: 'assets/source/creatures/stone-soup/CREDITS.md', library: 'assets/source/creatures/stone-soup/library.json' },
+  lpc: { label: 'LPC', credits: 'assets/source/lpc/CREDITS.md',
+    licence: 'each file under CC0, CC-BY 3.0/4.0 or OGA-BY 3.0, never share-alike; per-file credits ship with the game as generated/content/lpc-credits.md' },
 });
 
 const TITLE = 32, LINE = 400;
@@ -57,7 +62,7 @@ export function libraryCredits(id, repo) {
   const library = LIBRARIES[id];
   if (!library) throw new Error(`Unknown art library "${id}"`);
   const credits = parseCredits(readFileSync(join(repo, library.credits), 'utf8'));
-  const licence = JSON.parse(readFileSync(join(repo, library.library), 'utf8')).licence;
+  const licence = 'library' in library ? JSON.parse(readFileSync(join(repo, library.library), 'utf8')).licence : library.licence;
   const about = {
     id: `library:${id}.about`, category: id, title: clip(`About the ${library.label} art`, TITLE),
     text: [...lines(credits.intro), ...(licence ? [`Licence: ${licence}.`] : []), ...credits.sources.map(source => `Source: ${source}`)],
@@ -65,7 +70,7 @@ export function libraryCredits(id, repo) {
   const artists = credits.artists.map((name, index) => ({
     id: `library:${id}.artist-${String(index + 1).padStart(3, '0')}`, category: id, title: clip(name, TITLE),
     // The full name repeats in the text only when the list title had to be shortened.
-    text: [...(name.length > TITLE ? [name] : []), `An artist of the ${library.label} art used in this game, as named in the pack's credits.`],
+    text: [...(name.length > TITLE ? [name] : []), `An artist of the ${library.label} art used in this game, as named in its credits.`],
   }));
   return { category: { id, label: library.label }, entries: [about, ...artists] };
 }

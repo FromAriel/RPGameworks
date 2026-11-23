@@ -69,8 +69,10 @@ describe('the party in battle', () => {
     // The fixture predates enemy patterns (M5.4f), the M5.5c kit (affinities, shields, phases) and kinds (M5.5d), so those are left out.
     const plain = { ...encounters[1]!, enemies: encounters[1]!.enemies.map(({ pattern: _p, affinities: _a, shield: _s, phases: _ph, kind: _k, ...enemy }) => enemy) };
     const drill = battleEncounter(plain, roster, defaultParty(roster));
-    // Since M5.5b members also carry a weapon, MP and skills; the rest of each member is as authored.
+    // Since M5.5b members also carry a weapon, MP and skills; the rest of each member is as authored. (Their LPC art,
+    // decision 0019, stays out of battle.)
     expect({ ...drill, party: drill.party.map(({ weapon: _w, mp: _m, skills: _s, ...member }) => member) }).toEqual(authored[1]);
+    expect(drill.party.some(member => 'art' in member)).toBe(false);
     const play = (encounter: Encounter) => { const battle = new BattleSession(encounter); const trace = []; for (let i = 0; i < 6; i += 1) { const s = battle.snapshot(); if (s.phase !== 'command') break; const target = s.combatants.find(c => c.side === 'enemy' && c.hp > 0 && battle.validate({ type: 'attack', target: c.id }) === null); trace.push(battle.command(target ? { type: 'attack', target: target.id } : { type: 'guard' }).events); } return trace; };
     expect(play(drill)).toEqual(play(authored[1] as Encounter));
   });

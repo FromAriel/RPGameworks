@@ -70,7 +70,9 @@ export function battleEncounter(encounter: AuthoredEncounter, roster: PartyRoste
   const members: Combatant[] = party.active.map(id => {
     const member = roster.members.find(m => m.id === id);
     if (!member) throw new Error(`Unknown party member ${id}`);
-    return { ...member, cell: { ...party.cells[id]! } };
+    // Battle rules never see how a member is drawn (decision 0019 `art`); presentation looks it up by member ID.
+    const { art: _art, ...fighter } = member;
+    return { ...fighter, cell: { ...party.cells[id]! } };
   });
   const taken = new Set(members.map(m => key(m.cell!)));
   const joined = guests.map(guest => {

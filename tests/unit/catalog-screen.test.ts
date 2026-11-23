@@ -37,7 +37,7 @@ describe('catalog files', () => {
     expect(issues(() => readCatalog({ schemaVersion: 1, title: 'Credits', entries: [], libraryCredits: ['stone-soup'] }, 'c.json')))
       .toEqual(['/libraryCredits: Library credits become their own category: give the catalog categories']);
     expect(issues(() => readCatalog({ ...bestiary, libraryCredits: ['stone-soup', 'stone-soup'] }, 'c.json'))).toEqual(['/libraryCredits/1: Each library may be listed once']);
-    expect(issues(() => readCatalog({ ...bestiary, libraryCredits: ['lpc'] }, 'c.json'))[0]).toContain('/libraryCredits/0');
+    expect(issues(() => readCatalog({ ...bestiary, libraryCredits: ['opengameart'] }, 'c.json'))[0]).toContain('/libraryCredits/0');
   });
 
   it('menu entries on builtin:catalog name a catalog the game has', () => {
@@ -58,13 +58,22 @@ describe('library credits', () => {
     expect(credits.sources).toContain('https://opengameart.org/content/dungeon-crawl-32x32-tiles');
     const written = JSON.parse(readFileSync('content/games/demo/catalogs/credits.json', 'utf8'));
     const expanded = readCatalog(expandCatalog(readCatalog(written, 'credits.json'), '.'), 'credits.json');
-    expect(expanded.categories!.map(c => c.label)).toEqual(['RPGameworks', 'Stone Soup']);
+    expect(expanded.categories!.map(c => c.label)).toEqual(['RPGameworks', 'Stone Soup', 'LPC']);
     const stoneSoup = expanded.entries.filter(e => e.category === 'stone-soup');
     expect(stoneSoup).toHaveLength(credits.artists.length + 1);
     expect(stoneSoup[0]!.text.join(' ')).toContain('Licence: CC0-1.0.');
     expect(stoneSoup[1]!.title).toBe('Eino Keskitalo (evktalo)');
     expect(stoneSoup.every(e => e.title.length <= 32)).toBe(true); // Long names are clipped in the list, whole in the text.
     expect('libraryCredits' in expanded).toBe(false);
+    // Decision 0019: the LPC art the party uses, from its generated credits; its licence line is fixed, as each file
+    // carries its own.
+    const lpcCredits = parseCredits(readFileSync('assets/source/lpc/CREDITS.md', 'utf8'));
+    const lpc = expanded.entries.filter(e => e.category === 'lpc');
+    expect(lpc).toHaveLength(lpcCredits.artists.length + 1);
+    expect(lpc[0]!.title).toBe('About the LPC art');
+    expect(lpc[0]!.text.join(' ')).toContain('never share-alike');
+    expect(lpc[0]!.text.join(' ')).toContain('Source: https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator');
+    expect(lpc.map(e => e.title)).toContain('bluecarrot16');
   });
   it('fail loudly when a credit file loses its artist list', () => {
     expect(() => parseCredits('# Some art\n\nNo artists here.')).toThrow('no "## Artists" section');

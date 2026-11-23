@@ -4,6 +4,41 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## S1.5c the party's LPC art baked, and its credits — November 22, 2026, local
+
+[Decision 0019](decisions/0019-permissive-lpc-art.md), third packet. The art is built and credited, but nothing draws it yet (S1.5d); battles and menus still show the placeholders.
+
+- **Portraits (Ariel):** upper body, front-facing: 28 × 28, with tall hats trimmed so faces stay in.
+- **Bake:**
+  - **Linking:** `party.json` members name their LPC character with `art`; battle rules never see it.
+  - **Output:** the content build bakes each such member into one hashed atlas and frame table (`partyArtFile` in `game.json`). That is 158 frames: walk and attack facing left and right, hurt, standing frames, and the portrait.
+  - **Placement:** each animation carries its frame size, frame time and feet anchor.
+  - **Integrity:** sheets are checked against their manifest hashes.
+- **Credits:**
+  - **Credits screen:** a new LPC tab: About (licences, never share-alike, source) and 23 artists.
+  - **Every build:** ships `generated/content/lpc-credits.md` (per file: authors and licence).
+  - **NOTICE:** lists the LPC sheets.
+- **Build time:** about 3 seconds per content build now; one long test has a 30-second limit.
+- **Tests:**
+  - **Unit:** `party-atlas.test.ts` (4):
+    - the members and their characters;
+    - deterministic output, with every frame inside the atlas and non-empty;
+    - each member's walk, attack, hurt, standing frames, anchors and portrait;
+    - the action rules.
+  - **Updated:**
+    - `catalog-screen.test.ts`: the LPC credits tab;
+    - `party.test.ts`: art stays out of battle;
+    - `authoring-report.test.ts`: the 30-second limit;
+    - `catalog.spec.ts`: the LPC tab in the game.
+  - **Local results:**
+    - typecheck, `npm run validate`, the production build, `check:test-tags` (210) and `check:external-art` passed;
+    - unit tests **633/633**, with the two skin tests passing alone after timing out once in the full run, as before;
+    - browser suite **209/210**. The one failure was the known playback-speed timing flake (it passed alone, 1 worker); the Credits test with the new LPC tab passed.
+- **Next:** **S1.5d**:
+  - the battle draws the party from the atlas (standing, stepping in with the walk, the attack, hurt, facing either way);
+  - timeline icons and menu portraits;
+  - placeholders when the art is missing.
+
 ## S1.5b the party's LPC designs — November 22, 2026, local
 
 [Decision 0019](decisions/0019-permissive-lpc-art.md), second packet. No change in the game yet (S1.5c bakes it).

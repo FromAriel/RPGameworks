@@ -25,6 +25,7 @@
     "menuFile": {"type": "string", "pattern": "^menu(\\.[a-f0-9]{12})?\\.json$", "description": "The main menu definition (decision 0016)."},
     "catalogs": {"type": "array", "maxItems": 16, "items": {"type": "object", "additionalProperties": false, "required": ["id", "file"], "properties": {"id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"}, "file": {"type": "string", "pattern": "^catalogs/[a-z0-9-]+(\\.[a-f0-9]{12})?\\.json$"}}}, "description": "Data-only menu screens (decision 0016 U2.4): a menu entry on builtin:catalog names one by id."},
     "creaturesFile": {"type": "string", "pattern": "^creatures(\\.[a-f0-9]{12})?\\.json$", "description": "Generated: the baked creature atlas frame table (decision 0015 C3)."},
+    "partyArtFile": {"type": "string", "pattern": "^party-art(\\.[a-f0-9]{12})?\\.json$", "description": "Generated: the baked LPC party atlas frame table (decision 0019 S1.5c)."},
     "stateIndexFile": {"type": "string", "pattern": "^state-index(\\.[a-f0-9]{12})?\\.json$"},
     "saveCompatibilityVersion": {"type": "integer", "minimum": 1, "maximum": 65535},
     "start": {

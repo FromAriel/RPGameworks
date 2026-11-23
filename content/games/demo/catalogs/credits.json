@@ -14,5 +14,5 @@
     {"id": "demo:credits.starter-hero", "category": "project", "title": "Starter hero",
       "text": ["Derived from the premium Cute Fantasy character pack, used under its purchased licence.", "It is not covered by the Apache License and may not be reused outside this game (see NOTICE)."]}
   ],
-  "libraryCredits": ["stone-soup"]
+  "libraryCredits": ["stone-soup", "lpc"]
 }

@@ -38,10 +38,10 @@ test('the Codex lists the creatures met, and lore stays ??? until it is discover
   await expect(screen(page).locator('.menu-detail')).toContainText("A polished lens once focused the gallery's light.");
 });
 
-test('Credits: the project, then the Stone Soup artists from the library credit file, scrolling to the last', { tag: ['@inventory'] }, async ({ page }, info) => {
+test('Credits: the project, then the Stone Soup and LPC artists from their credit files, scrolling to the last', { tag: ['@inventory'] }, async ({ page }, info) => {
   await openRoom(page);
   await open(page, 'credits');
-  await expect(screen(page).locator('.menu-tab')).toHaveText(['RPGameworks', 'Stone Soup']);
+  await expect(screen(page).locator('.menu-tab')).toHaveText(['RPGameworks', 'Stone Soup', 'LPC']); // LPC since decision 0019.
   await expect(rows(page)).toHaveText(['RPGameworks', 'UNSCII font', 'White and Silver skin', 'Starter hero']);
   await expect(screen(page).locator('.menu-catalog-top')).not.toContainText('Found'); // Nothing to discover here.
   await page.keyboard.press('KeyE');
@@ -54,4 +54,10 @@ test('Credits: the project, then the Stone Soup artists from the library credit 
   await expect(last).toBeFocused();
   await expect(last).toBeInViewport(); // The list scrolls to keep the highlighted artist visible.
   await page.screenshot({ path: info.outputPath('credits.png') });
+  // The LPC art the party is drawn with (decision 0019): about the art, its licences, then its artists.
+  await page.keyboard.press('KeyE');
+  await expect(rows(page).first()).toHaveText('About the LPC art');
+  await expect(screen(page).locator('.menu-detail')).toContainText('never share-alike');
+  await expect(rows(page)).toContainText(['bluecarrot16']);
+  await page.screenshot({ path: info.outputPath('credits-lpc.png') });
 });

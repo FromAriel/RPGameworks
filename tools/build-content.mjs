@@ -10,6 +10,8 @@ import { readUiTheme, emitUiTheme, checkMapSkins } from './ui-theme.mjs';
 import pngjs from 'pngjs';
 import { motionAssignmentProblems, motionStyleProblems } from '../src/content/creature-pose.mjs';
 import { bakeCreatureAtlas } from '../src/content/creature-atlas.mjs';
+import { bakePartyAtlas } from '../src/content/party-atlas.mjs';
+import { reduceSheet } from '../src/content/lpc/bake.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -174,6 +176,39 @@ try {
         writeFileSync(join(staging, creaturesFile), tableText);
         console.log(`Baked ${Object.keys(first.table.creatures).length} creature(s) into ${image} (${Object.keys(first.table.frames).length} frames).`);
       }
+      // Decision 0019 S1.5c: bake the LPC characters the roster names (member "art") into one hashed atlas and frame
+      // table, from the committed sheets in assets/source/lpc (each checked against its manifest hash), and ship the
+      // per-file LPC credits with the build.
+      let partyArtFile;
+      const artMembers = party ? party.members.filter(m => m.art).map(m => ({ id: m.id, character: m.art })) : [];
+      if (artMembers.length) {
+        const lpcRoot = join(repo, 'assets/source/lpc');
+        const lpcManifest = readJSON(join(lpcRoot, 'manifest.json')), lpcReduction = readJSON(join(lpcRoot, 'reduction.json'));
+        for (const m of artMembers) if (!lpcManifest.characters[m.character]) throw new Error(`${game.partyFile}: member ${m.id} names LPC character "${m.character}", which assets/source/lpc/recipes.json does not define (run npm run lpc:import)`);
+        const sheets = new Map();
+        const reduced = (/** @type {string} */ file) => {
+          let sheet = sheets.get(file);
+          if (!sheet) {
+            const bytes = readFileSync(join(lpcRoot, 'sheets', file));
+            if (createHash('sha256').update(bytes).digest('hex') !== lpcManifest.files[file]?.sha256) throw new Error(`assets/source/lpc/sheets/${file} does not match its manifest hash`);
+            const png = pngjs.PNG.sync.read(bytes);
+            sheet = reduceSheet({ width: png.width, height: png.height, data: new Uint8ClampedArray(png.data) }, lpcManifest.files[file].cell, lpcReduction);
+            sheets.set(file, sheet);
+          }
+          return sheet;
+        };
+        const baked = bakePartyAtlas(lpcManifest, artMembers, { reduced, threshold: lpcReduction.finalAlphaThreshold, image: 'party-art.png' });
+        const png = new pngjs.PNG({ width: baked.atlas.width, height: baked.atlas.height });
+        png.data = Buffer.from(baked.atlas.data.buffer, baked.atlas.data.byteOffset, baked.atlas.data.byteLength);
+        const pngBytes = pngjs.PNG.sync.write(png, { colorType: 6 });
+        const image = `party-art.${createHash('sha256').update(pngBytes).digest('hex').slice(0, 12)}.png`;
+        writeFileSync(join(staging, image), pngBytes);
+        const tableText = JSON.stringify({ ...baked.table, image }) + '\n';
+        partyArtFile = `party-art.${createHash('sha256').update(tableText).digest('hex').slice(0, 12)}.json`;
+        writeFileSync(join(staging, partyArtFile), tableText);
+        writeFileSync(join(staging, 'lpc-credits.md'), readFileSync(join(lpcRoot, 'CREDITS.md')));
+        console.log(`Baked ${artMembers.length} LPC party member(s) into ${image} (${Object.keys(baked.table.frames).length} frames).`);
+      }
       // Save schema 3 (decision 0014 M5.4d) when the game has a party roster: saves keep the party and play time.
       // Schema 4 (decision 0017 M5.5d) adds the bestiary: each enemy kind and the tags a save may record about it.
       const partyDefaults=party&&{active:[...party.active],cells:Object.fromEntries(party.active.map(id=>{const cell=party.members.find(m=>m.id===id).cell;return[id,{lane:cell.lane,depth:cell.depth}];}))};
@@ -181,7 +216,7 @@ try {
         maps:[...maps.values()].map(map=>({id:map.id,name:map.name,width:map.width,height:map.height,spawns:map.spawns.map(spawn=>spawn.id)})),
         itemIds:catalog.items.map(item=>item.id),factIds:facts.facts.map(fact=>fact.id),placementIds:[...maps.values()].flatMap(map=>map.objects.map(object=>object.id)),...(game.questsFile||party?{questIds:quests.quests.map(quest=>quest.id)}:{}),...(party?{party:{memberIds:party.members.map(m=>m.id),defaults:partyDefaults},bestiary:bestiaryKinds(encounters)}:{})};
       const stateText=JSON.stringify(stateIndex)+'\n';const stateIndexFile=`state-index.${createHash('sha256').update(stateText).digest('hex').slice(0,12)}.json`;writeFileSync(join(staging,stateIndexFile),stateText);
-      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(partyFile?{partyFile}:{}),...(actionsFile?{actionsFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(menuFile?{menuFile}:{}),...(catalogEntries.length?{catalogs:catalogEntries}:{}),...(creaturesFile?{creaturesFile}:{}),stateIndexFile,maps:entries}) + '\n');
+      writeFileSync(join(staging, 'game.json'), JSON.stringify({...game,...(itemsFile?{itemsFile}:{}),...(factsFile?{factsFile}:{}),...(questsFile?{questsFile}:{}),...(encountersFile?{encountersFile}:{}),...(partyFile?{partyFile}:{}),...(actionsFile?{actionsFile}:{}),...(uiThemeFile?{uiThemeFile}:{}),...(menuFile?{menuFile}:{}),...(catalogEntries.length?{catalogs:catalogEntries}:{}),...(creaturesFile?{creaturesFile}:{}),...(partyArtFile?{partyArtFile}:{}),stateIndexFile,maps:entries}) + '\n');
       rmSync(output, {recursive: true, force: true});
       renameSync(staging, output);
     } finally { rmSync(staging, {recursive: true, force: true}); }

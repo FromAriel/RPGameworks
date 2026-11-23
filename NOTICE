@@ -23,5 +23,12 @@ assets/source/creatures/stone-soup/
   the licence: assets/source/creatures/stone-soup/CREDITS.md and licences/.
   Committed as the one exception to docs/decisions/0007 (docs/decisions/0015).
 
-Other third-party art fetched locally (LPC and others) lives under ignored
-folders and is never committed (docs/decisions/0007).
+assets/source/lpc/sheets/
+  Liberated Pixel Cup (LPC) character sheets from the Universal LPC
+  Spritesheet Character Generator, only those the party uses. Each file is
+  used under CC0, CC-BY 3.0/4.0 or OGA-BY 3.0, never a share-alike licence,
+  and is modified (composited, recoloured, reduced). Authors, licence and
+  source per file: assets/source/lpc/CREDITS.md (docs/decisions/0019).
+
+Other third-party art fetched locally lives under ignored folders and is
+never committed (docs/decisions/0007).

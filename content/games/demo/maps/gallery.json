@@ -51,7 +51,7 @@
       {"id":"lit","when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"frame":"sigil-lit","visible":true},
       {"id":"dim","fallback":true,"frame":"sigil","visible":true}
     ]},
-    {"id":"demo:object.gallery.archive-clerk","frame":"caretaker","x":17,"y":3,"solid":true,"states":[
+    {"id":"demo:object.gallery.archive-clerk","frame":"caretaker","character":"clerk","x":17,"y":3,"solid":true,"states":[
       {"id":"completed","when":{"type":"questStateEquals","questId":"demo:quest.archive-ledger","value":"completed"},"frame":"caretaker","visible":true,"interaction":{"dialogueId":"archive-ledger"}},
       {"id":"available","fallback":true,"frame":"caretaker","visible":true,"interaction":{"dialogueId":"archive-ledger"}}
     ]},

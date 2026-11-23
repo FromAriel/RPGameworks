@@ -43,7 +43,7 @@
   ],
   "objects": [
     {"id": "demo:object.workshop.sigil", "frame": "sigil", "x": 10, "y": 5, "solid": false},
-    {"id": "demo:object.workshop.caretaker", "frame": "caretaker", "x": 10, "y": 8, "solid": true, "states": [
+    {"id": "demo:object.workshop.caretaker", "frame": "caretaker", "character": "mara", "x": 10, "y": 8, "solid": true, "states": [
       {"id":"completed","when":{"type":"questStateEquals","questId":"demo:quest.gallery-light","value":"completed"},"frame":"caretaker","visible":true,"interaction":{"dialogueId":"mara-lens"}},
       {"id":"available","fallback":true,"frame":"caretaker","visible":true,"interaction":{"dialogueId":"mara-lens"}}
     ]},

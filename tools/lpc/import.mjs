@@ -92,7 +92,7 @@ write(join(out, 'manifest.json'), `${JSON.stringify(manifest, null, 1)}\n`);
 const licencesUsed = [...new Set(Object.values(fileEntries).map(entry => entry.licence))].sort();
 const artists = [...new Set(Object.values(fileEntries).flatMap(entry => entry.authors))].sort((a, b) => a.localeCompare(b));
 const lines = ['# LPC art credits', '',
-  'The party characters are built from Liberated Pixel Cup (LPC) art, taken from the Universal LPC Spritesheet Character Generator. '
+  'The party and the map characters are built from Liberated Pixel Cup (LPC) art, taken from the Universal LPC Spritesheet Character Generator. '
   + `Each file is used under ${licencesUsed.join(', ')}, never a share-alike licence. `
   + 'All of it is used in modified form: layers are composited, recoloured, and reduced to 48-pixel frames by the PixiPPL reducer. '
   + 'Every file\'s authors and licence are listed in the per-file credits.', '',

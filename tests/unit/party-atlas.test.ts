@@ -71,6 +71,20 @@ describe('the party atlas', () => {
     }
   });
 
+  it('bakes each map character standing four ways, and only that (S1.5g)', () => {
+    const withPeople = bakePartyAtlas(manifest, members, { reduced, threshold: reduction.finalAlphaThreshold, image: 'party-art.png', characters: ['mara', 'clerk'] });
+    expect(Object.keys(withPeople.table.characters!)).toEqual(['mara', 'clerk']);
+    for (const id of ['mara', 'clerk']) {
+      const { stand } = withPeople.table.characters![id]!;
+      expect([stand.left, stand.right, stand.up, stand.down]).toEqual(['left', 'right', 'up', 'down'].map(way => `character/${id}/stand/${way}`));
+      expect([stand.size, stand.anchor]).toEqual([48, { x: 24, y: 40 }]);
+      for (const name of [stand.left, stand.right, stand.up, stand.down]) expect(withPeople.table.frames[name], name).toMatchObject({ w: 48, h: 48 });
+    }
+    expect(Object.keys(withPeople.table.frames).filter(name => name.startsWith('character/'))).toHaveLength(8);
+    expect(baked.table.characters).toBeUndefined(); // None asked for, none baked.
+    expect(() => bakePartyAtlas(manifest, [], { reduced, threshold: 128, image: 'x.png', characters: ['ghost'] })).toThrow('Map character ghost');
+  });
+
   it('needs one walk, one attack and hurt per character', () => {
     expect(memberActions('x', { walk: {}, shoot: {}, hurt: {} })).toEqual({ walk: 'walk', attack: 'shoot', hurt: 'hurt' });
     expect(() => memberActions('x', { walk: {}, hurt: {} })).toThrow('needs one walk, one attack and hurt');

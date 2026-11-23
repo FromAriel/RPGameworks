@@ -180,6 +180,24 @@ What was built:
   The pack stays in git history, and the Cute Fantasy analysis docs under `docs/asset-analysis/` remain as a record.
 - **Snapshot:** `heroArt` is `'static' | 'lpc'`; `heroFrame` names the atlas frame; `heroMirrored` is gone, since nothing is mirrored.
 
+## Execution notes (S1.5g, November 23)
+
+Mara and the Gallery archive clerk had shared one generic placeholder. Ariel chose their looks from `assets/source/lpc/candidates-map.json` (three each, all licence-checked):
+- **Mara, the Workshop caretaker:** **A, the Smith**: leather full apron over a slate shirt, red kerchief, hair in a bun.
+- **The archive clerk:** **A, the Old archivist**: bald with a white beard, half-moon glasses, a white cravat and a dark coat.
+
+What was built:
+- **Recipes and import:** `recipes.json` gains `mara` and `clerk` with only a walk, since they stand and turn but never walk. The import added 15 sheets (128 in all), each passing the per-file licence check, with credits.
+- **Preview:** `tools/lpc/preview.mjs` handles members without an attack: it shows the standing frame each way at 4× and the walk facing down. Two first-draft clerk looks were refused because a waistcoat and a shirt share LPC's clothes slot; a coat and suspenders replaced them.
+- **Map content:** a map object may name `"character": "<LPC character id>"`. Its `frame` stays as the fallback.
+  - **Build:** the content build bakes each named character's four standing frames (`character/<id>/stand/<way>`) into the party atlas, under `characters` in its table, and refuses an unknown character.
+- **Map drawing:**
+  - **Placement:** a map character stands with its feet on the bottom edge of its tile, facing down. Its visibility follows the object's state.
+  - **Depth:** figures, the hero included, are drawn in order of their feet, so whoever stands lower is in front.
+  - **Talking:** while you talk to it, it turns toward the hero; closing the talk turns it back.
+  - **Fallback:** without the art, it keeps its placeholder frame.
+- **Snapshot:** `characterFrames` lists each map character's shown frame by object id.
+
 ## Still open
 
 - **Looks:** body types, colours and hair are chosen from the S1.5b previews.

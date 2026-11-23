@@ -39,6 +39,8 @@ export interface RuntimeSnapshot {
   heroArt: 'static' | 'lpc';
   heroFrame: string | null;
   heroFeet: { x: number; y: number } | null;
+  /** Each map character's LPC frame, by object id (decision 0019 S1.5g); placeholder-drawn characters are absent. */
+  characterFrames: Record<string, string>;
   characterArtStatus: 'loading' | 'ready' | 'fallback';
   activeScenes: number;
   displayObjects: number;

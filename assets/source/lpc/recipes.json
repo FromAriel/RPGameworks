@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "about": "Decision 0019: the party's LPC recipes for tools/lpc/import.mjs (run it after any change). Part IDs and colours from the Universal LPC Spritesheet Character Generator. Chosen by Ariel from the S1.5b previews (candidates.json): the Hero is the Captain, the Archer the Ranger, the Lancer the Guard (with the arming sword until Ariel's spear), the Mage the Sorceress. Actions: a walk (the bow only walks oversized, walk_128), the weapon's attack, and hurt. None has an idle: each wears a part without one (tabard, belt, quiver, robe belt), so they stand on the walk's first frame.",
+  "about": "Decision 0019: the party's LPC recipes for tools/lpc/import.mjs (run it after any change). Part IDs and colours from the Universal LPC Spritesheet Character Generator. Chosen by Ariel from the S1.5b previews (candidates.json): the Hero is the Captain, the Archer the Ranger, the Lancer the Guard (with the arming sword until Ariel's spear), the Mage the Sorceress. Actions: a walk (the bow only walks oversized, walk_128), the weapon's attack, and hurt. None has an idle: each wears a part without one (tabard, belt, quiver, robe belt), so they stand on the walk's first frame. Map characters (S1.5g, chosen by Ariel from candidates-map.json): Mara and the Gallery archive clerk, who only stand and turn on the map, so each has just a walk.",
   "characters": [
     {
       "id": "hero",
@@ -230,6 +230,122 @@
         "walk",
         "spellcast",
         "hurt"
+      ]
+    },
+    {
+      "id": "mara",
+      "label": "Mara, the Workshop caretaker: Smith: leather apron over a slate shirt, red kerchief, hair in a bun",
+      "bodyType": "female",
+      "selections": [
+        {
+          "id": "body",
+          "recolors": {
+            "color_1": "amber"
+          }
+        },
+        {
+          "id": "heads_human_female"
+        },
+        {
+          "id": "hair_bangs_bun",
+          "recolors": {
+            "color_1": "dark_brown"
+          }
+        },
+        {
+          "id": "hat_headband_kerchief",
+          "recolors": {
+            "color_1": "red"
+          }
+        },
+        {
+          "id": "torso_clothes_longsleeve2",
+          "recolors": {
+            "color_1": "slate"
+          }
+        },
+        {
+          "id": "torso_aprons_apron_full",
+          "variant": "leather"
+        },
+        {
+          "id": "legs_pants",
+          "recolors": {
+            "color_1": "brown"
+          }
+        },
+        {
+          "id": "feet_boots_basic",
+          "recolors": {
+            "color_1": "brown"
+          }
+        }
+      ],
+      "actions": [
+        "walk"
+      ]
+    },
+    {
+      "id": "clerk",
+      "label": "Gallery archive clerk: Old archivist: white beard, half-moon glasses, cravat, dark coat",
+      "bodyType": "male",
+      "selections": [
+        {
+          "id": "body",
+          "recolors": {
+            "color_1": "light"
+          }
+        },
+        {
+          "id": "heads_human_male_elderly"
+        },
+        {
+          "id": "hair_balding",
+          "recolors": {
+            "color_1": "white"
+          }
+        },
+        {
+          "id": "beards_trimmed",
+          "recolors": {
+            "color_1": "white"
+          }
+        },
+        {
+          "id": "facial_glasses_halfmoon",
+          "variant": "brown"
+        },
+        {
+          "id": "torso_clothes_longsleeve2_buttoned",
+          "recolors": {
+            "color_1": "white"
+          }
+        },
+        {
+          "id": "torso_jacket_pockets",
+          "variant": "navy"
+        },
+        {
+          "id": "neck_cravat",
+          "recolors": {
+            "color_1": "white"
+          }
+        },
+        {
+          "id": "legs_formal",
+          "recolors": {
+            "color_1": "charcoal"
+          }
+        },
+        {
+          "id": "feet_shoes_basic",
+          "recolors": {
+            "color_1": "black"
+          }
+        }
+      ],
+      "actions": [
+        "walk"
       ]
     }
   ]

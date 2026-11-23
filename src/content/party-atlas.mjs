@@ -3,7 +3,8 @@
  * committed sheets in assets/source/lpc, into one atlas: for each member its walk facing all four ways (the map walks it,
  * S1.5f), its attack facing left and right, its hurt (a single row in LPC), a standing frame each way (LPC's at-rest
  * walk column, feet together: none of the chosen outfits has an idle; Ariel, S1.5f), and a front-facing upper-body
- * portrait for the menus (Ariel, S1.5c). Deterministic: the same manifest and
+ * portrait for the menus (Ariel, S1.5c). Map characters (S1.5g) get only their standing frame each way, under
+ * `character/<id>/`, since they stand and turn but never walk. Deterministic: the same manifest and
  * sheets give the same pixels.
  *
  * Pure: the caller supplies the reduced sheets and encodes the PNG. A JSDoc-typed .mjs for the content build.
@@ -19,8 +20,10 @@ import { bakeFrame, bakeStandFrame } from './lpc/bake.mjs';
  *   left?: string[], right?: string[], up?: string[], down?: string[], front?: string[] }} PartyAnimation
  * @typedef {{ character: string, stand: { left: string, right: string, up: string, down: string, size: number, anchor: { x: number, y: number } },
  *   walk: PartyAnimation, attack: PartyAnimation, hurt: PartyAnimation, portrait: string }} PartyMemberArt
+ * @typedef {{ left: string, right: string, up: string, down: string, size: number, anchor: { x: number, y: number } }} StandFrames
+ * @typedef {{ stand: StandFrames }} MapCharacterArt
  * @typedef {{ format: 'rpgameworks.party-atlas', formatVersion: 1, image: string, size: { width: number, height: number },
- *   frames: Record<string, FrameRect>, members: Record<string, PartyMemberArt> }} PartyAtlasTable
+ *   frames: Record<string, FrameRect>, members: Record<string, PartyMemberArt>, characters?: Record<string, MapCharacterArt> }} PartyAtlasTable
  */
 
 /** Milliseconds per frame by LPC action. Starting values, tuned when the battle plays them (S1.5d). */
@@ -50,10 +53,11 @@ export function memberActions(character, actions) {
 /**
  * @param {any} manifest the committed LPC manifest
  * @param {readonly { id: string, character: string }[]} members party members and their LPC characters
- * @param {{ reduced: (file: string) => Rgba & { cellOut: number }, threshold: number, image: string }} source
+ * @param {{ reduced: (file: string) => Rgba & { cellOut: number }, threshold: number, image: string, characters?: readonly string[] }} source
+ *   `characters`: the LPC characters map objects stand as (S1.5g)
  * @returns {{ atlas: Rgba, table: PartyAtlasTable }}
  */
-export function bakePartyAtlas(manifest, members, { reduced, threshold, image }) {
+export function bakePartyAtlas(manifest, members, { reduced, threshold, image, characters = [] }) {
   /** @type {{ name: string, pixels: Rgba }[]} */ const frames = [];
   /** @type {Record<string, PartyMemberArt>} */ const art = {};
   for (const { id, character } of members) {
@@ -84,8 +88,18 @@ export function bakePartyAtlas(manifest, members, { reduced, threshold, image })
     add('portrait', portraitCrop(front, walkSpec.size));
     art[id] = { character, stand, walk, attack, hurt, portrait: `${id}/portrait` };
   }
+  /** @type {Record<string, MapCharacterArt>} */ const standing = {};
+  for (const character of characters) {
+    const walk = manifest.characters[character]?.actions.walk;
+    if (!walk || walk.kind !== 'standard') throw new Error(`Map character ${character}: needs an LPC character with a standard walk`);
+    const side = (/** @type {'left' | 'right' | 'up' | 'down'} */ way) => {
+      frames.push({ name: `character/${character}/stand/${way}`, pixels: bakeStandFrame(manifest, character, 'walk', way, reduced, threshold) });
+      return `character/${character}/stand/${way}`;
+    };
+    standing[character] = { stand: { left: side('left'), right: side('right'), up: side('up'), down: side('down'), size: walk.size, anchor: anchorFor(walk.size) } };
+  }
   const { atlas, rects } = pack(frames);
-  return { atlas, table: { format: 'rpgameworks.party-atlas', formatVersion: 1, image, size: { width: atlas.width, height: atlas.height }, frames: rects, members: art } };
+  return { atlas, table: { format: 'rpgameworks.party-atlas', formatVersion: 1, image, size: { width: atlas.width, height: atlas.height }, frames: rects, members: art, ...(characters.length ? { characters: standing } : {}) } };
 }
 
 /**

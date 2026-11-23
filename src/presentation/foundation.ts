@@ -32,7 +32,7 @@ import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
 import { MapView, ATLAS } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
-import type { MapHeroArt } from './map-hero-view';
+import type { MapArt } from './map-hero-view';
 import type { ConfirmationDialogParts } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
@@ -117,8 +117,11 @@ export function createFoundation(elements: FoundationElements, onError: (message
   let resizeFrame: number | null = null;
   let appliedScale = 0;
   const appLifetime = new AbortController();
-  /** The map hero's art (decision 0019 S1.5f): the party leader's LPC frames in an app-owned texture, kept across restarts. */
-  let mapHero: MapHeroArt | null = null;
+  /**
+   * The map's LPC art (decision 0019 S1.5f, S1.5g): the party leader and the map characters, in an app-owned texture
+   * kept across restarts.
+   */
+  let mapArt: MapArt | null = null;
   let characterArtStatus: RuntimeSnapshot['characterArtStatus'] = 'loading';
   // The Items screen's tab and sort, kept for the whole play session (Ariel, U2.2), not in saves.
   const itemsMemory: ItemsMemory = { tab: ALL_ITEMS, sort: 'type' };
@@ -274,7 +277,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.transfer = new TransitionTask<LoadedMap>();
         this.mode = 'exploration'; this.message = null;this.dialogue=null;this.battle=null;this.battleView=null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
-        this.room = new MapView(this, content, elements.session.current, mapHero);
+        this.room = new MapView(this, content, elements.session.current, mapArt);
         this.room.bind(elements.session);
         this.room.show();
         const registry = new ScreenRegistry();
@@ -347,10 +350,10 @@ export function createFoundation(elements: FoundationElements, onError: (message
           if (disposed || lifetime.aborted || this.sceneLifetime?.signal !== lifetime) return;
           this.partyArt = art;
           const leader = elements.session.current.roster?.members[0]?.id;
-          const member = art && leader ? memberArt(art, leader) : null;
-          if (art && member) mapHero ??= { texture: addPartyTexture(this.textures, art, 'map'), member };
-          if (mapHero) this.room?.attachHeroArt(mapHero);
-          characterArtStatus = mapHero ? 'ready' : 'fallback';
+          const hero = art && leader ? memberArt(art, leader) : null;
+          if (art && (hero || art.table.characters)) mapArt ??= { texture: addPartyTexture(this.textures, art, 'map'), hero, characters: art.table.characters ?? {} };
+          if (mapArt) this.room?.attachArt(mapArt);
+          characterArtStatus = mapArt?.hero ? 'ready' : 'fallback';
           elements.onArtWarning(null);
         }).catch((cause: unknown) => {
           if (lifetime.aborted || disposed) return;
@@ -419,6 +422,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       if (target) {
         let state=room.resolve(target.objectId);if(!state?.interaction)return;
         if(state.interaction.encounterId){void this.startBattle(state.interaction.encounterId);return;}
+        room.faceHero(target.objectId); // A map character turns to talk (decision 0019 S1.5g); resume() turns it back.
         if(state.interaction.dialogueId){
           const dialogueId=state.interaction.dialogueId;
           const graph=content.map.dialogues?.find(candidate=>candidate.id===dialogueId);
@@ -623,7 +627,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const current=elements.session.current;
       const candidate=new SessionState({items:current.catalog,facts:current.factCatalog,quests:current.questCatalog,...(current.roster?{party:current.roster}:{}),bestiary:current.bestiaryKinds},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
-        const prepared=new MapView(this,next,candidate,mapHero);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
+        const prepared=new MapView(this,next,candidate,mapArt);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
       });
       if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close','Close',{soleAction:true});return;}
@@ -655,7 +659,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
     }
     private resume(): void {
       this.battleLoad?.abort();this.battleLoad=null;this.endBattleView();this.battle=null;
-      this.dialog.close(); this.message = null;this.dialogue=null;
+      this.dialog.close(); this.message = null;this.dialogue=null;this.room?.restFacing();
       this.leaveHub(); this.hubEntry = null;
       this.setMode('exploration'); this.inputOwner?.clear(); this.inputOwner?.focus();
     }
@@ -706,7 +710,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         (next) => {
           // Construct/validate the new view while the old view is still usable.
           const old = this.room!;
-          const prepared = new MapView(this, next, elements.session.current, mapHero);
+          const prepared = new MapView(this, next, elements.session.current, mapArt);
           prepared.setEffectsEnabled(elements.effects.checked);
           prepared.bind(elements.session);
           try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
@@ -836,7 +840,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         actorPixel: { x: Math.round(position.x), y: Math.round(position.y) },
         moving: actor.motion !== null, facing: actor.facing,
         heroArt: room?.heroArt ?? 'static', heroFrame: room?.heroFrame ?? null,
-        heroFeet: room?.heroFeet ?? null,
+        heroFeet: room?.heroFeet ?? null, characterFrames: room?.characterFrames ?? {},
         characterArtStatus,
         activeScenes: game.scene.getScenes(true).length,
         displayObjects: current?.children.length ?? 0,
@@ -868,7 +872,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       elements.restart.disabled = true;
       elements.interact.disabled = true;
       game.destroy(true);
-      mapHero = null;
+      mapArt = null;
     },
   };
 }

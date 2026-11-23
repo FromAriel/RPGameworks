@@ -4,6 +4,30 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## S1.5g Mara and the archive clerk in their own LPC looks — November 23, 2026, local
+
+[Decision 0019](decisions/0019-permissive-lpc-art.md), map characters. **The two map characters no longer share one generic placeholder.**
+
+- **Ariel's choices** (from three licence-checked candidates each):
+  - **Mara:** the Smith (leather apron, slate shirt, red kerchief, hair in a bun);
+  - **the archive clerk:** the Old archivist (white beard, half-moon glasses, cravat, dark coat).
+- **On the map:**
+  - both stand facing down on their tiles, drawn in order of their feet with the hero;
+  - while you talk to one, they turn toward the hero, and face down again when the talk closes.
+- **How it works:**
+  - **Content:** map objects can name an LPC character (`"character"`), and the content build bakes its standing frames into the party atlas (248 frames).
+  - **Import:** 15 new LPC sheets, every one licence-checked and credited.
+  - **Fallback:** without the art, each keeps its placeholder frame.
+- **Tests:**
+  - **New:** a browser test of Mara turning toward the hero from above and from her side and back, the clerk in the Gallery, and the fallback; a unit test of the character bake.
+  - **Updated:** the LPC test now expects the six characters.
+  - **Local results:**
+    - typecheck, `check:test-tags` and `check:external-art` passed;
+    - unit tests 605/605 (the skin batch test timed out once under load and passed alone);
+    - browser suite 214/215 in a parallel run; the one failure was the Gallery's display-object count, which the clerk's LPC figure raises from 348 to 349 (expectation updated, maps spec then passed).
+- **Not checked by Ariel yet:** the two looks on the map in play.
+- **Next:** **S1.5e**, Ariel's spear layer, whenever it is ready; then Ariel's play review of S1.5.
+
 ## S1.5f the LPC hero walks the map; Cute Fantasy retired — November 23, 2026, local
 
 [Decision 0019](decisions/0019-permissive-lpc-art.md), map packet. **The map hero is now the party's LPC Captain.**

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "about": "Decision 0019 S1.5g: candidate looks for the map's two characters, Mara (the Workshop caretaker) and the Gallery archive clerk, rendered by tools/lpc/preview.mjs (npm run lpc:preview -- --candidates assets/source/lpc/candidates-map.json) for Ariel to choose from. Not imported; the chosen ones move to recipes.json. They only stand and turn on the map, so each needs only a walk. Every file a candidate uses must pass the same licence check as the import.",
+  "members": [
+    {
+      "member": "mara",
+      "name": "Mara",
+      "role": "Workshop caretaker",
+      "candidates": [
+        {
+          "id": "a",
+          "label": "Smith: leather apron over a slate shirt, red kerchief, hair in a bun",
+          "bodyType": "female",
+          "selections": [
+            { "id": "body", "recolors": { "color_1": "amber" } },
+            { "id": "heads_human_female" },
+            { "id": "hair_bangs_bun", "recolors": { "color_1": "dark_brown" } },
+            { "id": "hat_headband_kerchief", "recolors": { "color_1": "red" } },
+            { "id": "torso_clothes_longsleeve2", "recolors": { "color_1": "slate" } },
+            { "id": "torso_aprons_apron_full", "variant": "leather" },
+            { "id": "legs_pants", "recolors": { "color_1": "brown" } },
+            { "id": "feet_boots_basic", "recolors": { "color_1": "brown" } }
+          ]
+        },
+        {
+          "id": "b",
+          "label": "Tinker: navy overalls, white shirt, half-moon glasses, grey bob",
+          "bodyType": "female",
+          "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } },
+            { "id": "heads_human_female_elderly" },
+            { "id": "hair_bob", "recolors": { "color_1": "gray" } },
+            { "id": "facial_glasses_halfmoon", "variant": "gray" },
+            { "id": "torso_clothes_shortsleeve", "recolors": { "color_1": "white" } },
+            { "id": "torso_aprons_overalls", "variant": "navy" },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "black" } }
+          ]
+        },
+        {
+          "id": "c",
+          "label": "Keeper: forest-green shirt and skirt, white half apron, long braid",
+          "bodyType": "female",
+          "selections": [
+            { "id": "body", "recolors": { "color_1": "bronze" } },
+            { "id": "heads_human_female" },
+            { "id": "hair_braid", "recolors": { "color_1": "chestnut" } },
+            { "id": "torso_clothes_longsleeve2", "recolors": { "color_1": "forest" } },
+            { "id": "legs_skirt_straight", "recolors": { "color_1": "forest" } },
+            { "id": "torso_aprons_apron_half", "variant": "white" },
+            { "id": "belt_leather", "variant": "brown" },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "brown" } }
+          ]
+        }
+      ]
+    },
+    {
+      "member": "clerk",
+      "name": "Archive clerk",
+      "role": "Gallery east wing",
+      "candidates": [
+        {
+          "id": "a",
+          "label": "Old archivist: white beard, half-moon glasses, cravat, navy coat",
+          "bodyType": "male",
+          "selections": [
+            { "id": "body", "recolors": { "color_1": "light" } },
+            { "id": "heads_human_male_elderly" },
+            { "id": "hair_balding", "recolors": { "color_1": "white" } },
+            { "id": "beards_trimmed", "recolors": { "color_1": "white" } },
+            { "id": "facial_glasses_halfmoon", "variant": "brown" },
+            { "id": "torso_clothes_longsleeve2_buttoned", "recolors": { "color_1": "white" } },
+            { "id": "torso_jacket_pockets", "variant": "navy" },
+            { "id": "neck_cravat", "recolors": { "color_1": "white" } },
+            { "id": "legs_formal", "recolors": { "color_1": "charcoal" } },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "black" } }
+          ]
+        },
+        {
+          "id": "b",
+          "label": "Young clerk: blue-grey cardigan, round glasses, navy skirt",
+          "bodyType": "female",
+          "selections": [
+            { "id": "body", "recolors": { "color_1": "brown" } },
+            { "id": "heads_human_female" },
+            { "id": "hair_lob", "recolors": { "color_1": "black" } },
+            { "id": "facial_glasses", "variant": "black" },
+            { "id": "torso_clothes_longsleeve2_cardigan", "recolors": { "color_1": "bluegray" } },
+            { "id": "legs_skirt_straight", "recolors": { "color_1": "navy" } },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "brown" } }
+          ]
+        },
+        {
+          "id": "c",
+          "label": "Ledger keeper: maroon bow tie, white shirt, brown suspenders, side parting",
+          "bodyType": "male",
+          "selections": [
+            { "id": "body", "recolors": { "color_1": "olive" } },
+            { "id": "heads_human_male" },
+            { "id": "hair_parted_side_bangs", "recolors": { "color_1": "raven" } },
+            { "id": "torso_clothes_longsleeve2_buttoned", "recolors": { "color_1": "white" } },
+            { "id": "torso_aprons_suspenders", "variant": "brown" },
+            { "id": "neck_bowtie2", "recolors": { "color_1": "maroon" } },
+            { "id": "legs_formal_striped", "recolors": { "color_1": "charcoal" } },
+            { "id": "feet_shoes_basic", "recolors": { "color_1": "black" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

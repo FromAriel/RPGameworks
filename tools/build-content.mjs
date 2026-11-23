@@ -181,10 +181,13 @@ try {
       // per-file LPC credits with the build.
       let partyArtFile;
       const artMembers = party ? party.members.filter(m => m.art).map(m => ({ id: m.id, character: m.art })) : [];
-      if (artMembers.length) {
+      // Map characters (decision 0019 S1.5g): objects that stand as an LPC character, in map order.
+      const mapCharacters = [...new Set([...maps.values()].flatMap(map => map.objects.flatMap(object => object.character ? [object.character] : [])))];
+      if (artMembers.length || mapCharacters.length) {
         const lpcRoot = join(repo, 'assets/source/lpc');
         const lpcManifest = readJSON(join(lpcRoot, 'manifest.json')), lpcReduction = readJSON(join(lpcRoot, 'reduction.json'));
         for (const m of artMembers) if (!lpcManifest.characters[m.character]) throw new Error(`${game.partyFile}: member ${m.id} names LPC character "${m.character}", which assets/source/lpc/recipes.json does not define (run npm run lpc:import)`);
+        for (const [mapId, map] of maps) for (const object of map.objects) if (object.character && !lpcManifest.characters[object.character]) throw new Error(`${mapId}: object ${object.id} names LPC character "${object.character}", which assets/source/lpc/recipes.json does not define (run npm run lpc:import)`);
         const sheets = new Map();
         const reduced = (/** @type {string} */ file) => {
           let sheet = sheets.get(file);
@@ -197,7 +200,7 @@ try {
           }
           return sheet;
         };
-        const baked = bakePartyAtlas(lpcManifest, artMembers, { reduced, threshold: lpcReduction.finalAlphaThreshold, image: 'party-art.png' });
+        const baked = bakePartyAtlas(lpcManifest, artMembers, { reduced, threshold: lpcReduction.finalAlphaThreshold, image: 'party-art.png', characters: mapCharacters });
         const png = new pngjs.PNG({ width: baked.atlas.width, height: baked.atlas.height });
         png.data = Buffer.from(baked.atlas.data.buffer, baked.atlas.data.byteOffset, baked.atlas.data.byteLength);
         const pngBytes = pngjs.PNG.sync.write(png, { colorType: 6 });
@@ -207,7 +210,7 @@ try {
         partyArtFile = `party-art.${createHash('sha256').update(tableText).digest('hex').slice(0, 12)}.json`;
         writeFileSync(join(staging, partyArtFile), tableText);
         writeFileSync(join(staging, 'lpc-credits.md'), readFileSync(join(lpcRoot, 'CREDITS.md')));
-        console.log(`Baked ${artMembers.length} LPC party member(s) into ${image} (${Object.keys(baked.table.frames).length} frames).`);
+        console.log(`Baked ${artMembers.length} LPC party member(s) and ${mapCharacters.length} map character(s) into ${image} (${Object.keys(baked.table.frames).length} frames).`);
       }
       // Save schema 3 (decision 0014 M5.4d) when the game has a party roster: saves keep the party and play time.
       // Schema 4 (decision 0017 M5.5d) adds the bestiary: each enemy kind and the tags a save may record about it.

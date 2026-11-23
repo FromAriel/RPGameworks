@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { GameManifest } from '../content/generated/game';
-import type { PartyAtlasTable, PartyMemberArt } from '../content/party-atlas.mjs';
+import type { MapCharacterArt, PartyAtlasTable, PartyMemberArt } from '../content/party-atlas.mjs';
 import { fetchContent } from './map-loader';
 
 /**
@@ -46,6 +46,11 @@ export function addPartyTexture(textures: Phaser.Textures.TextureManager, art: P
   return key;
 }
 
+/** A map character's art (decision 0019 S1.5g), if the table has it. */
+export function mapCharacterArt(art: PartyArt | null, id: string): MapCharacterArt | null {
+  return art?.table.characters?.[id] ?? null;
+}
+
 /** A member's art, if the table has it. */
 export function memberArt(art: PartyArt | null, id: string): PartyMemberArt | null {
   return art?.table.members[id] ?? null;
@@ -73,6 +78,9 @@ function readTable(value: unknown, file: string): PartyAtlasTable {
     const names = [m.stand.left, m.stand.right, m.stand.up, m.stand.down, m.portrait, ...[m.walk, m.attack].flatMap(a => [...(a.left ?? []), ...(a.right ?? []), ...(a.up ?? []), ...(a.down ?? [])]), ...(m.hurt.front ?? [])];
     for (const name of names) if (!table.frames[name]) bad(`${id} names a missing frame ${name}`);
     if (!m.walk.left?.length || !m.walk.right?.length || !m.walk.up?.length || !m.walk.down?.length || !m.attack.left?.length || !m.hurt.front?.length) bad(`${id} is missing an animation`);
+  }
+  for (const [id, c] of Object.entries(table.characters ?? {})) {
+    for (const name of [c.stand.left, c.stand.right, c.stand.up, c.stand.down]) if (!table.frames[name]) bad(`map character ${id} names a missing frame ${name}`);
   }
   return table;
 }

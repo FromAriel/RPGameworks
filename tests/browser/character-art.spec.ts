@@ -1,4 +1,4 @@
-import { test, expect, openRoom, openTools, snapshot } from './helpers';
+import { test, expect, openRoom, openTools, snapshot, tapDirection } from './helpers';
 
 /**
  * Decision 0019 S1.5f: the map hero is the party leader drawn from the party's baked LPC art. It stands on LPC's
@@ -22,6 +22,36 @@ test('the LPC hero stands, walks each way with its own row, and keeps its feet o
   }
 });
 
+const MARA = 'demo:object.workshop.caretaker', CLERK = 'demo:object.gallery.archive-clerk';
+const mara = async (page: import('@playwright/test').Page) => (await snapshot(page)).characterFrames[MARA];
+
+test('Mara and the archive clerk stand in their own LPC looks; Mara turns to talk, then back', { tag: ['@world', '@dialogue'] }, async ({ page }) => {
+  // Decision 0019 S1.5g.
+  await openRoom(page);
+  await expect.poll(() => mara(page)).toBe('character/mara/stand/down');
+  expect(await tapDirection(page, 'ArrowDown')).toBe('walked'); // (10,7), above Mara at (10,8).
+  expect((await snapshot(page)).interactionTarget).toBe(MARA);
+  await page.keyboard.press('KeyE');
+  await expect(page.locator('#interaction-dialog')).toBeVisible();
+  expect(await mara(page)).toBe('character/mara/stand/up');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#interaction-dialog')).toBeHidden();
+  await expect.poll(() => mara(page)).toBe('character/mara/stand/down');
+  // From her right: she faces right.
+  expect(await tapDirection(page, 'ArrowRight')).toBe('walked'); // (11,7)
+  expect(await tapDirection(page, 'ArrowDown')).toBe('walked'); // (11,8)
+  expect(await tapDirection(page, 'ArrowLeft')).toBe('turned');
+  expect((await snapshot(page)).interactionTarget).toBe(MARA);
+  await page.keyboard.press('KeyE');
+  await expect(page.locator('#interaction-dialog')).toBeVisible();
+  expect(await mara(page)).toBe('character/mara/stand/right');
+  await page.keyboard.press('Escape');
+  await expect.poll(() => mara(page)).toBe('character/mara/stand/down');
+  await page.goto('about:blank');
+  await openRoom(page, '?map=demo:map.gallery');
+  await expect.poll(async () => (await snapshot(page)).characterFrames[CLERK]).toBe('character/clerk/stand/down');
+});
+
 test('a failed art request leaves the placeholder hero visible and gameplay usable', { tag: ['@world', '@smoke'] }, async ({ page }) => {
   await page.route('**/generated/content/party-art.*.png', route => route.abort());
   await openRoom(page);
@@ -29,6 +59,7 @@ test('a failed art request leaves the placeholder hero visible and gameplay usab
   expect(state.characterArtStatus).toBe('fallback');
   expect(state.heroArt).toBe('static');
   expect(state.heroFrame).toBeNull();
+  expect(state.characterFrames).toEqual({}); // Mara keeps her placeholder frame too.
   await expect(page.locator('#status')).toContainText('original hero remains playable');
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).actorTile.x).toBeGreaterThan(state.actorTile.x);

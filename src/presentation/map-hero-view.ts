@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { STEP_MS } from '../domain/movement';
 import type { Actor } from '../domain/movement';
-import type { PartyMemberArt } from '../content/party-atlas.mjs';
+import type { MapCharacterArt, PartyMemberArt } from '../content/party-atlas.mjs';
 
 /**
  * The walking hero on the map, drawn from the party's baked LPC art (decision 0019 S1.5f; it replaces the Cute Fantasy
@@ -9,11 +9,17 @@ import type { PartyMemberArt } from '../content/party-atlas.mjs';
  * way, one stride per tile (an LPC walk cycle is two strides). Feet stand where the old hero's did: on the bottom edge
  * of the actor's tile. Left and right use LPC's own rows, never a mirror image.
  */
-export interface MapHeroArt {
+export interface MapArt {
   /** The party atlas texture the map owns. */
   readonly texture: string;
-  readonly member: PartyMemberArt;
+  /** The party leader, who walks the map; null keeps the placeholder hero. */
+  readonly hero: PartyMemberArt | null;
+  /** Map characters by LPC character id (S1.5g). */
+  readonly characters: Readonly<Record<string, MapCharacterArt>>;
 }
+
+/** Draw depth for a figure whose feet are at y: below figures stand in front (all above tiles and objects). */
+export const figureDepth = (feetY: number): number => 1 + feetY / 100_000;
 
 /** How long a step may pause between tiles while a direction is held before the hero is shown standing. */
 const STOP_GRACE_MS = 50;
@@ -28,11 +34,14 @@ export class MapHeroView {
   private readonly footOffset: number;
   private readonly frameMs: number;
 
-  constructor(scene: Phaser.Scene, private readonly art: MapHeroArt, tileSize: number) {
-    const { stand, walk } = art.member;
+  private readonly art: { readonly member: PartyMemberArt };
+
+  constructor(scene: Phaser.Scene, texture: string, member: PartyMemberArt, tileSize: number) {
+    this.art = { member };
+    const { stand, walk } = member;
     this.footOffset = tileSize / 2;
     this.frameMs = (2 * STEP_MS) / (walk.down?.length || 8);
-    this.sprite = scene.add.image(0, 0, art.texture, stand.down).setOrigin(stand.anchor.x / stand.size, stand.anchor.y / stand.size).setDepth(1);
+    this.sprite = scene.add.image(0, 0, texture, stand.down).setOrigin(stand.anchor.x / stand.size, stand.anchor.y / stand.size).setDepth(1);
   }
 
   /** The atlas frame shown now. */
@@ -52,7 +61,7 @@ export class MapHeroView {
     const frame = walking ? walk[this.facing]?.[this.index] ?? stand[this.facing] : stand[this.facing];
     const size = walking ? walk.size : stand.size, anchor = walking ? walk.anchor : stand.anchor;
     if (this.sprite.frame.name !== frame) this.sprite.setFrame(frame).setOrigin(anchor.x / size, anchor.y / size);
-    this.sprite.setPosition(Math.round(x), Math.round(y + this.footOffset));
+    this.sprite.setPosition(Math.round(x), Math.round(y + this.footOffset)).setDepth(figureDepth(this.sprite.y));
   }
 
   destroy(): void { this.sprite.destroy(); }

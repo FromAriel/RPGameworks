@@ -133,7 +133,9 @@ describe('reduction and compositing (ports of DanJen Delver\'s)', () => {
     expect(checked).toBeGreaterThan(20);
     expect(manifest.ramps.length).toBeGreaterThan(0); // The party is recoloured, so ramps are exercised.
     // Ariel's party (S1.5b): oversized actions for the sword and the bow's walk; standard ones otherwise.
-    expect(Object.keys(manifest.characters)).toEqual(['hero', 'archer', 'lancer', 'mage']);
+    // Then the map characters (S1.5g), who only walk.
+    expect(Object.keys(manifest.characters)).toEqual(['hero', 'archer', 'lancer', 'mage', 'mara', 'clerk']);
+    for (const id of ['mara', 'clerk']) expect(Object.keys(manifest.characters[id].actions), id).toEqual(['walk']);
     expect(manifest.characters.hero.actions.slash_128).toMatchObject({ kind: 'custom', size: 96 });
     expect(manifest.characters.archer.actions.walk_128).toMatchObject({ kind: 'custom', size: 96 });
     expect(manifest.characters.mage.actions.spellcast).toMatchObject({ kind: 'standard', size: 48 });

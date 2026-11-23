@@ -4,6 +4,31 @@
 
 **GitHub Actions tests disabled (November 9, 2026).** Ariel disabled the "Foundation checks (manual full matrix)" workflow (`ci.yml`, via `gh workflow disable`) because the three-runner suite used about an hour of billed Actions minutes in one evening. The file stays in the repository but cannot be dispatched until re-enabled. All tests now run locally only; AGENTS.md records the rule. Pages publishing (`pages.yml`, build and deploy, no tests) is unchanged and still manual. Next: a more focused local test strategy (smoke tier, area tags, setup shortcuts instead of real-time walking), planned before any code changes.
 
+## S1.5f the LPC hero walks the map; Cute Fantasy retired — November 23, 2026, local
+
+[Decision 0019](decisions/0019-permissive-lpc-art.md), map packet. **The map hero is now the party's LPC Captain.**
+
+- **Ariel's choices:**
+  - retire the Cute Fantasy starter hero;
+  - the battle-sized figure on the map;
+  - LPC's true standing frame (feet together), on the map and for battlers at rest;
+  - Mara and the archive clerk chosen from previews next (S1.5g), turning to face the hero while you talk.
+- **Map:** the Captain stands facing the way it last moved, walks with that way's own LPC row at one stride per tile, and keeps its feet where the old hero's were.
+- **Battle and menus:** resting battlers and the Formation grid now use the standing frame instead of a mid-stride walk frame. Portraits come from the front standing frame.
+- **Bake:** 240 atlas frames (walks in four directions and four standing frames per member), up from 158.
+- **Retired:** the Cute Fantasy pack, the character pack v1 format (decision 0003) with its tools, schemas, fixtures and tests, the Starter hero credit and its NOTICE entry. The pack remains in git history.
+- **Fallback:** without a party roster or its art, the map keeps the placeholder hero; a load failure shows the same warning as before.
+- **Tests:**
+  - **Rewritten:** `character-art.spec.ts` (4): standing, walking all four ways with feet on the tile, a blocked atlas, a corrupt frame table, and bounded textures across restarts.
+  - **New:** in `party-art.spec.ts`, the map hero keeps its art after a battle.
+  - **Updated:** the atlas unit test (four-way walk, standing frames), battle and Formation frame names, `'layered'` → `'lpc'`, and two fixture games without a party, which now keep the placeholder hero.
+  - **Local results:**
+    - typecheck, `check:test-tags` (213) and `check:external-art` passed;
+    - unit tests 604/604 (one skin test timed out under load in the full run and passed alone; 29 fewer than before, the retired character-pack, starter-hero and appearance-selection tests);
+    - browser suite 209/214 in a parallel run: the Credits test still expected the retired Starter hero credit (fixed, then passed); the other 4 (two battle tests and two party-art tests: a timeout, a network buffer error and two timing checks under load) passed when rerun alone.
+- **Not checked by Ariel yet:** the hero walking in play (size on the map, walk speed, the standing pose).
+- **Next:** **S1.5g**, LPC looks for Mara and the Gallery archive clerk, chosen from previews. **S1.5e** (Ariel's spear) whenever it is ready.
+
 ## S1.5d the party drawn in its LPC art — November 22, 2026, local
 
 [Decision 0019](decisions/0019-permissive-lpc-art.md), fourth packet. **The tiny placeholder figures are replaced.**

@@ -1,22 +1,23 @@
 /**
  * Party atlas bake (decision 0019, roadmap S1.5c). The content build bakes each party member's LPC character, from the
- * committed sheets in assets/source/lpc, into one atlas: for each member its walk and its attack facing left and right,
- * its hurt (a single row in LPC), a standing frame each way (the walk's first frame: none of the chosen outfits has an
- * idle), and a front-facing upper-body portrait for the menus (Ariel, S1.5c). Deterministic: the same manifest and
+ * committed sheets in assets/source/lpc, into one atlas: for each member its walk facing all four ways (the map walks it,
+ * S1.5f), its attack facing left and right, its hurt (a single row in LPC), a standing frame each way (LPC's at-rest
+ * walk column, feet together: none of the chosen outfits has an idle; Ariel, S1.5f), and a front-facing upper-body
+ * portrait for the menus (Ariel, S1.5c). Deterministic: the same manifest and
  * sheets give the same pixels.
  *
  * Pure: the caller supplies the reduced sheets and encodes the PNG. A JSDoc-typed .mjs for the content build.
  */
-import { bakeFrame } from './lpc/bake.mjs';
+import { bakeFrame, bakeStandFrame } from './lpc/bake.mjs';
 
 /** @typedef {import('./lpc/bake.mjs').Rgba} Rgba */
 /** @typedef {{ x: number, y: number, w: number, h: number }} FrameRect */
 /**
- * One animation: its frames facing left and right (or `front` for a single-row action), the frame size, how long each
- * frame shows, and where the feet are within a frame (the stage stands the frame there).
+ * One animation: its frames facing left and right (the walk also up and down; `front` for a single-row action), the
+ * frame size, how long each frame shows, and where the feet are within a frame (the stage stands the frame there).
  * @typedef {{ action: string, size: number, frameMs: number, anchor: { x: number, y: number },
- *   left?: string[], right?: string[], front?: string[] }} PartyAnimation
- * @typedef {{ character: string, stand: { left: string, right: string, size: number, anchor: { x: number, y: number } },
+ *   left?: string[], right?: string[], up?: string[], down?: string[], front?: string[] }} PartyAnimation
+ * @typedef {{ character: string, stand: { left: string, right: string, up: string, down: string, size: number, anchor: { x: number, y: number } },
  *   walk: PartyAnimation, attack: PartyAnimation, hurt: PartyAnimation, portrait: string }} PartyMemberArt
  * @typedef {{ format: 'rpgameworks.party-atlas', formatVersion: 1, image: string, size: { width: number, height: number },
  *   frames: Record<string, FrameRect>, members: Record<string, PartyMemberArt> }} PartyAtlasTable
@@ -63,22 +64,23 @@ export function bakePartyAtlas(manifest, members, { reduced, threshold, image })
     const add = (name, pixels) => { frames.push({ name: `${id}/${name}`, pixels }); return `${id}/${name}`; };
     const count = (/** @type {any} */ a) => (a.kind === 'standard' ? a.cycle.length : (a.frames[1] ?? a.frames[0]).length);
     const rowsOf = (/** @type {any} */ a) => (a.kind === 'standard' ? a.rows : a.frames.length);
-    /** @param {string} action @returns {PartyAnimation} */
-    const animation = (action) => {
+    /** @param {string} action @param {readonly ('left' | 'right' | 'up' | 'down')[]} sides @returns {PartyAnimation} */
+    const animation = (action, sides = ['left', 'right']) => {
       const a = spec.actions[action];
       /** @type {PartyAnimation} */ const out = { action, size: a.size, frameMs: FRAME_MS[/** @type {keyof typeof FRAME_MS} */ (action)] ?? 100, anchor: anchorFor(a.size) };
-      const directions = rowsOf(a) >= 4 ? /** @type {const} */ (['left', 'right']) : /** @type {const} */ (['front']);
+      const directions = rowsOf(a) >= 4 ? sides : /** @type {const} */ (['front']);
       for (const direction of directions) {
         const row = direction === 'front' ? 'up' : direction; // A single-row action has only the first row.
         out[direction] = Array.from({ length: count(a) }, (_, phase) => add(`${action}/${direction}/${phase}`, bakeFrame(manifest, character, action, row, phase, reduced, threshold)));
       }
       return out;
     };
-    const walk = animation(actions.walk), attack = animation(actions.attack), hurt = animation(actions.hurt);
+    const walk = animation(actions.walk, ['left', 'right', 'up', 'down']), attack = animation(actions.attack), hurt = animation(actions.hurt);
     const walkSpec = spec.actions[actions.walk];
-    const stand = { left: /** @type {string[]} */ (walk.left)[0] ?? '', right: /** @type {string[]} */ (walk.right)[0] ?? '', size: walk.size, anchor: walk.anchor };
-    // The portrait: the walk's first frame facing the viewer, cut to head and shoulders around the figure's top.
-    const front = bakeFrame(manifest, character, actions.walk, 'down', 0, reduced, threshold);
+    const standing = (/** @type {'left' | 'right' | 'up' | 'down'} */ side) => add(`stand/${side}`, bakeStandFrame(manifest, character, actions.walk, side, reduced, threshold));
+    const stand = { left: standing('left'), right: standing('right'), up: standing('up'), down: standing('down'), size: walk.size, anchor: walk.anchor };
+    // The portrait: the standing frame facing the viewer, cut to head and shoulders around the figure's top.
+    const front = bakeStandFrame(manifest, character, actions.walk, 'down', reduced, threshold);
     add('portrait', portraitCrop(front, walkSpec.size));
     art[id] = { character, stand, walk, attack, hurt, portrait: `${id}/portrait` };
   }

@@ -32,7 +32,7 @@ import { loadMapCheckpoint,loadMapDestination } from '../platform/map-loader';
 import type { InputMode } from '../platform/input';
 import { MapView, ATLAS } from './map-view';
 import { InteractionDialog } from './ui/interaction-dialog';
-import { CharacterArt } from './character-view';
+import type { MapHeroArt } from './map-hero-view';
 import type { ConfirmationDialogParts } from './ui/components';
 import type { GamepadSource } from '../platform/gamepad';
 import type { LoadedMap } from '../platform/map-loader';
@@ -117,7 +117,8 @@ export function createFoundation(elements: FoundationElements, onError: (message
   let resizeFrame: number | null = null;
   let appliedScale = 0;
   const appLifetime = new AbortController();
-  let characterArt: CharacterArt | null = null;
+  /** The map hero's art (decision 0019 S1.5f): the party leader's LPC frames in an app-owned texture, kept across restarts. */
+  let mapHero: MapHeroArt | null = null;
   let characterArtStatus: RuntimeSnapshot['characterArtStatus'] = 'loading';
   // The Items screen's tab and sort, kept for the whole play session (Ariel, U2.2), not in saves.
   const itemsMemory: ItemsMemory = { tab: ALL_ITEMS, sort: 'type' };
@@ -271,15 +272,9 @@ export function createFoundation(elements: FoundationElements, onError: (message
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.release, this);
         this.events.once(Phaser.Scenes.Events.DESTROY, this.release, this);
         this.transfer = new TransitionTask<LoadedMap>();
-        // Decoration only (decision 0019 S1.5d): portraits use the placeholders until the party art arrives, or for good
-        // if it cannot load.
-        const artLifetime = this.sceneLifetime.signal;
-        loadPartyArt(elements.base, content.game, artLifetime).then(art => { if (!artLifetime.aborted) this.partyArt = art; })
-          .catch((cause: unknown) => { if (!artLifetime.aborted) console.warn('[RPGameworks] Party art unavailable; using placeholder frames:', cause); });
         this.mode = 'exploration'; this.message = null;this.dialogue=null;this.battle=null;this.battleView=null; this.transitionError = null; this.menuPending = false;
         this.cameras.main.setRoundPixels(true);
-        characterArt ??= new CharacterArt(this.textures, import.meta.env.BASE_URL);
-        this.room = new MapView(this, content, elements.session.current, characterArt);
+        this.room = new MapView(this, content, elements.session.current, mapHero);
         this.room.bind(elements.session);
         this.room.show();
         const registry = new ScreenRegistry();
@@ -345,15 +340,22 @@ export function createFoundation(elements: FoundationElements, onError: (message
         elements.burst.disabled = false; elements.restart.disabled = false; elements.interact.disabled = false;
         phase = 'ready';
         scheduleResize();
+        // Decoration only (decision 0019 S1.5d, S1.5f): the map hero and the menu portraits use the placeholders until the
+        // party art arrives, or for good if it cannot load. The party's first member walks the map.
         const lifetime = this.sceneLifetime.signal;
-        void characterArt.load(lifetime).then(() => {
+        void loadPartyArt(elements.base, content.game, lifetime).then(art => {
           if (disposed || lifetime.aborted || this.sceneLifetime?.signal !== lifetime) return;
-          this.room?.attachCharacterArt(characterArt!);
-          characterArtStatus = 'ready';
+          this.partyArt = art;
+          const leader = elements.session.current.roster?.members[0]?.id;
+          const member = art && leader ? memberArt(art, leader) : null;
+          if (art && member) mapHero ??= { texture: addPartyTexture(this.textures, art, 'map'), member };
+          if (mapHero) this.room?.attachHeroArt(mapHero);
+          characterArtStatus = mapHero ? 'ready' : 'fallback';
           elements.onArtWarning(null);
         }).catch((cause: unknown) => {
           if (lifetime.aborted || disposed) return;
           characterArtStatus = 'fallback';
+          console.warn('[RPGameworks] Party art unavailable; using placeholder frames:', cause);
           elements.onArtWarning(`Character art could not load; the original hero remains playable. ${cause instanceof Error ? cause.message : String(cause)}`);
         });
       } catch (cause) { this.fail(cause); }
@@ -479,7 +481,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         const session=elements.session.current;
         this.battle=new BattleSession(battleEncounter(encounter,session.roster,session.party()),uses,actions);this.battleLoad=null;this.battleMenu=new BattleMenu();this.battleRecorded=false;
         const opening=this.battle.snapshot();
-        const party=partyArt?{texture:addPartyTexture(this.textures,partyArt),members:new Map(Object.entries(partyArt.table.members))}:null;
+        const party=partyArt?{texture:addPartyTexture(this.textures,partyArt,'battle'),members:new Map(Object.entries(partyArt.table.members))}:null;
         this.battleView=new BattleView(this,opening,{atlas:ATLAS,skin,creatures,partyArt:party,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,itemName:itemId=>this.battleItemName(itemId),
           impact:(screen,seed)=>{const camera=this.cameras.main;this.room?.effects.request({effectId:'demo:fx.impact',anchor:{kind:'world',x:screen.x+camera.scrollX,y:screen.y+camera.scrollY},seed});}});
         this.playBattle(opening);
@@ -621,7 +623,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       const current=elements.session.current;
       const candidate=new SessionState({items:current.catalog,facts:current.factCatalog,quests:current.questCatalog,...(current.roster?{party:current.roster}:{}),bestiary:current.bestiaryKinds},envelope.session);
       const result=await this.transfer.run(signal=>loadMapCheckpoint(elements.base,content.game,envelope.checkpoint.mapId,envelope.checkpoint.tile,envelope.checkpoint.facing,candidate,signal),next=>{
-        const prepared=new MapView(this,next,candidate,characterArt??undefined);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
+        const prepared=new MapView(this,next,candidate,mapHero);prepared.setEffectsEnabled(elements.effects.checked);try{prepared.show();}catch(cause){prepared.destroy();old.show();throw cause;}
         elements.session.activate(candidate);prepared.bind(elements.session);this.room=prepared;content=next;old.destroy();transitions+=1;
       });
       if(result.kind==='failed'){this.setMode('message');this.dialog.show('Save could not load',result.error.message.slice(0,2000),'Your current room and session are unchanged.','Close','Close',{soleAction:true});return;}
@@ -704,7 +706,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         (next) => {
           // Construct/validate the new view while the old view is still usable.
           const old = this.room!;
-          const prepared = new MapView(this, next, elements.session.current, characterArt??undefined);
+          const prepared = new MapView(this, next, elements.session.current, mapHero);
           prepared.setEffectsEnabled(elements.effects.checked);
           prepared.bind(elements.session);
           try { prepared.show(); } catch (cause) { prepared.destroy(); old.show(); throw cause; }
@@ -834,7 +836,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
         actorPixel: { x: Math.round(position.x), y: Math.round(position.y) },
         moving: actor.motion !== null, facing: actor.facing,
         heroArt: room?.heroArt ?? 'static', heroFrame: room?.heroFrame ?? null,
-        heroMirrored: room?.heroMirrored ?? false, heroFeet: room?.heroFeet ?? null,
+        heroFeet: room?.heroFeet ?? null,
         characterArtStatus,
         activeScenes: game.scene.getScenes(true).length,
         displayObjects: current?.children.length ?? 0,
@@ -866,7 +868,7 @@ export function createFoundation(elements: FoundationElements, onError: (message
       elements.restart.disabled = true;
       elements.interact.disabled = true;
       game.destroy(true);
-      characterArt?.dispose();
+      mapHero = null;
     },
   };
 }

@@ -35,7 +35,7 @@ test('the drill shows four party members and three creatures on the grid, with s
   expect(Object.keys(battle.hp).sort()).toEqual(['archer', 'bat', 'golem', 'hero', 'lancer', 'mage', 'ogre']);
   expect(battle.art.ogre!.source).toBe('creature');
   expect(battle.art.ogre!.frame).toMatch(/^dcss\/monster\/two_headed_ogre_new@left\//);
-  expect(battle.art.lancer).toMatchObject({ source: 'lpc', frame: 'lancer/walk/left/0', shields: 0 }); // LPC art since decision 0019 S1.5d.
+  expect(battle.art.lancer).toMatchObject({ source: 'lpc', frame: 'lancer/stand/left', shields: 0 }); // LPC art since decision 0019 S1.5d, standing since S1.5f.
   // One living ally ahead in the lane: the archer behind the hero, the mage behind the lancer, the bat behind the golem.
   expect(Object.fromEntries(Object.entries(battle.art).map(([id, a]) => [id, a.shields]))).toEqual({ hero: 0, archer: 1, lancer: 0, mage: 1, ogre: 0, golem: 0, bat: 1 });
 });

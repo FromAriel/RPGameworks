@@ -27,6 +27,10 @@ const opaque = (name: string) => {
   for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) if (baked.atlas.data[((r.y + y) * baked.atlas.width + r.x + x) * 4 + 3]) return true;
   return false;
 };
+const pixels = (name: string) => {
+  const r = baked.table.frames[name]!;
+  return Array.from({ length: r.h }, (_, y) => Buffer.from(baked.atlas.data.subarray(((r.y + y) * baked.atlas.width + r.x) * 4, ((r.y + y) * baked.atlas.width + r.x + r.w) * 4)).toString('hex')).join('');
+};
 
 describe('the party atlas', () => {
   it('draws every demo party member from an LPC character the recipes define', () => {
@@ -44,7 +48,7 @@ describe('the party atlas', () => {
     }
   });
 
-  it('gives each member a walk and an attack facing both ways, hurt, a standing frame each way and an upper-body portrait', () => {
+  it('gives each member a four-way walk, an attack facing both ways, hurt, a standing frame each way and an upper-body portrait', () => {
     const expected = { hero: ['walk', 'slash_128', 96], archer: ['walk_128', 'shoot', 48], lancer: ['walk', 'slash_128', 96], mage: ['walk', 'spellcast', 48] } as const;
     for (const [id, [walk, attack, attackSize]] of Object.entries(expected)) {
       const art = baked.table.members[id]!;
@@ -54,8 +58,15 @@ describe('the party atlas', () => {
         expect(anim.left!.length).toBeGreaterThan(0);
         expect(anim.anchor).toEqual({ x: anim.size / 2, y: anim.size / 2 + 16 }); // Feet at (24, 40) in a 48-pixel frame.
       }
+      expect([art.walk.up!.length, art.walk.down!.length], id).toEqual([art.walk.left!.length, art.walk.left!.length]); // The map walks all four ways (S1.5f).
       expect(art.hurt.front!.length, id).toBe(6); // LPC's hurt is a single row.
-      expect([art.stand.left, art.stand.right]).toEqual([art.walk.left![0], art.walk.right![0]]); // No idle: the walk's first frame.
+      // No idle: LPC's at-rest walk column, feet together (S1.5f). A standard walk's cycle leaves it out; the bow's
+      // oversized walk lists it first.
+      expect([art.stand.left, art.stand.right, art.stand.up, art.stand.down]).toEqual(['left', 'right', 'up', 'down'].map(side => `${id}/stand/${side}`));
+      expect([art.stand.size, art.stand.anchor]).toEqual([art.walk.size, art.walk.anchor]);
+      for (const side of ['left', 'right', 'up', 'down'] as const) {
+        expect(pixels(art.stand[side]) === pixels(art.walk[side]![0]!), `${id} ${side}`).toBe(art.walk.action === 'walk_128');
+      }
       expect(baked.table.frames[art.portrait]).toMatchObject({ w: PORTRAIT, h: PORTRAIT });
     }
   });

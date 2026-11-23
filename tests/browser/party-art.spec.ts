@@ -33,7 +33,7 @@ test('the party stands, strikes and is portrayed in its LPC art', { tag: ['@batt
   await settled(page);
   const standing = await art(page);
   for (const id of ['hero', 'archer', 'lancer', 'mage']) expect(standing[id]!.source, id).toBe('lpc');
-  expect([standing.hero!.frame, standing.archer!.frame, standing.mage!.frame]).toEqual(['hero/walk/left/0', 'archer/walk_128/left/0', 'mage/walk/left/0']);
+  expect([standing.hero!.frame, standing.archer!.frame, standing.mage!.frame]).toEqual(['hero/stand/left', 'archer/stand/left', 'mage/stand/left']);
   await page.screenshot({ path: info.outputPath('standing.png') });
   // The archer acts first: it shoots, frame by frame, then stands again.
   expect((await snapshot(page)).battle!.active).toBe('archer');
@@ -42,7 +42,25 @@ test('the party stands, strikes and is portrayed in its LPC art', { tag: ['@batt
   const seen = new Set<string>();
   await expect.poll(async () => { seen.add((await art(page)).archer!.frame); return [...seen].filter(f => f.startsWith('archer/shoot/left/')).length; }, { timeout: 3000, intervals: [30] }).toBeGreaterThan(2);
   await settled(page);
-  expect((await art(page)).archer!.frame).toBe('archer/walk_128/left/0');
+  expect((await art(page)).archer!.frame).toBe('archer/stand/left');
+});
+
+test('the map hero keeps its LPC art after a battle removes its own texture', { tag: ['@battle', '@world'] }, async ({ page }) => {
+  await openRoom(page, '?map=demo:map.supply-room');
+  await expect.poll(async () => (await snapshot(page)).heroArt).toBe('lpc');
+  const before = (await snapshot(page)).textureCount;
+  await page.goto('about:blank');
+  await startPractice(page);
+  await settled(page);
+  await button(page, 'Run').click();
+  await settled(page);
+  await button(page, 'Leave').click();
+  await expect(page.locator('#stage')).toBeFocused();
+  const state = await snapshot(page);
+  expect(state.battle).toBeNull();
+  expect(state.heroArt).toBe('lpc'); // Decision 0019 S1.5f: the map owns its own party texture.
+  expect(state.heroFrame).toBe('hero/stand/left');
+  expect(state.textureCount).toBe(before); // The battle's party and creature textures are gone; the map's remains.
 });
 
 test('a fallen member lies down, dimmed', { tag: ['@battle'] }, async ({ page }) => {

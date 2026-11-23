@@ -82,14 +82,14 @@ async function fakePad(page: Page): Promise<void> {
   await openRoom(page);
   const marker=await page.evaluate(()=>{(window as any).__DOCUMENT_MARKER__=Math.random();return (window as any).__DOCUMENT_MARKER__;});
   await cross(page,'ArrowRight',GALLERY);
-  expect((await snapshot(page)).heroArt).toBe('layered');
+  expect((await snapshot(page)).heroArt).toBe('lpc');
   expect((await snapshot(page)).actorTile).toEqual({x:3,y:6}); expect((await snapshot(page)).facing).toBe('right');
   await step(page,'ArrowLeft'); // One backward tile remains in the Gallery.
   expect((await snapshot(page)).actorTile).toEqual({x:2,y:6});
   expect((await snapshot(page)).mapId).toBe(GALLERY);
   expect((await snapshot(page)).spawnId).toBe('from-workshop'); expect(maps).toHaveLength(2);
   await cross(page,'ArrowLeft',WORKSHOP);
-  expect((await snapshot(page)).heroArt).toBe('layered');
+  expect((await snapshot(page)).heroArt).toBe('lpc');
   expect((await snapshot(page)).actorTile).toEqual({x:16,y:6}); expect((await snapshot(page)).facing).toBe('left');
   await step(page,'ArrowRight'); // One backward tile remains in the Workshop.
   expect((await snapshot(page)).actorTile).toEqual({x:17,y:6});

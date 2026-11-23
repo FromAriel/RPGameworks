@@ -6,7 +6,8 @@ import { fetchContent } from './map-loader';
 /**
  * The party's baked LPC art (decision 0019 S1.5d): one atlas image and, per party member, its animations, standing
  * frames and portrait. The frame table and decoded image are fetched once per content build and cached; menus draw
- * portraits straight from the image, and a battle adds the image as a texture it owns and removes when it ends. If the
+ * portraits straight from the image; a battle adds the image as a texture it owns and removes when it ends, and the map
+ * keeps its own texture for the walking hero (S1.5f) for the app's lifetime. If the
  * art cannot load, or a member has none, the member is drawn with its placeholder frame.
  */
 export interface PartyArt {
@@ -31,9 +32,12 @@ export async function loadPartyArt(base: URL, game: GameManifest, signal: AbortS
   return art;
 }
 
-/** Add the atlas as a texture with every frame named, if it is not there yet; returns the texture key. */
-export function addPartyTexture(textures: Phaser.Textures.TextureManager, art: PartyArt): string {
-  const key = `party-art:${art.table.image}`;
+/**
+ * Add the atlas as a texture with every frame named, if it is not there yet; returns the texture key. Each owner gets
+ * its own key, so a battle removing its texture never takes the map hero's.
+ */
+export function addPartyTexture(textures: Phaser.Textures.TextureManager, art: PartyArt, owner: 'map' | 'battle'): string {
+  const key = `party-art:${owner}:${art.table.image}`;
   if (!textures.exists(key)) {
     const texture = textures.addImage(key, art.image);
     if (!texture) throw new Error(`${art.table.image} could not become a texture`);
@@ -66,9 +70,9 @@ function readTable(value: unknown, file: string): PartyAtlasTable {
     if (![r.x, r.y, r.w, r.h].every(Number.isInteger) || r.x < 0 || r.y < 0 || r.x + r.w > table.size.width || r.y + r.h > table.size.height) bad(`frame ${name} lies outside the atlas`);
   }
   for (const [id, m] of Object.entries(table.members ?? {})) {
-    const names = [m.stand.left, m.stand.right, m.portrait, ...[m.walk, m.attack].flatMap(a => [...(a.left ?? []), ...(a.right ?? [])]), ...(m.hurt.front ?? [])];
+    const names = [m.stand.left, m.stand.right, m.stand.up, m.stand.down, m.portrait, ...[m.walk, m.attack].flatMap(a => [...(a.left ?? []), ...(a.right ?? []), ...(a.up ?? []), ...(a.down ?? [])]), ...(m.hurt.front ?? [])];
     for (const name of names) if (!table.frames[name]) bad(`${id} names a missing frame ${name}`);
-    if (!m.walk.left?.length || !m.attack.left?.length || !m.hurt.front?.length) bad(`${id} is missing an animation`);
+    if (!m.walk.left?.length || !m.walk.right?.length || !m.walk.up?.length || !m.walk.down?.length || !m.attack.left?.length || !m.hurt.front?.length) bad(`${id} is missing an animation`);
   }
   return table;
 }

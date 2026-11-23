@@ -38,7 +38,7 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   ]);
   await expect.poll(()=>page.evaluate(()=>window.__RPGAMEWORKS__?.snapshot().mapId)).toBe('demo:map.gallery');
   await expect.poll(async()=>(await snapshot(page)).phase).toBe('ready');
-  await expect.poll(async()=>(await snapshot(page)).heroArt).toBe('layered');
+  await expect.poll(async()=>(await snapshot(page)).heroArt).toBe('lpc');
   const initial=await snapshot(page);
   for(let i=1;i<=6;i++){
     await openTools(page, 'debug'); await page.locator('#restart').click();
@@ -54,7 +54,8 @@ const registry = (): any => JSON.parse(readFileSync('content/games/demo/game.jso
   await page.route('**/generated/content/state-index.aaaaaaaaaaaa.json',route=>route.fulfill({json:{schemaVersion:1,gameId:game.id,saveCompatibilityVersion:1,maps:[{id:'demo:map.fixture',name:'Content-only fixture',width:2,height:2,spawns:['start']}],itemIds:[],factIds:[],placementIds:[]}}));
   await page.route('**/generated/content/maps/fixture.json',route=>route.fulfill({json:map}));
   await openRoom(page,'?map=demo:map.fixture');
-  const state=await snapshot(page);expect(state.mapName).toBe('Content-only fixture');expect(state.displayObjects).toBe(6);expect(state.actorTile).toEqual({x:0,y:0});
+  const state=await snapshot(page);expect(state.mapName).toBe('Content-only fixture');expect(state.displayObjects).toBe(5);expect(state.heroArt).toBe('static'); // No party roster, so no LPC map hero (decision 0019 S1.5f): four tiles and the placeholder hero.
+  expect(state.actorTile).toEqual({x:0,y:0});
 });
 
 for(const mode of ['malformed','blocked-spawn','wrong-id','missing-frame'] as const){

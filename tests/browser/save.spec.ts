@@ -34,7 +34,7 @@ test('three-slot UI exposes real unavailable Load commands and saves/loads a ses
   await page.screenshot({path:info.outputPath('save-screen.png')});
   await leave(page);await step(page,'ArrowDown');expect((await snapshot(page)).actorTile).not.toEqual(savedTile);
   await openSaves(page);await confirm(page,0,'load');await expect(page.locator('#game-menu')).toBeHidden();await expect.poll(async()=>(await snapshot(page)).inputMode).toBe('exploration');
-  const after=await snapshot(page);expect(after.actorTile).toEqual(savedTile);expect(after.session.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(after.activeScenes).toBe(1);expect(after.sessionSubscribers).toBe(1);expect(after.heroArt).toBe('layered');await expect(page.locator('#stage')).toBeFocused();
+  const after=await snapshot(page);expect(after.actorTile).toEqual(savedTile);expect(after.session.facts['demo:fact.gallery.plaque-read']).toBe(true);expect(after.activeScenes).toBe(1);expect(after.sessionSubscribers).toBe(1);expect(after.heroArt).toBe('lpc');await expect(page.locator('#stage')).toBeFocused();
 });
 
 test('a deliberate load restores IndexedDB progress after a full browser reload',{ tag: ['@saves', '@smoke'] }, async({page})=>{

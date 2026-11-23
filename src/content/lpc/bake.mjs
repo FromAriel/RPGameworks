@@ -135,11 +135,7 @@ export function bakeFrame(manifest, character, action, direction, phase, reduced
   if (row < 0) throw new Error(`Unknown direction ${direction}`);
   /** @param {LayerRef} layer */
   const ramps = layer => layer.ramps.map(i => manifest.ramps[i]);
-  if (spec.kind === 'standard') {
-    const col = spec.cycle[phase % spec.cycle.length];
-    const layers = spec.layers.map((/** @type {LayerRef} */ layer) => recolor(extractFrame(reduced(layer.file), col, row, spec.size), ramps(layer)));
-    return binaryAlpha(composite(layers, spec.size), threshold);
-  }
+  if (spec.kind === 'standard') return bakeColumn(manifest, spec, spec.cycle[phase % spec.cycle.length], row, reduced, threshold);
   const frames = spec.frames[row];
   if (!frames) throw new Error(`No ${direction} row for ${action}`);
   const phaseIndex = phase % frames.length;
@@ -149,5 +145,28 @@ export function bakeFrame(manifest, character, action, direction, phase, reduced
     const sourceColumn = !layer.base && !spec.sourceSingleAnimation ? phaseIndex : column;
     return centre(recolor(extractFrame(sheet, sourceColumn, row, sheet.cellOut), ramps(layer)), spec.size);
   });
+  return binaryAlpha(composite(layers, spec.size), threshold);
+}
+
+/**
+ * A walk's standing frame (decision 0019 S1.5f): LPC's walk sheets keep the figure at rest, feet together, in column 0,
+ * outside the stepping cycle. A standard walk cuts that column; an oversized walk already lists it as its first frame.
+ * @param {any} manifest @param {string} character @param {string} action @param {string} direction
+ * @param {(file: string) => Rgba & { cellOut: number }} reduced @param {number} threshold
+ * @returns {Rgba}
+ */
+export function bakeStandFrame(manifest, character, action, direction, reduced, threshold) {
+  const spec = manifest.characters[character]?.actions[action];
+  if (!spec) throw new Error(`No ${action} for ${character}`);
+  if (spec.kind !== 'standard') return bakeFrame(manifest, character, action, direction, 0, reduced, threshold);
+  const row = LPC_DIRECTIONS.indexOf(direction);
+  if (row < 0) throw new Error(`Unknown direction ${direction}`);
+  return bakeColumn(manifest, spec, 0, row, reduced, threshold);
+}
+
+/** A standard action's frame at one column and row. */
+function bakeColumn(/** @type {any} */ manifest, /** @type {any} */ spec, /** @type {number} */ col, /** @type {number} */ row, /** @type {(file: string) => Rgba & { cellOut: number }} */ reduced, /** @type {number} */ threshold) {
+  const ramps = (/** @type {LayerRef} */ layer) => layer.ramps.map(i => manifest.ramps[i]);
+  const layers = spec.layers.map((/** @type {LayerRef} */ layer) => recolor(extractFrame(reduced(layer.file), col, row, spec.size), ramps(layer)));
   return binaryAlpha(composite(layers, spec.size), threshold);
 }

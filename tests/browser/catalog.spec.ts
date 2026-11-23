@@ -42,7 +42,7 @@ test('Credits: the project, then the Stone Soup and LPC artists from their credi
   await openRoom(page);
   await open(page, 'credits');
   await expect(screen(page).locator('.menu-tab')).toHaveText(['RPGameworks', 'Stone Soup', 'LPC']); // LPC since decision 0019.
-  await expect(rows(page)).toHaveText(['RPGameworks', 'UNSCII font', 'White and Silver skin', 'Starter hero']);
+  await expect(rows(page)).toHaveText(['RPGameworks', 'UNSCII font', 'White and Silver skin']); // The Starter hero credit left with the Cute Fantasy pack (decision 0019 S1.5f).
   await expect(screen(page).locator('.menu-catalog-top')).not.toContainText('Found'); // Nothing to discover here.
   await page.keyboard.press('KeyE');
   await expect(rows(page).first()).toHaveText('About the Stone Soup art');

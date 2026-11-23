@@ -155,9 +155,33 @@ What was built:
   - **Formation grid:** a 40-pixel cut of the standing figure facing the enemies, centred on its feet, so the bow's 96-pixel walk frame works too.
 - **Runtime snapshot:** the art `source` is `'lpc'` for these members.
 
+## Execution notes (S1.5f, November 23)
+
+The map hero question is answered. Ariel's choices:
+- **The Cute Fantasy starter hero is retired.** The LPC party leader walks the map.
+- **Size:** the same reduced 41-pixel figure as in battle, about the old hero's height, so one bake serves both.
+- **Standing frame:** LPC's at-rest walk column (feet together), on the map **and** for battlers at rest. The bake had left it out, because a standard walk's stepping cycle skips it, so S1.5d's battlers stood mid-stride.
+- **Next characters:** Mara and the Gallery archive clerk get LPC looks chosen from previews (S1.5g), and turn to face the hero while you talk.
+
+What was built:
+- **Bake:** the party atlas adds each member's walk facing up and down and a standing frame each way (`<id>/stand/<way>`), and cuts the portrait from the front standing frame. The bow's oversized walk already lists its at-rest frame first, so its standing frames match its walk's first. 240 frames, up from 158.
+- **Map:** `src/presentation/map-hero-view.ts` draws the party's first member.
+  - **Standing:** its standing frame for the way it faces.
+  - **Walking:** that way's own row, at one stride per tile (an LPC walk cycle is two strides). A 50 ms grace keeps the walk going across tiles while a direction is held.
+  - **Placement:** feet on the bottom edge of the tile, where the old hero's were.
+- **Textures:** `addPartyTexture` takes an owner. The map's texture lives as long as the app (reused across scene restarts); a battle's is its own and removed when it ends, so leaving a battle never takes the map hero's art.
+- **Fallback:** a game without a party roster or party art, or whose art fails to load, keeps the placeholder hero. A failure shows the old warning ("Character art could not load; the original hero remains playable").
+- **Removed:**
+  - `public/character/starter-hero.rpgpack`;
+  - the character pack v1 format of [decision 0003](0003-character-pack-v1.md): its reader, format rules and schemas, encoder and starter-hero tools, appearance-selection validator, fixtures and tests;
+  - the old layered hero view;
+  - the Starter hero credit and its NOTICE entry.
+
+  The pack stays in git history, and the Cute Fantasy analysis docs under `docs/asset-analysis/` remain as a record.
+- **Snapshot:** `heroArt` is `'static' | 'lpc'`; `heroFrame` names the atlas frame; `heroMirrored` is gone, since nothing is mirrored.
+
 ## Still open
 
-- **The map hero:** the walking hero on the map is the Cute Fantasy starter pack. Should it become the LPC Hero too, or stay as it is?
 - **Looks:** body types, colours and hair are chosen from the S1.5b previews.
 - **The project's licence,** which also covers Ariel's original art: still Ariel's choice, as before.
 
